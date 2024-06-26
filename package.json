@@ -1,0 +1,23 @@
+{
+  "name": "hardhat-project",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^2.0.2",
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.5"
+  },
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "npm run deploy-step1 && npm run deploy-step2 && npm run deploy-step3",
+    "deploy-step1": "npx hardhat run ./scripts/deployStep1ToL1.ts --network sepolia",
+    "deploy-step2": "npx hardhat run ./scripts/deployStep2ToL2.ts --network scrollsepolia",
+    "deploy-step3": "npx hardhat run ./scripts/deployStep3ToL1.ts --network sepolia",
+    "send-message-from-l1": "npx hardhat run ./scripts/sendMessageFromL1ToL2.ts --network sepolia",
+    "send-message-from-l2": "npx hardhat run ./scripts/sendMessageFromL2ToL1.ts --network scrollsepolia",
+    "relay-message-from-l2": "npx hardhat run ./scripts/relayMessageFromL2ToL1.ts --network sepolia"
+  },
+  "dependencies": {
+    "axios": "^1.7.2"
+  }
+}
