@@ -375,7 +375,7 @@ export interface Liquidity extends BaseContract {
 
     depositERC1155(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -383,20 +383,20 @@ export interface Liquidity extends BaseContract {
 
     depositERC20(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     depositERC721(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     depositETH(
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -468,7 +468,7 @@ export interface Liquidity extends BaseContract {
 
   depositERC1155(
     tokenAddress: PromiseOrValue<string>,
-    recipient: PromiseOrValue<BytesLike>,
+    recipientSaltHash: PromiseOrValue<BytesLike>,
     tokenId: PromiseOrValue<BigNumberish>,
     amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -476,20 +476,20 @@ export interface Liquidity extends BaseContract {
 
   depositERC20(
     tokenAddress: PromiseOrValue<string>,
-    recipient: PromiseOrValue<BytesLike>,
+    recipientSaltHash: PromiseOrValue<BytesLike>,
     amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   depositERC721(
     tokenAddress: PromiseOrValue<string>,
-    recipient: PromiseOrValue<BytesLike>,
+    recipientSaltHash: PromiseOrValue<BytesLike>,
     tokenId: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   depositETH(
-    recipient: PromiseOrValue<BytesLike>,
+    recipientSaltHash: PromiseOrValue<BytesLike>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -561,7 +561,7 @@ export interface Liquidity extends BaseContract {
 
     depositERC1155(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -569,20 +569,20 @@ export interface Liquidity extends BaseContract {
 
     depositERC20(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     depositERC721(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
     depositETH(
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -681,7 +681,7 @@ export interface Liquidity extends BaseContract {
 
     depositERC1155(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -689,20 +689,20 @@ export interface Liquidity extends BaseContract {
 
     depositERC20(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     depositERC721(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     depositETH(
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -775,7 +775,7 @@ export interface Liquidity extends BaseContract {
 
     depositERC1155(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -783,20 +783,20 @@ export interface Liquidity extends BaseContract {
 
     depositERC20(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     depositERC721(
       tokenAddress: PromiseOrValue<string>,
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       tokenId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     depositETH(
-      recipient: PromiseOrValue<BytesLike>,
+      recipientSaltHash: PromiseOrValue<BytesLike>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

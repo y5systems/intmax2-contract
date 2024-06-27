@@ -8,6 +8,7 @@ import type {
   BytesLike,
   CallOverrides,
   ContractTransaction,
+  Overrides,
   PayableOverrides,
   PopulatedTransaction,
   Signer,
@@ -21,18 +22,45 @@ import type {
   TypedListener,
   OnEvent,
   PromiseOrValue,
-} from "./common";
+} from "../common";
 
-export interface IScrollMessengerInterface extends utils.Interface {
+export declare namespace IL1ScrollMessenger {
+  export type L2MessageProofStruct = {
+    batchHash: PromiseOrValue<BytesLike>;
+    merkleProof: PromiseOrValue<BytesLike>;
+  };
+
+  export type L2MessageProofStructOutput = [string, string] & {
+    batchHash: string;
+    merkleProof: string;
+  };
+}
+
+export interface IL1ScrollMessengerInterface extends utils.Interface {
   functions: {
+    "relayMessageWithProof(address,address,uint256,uint256,bytes,(bytes32,bytes))": FunctionFragment;
     "sendMessage(address,uint256,bytes,uint256,address)": FunctionFragment;
     "xDomainMessageSender()": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "sendMessage" | "xDomainMessageSender"
+    nameOrSignatureOrTopic:
+      | "relayMessageWithProof"
+      | "sendMessage"
+      | "xDomainMessageSender"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "relayMessageWithProof",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BytesLike>,
+      IL1ScrollMessenger.L2MessageProofStruct
+    ]
+  ): string;
   encodeFunctionData(
     functionFragment: "sendMessage",
     values: [
@@ -49,6 +77,10 @@ export interface IScrollMessengerInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
+    functionFragment: "relayMessageWithProof",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "sendMessage",
     data: BytesLike
   ): Result;
@@ -60,12 +92,12 @@ export interface IScrollMessengerInterface extends utils.Interface {
   events: {};
 }
 
-export interface IScrollMessenger extends BaseContract {
+export interface IL1ScrollMessenger extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: IScrollMessengerInterface;
+  interface: IL1ScrollMessengerInterface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -87,6 +119,16 @@ export interface IScrollMessenger extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    relayMessageWithProof(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
+      message: PromiseOrValue<BytesLike>,
+      proof: IL1ScrollMessenger.L2MessageProofStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     sendMessage(
       target: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
@@ -98,6 +140,16 @@ export interface IScrollMessenger extends BaseContract {
 
     xDomainMessageSender(overrides?: CallOverrides): Promise<[string]>;
   };
+
+  relayMessageWithProof(
+    from: PromiseOrValue<string>,
+    to: PromiseOrValue<string>,
+    value: PromiseOrValue<BigNumberish>,
+    nonce: PromiseOrValue<BigNumberish>,
+    message: PromiseOrValue<BytesLike>,
+    proof: IL1ScrollMessenger.L2MessageProofStruct,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   sendMessage(
     target: PromiseOrValue<string>,
@@ -111,6 +163,16 @@ export interface IScrollMessenger extends BaseContract {
   xDomainMessageSender(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
+    relayMessageWithProof(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
+      message: PromiseOrValue<BytesLike>,
+      proof: IL1ScrollMessenger.L2MessageProofStruct,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     sendMessage(
       target: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
@@ -126,6 +188,16 @@ export interface IScrollMessenger extends BaseContract {
   filters: {};
 
   estimateGas: {
+    relayMessageWithProof(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
+      message: PromiseOrValue<BytesLike>,
+      proof: IL1ScrollMessenger.L2MessageProofStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     sendMessage(
       target: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,
@@ -139,6 +211,16 @@ export interface IScrollMessenger extends BaseContract {
   };
 
   populateTransaction: {
+    relayMessageWithProof(
+      from: PromiseOrValue<string>,
+      to: PromiseOrValue<string>,
+      value: PromiseOrValue<BigNumberish>,
+      nonce: PromiseOrValue<BigNumberish>,
+      message: PromiseOrValue<BytesLike>,
+      proof: IL1ScrollMessenger.L2MessageProofStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     sendMessage(
       target: PromiseOrValue<string>,
       value: PromiseOrValue<BigNumberish>,

@@ -48,6 +48,19 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
+        indexed: false,
+        internalType: "bytes32",
+        name: "depositTreeRoot",
+        type: "bytes32",
+      },
+    ],
+    name: "DepositsProcessed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
         indexed: true,
         internalType: "bytes32",
         name: "withdrawalRequest",

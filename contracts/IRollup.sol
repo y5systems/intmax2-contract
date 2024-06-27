@@ -17,6 +17,8 @@ interface IRollup {
         bytes32 salt;
     }
 
+    event DepositsProcessed(bytes32 depositTreeRoot);
+
     event BlockPosted(
         bytes32 indexed prevBlockHash,
         address indexed blockBuilder,

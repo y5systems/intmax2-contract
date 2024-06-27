@@ -7,7 +7,7 @@ import type { Provider } from "@ethersproject/providers";
 import type {
   IScrollMessenger,
   IScrollMessengerInterface,
-} from "../IScrollMessenger";
+} from "../../contracts/IScrollMessenger";
 
 const _abi = [
   {

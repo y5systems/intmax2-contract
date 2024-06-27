@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import "dotenv/config";
 import contractAddresses from "./contractAddresses.json";
 import { Liquidity } from "../typechain-types";
+import { calcRecipientSaltHash } from "./utils/hash";
 
 const getLatestDepositEvents = async (liquidity: Liquidity, sender: string) => {
   // fetch the latest deposit event for the owner
@@ -30,26 +31,28 @@ async function main() {
     liquidityContractAddress
   );
 
-  const recipient = "0x" + "0".repeat(64);
+  const recipient = "0x" + "0".repeat(63) + "1";
+  const salt = "0x" + "0".repeat(64);
+  const recipientSaltHash = calcRecipientSaltHash(recipient, salt);
   const amount = ethers.utils.parseEther("0.0000000001"); // 0.1 Gwei
-  const tx = await liquidity.depositETH(recipient, {
+  const tx = await liquidity.depositETH(recipientSaltHash, {
     value: amount,
   });
   console.log("tx hash:", tx.hash);
   const receipt = await tx.wait();
   console.log("Deposited ETH");
 
-  // get the deposit index
-  const depositEvent = receipt.events?.[0];
-  console.log("deposit events:", depositEvent);
-  const depositEventResult = depositEvent?.args;
-  if (!depositEventResult) {
-    throw new Error("deposit is not set");
-  }
+  // // get the deposit index
+  // const depositEvent = receipt.events?.[0];
+  // console.log("deposit events:", depositEvent);
+  // const depositEventResult = depositEvent?.args;
+  // if (!depositEventResult) {
+  //   throw new Error("deposit is not set");
+  // }
 
-  // const depositEventResult = await getLatestDepositEvents(liquidity, owner);
+  const depositEventResult = await getLatestDepositEvents(liquidity, owner);
   const depositId = depositEventResult.depositId;
-  if (!depositId) {
+  if (depositId == null) {
     throw new Error("depositId is not set");
   }
 

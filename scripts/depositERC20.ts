@@ -2,32 +2,33 @@ import { ethers } from "hardhat";
 import "dotenv/config";
 import contractAddresses from "./contractAddresses.json";
 import { ILiquidity, Liquidity } from "../typechain-types";
+import { testTokenSol } from "../typechain-types/contracts/token";
+import { calcRecipientSaltHash } from "./utils/hash";
 
-const getLatestDepositEvent = async (liquidity: ILiquidity | Liquidity, sender: string) => {
+const getLatestDepositEvent = async (
+  liquidity: ILiquidity | Liquidity,
+  sender: string
+) => {
   // fetch the latest deposit event for the owner
   const depositEvents = await liquidity.queryFilter(
     liquidity.filters.Deposited(null, sender)
   );
-  const depositEventResult = depositEvents.pop();
-  if (!depositEventResult) {
+  const depositEvent = depositEvents.pop();
+  if (!depositEvent) {
     throw new Error("depositEvent is not set");
   }
-  const deposit = depositEventResult?.args;
-  if (!deposit) {
-    throw new Error("deposit is not set");
-  }
-  const depositId = deposit.depositId;
-  if (!depositId) {
-    throw new Error("depositId is not set");
-  }
-
-  return depositEventResult;
+  return depositEvent.args;
 };
 
 async function main() {
   const liquidityContractAddress = contractAddresses.liquidity;
   if (!liquidityContractAddress) {
     throw new Error("liquidityContractAddress is not set");
+  }
+
+  const testErc20ContractAddress = contractAddresses.testErc20;
+  if (!testErc20ContractAddress) {
+    throw new Error("testErc20ContractAddress is not set");
   }
 
   const owner = (await ethers.getSigners())[0].address;
@@ -38,40 +39,68 @@ async function main() {
     liquidityContractAddress
   );
 
-  const tokenAddress = "0x" + "0".repeat(39) + "1";
-  const recipient = "0x" + "0".repeat(64);
+  const testErc20 = await ethers.getContractAt(
+    "TestERC20",
+    testErc20ContractAddress
+  );
+
+  const tokenAddress = contractAddresses.testErc20;
+  const recipient = "0x" + "0".repeat(63) + "1";
+  const salt = "0x" + "0".repeat(64);
+  const recipientSaltHash = calcRecipientSaltHash(recipient, salt);
   const amount = "1000000";
-  const tx = await liquidity.depositERC20(tokenAddress, recipient, amount);
+
+  const approvalTx = await testErc20.approve(liquidity.address, amount);
+  console.log("tx hash:", approvalTx.hash);
+  await approvalTx.wait();
+  console.log("Approved ERC20");
+
+  console.log("balance of owner:", await testErc20.balanceOf(owner));
+
+  const tx = await liquidity.depositERC20(
+    tokenAddress,
+    recipientSaltHash,
+    amount
+  );
   console.log("tx hash:", tx.hash);
   const receipt = await tx.wait();
-  console.log("Deposited ETH");
+  console.log("Deposited ERC20");
 
-  // get the deposit index
-  const depositEvent = receipt.events?.[0];
-  console.log("deposit event:", depositEvent);
-  const depositEventResult = depositEvent?.args;
-  if (!depositEventResult) {
-    throw new Error("deposit is not set");
-  }
+  console.log("balance of owner:", await testErc20.balanceOf(owner));
 
-  // const depositEventResult = await getLatestDepositEvent(liquidity, owner);
+  // // get the deposit index
+  // const depositEvent = receipt.events?.[0];
+  // console.log("deposit event:", depositEvent);
+  // const depositEventResult = depositEvent?.args;
+  // if (!depositEventResult) {
+  //   throw new Error("deposit is not set");
+  // }
+
+  const depositEventResult = await getLatestDepositEvent(liquidity, owner);
+  console.log("depositEventResult", depositEventResult);
 
   const depositId = depositEventResult.depositId;
-  if (!depositId) {
+  console.log("deposit ID", depositId);
+  if (depositId == null) {
     throw new Error("depositId is not set");
   }
 
   const depositData = {
-    recipientSaltHash: depositEventResult.recipientSaltData,
+    recipientSaltHash: depositEventResult.recipientSaltHash,
     tokenIndex: depositEventResult.tokenIndex,
     amount: depositEventResult.amount,
   };
+  console.log("deposit data:", depositData);
+
+  console.log("pending deposit", await liquidity.getPendingDeposit(depositId));
 
   // cancel the deposit
   const tx2 = await liquidity.cancelPendingDeposit(depositId, depositData);
   console.log("tx hash:", tx2.hash);
   await tx2.wait();
   console.log("Cancelled deposit");
+
+  console.log("balance of owner:", await testErc20.balanceOf(owner));
 }
 
 // We recommend this pattern to be able to use async/await everywhere

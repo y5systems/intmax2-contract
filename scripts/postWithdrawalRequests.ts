@@ -8,31 +8,22 @@ async function main() {
     throw new Error("rollupContractAddress is not set");
   }
 
-  const owner = (await ethers.getSigners())[0].address;
+  const ownerAccount = (await ethers.getSigners())[0];
+  const owner = ownerAccount.address;
   console.log("owner address", owner);
+  console.log(ethers.provider.getTransactionCount(owner))
 
   const rollup = await ethers.getContractAt("Rollup", rollupContractAddress);
 
   const recipient = owner;
-  const abiCoder = new ethers.utils.AbiCoder();
   const withdrawRequests = [
     {
       recipient,
       tokenIndex: 1,
       amount: 100,
+      salt: "0x" + "0".repeat(64),
     },
-  ].map((withdrawRequest) => {
-    return ethers.utils.keccak256(
-      abiCoder.encode(
-        ["address", "uint32", "uint256"],
-        [
-          withdrawRequest.recipient,
-          withdrawRequest.tokenIndex,
-          withdrawRequest.amount,
-        ]
-      )
-    );
-  });
+  ];
   console.log("withdrawal request:", withdrawRequests);
   const publicInputs: string[] = [];
   const proof = "0x";

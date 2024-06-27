@@ -7,7 +7,7 @@ import type { Provider } from "@ethersproject/providers";
 import type {
   IL1ScrollMessenger,
   IL1ScrollMessengerInterface,
-} from "../IL1ScrollMessenger";
+} from "../../contracts/IL1ScrollMessenger";
 
 const _abi = [
   {

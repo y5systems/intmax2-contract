@@ -3,14 +3,9 @@ import "dotenv/config";
 import contractAddresses from "./contractAddresses.json";
 
 async function main() {
-  const registryContractAddress = contractAddresses.rollup;
+  const registryContractAddress = contractAddresses.blockBuilderRegistry;
   if (!registryContractAddress) {
     throw new Error("registryContractAddress is not set");
-  }
-
-  const rollupContractAddress = contractAddresses.rollup;
-  if (!rollupContractAddress) {
-    throw new Error("liquidityContractAddress is not set");
   }
 
   const owner = (await ethers.getSigners())[0].address;
@@ -18,17 +13,12 @@ async function main() {
 
   const registry = await ethers.getContractAt(
     "BlockBuilderRegistry",
-    rollupContractAddress
-  );
-
-  const rollup = await ethers.getContractAt(
-    "Rollup",
-    rollupContractAddress
+    registryContractAddress
   );
 
   const url = "https://example.com";
   const tx = await registry.updateBlockBuilder(url, {
-    value: '100000000',
+    value: "100000000",
   });
   console.log("tx hash:", tx.hash);
   await tx.wait();
@@ -51,6 +41,8 @@ async function main() {
   await tx.wait();
   console.log("Stop block builder");
 
+  console.log("Waiting 5 seconds before unstaking...");
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 
   const tx3 = await registry.unstake();
   console.log("tx hash:", tx3.hash);
