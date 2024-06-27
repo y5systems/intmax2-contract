@@ -16,8 +16,8 @@ async function main() {
     rollupContractAddress
   );
 
-
-  console.log("lastProcessedWithdrawalId", (await rollup.getLastProcessedWIthdrawalId()).toString());
+  const a = await rollup.getLastProcessedWIthdrawalId()
+  console.log("lastProcessedWithdrawalId", (a).toString());
 
   const lastProcessedWithdrawId = 2;
   const tx = await rollup.submitWithdrawals(lastProcessedWithdrawId);

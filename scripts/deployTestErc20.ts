@@ -15,7 +15,7 @@ async function main() {
 
   const newContractAddresses = {
     ...contractAddresses,
-    token: token.address,
+    testErc20: token.address,
   };
 
   saveJsonToFile(

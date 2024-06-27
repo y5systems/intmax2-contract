@@ -159,10 +159,12 @@ export interface IRollupInterface extends utils.Interface {
 
   events: {
     "BlockPosted(bytes32,address,uint256,bytes32,bytes32)": EventFragment;
+    "DepositsProcessed(bytes32)": EventFragment;
     "WithdrawRequested(bytes32,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "BlockPosted"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "DepositsProcessed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "WithdrawRequested"): EventFragment;
 }
 
@@ -179,6 +181,17 @@ export type BlockPostedEvent = TypedEvent<
 >;
 
 export type BlockPostedEventFilter = TypedEventFilter<BlockPostedEvent>;
+
+export interface DepositsProcessedEventObject {
+  depositTreeRoot: string;
+}
+export type DepositsProcessedEvent = TypedEvent<
+  [string],
+  DepositsProcessedEventObject
+>;
+
+export type DepositsProcessedEventFilter =
+  TypedEventFilter<DepositsProcessedEvent>;
 
 export interface WithdrawRequestedEventObject {
   withdrawalRequest: string;
@@ -392,6 +405,11 @@ export interface IRollup extends BaseContract {
       depositTreeRoot?: null,
       signatureHash?: null
     ): BlockPostedEventFilter;
+
+    "DepositsProcessed(bytes32)"(
+      depositTreeRoot?: null
+    ): DepositsProcessedEventFilter;
+    DepositsProcessed(depositTreeRoot?: null): DepositsProcessedEventFilter;
 
     "WithdrawRequested(bytes32,address)"(
       withdrawalRequest?: PromiseOrValue<BytesLike> | null,

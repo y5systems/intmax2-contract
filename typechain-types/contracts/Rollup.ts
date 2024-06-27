@@ -60,8 +60,6 @@ export declare namespace ILiquidity {
 export interface RollupInterface extends utils.Interface {
   functions: {
     "_blockBuilderRegistry()": FunctionFragment;
-    "_depositTreeRoot()": FunctionFragment;
-    "_lastProcessedWithdrawId()": FunctionFragment;
     "_liquidityContract()": FunctionFragment;
     "_scrollMessenger()": FunctionFragment;
     "getBlockHash(uint32)": FunctionFragment;
@@ -76,8 +74,6 @@ export interface RollupInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "_blockBuilderRegistry"
-      | "_depositTreeRoot"
-      | "_lastProcessedWithdrawId"
       | "_liquidityContract"
       | "_scrollMessenger"
       | "getBlockHash"
@@ -91,14 +87,6 @@ export interface RollupInterface extends utils.Interface {
 
   encodeFunctionData(
     functionFragment: "_blockBuilderRegistry",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_depositTreeRoot",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "_lastProcessedWithdrawId",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -166,14 +154,6 @@ export interface RollupInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "_depositTreeRoot",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "_lastProcessedWithdrawId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "_liquidityContract",
     data: BytesLike
   ): Result;
@@ -209,10 +189,12 @@ export interface RollupInterface extends utils.Interface {
 
   events: {
     "BlockPosted(bytes32,address,uint256,bytes32,bytes32)": EventFragment;
+    "DepositsProcessed(bytes32)": EventFragment;
     "WithdrawRequested(bytes32,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "BlockPosted"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "DepositsProcessed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "WithdrawRequested"): EventFragment;
 }
 
@@ -229,6 +211,17 @@ export type BlockPostedEvent = TypedEvent<
 >;
 
 export type BlockPostedEventFilter = TypedEventFilter<BlockPostedEvent>;
+
+export interface DepositsProcessedEventObject {
+  depositTreeRoot: string;
+}
+export type DepositsProcessedEvent = TypedEvent<
+  [string],
+  DepositsProcessedEventObject
+>;
+
+export type DepositsProcessedEventFilter =
+  TypedEventFilter<DepositsProcessedEvent>;
 
 export interface WithdrawRequestedEventObject {
   withdrawalRequest: string;
@@ -270,10 +263,6 @@ export interface Rollup extends BaseContract {
 
   functions: {
     _blockBuilderRegistry(overrides?: CallOverrides): Promise<[string]>;
-
-    _depositTreeRoot(overrides?: CallOverrides): Promise<[string]>;
-
-    _lastProcessedWithdrawId(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _liquidityContract(overrides?: CallOverrides): Promise<[string]>;
 
@@ -335,10 +324,6 @@ export interface Rollup extends BaseContract {
 
   _blockBuilderRegistry(overrides?: CallOverrides): Promise<string>;
 
-  _depositTreeRoot(overrides?: CallOverrides): Promise<string>;
-
-  _lastProcessedWithdrawId(overrides?: CallOverrides): Promise<BigNumber>;
-
   _liquidityContract(overrides?: CallOverrides): Promise<string>;
 
   _scrollMessenger(overrides?: CallOverrides): Promise<string>;
@@ -396,10 +381,6 @@ export interface Rollup extends BaseContract {
 
   callStatic: {
     _blockBuilderRegistry(overrides?: CallOverrides): Promise<string>;
-
-    _depositTreeRoot(overrides?: CallOverrides): Promise<string>;
-
-    _lastProcessedWithdrawId(overrides?: CallOverrides): Promise<BigNumber>;
 
     _liquidityContract(overrides?: CallOverrides): Promise<string>;
 
@@ -473,6 +454,11 @@ export interface Rollup extends BaseContract {
       signatureHash?: null
     ): BlockPostedEventFilter;
 
+    "DepositsProcessed(bytes32)"(
+      depositTreeRoot?: null
+    ): DepositsProcessedEventFilter;
+    DepositsProcessed(depositTreeRoot?: null): DepositsProcessedEventFilter;
+
     "WithdrawRequested(bytes32,address)"(
       withdrawalRequest?: PromiseOrValue<BytesLike> | null,
       withdrawAggregator?: null
@@ -485,10 +471,6 @@ export interface Rollup extends BaseContract {
 
   estimateGas: {
     _blockBuilderRegistry(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _depositTreeRoot(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _lastProcessedWithdrawId(overrides?: CallOverrides): Promise<BigNumber>;
 
     _liquidityContract(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -548,12 +530,6 @@ export interface Rollup extends BaseContract {
 
   populateTransaction: {
     _blockBuilderRegistry(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    _depositTreeRoot(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _lastProcessedWithdrawId(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

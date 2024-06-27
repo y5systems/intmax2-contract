@@ -5,7 +5,7 @@ import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
 
 contract BlockBuilderRegistry is IBlockBuilderRegistry {
     uint256 public constant MIN_STAKE_AMOUNT = 100000000 wei; // TODO: 0.1 ether
-    uint256 public constant CHALLENGE_DURATION = 1 minutes; // TODO: 1 days
+    uint256 public constant CHALLENGE_DURATION = 5 seconds; // TODO: 1 days
 
     mapping(address => BlockBuilderInfo) _blockBuilders;
 
@@ -18,6 +18,11 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
         _blockBuilders[msg.sender].blockBuilderUrl = url;
         _blockBuilders[msg.sender].stakeAmount = stakeAmount;
         _blockBuilders[msg.sender].stopTime = 0;
+        if (
+            _isValidBlockBuilder(msg.sender)
+        ) {
+            _blockBuilders[msg.sender].isValid = true;
+        }
 
         emit BlockBuilderUpdated(msg.sender, url, stakeAmount);
     }
@@ -30,6 +35,7 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 
         // Remove the block builder information.
         _blockBuilders[msg.sender].stopTime = block.timestamp;
+        _blockBuilders[msg.sender].isValid = false;
 
         emit BlockBuilderStoped(msg.sender);
     }

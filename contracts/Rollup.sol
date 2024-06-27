@@ -10,9 +10,10 @@ contract Rollup is IRollup {
     IScrollMessenger public _scrollMessenger;
     IBlockBuilderRegistry public _blockBuilderRegistry;
     address public _liquidityContract;
-    bytes32 public _depositTreeRoot;
+    bytes32 _depositTreeRoot;
+    bytes32[] _depositTreeSiblings;
     bytes32[] _blockHashes;
-    uint256 public _lastProcessedWithdrawId;
+    uint256 _lastProcessedWithdrawId;
     bytes32[] _withdrawalRequests;
 
     // TODO
@@ -42,8 +43,26 @@ contract Rollup is IRollup {
     function processDeposits(
         ILiquidity.Deposit[] calldata deposits
     ) public OnlyLiquidityContract {
-        bytes32 depositTreeRoot = bytes32(0); // TODO: Calculate the deposit tree root.
+        // for (uint256 i = 0; i < deposits.length; i++) {
+        //     _addLeafHash(
+        //         keccak256(
+        //             abi.encodePacked(
+        //                 deposits[i].recipientSaltHash,
+        //                 deposits[i].tokenIndex,
+        //                 deposits[i].amount
+        //             )
+        //         )
+        //     );
+        // }
+
+        // // Calculate the deposit tree root.
+        // bytes32 depositTreeRoot = getMerkleRoot();
+        bytes32 depositTreeRoot = 0;
+
         _depositTreeRoot = depositTreeRoot;
+
+
+        emit DepositsProcessed(depositTreeRoot);
     }
 
     function postBlock(
@@ -56,11 +75,11 @@ contract Rollup is IRollup {
         uint256[4] calldata aggregatedSignature,
         uint256[4] calldata messagePoint
     ) public returns (uint256 blockNumber) {
-        // TODO: Check if the block builder is valid.
-        // require(
-        //     _blockBuilderRegistry.isValidBlockBuilder(msg.sender),
-        //     "Block builder is not valid"
-        // );
+        // Check if the block builder is valid.
+        require(
+            _blockBuilderRegistry.isValidBlockBuilder(msg.sender),
+            "Block builder is not valid"
+        );
         bytes32 signatureHash = keccak256(
             abi.encodePacked(
                 isRegistrationBlock,
@@ -114,16 +133,16 @@ contract Rollup is IRollup {
         emit WithdrawRequested(withdrawTreeRoot, msg.sender);
     }
 
-    //
     function submitWithdrawals(uint256 lastProcessedWithdrawId) public {
-        require(
-            lastProcessedWithdrawId <= _withdrawalRequests.length &&
-                lastProcessedWithdrawId > _lastProcessedWithdrawId,
-            "Invalid last processed withdrawal ID"
-        );
+        // NOTE: Commented out for the debugging purpose.
+        // require(
+        //     lastProcessedWithdrawId <= _withdrawalRequests.length &&
+        //         lastProcessedWithdrawId > _lastProcessedWithdrawId,
+        //     "Invalid last processed withdrawal ID"
+        // );
         _lastProcessedWithdrawId = lastProcessedWithdrawId;
 
-        // TODO: Call receiveWithdrawRoot function in Liquidity contract.
+        // TODO: Call processWithdrawals function in Liquidity contract.
     }
 
     function getDepositTreeRoot() public view returns (bytes32) {
