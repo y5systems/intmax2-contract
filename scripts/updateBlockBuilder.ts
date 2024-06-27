@@ -18,7 +18,7 @@ async function main() {
 
   const url = "https://example.com";
   const tx = await registry.updateBlockBuilder(url, {
-    value: '100000000',
+    value: "100000000",
   });
   console.log("tx hash:", tx.hash);
   await tx.wait();

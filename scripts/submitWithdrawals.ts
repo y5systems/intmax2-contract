@@ -11,13 +11,12 @@ async function main() {
   const owner = (await ethers.getSigners())[0].address;
   console.log("owner address", owner);
 
-  const rollup = await ethers.getContractAt(
-    "Rollup",
-    rollupContractAddress
-  );
+  const rollup = await ethers.getContractAt("Rollup", rollupContractAddress);
 
-  const a = await rollup.getLastProcessedWIthdrawalId()
-  console.log("lastProcessedWithdrawalId", (a).toString());
+  console.log(
+    "lastProcessedWithdrawalId",
+    (await rollup.getLastProcessedWIthdrawalId()).toString()
+  );
 
   const lastProcessedWithdrawId = 2;
   const tx = await rollup.submitWithdrawals(lastProcessedWithdrawId);
@@ -25,7 +24,10 @@ async function main() {
   await tx.wait();
   console.log("Submit withdrawals");
 
-  console.log("lastProcessedWithdrawalId", (await rollup.getLastProcessedWIthdrawalId()).toString());
+  console.log(
+    "lastProcessedWithdrawalId",
+    (await rollup.getLastProcessedWIthdrawalId()).toString()
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere
