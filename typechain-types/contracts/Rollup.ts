@@ -59,7 +59,7 @@ export declare namespace ILiquidity {
 
 export interface RollupInterface extends utils.Interface {
   functions: {
-    "_blockBuilderRegistry()": FunctionFragment;
+    "_blockBuilderRegistryContract()": FunctionFragment;
     "_liquidityContract()": FunctionFragment;
     "_scrollMessenger()": FunctionFragment;
     "getBlockHash(uint32)": FunctionFragment;
@@ -69,11 +69,12 @@ export interface RollupInterface extends utils.Interface {
     "postWithdrawRequests((address,uint32,uint256,bytes32)[],uint256[],bytes)": FunctionFragment;
     "processDeposits((bytes32,uint32,uint256)[])": FunctionFragment;
     "submitWithdrawals(uint256)": FunctionFragment;
+    "updateDependentContract(address,address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "_blockBuilderRegistry"
+      | "_blockBuilderRegistryContract"
       | "_liquidityContract"
       | "_scrollMessenger"
       | "getBlockHash"
@@ -83,10 +84,11 @@ export interface RollupInterface extends utils.Interface {
       | "postWithdrawRequests"
       | "processDeposits"
       | "submitWithdrawals"
+      | "updateDependentContract"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "_blockBuilderRegistry",
+    functionFragment: "_blockBuilderRegistryContract",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -148,9 +150,13 @@ export interface RollupInterface extends utils.Interface {
     functionFragment: "submitWithdrawals",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "updateDependentContract",
+    values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
 
   decodeFunctionResult(
-    functionFragment: "_blockBuilderRegistry",
+    functionFragment: "_blockBuilderRegistryContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -184,6 +190,10 @@ export interface RollupInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "submitWithdrawals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateDependentContract",
     data: BytesLike
   ): Result;
 
@@ -262,7 +272,7 @@ export interface Rollup extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    _blockBuilderRegistry(overrides?: CallOverrides): Promise<[string]>;
+    _blockBuilderRegistryContract(overrides?: CallOverrides): Promise<[string]>;
 
     _liquidityContract(overrides?: CallOverrides): Promise<[string]>;
 
@@ -320,9 +330,15 @@ export interface Rollup extends BaseContract {
       lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    updateDependentContract(
+      liquidityContract: PromiseOrValue<string>,
+      blockBuilderRegistryContract: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
-  _blockBuilderRegistry(overrides?: CallOverrides): Promise<string>;
+  _blockBuilderRegistryContract(overrides?: CallOverrides): Promise<string>;
 
   _liquidityContract(overrides?: CallOverrides): Promise<string>;
 
@@ -379,8 +395,14 @@ export interface Rollup extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  updateDependentContract(
+    liquidityContract: PromiseOrValue<string>,
+    blockBuilderRegistryContract: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
-    _blockBuilderRegistry(overrides?: CallOverrides): Promise<string>;
+    _blockBuilderRegistryContract(overrides?: CallOverrides): Promise<string>;
 
     _liquidityContract(overrides?: CallOverrides): Promise<string>;
 
@@ -436,6 +458,12 @@ export interface Rollup extends BaseContract {
       lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    updateDependentContract(
+      liquidityContract: PromiseOrValue<string>,
+      blockBuilderRegistryContract: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
@@ -470,7 +498,9 @@ export interface Rollup extends BaseContract {
   };
 
   estimateGas: {
-    _blockBuilderRegistry(overrides?: CallOverrides): Promise<BigNumber>;
+    _blockBuilderRegistryContract(
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     _liquidityContract(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -526,10 +556,16 @@ export interface Rollup extends BaseContract {
       lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    updateDependentContract(
+      liquidityContract: PromiseOrValue<string>,
+      blockBuilderRegistryContract: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _blockBuilderRegistry(
+    _blockBuilderRegistryContract(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -591,6 +627,12 @@ export interface Rollup extends BaseContract {
 
     submitWithdrawals(
       lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updateDependentContract(
+      liquidityContract: PromiseOrValue<string>,
+      blockBuilderRegistryContract: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

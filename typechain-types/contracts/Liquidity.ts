@@ -102,7 +102,6 @@ export interface LiquidityInterface extends utils.Interface {
     "processWithdrawals((address,uint32,uint256,bytes32)[])": FunctionFragment;
     "rejectDeposits(uint256,uint256[])": FunctionFragment;
     "submitDeposits(uint256)": FunctionFragment;
-    "updateRollupContract(address)": FunctionFragment;
   };
 
   getFunction(
@@ -125,7 +124,6 @@ export interface LiquidityInterface extends utils.Interface {
       | "processWithdrawals"
       | "rejectDeposits"
       | "submitDeposits"
-      | "updateRollupContract"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -217,10 +215,6 @@ export interface LiquidityInterface extends utils.Interface {
     functionFragment: "submitDeposits",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
-  encodeFunctionData(
-    functionFragment: "updateRollupContract",
-    values: [PromiseOrValue<string>]
-  ): string;
 
   decodeFunctionResult(
     functionFragment: "_rollupContract",
@@ -289,10 +283,6 @@ export interface LiquidityInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "submitDeposits",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateRollupContract",
     data: BytesLike
   ): Result;
 
@@ -443,11 +433,6 @@ export interface Liquidity extends BaseContract {
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
   };
 
   _rollupContract(overrides?: CallOverrides): Promise<string>;
@@ -537,11 +522,6 @@ export interface Liquidity extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  updateRollupContract(
-    newRollupContract: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   callStatic: {
     _rollupContract(overrides?: CallOverrides): Promise<string>;
 
@@ -627,11 +607,6 @@ export interface Liquidity extends BaseContract {
 
     submitDeposits(
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -749,11 +724,6 @@ export interface Liquidity extends BaseContract {
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -845,11 +815,6 @@ export interface Liquidity extends BaseContract {
 
     submitDeposits(
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

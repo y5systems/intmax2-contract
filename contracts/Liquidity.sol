@@ -57,15 +57,12 @@ contract Liquidity is ILiquidity {
         _;
     }
 
-    constructor(address scrollMessenger) {
+    constructor(address scrollMessenger, address rollupContract) {
         _scrollMessenger = IScrollMessenger(scrollMessenger);
+        _rollupContract = rollupContract;
         _tokenIndexList.push(TokenInfo(TokenType.ETH, address(0), 0));
         _fungibleTokenIndexMap[address(0)] = 0;
         _pendingDepositData.push(DepositData(0, address(0), 0));
-    }
-
-    function updateRollupContract(address newRollupContract) public {
-        _rollupContract = newRollupContract;
     }
 
     function depositETH(bytes32 recipientSaltHash) public payable {

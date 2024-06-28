@@ -6,8 +6,13 @@ import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
 contract BlockBuilderRegistry is IBlockBuilderRegistry {
     uint256 public constant MIN_STAKE_AMOUNT = 100000000 wei; // TODO: 0.1 ether
     uint256 public constant CHALLENGE_DURATION = 5 seconds; // TODO: 1 days
+    address _rollupContract;
 
     mapping(address => BlockBuilderInfo) _blockBuilders;
+
+    constructor(address rollupContract) {
+        _rollupContract = rollupContract;
+    }
 
     function updateBlockBuilder(string memory url) public payable {
         uint256 stakeAmount = _blockBuilders[msg.sender].stakeAmount +

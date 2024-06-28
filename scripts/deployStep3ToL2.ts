@@ -8,6 +8,12 @@ async function main() {
     throw new Error("liquidityContractAddress is not set");
   }
 
+  const blockBuilderRegistryContractAddress =
+    contractAddresses.blockBuilderRegistry;
+  if (!blockBuilderRegistryContractAddress) {
+    throw new Error("blockBuilderRegistryContractAddress is not set");
+  }
+
   const rollupContractAddress = contractAddresses.rollup;
   if (!rollupContractAddress) {
     throw new Error("rollupContractAddress is not set");
@@ -16,12 +22,12 @@ async function main() {
   const owner = (await ethers.getSigners())[0].address;
   console.log("owner address", owner);
 
-  const liquidity = await ethers.getContractAt(
-    "Liquidity",
-    liquidityContractAddress
-  );
+  const rollup = await ethers.getContractAt("Rollup", rollupContractAddress);
 
-  const tx = await liquidity.updateRollupContract(rollupContractAddress);
+  const tx = await rollup.updateDependentContract(
+    liquidityContractAddress,
+    blockBuilderRegistryContractAddress
+  );
   console.log("tx hash:", tx.hash);
   await tx.wait();
   console.log("Updated rollup address");
