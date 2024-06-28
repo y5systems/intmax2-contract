@@ -17,9 +17,8 @@ async function main() {
   );
 
   const greeting = "https://l1.example.com";
-  const [deployer] = await ethers.getSigners();
   const gasLimit = await liquidity.estimateGas.sendMessageToL2(greeting, {
-    value: ethers.provider.getBalance(deployer.address),
+    value: ethers.provider.getBalance(owner),
   });
   const fee = await getFee(gasLimit);
   console.log("fee:", ethers.utils.formatEther(fee), "ETH");
