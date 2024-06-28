@@ -61,10 +61,11 @@ export interface IRollupInterface extends utils.Interface {
   functions: {
     "getBlockHash(uint32)": FunctionFragment;
     "getDepositTreeRoot()": FunctionFragment;
-    "getLastProcessedWIthdrawalId()": FunctionFragment;
+    "getLastProcessedWithdrawalId()": FunctionFragment;
     "postBlock(bool,bytes32,uint128,bytes32,bytes32,uint256[2],uint256[4],uint256[4])": FunctionFragment;
-    "postWithdrawRequests((address,uint32,uint256,bytes32)[],uint256[],bytes)": FunctionFragment;
+    "postWithdrawalRequests((address,uint32,uint256,bytes32)[],uint256[],bytes)": FunctionFragment;
     "processDeposits((bytes32,uint32,uint256)[])": FunctionFragment;
+    "submitBlockFraudProof(uint32,address,uint256[],bytes)": FunctionFragment;
     "submitWithdrawals(uint256)": FunctionFragment;
   };
 
@@ -72,10 +73,11 @@ export interface IRollupInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "getBlockHash"
       | "getDepositTreeRoot"
-      | "getLastProcessedWIthdrawalId"
+      | "getLastProcessedWithdrawalId"
       | "postBlock"
-      | "postWithdrawRequests"
+      | "postWithdrawalRequests"
       | "processDeposits"
+      | "submitBlockFraudProof"
       | "submitWithdrawals"
   ): FunctionFragment;
 
@@ -88,7 +90,7 @@ export interface IRollupInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getLastProcessedWIthdrawalId",
+    functionFragment: "getLastProcessedWithdrawalId",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -115,7 +117,7 @@ export interface IRollupInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "postWithdrawRequests",
+    functionFragment: "postWithdrawalRequests",
     values: [
       IRollup.WithdrawalStruct[],
       PromiseOrValue<BigNumberish>[],
@@ -125,6 +127,15 @@ export interface IRollupInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "processDeposits",
     values: [ILiquidity.DepositStruct[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "submitBlockFraudProof",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>[],
+      PromiseOrValue<BytesLike>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "submitWithdrawals",
@@ -140,16 +151,20 @@ export interface IRollupInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getLastProcessedWIthdrawalId",
+    functionFragment: "getLastProcessedWithdrawalId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "postBlock", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "postWithdrawRequests",
+    functionFragment: "postWithdrawalRequests",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "processDeposits",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "submitBlockFraudProof",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -158,15 +173,30 @@ export interface IRollupInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "BlockFraudProofSubmitted(uint32,address,address)": EventFragment;
     "BlockPosted(bytes32,address,uint256,bytes32,bytes32)": EventFragment;
     "DepositsProcessed(bytes32)": EventFragment;
     "WithdrawRequested(bytes32,address)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "BlockFraudProofSubmitted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "BlockPosted"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "DepositsProcessed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "WithdrawRequested"): EventFragment;
 }
+
+export interface BlockFraudProofSubmittedEventObject {
+  blockNumber: number;
+  blockBuilder: string;
+  challenger: string;
+}
+export type BlockFraudProofSubmittedEvent = TypedEvent<
+  [number, string, string],
+  BlockFraudProofSubmittedEventObject
+>;
+
+export type BlockFraudProofSubmittedEventFilter =
+  TypedEventFilter<BlockFraudProofSubmittedEvent>;
 
 export interface BlockPostedEventObject {
   prevBlockHash: string;
@@ -239,7 +269,7 @@ export interface IRollup extends BaseContract {
 
     getDepositTreeRoot(overrides?: CallOverrides): Promise<[string]>;
 
-    getLastProcessedWIthdrawalId(
+    getLastProcessedWithdrawalId(
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -268,7 +298,7 @@ export interface IRollup extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    postWithdrawRequests(
+    postWithdrawalRequests(
       withdrawals: IRollup.WithdrawalStruct[],
       publicInputs: PromiseOrValue<BigNumberish>[],
       proof: PromiseOrValue<BytesLike>,
@@ -277,6 +307,14 @@ export interface IRollup extends BaseContract {
 
     processDeposits(
       deposits: ILiquidity.DepositStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    submitBlockFraudProof(
+      blockNumber: PromiseOrValue<BigNumberish>,
+      blockBuilder: PromiseOrValue<string>,
+      publicInputs: PromiseOrValue<BigNumberish>[],
+      proof: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -293,7 +331,7 @@ export interface IRollup extends BaseContract {
 
   getDepositTreeRoot(overrides?: CallOverrides): Promise<string>;
 
-  getLastProcessedWIthdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
+  getLastProcessedWithdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
 
   postBlock(
     isRegistrationBlock: PromiseOrValue<boolean>,
@@ -320,7 +358,7 @@ export interface IRollup extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  postWithdrawRequests(
+  postWithdrawalRequests(
     withdrawals: IRollup.WithdrawalStruct[],
     publicInputs: PromiseOrValue<BigNumberish>[],
     proof: PromiseOrValue<BytesLike>,
@@ -329,6 +367,14 @@ export interface IRollup extends BaseContract {
 
   processDeposits(
     deposits: ILiquidity.DepositStruct[],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  submitBlockFraudProof(
+    blockNumber: PromiseOrValue<BigNumberish>,
+    blockBuilder: PromiseOrValue<string>,
+    publicInputs: PromiseOrValue<BigNumberish>[],
+    proof: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -345,7 +391,7 @@ export interface IRollup extends BaseContract {
 
     getDepositTreeRoot(overrides?: CallOverrides): Promise<string>;
 
-    getLastProcessedWIthdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
+    getLastProcessedWithdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
 
     postBlock(
       isRegistrationBlock: PromiseOrValue<boolean>,
@@ -372,7 +418,7 @@ export interface IRollup extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    postWithdrawRequests(
+    postWithdrawalRequests(
       withdrawals: IRollup.WithdrawalStruct[],
       publicInputs: PromiseOrValue<BigNumberish>[],
       proof: PromiseOrValue<BytesLike>,
@@ -384,6 +430,14 @@ export interface IRollup extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    submitBlockFraudProof(
+      blockNumber: PromiseOrValue<BigNumberish>,
+      blockBuilder: PromiseOrValue<string>,
+      publicInputs: PromiseOrValue<BigNumberish>[],
+      proof: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     submitWithdrawals(
       lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -391,6 +445,17 @@ export interface IRollup extends BaseContract {
   };
 
   filters: {
+    "BlockFraudProofSubmitted(uint32,address,address)"(
+      blockNumber?: PromiseOrValue<BigNumberish> | null,
+      blockBuilder?: PromiseOrValue<string> | null,
+      challenger?: PromiseOrValue<string> | null
+    ): BlockFraudProofSubmittedEventFilter;
+    BlockFraudProofSubmitted(
+      blockNumber?: PromiseOrValue<BigNumberish> | null,
+      blockBuilder?: PromiseOrValue<string> | null,
+      challenger?: PromiseOrValue<string> | null
+    ): BlockFraudProofSubmittedEventFilter;
+
     "BlockPosted(bytes32,address,uint256,bytes32,bytes32)"(
       prevBlockHash?: PromiseOrValue<BytesLike> | null,
       blockBuilder?: PromiseOrValue<string> | null,
@@ -429,7 +494,7 @@ export interface IRollup extends BaseContract {
 
     getDepositTreeRoot(overrides?: CallOverrides): Promise<BigNumber>;
 
-    getLastProcessedWIthdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
+    getLastProcessedWithdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
 
     postBlock(
       isRegistrationBlock: PromiseOrValue<boolean>,
@@ -456,7 +521,7 @@ export interface IRollup extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    postWithdrawRequests(
+    postWithdrawalRequests(
       withdrawals: IRollup.WithdrawalStruct[],
       publicInputs: PromiseOrValue<BigNumberish>[],
       proof: PromiseOrValue<BytesLike>,
@@ -465,6 +530,14 @@ export interface IRollup extends BaseContract {
 
     processDeposits(
       deposits: ILiquidity.DepositStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    submitBlockFraudProof(
+      blockNumber: PromiseOrValue<BigNumberish>,
+      blockBuilder: PromiseOrValue<string>,
+      publicInputs: PromiseOrValue<BigNumberish>[],
+      proof: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -484,7 +557,7 @@ export interface IRollup extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getLastProcessedWIthdrawalId(
+    getLastProcessedWithdrawalId(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -513,7 +586,7 @@ export interface IRollup extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    postWithdrawRequests(
+    postWithdrawalRequests(
       withdrawals: IRollup.WithdrawalStruct[],
       publicInputs: PromiseOrValue<BigNumberish>[],
       proof: PromiseOrValue<BytesLike>,
@@ -522,6 +595,14 @@ export interface IRollup extends BaseContract {
 
     processDeposits(
       deposits: ILiquidity.DepositStruct[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    submitBlockFraudProof(
+      blockNumber: PromiseOrValue<BigNumberish>,
+      blockBuilder: PromiseOrValue<string>,
+      publicInputs: PromiseOrValue<BigNumberish>[],
+      proof: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

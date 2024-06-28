@@ -58,7 +58,7 @@ export interface BlockBuilderRegistryInterface extends utils.Interface {
     "MIN_STAKE_AMOUNT()": FunctionFragment;
     "getBlockBuilder(address)": FunctionFragment;
     "isValidBlockBuilder(address)": FunctionFragment;
-    "slashBlockBuilder(uint32,address,uint256[],bytes)": FunctionFragment;
+    "slashBlockBuilder(uint32,address,address)": FunctionFragment;
     "stopBlockBuilder()": FunctionFragment;
     "unstake()": FunctionFragment;
     "updateBlockBuilder(string)": FunctionFragment;
@@ -97,8 +97,7 @@ export interface BlockBuilderRegistryInterface extends utils.Interface {
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>
+      PromiseOrValue<string>
     ]
   ): string;
   encodeFunctionData(
@@ -218,8 +217,7 @@ export interface BlockBuilderRegistry extends BaseContract {
     slashBlockBuilder(
       blockNumber: PromiseOrValue<BigNumberish>,
       blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
+      challenger: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -254,8 +252,7 @@ export interface BlockBuilderRegistry extends BaseContract {
   slashBlockBuilder(
     blockNumber: PromiseOrValue<BigNumberish>,
     blockBuilder: PromiseOrValue<string>,
-    publicInputs: PromiseOrValue<BigNumberish>[],
-    proof: PromiseOrValue<BytesLike>,
+    challenger: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -290,8 +287,7 @@ export interface BlockBuilderRegistry extends BaseContract {
     slashBlockBuilder(
       blockNumber: PromiseOrValue<BigNumberish>,
       blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
+      challenger: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -343,8 +339,7 @@ export interface BlockBuilderRegistry extends BaseContract {
     slashBlockBuilder(
       blockNumber: PromiseOrValue<BigNumberish>,
       blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
+      challenger: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -382,8 +377,7 @@ export interface BlockBuilderRegistry extends BaseContract {
     slashBlockBuilder(
       blockNumber: PromiseOrValue<BigNumberish>,
       blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
+      challenger: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

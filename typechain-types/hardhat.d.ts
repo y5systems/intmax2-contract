@@ -61,6 +61,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165__factory>;
     getContractFactory(
+      name: "ReentrancyGuard",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ReentrancyGuard__factory>;
+    getContractFactory(
       name: "BlockBuilderRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BlockBuilderRegistry__factory>;
@@ -68,6 +72,10 @@ declare module "hardhat/types/runtime" {
       name: "IBlockBuilderRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBlockBuilderRegistry__factory>;
+    getContractFactory(
+      name: "IL1GasPriceOracle",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IL1GasPriceOracle__factory>;
     getContractFactory(
       name: "IL1ScrollMessenger",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -88,6 +96,10 @@ declare module "hardhat/types/runtime" {
       name: "Liquidity",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Liquidity__factory>;
+    getContractFactory(
+      name: "MockL1GasPriceOracle",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockL1GasPriceOracle__factory>;
     getContractFactory(
       name: "Rollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -158,6 +170,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165>;
     getContractAt(
+      name: "ReentrancyGuard",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ReentrancyGuard>;
+    getContractAt(
       name: "BlockBuilderRegistry",
       address: string,
       signer?: ethers.Signer
@@ -167,6 +184,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IBlockBuilderRegistry>;
+    getContractAt(
+      name: "IL1GasPriceOracle",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IL1GasPriceOracle>;
     getContractAt(
       name: "IL1ScrollMessenger",
       address: string,
@@ -192,6 +214,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Liquidity>;
+    getContractAt(
+      name: "MockL1GasPriceOracle",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockL1GasPriceOracle>;
     getContractAt(
       name: "Rollup",
       address: string,

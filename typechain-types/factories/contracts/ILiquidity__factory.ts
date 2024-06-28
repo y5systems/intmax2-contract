@@ -67,6 +67,32 @@ const _abi = [
     type: "event",
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "lastAnalyzedDepositId",
+        type: "uint256",
+      },
+    ],
+    name: "DepositsRejected",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "lastProcessedDepositId",
+        type: "uint256",
+      },
+    ],
+    name: "DepositsSubmitted",
+    type: "event",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",
@@ -132,6 +158,47 @@ const _abi = [
       },
     ],
     name: "claimRejectedDeposit",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256[]",
+        name: "withdrawalIds",
+        type: "uint256[]",
+      },
+    ],
+    name: "claimWithdrawals",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "tokenAddress",
+        type: "address",
+      },
+      {
+        internalType: "bytes32",
+        name: "recipientSaltHash",
+        type: "bytes32",
+      },
+      {
+        internalType: "uint256",
+        name: "tokenId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "depositERC1155",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -369,7 +436,7 @@ const _abi = [
     ],
     name: "submitDeposits",
     outputs: [],
-    stateMutability: "nonpayable",
+    stateMutability: "payable",
     type: "function",
   },
 ] as const;

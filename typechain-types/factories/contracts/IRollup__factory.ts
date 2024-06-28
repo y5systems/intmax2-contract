@@ -12,6 +12,31 @@ const _abi = [
     inputs: [
       {
         indexed: true,
+        internalType: "uint32",
+        name: "blockNumber",
+        type: "uint32",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "blockBuilder",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "challenger",
+        type: "address",
+      },
+    ],
+    name: "BlockFraudProofSubmitted",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
         internalType: "bytes32",
         name: "prevBlockHash",
         type: "bytes32",
@@ -110,7 +135,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "getLastProcessedWIthdrawalId",
+    name: "getLastProcessedWithdrawalId",
     outputs: [
       {
         internalType: "uint256",
@@ -215,7 +240,7 @@ const _abi = [
         type: "bytes",
       },
     ],
-    name: "postWithdrawRequests",
+    name: "postWithdrawalRequests",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -246,6 +271,34 @@ const _abi = [
       },
     ],
     name: "processDeposits",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint32",
+        name: "blockNumber",
+        type: "uint32",
+      },
+      {
+        internalType: "address",
+        name: "blockBuilder",
+        type: "address",
+      },
+      {
+        internalType: "uint256[]",
+        name: "publicInputs",
+        type: "uint256[]",
+      },
+      {
+        internalType: "bytes",
+        name: "proof",
+        type: "bytes",
+      },
+    ],
+    name: "submitBlockFraudProof",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
