@@ -10,6 +10,14 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 
     mapping(address => BlockBuilderInfo) _blockBuilders;
 
+    modifier OnlyRollupContract() {
+        // require(
+        //     msg.sender == address(_rollupContract),
+        //     "This method can only be called from Rollup contract."
+        // );
+        _;
+    }
+
     constructor(address rollupContract) {
         _rollupContract = rollupContract;
     }
@@ -72,9 +80,8 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
     function slashBlockBuilder(
         uint32 blockNumber,
         address blockBuilder,
-        uint256[] calldata publicInputs,
-        bytes calldata proof
-    ) external {
+        address challenger
+    ) external OnlyRollupContract {
         // TODO: Implement the slashing logic.
 
         _blockBuilders[blockBuilder].numSlashes += 1;

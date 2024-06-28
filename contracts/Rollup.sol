@@ -116,7 +116,18 @@ contract Rollup is IRollup {
         return blockNumber;
     }
 
-    function postWithdrawRequests(
+    function submitBlockFraudProof(
+        uint32 blockNumber,
+        address blockBuilder,
+        uint256[] calldata publicInputs,
+        bytes calldata proof
+    ) public {
+        _blockBuilderRegistryContract.slashBlockBuilder(blockNumber, blockBuilder, msg.sender);
+
+        emit BlockFraudProofSubmitted(blockNumber, blockBuilder, msg.sender);
+    }
+
+    function postWithdrawalRequests(
         Withdrawal[] calldata withdrawalRequests,
         uint256[] calldata publicInputs,
         bytes calldata proof
@@ -153,7 +164,7 @@ contract Rollup is IRollup {
         return _blockHashes[blockNumber];
     }
 
-    function getLastProcessedWIthdrawalId() public view returns (uint256) {
+    function getLastProcessedWithdrawalId() public view returns (uint256) {
         return _lastProcessedWithdrawId;
     }
 

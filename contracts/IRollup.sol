@@ -27,6 +27,12 @@ interface IRollup {
         bytes32 signatureHash
     );
 
+    event BlockFraudProofSubmitted(
+        uint32 indexed blockNumber,
+        address indexed blockBuilder,
+        address indexed challenger
+    );
+
     event WithdrawRequested(
         bytes32 indexed withdrawalRequest,
         address withdrawAggregator
@@ -47,12 +53,19 @@ interface IRollup {
         uint256[4] calldata messagePoint
     ) external returns (uint256 blockNumber);
 
+    function submitBlockFraudProof(
+        uint32 blockNumber,
+        address blockBuilder,
+        uint256[] calldata publicInputs,
+        bytes calldata proof
+    ) external;
+
     /**
      * @notice Post the withdrawal requests.
      * @dev This method is called by the Withdraw Aggregator.
      * @param withdrawals The list of withdrawals.
      */
-    function postWithdrawRequests(
+    function postWithdrawalRequests(
         Withdrawal[] calldata withdrawals,
         uint256[] calldata publicInputs,
         bytes calldata proof
@@ -74,5 +87,5 @@ interface IRollup {
 
     function getBlockHash(uint32 blockNumber) external view returns (bytes32);
 
-    function getLastProcessedWIthdrawalId() external view returns (uint256);
+    function getLastProcessedWithdrawalId() external view returns (uint256);
 }
