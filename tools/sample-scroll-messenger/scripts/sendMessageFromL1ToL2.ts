@@ -16,7 +16,7 @@ async function main() {
   );
 
   const greeting = "https://l1.example.com";
-  const fee = ethers.utils.parseEther('0.00001');
+  const fee = ethers.utils.parseEther('0.001');
   const tx = await liquidity.sendMessageToL2(greeting, {
     value: fee,
   });
