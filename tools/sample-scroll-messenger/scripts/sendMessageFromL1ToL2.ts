@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
 import "dotenv/config";
 import { l1ContractAddress } from "./contractAddresses.json";
+import { getFee } from "./utils/scrollMessenger";
 
 async function main() {
   if (!l1ContractAddress) {
@@ -16,7 +17,11 @@ async function main() {
   );
 
   const greeting = "https://l1.example.com";
-  const fee = ethers.utils.parseEther('0.00001');
+  const gasLimit = await liquidity.estimateGas.sendMessageToL2(greeting, {
+    value: ethers.provider.getBalance(owner),
+  });
+  const fee = await getFee(gasLimit);
+  console.log("fee:", ethers.utils.formatEther(fee), "ETH");
   const tx = await liquidity.sendMessageToL2(greeting, {
     value: fee,
   });

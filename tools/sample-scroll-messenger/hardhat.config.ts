@@ -27,6 +27,10 @@ const config: HardhatUserConfig = {
       url: "https://scroll-testnet.rpc.grove.city/v1/a7a7c8e2",
       accounts: [PRIVATE_KEY || ""],
     },
+    scroll: {
+      url: "https://scroll.drpc.org",
+      accounts: [PRIVATE_KEY || ""],
+    },
   }
 };
 

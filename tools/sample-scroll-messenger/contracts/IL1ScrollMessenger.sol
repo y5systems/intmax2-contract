@@ -5,7 +5,7 @@ import {IScrollMessenger} from "./IScrollMessenger.sol";
 
 interface IL1ScrollMessenger is IScrollMessenger {
     struct L2MessageProof {
-        bytes32 batchHash;
+        uint256 batchIndex;
         bytes merkleProof;
     }
 

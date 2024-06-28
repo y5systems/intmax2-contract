@@ -15,7 +15,8 @@
     "deploy-step3": "npx hardhat run ./scripts/deployStep3ToL1.ts --network sepolia",
     "send-message-from-l1": "npx hardhat run ./scripts/sendMessageFromL1ToL2.ts --network sepolia",
     "send-message-from-l2": "npx hardhat run ./scripts/sendMessageFromL2ToL1.ts --network scrollsepolia",
-    "relay-message-from-l2": "npx hardhat run ./scripts/relayMessageFromL2ToL1.ts --network sepolia"
+    "relay-message-from-l2": "npx hardhat run ./scripts/relayMessageFromL2ToL1.ts --network sepolia",
+    "get-relay-fee": "npx hardhat run ./scripts/getRelayFee.ts --network scrollsepolia"
   },
   "dependencies": {
     "axios": "^1.7.2"
