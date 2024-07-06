@@ -27,7 +27,7 @@ async function main() {
   console.log("withdrawal request:", withdrawRequests);
   const publicInputs: string[] = [];
   const proof = "0x";
-  const tx = await rollup.postWithdrawRequests(
+  const tx = await rollup.postWithdrawalRequests(
     withdrawRequests,
     publicInputs,
     proof

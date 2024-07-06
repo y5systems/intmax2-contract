@@ -8,8 +8,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract Liquidity is ILiquidity {
+contract Liquidity is ILiquidity, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     IScrollMessenger public _scrollMessenger;
@@ -57,15 +58,12 @@ contract Liquidity is ILiquidity {
         _;
     }
 
-    constructor(address scrollMessenger) {
+    constructor(address scrollMessenger, address rollupContract) {
         _scrollMessenger = IScrollMessenger(scrollMessenger);
+        _rollupContract = rollupContract;
         _tokenIndexList.push(TokenInfo(TokenType.ETH, address(0), 0));
         _fungibleTokenIndexMap[address(0)] = 0;
         _pendingDepositData.push(DepositData(0, address(0), 0));
-    }
-
-    function updateRollupContract(address newRollupContract) public {
-        _rollupContract = newRollupContract;
     }
 
     function depositETH(bytes32 recipientSaltHash) public payable {
@@ -163,6 +161,12 @@ contract Liquidity is ILiquidity {
 
     function processWithdrawals(
         IRollup.Withdrawal[] calldata withdrawals
+    ) external {
+        // TODO
+    }
+
+    function claimWithdrawals(
+        uint256[] calldata withdrawalIds
     ) external {
         // TODO
     }
@@ -274,9 +278,11 @@ contract Liquidity is ILiquidity {
             ];
             delete _pendingDepositData[rejectedDepositId];
         }
+
+        emit DepositsRejected(lastAnalyzedDepositId);
     }
 
-    function submitDeposits(uint256 lastProcessedDepositId) public {
+    function submitDeposits(uint256 lastProcessedDepositId) public payable nonReentrant {
         // NOTE: Commented out for the debugging purpose.
         // require(
         //     lastProcessedDepositId <= _depositCounter &&
@@ -286,6 +292,10 @@ contract Liquidity is ILiquidity {
         _lastProcessedDepositId = lastProcessedDepositId;
 
         // TODO: Call processDeposits function in Rollup contract.
+
+        payable(msg.sender).transfer(msg.value);
+
+        emit DepositsSubmitted(lastProcessedDepositId);
     }
 
     function getDepositCounter() public view returns (uint256) {

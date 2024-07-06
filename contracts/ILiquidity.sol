@@ -40,6 +40,10 @@ interface ILiquidity {
 
     event DepositCanceled(uint256 indexed depositId);
 
+    event DepositsRejected(uint256 indexed lastAnalyzedDepositId);
+
+    event DepositsSubmitted(uint256 indexed lastProcessedDepositId);
+
     function depositETH(bytes32 recipientSaltHash) external payable;
 
     function depositERC20(
@@ -52,6 +56,13 @@ interface ILiquidity {
         address tokenAddress,
         bytes32 recipientSaltHash,
         uint256 tokenId
+    ) external;
+
+    function depositERC1155(
+        address tokenAddress,
+        bytes32 recipientSaltHash,
+        uint256 tokenId,
+        uint256 amount
     ) external;
 
     function cancelPendingDeposit(
@@ -75,9 +86,8 @@ interface ILiquidity {
 
     /**
      * @notice Submit the deposit root
-     * Only the owner can call this function
      */
-    function submitDeposits(uint256 lastProcessedDepositId) external;
+    function submitDeposits(uint256 lastProcessedDepositId) external payable;
 
     /**
      * @notice Process the withdrawals.
@@ -87,6 +97,8 @@ interface ILiquidity {
     function processWithdrawals(
         IRollup.Withdrawal[] calldata withdrawals
     ) external;
+
+    function claimWithdrawals(uint256[] calldata withdrawalIds) external;
 
     function getDepositCounter() external view returns (uint256);
 

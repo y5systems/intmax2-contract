@@ -126,14 +126,9 @@ const _abi = [
         type: "address",
       },
       {
-        internalType: "uint256[]",
-        name: "publicInputs",
-        type: "uint256[]",
-      },
-      {
-        internalType: "bytes",
-        name: "proof",
-        type: "bytes",
+        internalType: "address",
+        name: "challenger",
+        type: "address",
       },
     ],
     name: "slashBlockBuilder",

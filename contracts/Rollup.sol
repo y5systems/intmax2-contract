@@ -8,7 +8,7 @@ import {IRollup} from "./IRollup.sol";
 
 contract Rollup is IRollup {
     IScrollMessenger public _scrollMessenger;
-    IBlockBuilderRegistry public _blockBuilderRegistry;
+    IBlockBuilderRegistry public _blockBuilderRegistryContract;
     address public _liquidityContract;
     bytes32 _depositTreeRoot;
     bytes32[] _depositTreeSiblings;
@@ -30,14 +30,14 @@ contract Rollup is IRollup {
     }
 
     constructor(
-        address scrollMessenger,
-        address liquidityContract,
-        address blockBuilderRegistry
+        address scrollMessenger
     ) {
-        _scrollMessenger = IScrollMessenger(scrollMessenger);
-        _blockBuilderRegistry = IBlockBuilderRegistry(blockBuilderRegistry);
+        _initialize(scrollMessenger);
+    }
+
+    function updateDependentContract(address liquidityContract, address blockBuilderRegistryContract) external {
         _liquidityContract = liquidityContract;
-        _blockHashes.push(bytes32(0));
+        _blockBuilderRegistryContract = IBlockBuilderRegistry(blockBuilderRegistryContract);
     }
 
     function processDeposits(
@@ -77,7 +77,7 @@ contract Rollup is IRollup {
     ) public returns (uint256 blockNumber) {
         // Check if the block builder is valid.
         require(
-            _blockBuilderRegistry.isValidBlockBuilder(msg.sender),
+            _blockBuilderRegistryContract.isValidBlockBuilder(msg.sender),
             "Block builder is not valid"
         );
         bytes32 signatureHash = keccak256(
@@ -116,7 +116,18 @@ contract Rollup is IRollup {
         return blockNumber;
     }
 
-    function postWithdrawRequests(
+    function submitBlockFraudProof(
+        uint32 blockNumber,
+        address blockBuilder,
+        uint256[] calldata publicInputs,
+        bytes calldata proof
+    ) public {
+        _blockBuilderRegistryContract.slashBlockBuilder(blockNumber, blockBuilder, msg.sender);
+
+        emit BlockFraudProofSubmitted(blockNumber, blockBuilder, msg.sender);
+    }
+
+    function postWithdrawalRequests(
         Withdrawal[] calldata withdrawalRequests,
         uint256[] calldata publicInputs,
         bytes calldata proof
@@ -153,8 +164,15 @@ contract Rollup is IRollup {
         return _blockHashes[blockNumber];
     }
 
-    function getLastProcessedWIthdrawalId() public view returns (uint256) {
+    function getLastProcessedWithdrawalId() public view returns (uint256) {
         return _lastProcessedWithdrawId;
+    }
+
+    function _initialize(
+        address scrollMessenger
+    ) internal {
+        _scrollMessenger = IScrollMessenger(scrollMessenger);
+        _blockHashes.push(bytes32(0));
     }
 
     function _calcBlockHash(

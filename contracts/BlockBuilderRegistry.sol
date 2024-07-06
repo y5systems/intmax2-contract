@@ -6,8 +6,21 @@ import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
 contract BlockBuilderRegistry is IBlockBuilderRegistry {
     uint256 public constant MIN_STAKE_AMOUNT = 100000000 wei; // TODO: 0.1 ether
     uint256 public constant CHALLENGE_DURATION = 5 seconds; // TODO: 1 days
+    address _rollupContract;
 
     mapping(address => BlockBuilderInfo) _blockBuilders;
+
+    modifier OnlyRollupContract() {
+        // require(
+        //     msg.sender == address(_rollupContract),
+        //     "This method can only be called from Rollup contract."
+        // );
+        _;
+    }
+
+    constructor(address rollupContract) {
+        _rollupContract = rollupContract;
+    }
 
     function updateBlockBuilder(string memory url) public payable {
         uint256 stakeAmount = _blockBuilders[msg.sender].stakeAmount +
@@ -67,9 +80,8 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
     function slashBlockBuilder(
         uint32 blockNumber,
         address blockBuilder,
-        uint256[] calldata publicInputs,
-        bytes calldata proof
-    ) external {
+        address challenger
+    ) external OnlyRollupContract {
         // TODO: Implement the slashing logic.
 
         _blockBuilders[blockBuilder].numSlashes += 1;

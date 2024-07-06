@@ -54,8 +54,7 @@ interface IBlockBuilderRegistry {
     function slashBlockBuilder(
         uint32 blockNumber,
         address blockBuilder,
-        uint256[] calldata publicInputs,
-        bytes calldata proof
+        address challenger
     ) external;
 
     function isValidBlockBuilder(

@@ -10,14 +10,16 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "deploy": "npm run deploy-step1 && npm run deploy-step2 && npm run deploy-step3",
-    "deploy-step1": "npx hardhat run ./scripts/deployStep1ToL1.ts --network sepolia",
-    "deploy-step2": "npx hardhat run ./scripts/deployStep2ToL2.ts --network scrollsepolia",
-    "deploy-step3": "npx hardhat run ./scripts/deployStep3ToL1.ts --network sepolia",
+    "deploy-step1": "npx hardhat run ./scripts/deployStep1ToL2.ts --network scrollsepolia",
+    "deploy-step2": "npx hardhat run ./scripts/deployStep2ToL1.ts --network sepolia",
+    "deploy-step3": "npx hardhat run ./scripts/deployStep3ToL2.ts --network scrollsepolia",
+    "update-block-builder": "npx hardhat run ./scripts/updateBlockBuilder.ts --network scrollsepolia",
     "deposit-eth": "npx hardhat run ./scripts/depositETH.ts --network sepolia",
     "deposit-erc20": "npx hardhat run ./scripts/depositERC20.ts --network sepolia",
-    "send-message-from-l1": "npx hardhat run ./scripts/sendMessageFromL1ToL2.ts --network sepolia",
-    "send-message-from-l2": "npx hardhat run ./scripts/sendMessageFromL2ToL1.ts --network scrollsepolia",
-    "relay-message-from-l2": "npx hardhat run ./scripts/relayMessageFromL2ToL1.ts --network sepolia"
+    "submit-deposits": "npx hardhat run ./scripts/submitDeposits.ts --network sepolia",
+    "post-withdrawal-requests": "npx hardhat run ./scripts/postWithdrawalRequests.ts --network scrollsepolia",
+    "submit-withdrawals": "npx hardhat run ./scripts/submitWithdrawals.ts --network scrollsepolia",
+    "process-withdrawals": "npx hardhat run ./scripts/processWithdrawals.ts --network sepolia"
   },
   "dependencies": {
     "axios": "^1.7.2"

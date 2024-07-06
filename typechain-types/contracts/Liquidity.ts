@@ -88,6 +88,7 @@ export interface LiquidityInterface extends utils.Interface {
     "_scrollMessenger()": FunctionFragment;
     "cancelPendingDeposit(uint256,(bytes32,uint32,uint256))": FunctionFragment;
     "claimRejectedDeposit(uint256,(bytes32,uint32,uint256))": FunctionFragment;
+    "claimWithdrawals(uint256[])": FunctionFragment;
     "depositERC1155(address,bytes32,uint256,uint256)": FunctionFragment;
     "depositERC20(address,bytes32,uint256)": FunctionFragment;
     "depositERC721(address,bytes32,uint256)": FunctionFragment;
@@ -102,7 +103,6 @@ export interface LiquidityInterface extends utils.Interface {
     "processWithdrawals((address,uint32,uint256,bytes32)[])": FunctionFragment;
     "rejectDeposits(uint256,uint256[])": FunctionFragment;
     "submitDeposits(uint256)": FunctionFragment;
-    "updateRollupContract(address)": FunctionFragment;
   };
 
   getFunction(
@@ -111,6 +111,7 @@ export interface LiquidityInterface extends utils.Interface {
       | "_scrollMessenger"
       | "cancelPendingDeposit"
       | "claimRejectedDeposit"
+      | "claimWithdrawals"
       | "depositERC1155"
       | "depositERC20"
       | "depositERC721"
@@ -125,7 +126,6 @@ export interface LiquidityInterface extends utils.Interface {
       | "processWithdrawals"
       | "rejectDeposits"
       | "submitDeposits"
-      | "updateRollupContract"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -143,6 +143,10 @@ export interface LiquidityInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "claimRejectedDeposit",
     values: [PromiseOrValue<BigNumberish>, ILiquidity.DepositStruct]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "claimWithdrawals",
+    values: [PromiseOrValue<BigNumberish>[]]
   ): string;
   encodeFunctionData(
     functionFragment: "depositERC1155",
@@ -217,10 +221,6 @@ export interface LiquidityInterface extends utils.Interface {
     functionFragment: "submitDeposits",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
-  encodeFunctionData(
-    functionFragment: "updateRollupContract",
-    values: [PromiseOrValue<string>]
-  ): string;
 
   decodeFunctionResult(
     functionFragment: "_rollupContract",
@@ -236,6 +236,10 @@ export interface LiquidityInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "claimRejectedDeposit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "claimWithdrawals",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -291,18 +295,18 @@ export interface LiquidityInterface extends utils.Interface {
     functionFragment: "submitDeposits",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "updateRollupContract",
-    data: BytesLike
-  ): Result;
 
   events: {
     "DepositCanceled(uint256)": EventFragment;
     "Deposited(uint256,address,bytes32,uint32,uint256,uint256)": EventFragment;
+    "DepositsRejected(uint256)": EventFragment;
+    "DepositsSubmitted(uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "DepositCanceled"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Deposited"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "DepositsRejected"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "DepositsSubmitted"): EventFragment;
 }
 
 export interface DepositCanceledEventObject {
@@ -329,6 +333,28 @@ export type DepositedEvent = TypedEvent<
 >;
 
 export type DepositedEventFilter = TypedEventFilter<DepositedEvent>;
+
+export interface DepositsRejectedEventObject {
+  lastAnalyzedDepositId: BigNumber;
+}
+export type DepositsRejectedEvent = TypedEvent<
+  [BigNumber],
+  DepositsRejectedEventObject
+>;
+
+export type DepositsRejectedEventFilter =
+  TypedEventFilter<DepositsRejectedEvent>;
+
+export interface DepositsSubmittedEventObject {
+  lastProcessedDepositId: BigNumber;
+}
+export type DepositsSubmittedEvent = TypedEvent<
+  [BigNumber],
+  DepositsSubmittedEventObject
+>;
+
+export type DepositsSubmittedEventFilter =
+  TypedEventFilter<DepositsSubmittedEvent>;
 
 export interface Liquidity extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -370,6 +396,11 @@ export interface Liquidity extends BaseContract {
     claimRejectedDeposit(
       depositId: PromiseOrValue<BigNumberish>,
       deposit: ILiquidity.DepositStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    claimWithdrawals(
+      withdrawalIds: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -441,12 +472,7 @@ export interface Liquidity extends BaseContract {
 
     submitDeposits(
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
@@ -463,6 +489,11 @@ export interface Liquidity extends BaseContract {
   claimRejectedDeposit(
     depositId: PromiseOrValue<BigNumberish>,
     deposit: ILiquidity.DepositStruct,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  claimWithdrawals(
+    withdrawalIds: PromiseOrValue<BigNumberish>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -534,12 +565,7 @@ export interface Liquidity extends BaseContract {
 
   submitDeposits(
     lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  updateRollupContract(
-    newRollupContract: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
+    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
@@ -556,6 +582,11 @@ export interface Liquidity extends BaseContract {
     claimRejectedDeposit(
       depositId: PromiseOrValue<BigNumberish>,
       deposit: ILiquidity.DepositStruct,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    claimWithdrawals(
+      withdrawalIds: PromiseOrValue<BigNumberish>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -629,11 +660,6 @@ export interface Liquidity extends BaseContract {
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
   };
 
   filters: {
@@ -660,6 +686,20 @@ export interface Liquidity extends BaseContract {
       amount?: null,
       requestedAt?: null
     ): DepositedEventFilter;
+
+    "DepositsRejected(uint256)"(
+      lastAnalyzedDepositId?: PromiseOrValue<BigNumberish> | null
+    ): DepositsRejectedEventFilter;
+    DepositsRejected(
+      lastAnalyzedDepositId?: PromiseOrValue<BigNumberish> | null
+    ): DepositsRejectedEventFilter;
+
+    "DepositsSubmitted(uint256)"(
+      lastProcessedDepositId?: PromiseOrValue<BigNumberish> | null
+    ): DepositsSubmittedEventFilter;
+    DepositsSubmitted(
+      lastProcessedDepositId?: PromiseOrValue<BigNumberish> | null
+    ): DepositsSubmittedEventFilter;
   };
 
   estimateGas: {
@@ -676,6 +716,11 @@ export interface Liquidity extends BaseContract {
     claimRejectedDeposit(
       depositId: PromiseOrValue<BigNumberish>,
       deposit: ILiquidity.DepositStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    claimWithdrawals(
+      withdrawalIds: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -747,12 +792,7 @@ export interface Liquidity extends BaseContract {
 
     submitDeposits(
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
@@ -770,6 +810,11 @@ export interface Liquidity extends BaseContract {
     claimRejectedDeposit(
       depositId: PromiseOrValue<BigNumberish>,
       deposit: ILiquidity.DepositStruct,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    claimWithdrawals(
+      withdrawalIds: PromiseOrValue<BigNumberish>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -845,12 +890,7 @@ export interface Liquidity extends BaseContract {
 
     submitDeposits(
       lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    updateRollupContract(
-      newRollupContract: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
 }
