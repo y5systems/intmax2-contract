@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IScrollMessenger} from "./IScrollMessenger.sol";
+import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
 import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "./IRollup.sol";

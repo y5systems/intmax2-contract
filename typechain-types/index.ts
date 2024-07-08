@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as openzeppelin from "./@openzeppelin";
 export type { openzeppelin };
+import type * as scrollTech from "./@scroll-tech";
+export type { scrollTech };
 import type * as contracts from "./contracts";
 export type { contracts };
 export * as factories from "./factories";
@@ -32,20 +34,18 @@ export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
 export type { ReentrancyGuard } from "./@openzeppelin/contracts/utils/ReentrancyGuard";
 export { ReentrancyGuard__factory } from "./factories/@openzeppelin/contracts/utils/ReentrancyGuard__factory";
+export type { IL1GasPriceOracle } from "./@scroll-tech/contracts/L2/predeploys/IL1GasPriceOracle";
+export { IL1GasPriceOracle__factory } from "./factories/@scroll-tech/contracts/L2/predeploys/IL1GasPriceOracle__factory";
+export type { IScrollMessenger } from "./@scroll-tech/contracts/libraries/IScrollMessenger";
+export { IScrollMessenger__factory } from "./factories/@scroll-tech/contracts/libraries/IScrollMessenger__factory";
 export type { BlockBuilderRegistry } from "./contracts/BlockBuilderRegistry";
 export { BlockBuilderRegistry__factory } from "./factories/contracts/BlockBuilderRegistry__factory";
 export type { IBlockBuilderRegistry } from "./contracts/IBlockBuilderRegistry";
 export { IBlockBuilderRegistry__factory } from "./factories/contracts/IBlockBuilderRegistry__factory";
-export type { IL1GasPriceOracle } from "./contracts/IL1GasPriceOracle";
-export { IL1GasPriceOracle__factory } from "./factories/contracts/IL1GasPriceOracle__factory";
-export type { IL1ScrollMessenger } from "./contracts/IL1ScrollMessenger";
-export { IL1ScrollMessenger__factory } from "./factories/contracts/IL1ScrollMessenger__factory";
 export type { ILiquidity } from "./contracts/ILiquidity";
 export { ILiquidity__factory } from "./factories/contracts/ILiquidity__factory";
 export type { IRollup } from "./contracts/IRollup";
 export { IRollup__factory } from "./factories/contracts/IRollup__factory";
-export type { IScrollMessenger } from "./contracts/IScrollMessenger";
-export { IScrollMessenger__factory } from "./factories/contracts/IScrollMessenger__factory";
 export type { Liquidity } from "./contracts/Liquidity";
 export { Liquidity__factory } from "./factories/contracts/Liquidity__factory";
 export type { MockL1GasPriceOracle } from "./contracts/mock/MockL1GasPriceOracle";

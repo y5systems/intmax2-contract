@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type {
   IBlockBuilderRegistry,
   IBlockBuilderRegistryInterface,
@@ -168,16 +167,16 @@ const _abi = [
 export class IBlockBuilderRegistry__factory {
   static readonly abi = _abi;
   static createInterface(): IBlockBuilderRegistryInterface {
-    return new utils.Interface(_abi) as IBlockBuilderRegistryInterface;
+    return new Interface(_abi) as IBlockBuilderRegistryInterface;
   }
   static connect(
     address: string,
-    signerOrProvider: Signer | Provider
+    runner?: ContractRunner | null
   ): IBlockBuilderRegistry {
     return new Contract(
       address,
       _abi,
-      signerOrProvider
-    ) as IBlockBuilderRegistry;
+      runner
+    ) as unknown as IBlockBuilderRegistry;
   }
 }
