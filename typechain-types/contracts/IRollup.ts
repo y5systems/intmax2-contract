@@ -3,74 +3,59 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../common";
 
 export declare namespace IRollup {
   export type WithdrawalStruct = {
-    recipient: PromiseOrValue<string>;
-    tokenIndex: PromiseOrValue<BigNumberish>;
-    amount: PromiseOrValue<BigNumberish>;
-    salt: PromiseOrValue<BytesLike>;
+    recipient: AddressLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
+    salt: BytesLike;
   };
 
-  export type WithdrawalStructOutput = [string, number, BigNumber, string] & {
-    recipient: string;
-    tokenIndex: number;
-    amount: BigNumber;
-    salt: string;
-  };
+  export type WithdrawalStructOutput = [
+    recipient: string,
+    tokenIndex: bigint,
+    amount: bigint,
+    salt: string
+  ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
 }
 
 export declare namespace ILiquidity {
   export type DepositStruct = {
-    recipientSaltHash: PromiseOrValue<BytesLike>;
-    tokenIndex: PromiseOrValue<BigNumberish>;
-    amount: PromiseOrValue<BigNumberish>;
+    recipientSaltHash: BytesLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
   };
 
-  export type DepositStructOutput = [string, number, BigNumber] & {
-    recipientSaltHash: string;
-    tokenIndex: number;
-    amount: BigNumber;
-  };
+  export type DepositStructOutput = [
+    recipientSaltHash: string,
+    tokenIndex: bigint,
+    amount: bigint
+  ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
 }
 
-export interface IRollupInterface extends utils.Interface {
-  functions: {
-    "getBlockHash(uint32)": FunctionFragment;
-    "getDepositTreeRoot()": FunctionFragment;
-    "getLastProcessedWithdrawalId()": FunctionFragment;
-    "postBlock(bool,bytes32,uint128,bytes32,bytes32,uint256[2],uint256[4],uint256[4])": FunctionFragment;
-    "postWithdrawalRequests((address,uint32,uint256,bytes32)[],uint256[],bytes)": FunctionFragment;
-    "processDeposits((bytes32,uint32,uint256)[])": FunctionFragment;
-    "submitBlockFraudProof(uint32,address,uint256[],bytes)": FunctionFragment;
-    "submitWithdrawals(uint256)": FunctionFragment;
-  };
-
+export interface IRollupInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "getBlockHash"
       | "getDepositTreeRoot"
       | "getLastProcessedWithdrawalId"
@@ -81,9 +66,17 @@ export interface IRollupInterface extends utils.Interface {
       | "submitWithdrawals"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "BlockFraudProofSubmitted"
+      | "BlockPosted"
+      | "DepositsProcessed"
+      | "WithdrawRequested"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "getBlockHash",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getDepositTreeRoot",
@@ -96,33 +89,19 @@ export interface IRollupInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "postBlock",
     values: [
-      PromiseOrValue<boolean>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BytesLike>,
-      [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ]
+      boolean,
+      BytesLike,
+      BigNumberish,
+      BytesLike,
+      BytesLike,
+      [BigNumberish, BigNumberish],
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
     ]
   ): string;
   encodeFunctionData(
     functionFragment: "postWithdrawalRequests",
-    values: [
-      IRollup.WithdrawalStruct[],
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>
-    ]
+    values: [IRollup.WithdrawalStruct[], BigNumberish[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "processDeposits",
@@ -130,16 +109,11 @@ export interface IRollupInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "submitBlockFraudProof",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>[],
-      PromiseOrValue<BytesLike>
-    ]
+    values: [BigNumberish, AddressLike, BigNumberish[], BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "submitWithdrawals",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
 
   decodeFunctionResult(
@@ -171,444 +145,339 @@ export interface IRollupInterface extends utils.Interface {
     functionFragment: "submitWithdrawals",
     data: BytesLike
   ): Result;
-
-  events: {
-    "BlockFraudProofSubmitted(uint32,address,address)": EventFragment;
-    "BlockPosted(bytes32,address,uint256,bytes32,bytes32)": EventFragment;
-    "DepositsProcessed(bytes32)": EventFragment;
-    "WithdrawRequested(bytes32,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "BlockFraudProofSubmitted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BlockPosted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DepositsProcessed"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "WithdrawRequested"): EventFragment;
 }
 
-export interface BlockFraudProofSubmittedEventObject {
-  blockNumber: number;
-  blockBuilder: string;
-  challenger: string;
+export namespace BlockFraudProofSubmittedEvent {
+  export type InputTuple = [
+    blockNumber: BigNumberish,
+    blockBuilder: AddressLike,
+    challenger: AddressLike
+  ];
+  export type OutputTuple = [
+    blockNumber: bigint,
+    blockBuilder: string,
+    challenger: string
+  ];
+  export interface OutputObject {
+    blockNumber: bigint;
+    blockBuilder: string;
+    challenger: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BlockFraudProofSubmittedEvent = TypedEvent<
-  [number, string, string],
-  BlockFraudProofSubmittedEventObject
->;
 
-export type BlockFraudProofSubmittedEventFilter =
-  TypedEventFilter<BlockFraudProofSubmittedEvent>;
-
-export interface BlockPostedEventObject {
-  prevBlockHash: string;
-  blockBuilder: string;
-  blockNumber: BigNumber;
-  depositTreeRoot: string;
-  signatureHash: string;
+export namespace BlockPostedEvent {
+  export type InputTuple = [
+    prevBlockHash: BytesLike,
+    blockBuilder: AddressLike,
+    blockNumber: BigNumberish,
+    depositTreeRoot: BytesLike,
+    signatureHash: BytesLike
+  ];
+  export type OutputTuple = [
+    prevBlockHash: string,
+    blockBuilder: string,
+    blockNumber: bigint,
+    depositTreeRoot: string,
+    signatureHash: string
+  ];
+  export interface OutputObject {
+    prevBlockHash: string;
+    blockBuilder: string;
+    blockNumber: bigint;
+    depositTreeRoot: string;
+    signatureHash: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BlockPostedEvent = TypedEvent<
-  [string, string, BigNumber, string, string],
-  BlockPostedEventObject
->;
 
-export type BlockPostedEventFilter = TypedEventFilter<BlockPostedEvent>;
-
-export interface DepositsProcessedEventObject {
-  depositTreeRoot: string;
+export namespace DepositsProcessedEvent {
+  export type InputTuple = [depositTreeRoot: BytesLike];
+  export type OutputTuple = [depositTreeRoot: string];
+  export interface OutputObject {
+    depositTreeRoot: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DepositsProcessedEvent = TypedEvent<
-  [string],
-  DepositsProcessedEventObject
->;
 
-export type DepositsProcessedEventFilter =
-  TypedEventFilter<DepositsProcessedEvent>;
-
-export interface WithdrawRequestedEventObject {
-  withdrawalRequest: string;
-  withdrawAggregator: string;
+export namespace WithdrawRequestedEvent {
+  export type InputTuple = [
+    withdrawalRequest: BytesLike,
+    withdrawAggregator: AddressLike
+  ];
+  export type OutputTuple = [
+    withdrawalRequest: string,
+    withdrawAggregator: string
+  ];
+  export interface OutputObject {
+    withdrawalRequest: string;
+    withdrawAggregator: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type WithdrawRequestedEvent = TypedEvent<
-  [string, string],
-  WithdrawRequestedEventObject
->;
-
-export type WithdrawRequestedEventFilter =
-  TypedEventFilter<WithdrawRequestedEvent>;
 
 export interface IRollup extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): IRollup;
+  waitForDeployment(): Promise<this>;
 
   interface: IRollupInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    getBlockHash(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    getDepositTreeRoot(overrides?: CallOverrides): Promise<[string]>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    getLastProcessedWithdrawalId(
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+  getBlockHash: TypedContractMethod<
+    [blockNumber: BigNumberish],
+    [string],
+    "view"
+  >;
 
-    postBlock(
-      isRegistrationBlock: PromiseOrValue<boolean>,
-      txTreeRoot: PromiseOrValue<BytesLike>,
-      senderFlags: PromiseOrValue<BigNumberish>,
-      publicKeysHash: PromiseOrValue<BytesLike>,
-      accountIdsHash: PromiseOrValue<BytesLike>,
-      aggregatedPublicKey: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
+  getDepositTreeRoot: TypedContractMethod<[], [string], "view">;
+
+  getLastProcessedWithdrawalId: TypedContractMethod<[], [bigint], "view">;
+
+  postBlock: TypedContractMethod<
+    [
+      isRegistrationBlock: boolean,
+      txTreeRoot: BytesLike,
+      senderFlags: BigNumberish,
+      publicKeysHash: BytesLike,
+      accountIdsHash: BytesLike,
+      aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
       ],
-      messagePoint: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+    ],
+    [bigint],
+    "nonpayable"
+  >;
 
-    postWithdrawalRequests(
+  postWithdrawalRequests: TypedContractMethod<
+    [
       withdrawals: IRollup.WithdrawalStruct[],
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    processDeposits(
-      deposits: ILiquidity.DepositStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    submitBlockFraudProof(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
-    submitWithdrawals(
-      lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
-
-  getBlockHash(
-    blockNumber: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getDepositTreeRoot(overrides?: CallOverrides): Promise<string>;
-
-  getLastProcessedWithdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
-
-  postBlock(
-    isRegistrationBlock: PromiseOrValue<boolean>,
-    txTreeRoot: PromiseOrValue<BytesLike>,
-    senderFlags: PromiseOrValue<BigNumberish>,
-    publicKeysHash: PromiseOrValue<BytesLike>,
-    accountIdsHash: PromiseOrValue<BytesLike>,
-    aggregatedPublicKey: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
+      publicInputs: BigNumberish[],
+      proof: BytesLike
     ],
-    aggregatedSignature: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
+    [void],
+    "nonpayable"
+  >;
+
+  processDeposits: TypedContractMethod<
+    [deposits: ILiquidity.DepositStruct[]],
+    [void],
+    "nonpayable"
+  >;
+
+  submitBlockFraudProof: TypedContractMethod<
+    [
+      blockNumber: BigNumberish,
+      blockBuilder: AddressLike,
+      publicInputs: BigNumberish[],
+      proof: BytesLike
     ],
-    messagePoint: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+    [void],
+    "nonpayable"
+  >;
 
-  postWithdrawalRequests(
-    withdrawals: IRollup.WithdrawalStruct[],
-    publicInputs: PromiseOrValue<BigNumberish>[],
-    proof: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  submitWithdrawals: TypedContractMethod<
+    [lastProcessedWithdrawId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-  processDeposits(
-    deposits: ILiquidity.DepositStruct[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
 
-  submitBlockFraudProof(
-    blockNumber: PromiseOrValue<BigNumberish>,
-    blockBuilder: PromiseOrValue<string>,
-    publicInputs: PromiseOrValue<BigNumberish>[],
-    proof: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  submitWithdrawals(
-    lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    getBlockHash(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getDepositTreeRoot(overrides?: CallOverrides): Promise<string>;
-
-    getLastProcessedWithdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    postBlock(
-      isRegistrationBlock: PromiseOrValue<boolean>,
-      txTreeRoot: PromiseOrValue<BytesLike>,
-      senderFlags: PromiseOrValue<BigNumberish>,
-      publicKeysHash: PromiseOrValue<BytesLike>,
-      accountIdsHash: PromiseOrValue<BytesLike>,
-      aggregatedPublicKey: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
+  getFunction(
+    nameOrSignature: "getBlockHash"
+  ): TypedContractMethod<[blockNumber: BigNumberish], [string], "view">;
+  getFunction(
+    nameOrSignature: "getDepositTreeRoot"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
+    nameOrSignature: "getLastProcessedWithdrawalId"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "postBlock"
+  ): TypedContractMethod<
+    [
+      isRegistrationBlock: boolean,
+      txTreeRoot: BytesLike,
+      senderFlags: BigNumberish,
+      publicKeysHash: BytesLike,
+      accountIdsHash: BytesLike,
+      aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
       ],
-      messagePoint: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    postWithdrawalRequests(
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+    ],
+    [bigint],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "postWithdrawalRequests"
+  ): TypedContractMethod<
+    [
       withdrawals: IRollup.WithdrawalStruct[],
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+      publicInputs: BigNumberish[],
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "processDeposits"
+  ): TypedContractMethod<
+    [deposits: ILiquidity.DepositStruct[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "submitBlockFraudProof"
+  ): TypedContractMethod<
+    [
+      blockNumber: BigNumberish,
+      blockBuilder: AddressLike,
+      publicInputs: BigNumberish[],
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "submitWithdrawals"
+  ): TypedContractMethod<
+    [lastProcessedWithdrawId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-    processDeposits(
-      deposits: ILiquidity.DepositStruct[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    submitBlockFraudProof(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    submitWithdrawals(
-      lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  getEvent(
+    key: "BlockFraudProofSubmitted"
+  ): TypedContractEvent<
+    BlockFraudProofSubmittedEvent.InputTuple,
+    BlockFraudProofSubmittedEvent.OutputTuple,
+    BlockFraudProofSubmittedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BlockPosted"
+  ): TypedContractEvent<
+    BlockPostedEvent.InputTuple,
+    BlockPostedEvent.OutputTuple,
+    BlockPostedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DepositsProcessed"
+  ): TypedContractEvent<
+    DepositsProcessedEvent.InputTuple,
+    DepositsProcessedEvent.OutputTuple,
+    DepositsProcessedEvent.OutputObject
+  >;
+  getEvent(
+    key: "WithdrawRequested"
+  ): TypedContractEvent<
+    WithdrawRequestedEvent.InputTuple,
+    WithdrawRequestedEvent.OutputTuple,
+    WithdrawRequestedEvent.OutputObject
+  >;
 
   filters: {
-    "BlockFraudProofSubmitted(uint32,address,address)"(
-      blockNumber?: PromiseOrValue<BigNumberish> | null,
-      blockBuilder?: PromiseOrValue<string> | null,
-      challenger?: PromiseOrValue<string> | null
-    ): BlockFraudProofSubmittedEventFilter;
-    BlockFraudProofSubmitted(
-      blockNumber?: PromiseOrValue<BigNumberish> | null,
-      blockBuilder?: PromiseOrValue<string> | null,
-      challenger?: PromiseOrValue<string> | null
-    ): BlockFraudProofSubmittedEventFilter;
+    "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
+      BlockFraudProofSubmittedEvent.InputTuple,
+      BlockFraudProofSubmittedEvent.OutputTuple,
+      BlockFraudProofSubmittedEvent.OutputObject
+    >;
+    BlockFraudProofSubmitted: TypedContractEvent<
+      BlockFraudProofSubmittedEvent.InputTuple,
+      BlockFraudProofSubmittedEvent.OutputTuple,
+      BlockFraudProofSubmittedEvent.OutputObject
+    >;
 
-    "BlockPosted(bytes32,address,uint256,bytes32,bytes32)"(
-      prevBlockHash?: PromiseOrValue<BytesLike> | null,
-      blockBuilder?: PromiseOrValue<string> | null,
-      blockNumber?: null,
-      depositTreeRoot?: null,
-      signatureHash?: null
-    ): BlockPostedEventFilter;
-    BlockPosted(
-      prevBlockHash?: PromiseOrValue<BytesLike> | null,
-      blockBuilder?: PromiseOrValue<string> | null,
-      blockNumber?: null,
-      depositTreeRoot?: null,
-      signatureHash?: null
-    ): BlockPostedEventFilter;
+    "BlockPosted(bytes32,address,uint256,bytes32,bytes32)": TypedContractEvent<
+      BlockPostedEvent.InputTuple,
+      BlockPostedEvent.OutputTuple,
+      BlockPostedEvent.OutputObject
+    >;
+    BlockPosted: TypedContractEvent<
+      BlockPostedEvent.InputTuple,
+      BlockPostedEvent.OutputTuple,
+      BlockPostedEvent.OutputObject
+    >;
 
-    "DepositsProcessed(bytes32)"(
-      depositTreeRoot?: null
-    ): DepositsProcessedEventFilter;
-    DepositsProcessed(depositTreeRoot?: null): DepositsProcessedEventFilter;
+    "DepositsProcessed(bytes32)": TypedContractEvent<
+      DepositsProcessedEvent.InputTuple,
+      DepositsProcessedEvent.OutputTuple,
+      DepositsProcessedEvent.OutputObject
+    >;
+    DepositsProcessed: TypedContractEvent<
+      DepositsProcessedEvent.InputTuple,
+      DepositsProcessedEvent.OutputTuple,
+      DepositsProcessedEvent.OutputObject
+    >;
 
-    "WithdrawRequested(bytes32,address)"(
-      withdrawalRequest?: PromiseOrValue<BytesLike> | null,
-      withdrawAggregator?: null
-    ): WithdrawRequestedEventFilter;
-    WithdrawRequested(
-      withdrawalRequest?: PromiseOrValue<BytesLike> | null,
-      withdrawAggregator?: null
-    ): WithdrawRequestedEventFilter;
-  };
-
-  estimateGas: {
-    getBlockHash(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getDepositTreeRoot(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getLastProcessedWithdrawalId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    postBlock(
-      isRegistrationBlock: PromiseOrValue<boolean>,
-      txTreeRoot: PromiseOrValue<BytesLike>,
-      senderFlags: PromiseOrValue<BigNumberish>,
-      publicKeysHash: PromiseOrValue<BytesLike>,
-      accountIdsHash: PromiseOrValue<BytesLike>,
-      aggregatedPublicKey: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      aggregatedSignature: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      messagePoint: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    postWithdrawalRequests(
-      withdrawals: IRollup.WithdrawalStruct[],
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    processDeposits(
-      deposits: ILiquidity.DepositStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    submitBlockFraudProof(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    submitWithdrawals(
-      lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    getBlockHash(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getDepositTreeRoot(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLastProcessedWithdrawalId(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    postBlock(
-      isRegistrationBlock: PromiseOrValue<boolean>,
-      txTreeRoot: PromiseOrValue<BytesLike>,
-      senderFlags: PromiseOrValue<BigNumberish>,
-      publicKeysHash: PromiseOrValue<BytesLike>,
-      accountIdsHash: PromiseOrValue<BytesLike>,
-      aggregatedPublicKey: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      aggregatedSignature: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      messagePoint: [
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>,
-        PromiseOrValue<BigNumberish>
-      ],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    postWithdrawalRequests(
-      withdrawals: IRollup.WithdrawalStruct[],
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    processDeposits(
-      deposits: ILiquidity.DepositStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    submitBlockFraudProof(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      publicInputs: PromiseOrValue<BigNumberish>[],
-      proof: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    submitWithdrawals(
-      lastProcessedWithdrawId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    "WithdrawRequested(bytes32,address)": TypedContractEvent<
+      WithdrawRequestedEvent.InputTuple,
+      WithdrawRequestedEvent.OutputTuple,
+      WithdrawRequestedEvent.OutputObject
+    >;
+    WithdrawRequested: TypedContractEvent<
+      WithdrawRequestedEvent.InputTuple,
+      WithdrawRequestedEvent.OutputTuple,
+      WithdrawRequestedEvent.OutputObject
+    >;
   };
 }

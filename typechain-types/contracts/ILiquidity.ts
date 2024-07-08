@@ -3,94 +3,71 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../common";
 
 export declare namespace ILiquidity {
   export type DepositStruct = {
-    recipientSaltHash: PromiseOrValue<BytesLike>;
-    tokenIndex: PromiseOrValue<BigNumberish>;
-    amount: PromiseOrValue<BigNumberish>;
+    recipientSaltHash: BytesLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
   };
 
-  export type DepositStructOutput = [string, number, BigNumber] & {
-    recipientSaltHash: string;
-    tokenIndex: number;
-    amount: BigNumber;
-  };
+  export type DepositStructOutput = [
+    recipientSaltHash: string,
+    tokenIndex: bigint,
+    amount: bigint
+  ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
 
   export type DepositDataStruct = {
-    depositHash: PromiseOrValue<BytesLike>;
-    sender: PromiseOrValue<string>;
-    requestedAt: PromiseOrValue<BigNumberish>;
+    depositHash: BytesLike;
+    sender: AddressLike;
+    requestedAt: BigNumberish;
   };
 
-  export type DepositDataStructOutput = [string, string, BigNumber] & {
-    depositHash: string;
-    sender: string;
-    requestedAt: BigNumber;
-  };
+  export type DepositDataStructOutput = [
+    depositHash: string,
+    sender: string,
+    requestedAt: bigint
+  ] & { depositHash: string; sender: string; requestedAt: bigint };
 }
 
 export declare namespace IRollup {
   export type WithdrawalStruct = {
-    recipient: PromiseOrValue<string>;
-    tokenIndex: PromiseOrValue<BigNumberish>;
-    amount: PromiseOrValue<BigNumberish>;
-    salt: PromiseOrValue<BytesLike>;
+    recipient: AddressLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
+    salt: BytesLike;
   };
 
-  export type WithdrawalStructOutput = [string, number, BigNumber, string] & {
-    recipient: string;
-    tokenIndex: number;
-    amount: BigNumber;
-    salt: string;
-  };
+  export type WithdrawalStructOutput = [
+    recipient: string,
+    tokenIndex: bigint,
+    amount: bigint,
+    salt: string
+  ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
 }
 
-export interface ILiquidityInterface extends utils.Interface {
-  functions: {
-    "cancelPendingDeposit(uint256,(bytes32,uint32,uint256))": FunctionFragment;
-    "claimRejectedDeposit(uint256,(bytes32,uint32,uint256))": FunctionFragment;
-    "claimWithdrawals(uint256[])": FunctionFragment;
-    "depositERC1155(address,bytes32,uint256,uint256)": FunctionFragment;
-    "depositERC20(address,bytes32,uint256)": FunctionFragment;
-    "depositERC721(address,bytes32,uint256)": FunctionFragment;
-    "depositETH(bytes32)": FunctionFragment;
-    "getDepositCounter()": FunctionFragment;
-    "getLastAnalyzedDepositId()": FunctionFragment;
-    "getLastProcessedDepositId()": FunctionFragment;
-    "getPendingDeposit(uint256)": FunctionFragment;
-    "getRejectedDeposit(uint256)": FunctionFragment;
-    "processWithdrawals((address,uint32,uint256,bytes32)[])": FunctionFragment;
-    "rejectDeposits(uint256,uint256[])": FunctionFragment;
-    "submitDeposits(uint256)": FunctionFragment;
-  };
-
+export interface ILiquidityInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "cancelPendingDeposit"
       | "claimRejectedDeposit"
       | "claimWithdrawals"
@@ -108,46 +85,41 @@ export interface ILiquidityInterface extends utils.Interface {
       | "submitDeposits"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic:
+      | "DepositCanceled"
+      | "Deposited"
+      | "DepositsRejected"
+      | "DepositsSubmitted"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "cancelPendingDeposit",
-    values: [PromiseOrValue<BigNumberish>, ILiquidity.DepositStruct]
+    values: [BigNumberish, ILiquidity.DepositStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "claimRejectedDeposit",
-    values: [PromiseOrValue<BigNumberish>, ILiquidity.DepositStruct]
+    values: [BigNumberish, ILiquidity.DepositStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "claimWithdrawals",
-    values: [PromiseOrValue<BigNumberish>[]]
+    values: [BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "depositERC1155",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "depositERC20",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, BytesLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "depositERC721",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>
-    ]
+    values: [AddressLike, BytesLike, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "depositETH",
-    values: [PromiseOrValue<BytesLike>]
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "getDepositCounter",
@@ -163,11 +135,11 @@ export interface ILiquidityInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "getPendingDeposit",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRejectedDeposit",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "processWithdrawals",
@@ -175,11 +147,11 @@ export interface ILiquidityInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "rejectDeposits",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>[]]
+    values: [BigNumberish, BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "submitDeposits",
-    values: [PromiseOrValue<BigNumberish>]
+    values: [BigNumberish]
   ): string;
 
   decodeFunctionResult(
@@ -239,522 +211,384 @@ export interface ILiquidityInterface extends utils.Interface {
     functionFragment: "submitDeposits",
     data: BytesLike
   ): Result;
-
-  events: {
-    "DepositCanceled(uint256)": EventFragment;
-    "Deposited(uint256,address,bytes32,uint32,uint256,uint256)": EventFragment;
-    "DepositsRejected(uint256)": EventFragment;
-    "DepositsSubmitted(uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "DepositCanceled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Deposited"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DepositsRejected"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "DepositsSubmitted"): EventFragment;
 }
 
-export interface DepositCanceledEventObject {
-  depositId: BigNumber;
+export namespace DepositCanceledEvent {
+  export type InputTuple = [depositId: BigNumberish];
+  export type OutputTuple = [depositId: bigint];
+  export interface OutputObject {
+    depositId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DepositCanceledEvent = TypedEvent<
-  [BigNumber],
-  DepositCanceledEventObject
->;
 
-export type DepositCanceledEventFilter = TypedEventFilter<DepositCanceledEvent>;
-
-export interface DepositedEventObject {
-  depositId: BigNumber;
-  sender: string;
-  recipientSaltHash: string;
-  tokenIndex: number;
-  amount: BigNumber;
-  requestedAt: BigNumber;
+export namespace DepositedEvent {
+  export type InputTuple = [
+    depositId: BigNumberish,
+    sender: AddressLike,
+    recipientSaltHash: BytesLike,
+    tokenIndex: BigNumberish,
+    amount: BigNumberish,
+    requestedAt: BigNumberish
+  ];
+  export type OutputTuple = [
+    depositId: bigint,
+    sender: string,
+    recipientSaltHash: string,
+    tokenIndex: bigint,
+    amount: bigint,
+    requestedAt: bigint
+  ];
+  export interface OutputObject {
+    depositId: bigint;
+    sender: string;
+    recipientSaltHash: string;
+    tokenIndex: bigint;
+    amount: bigint;
+    requestedAt: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DepositedEvent = TypedEvent<
-  [BigNumber, string, string, number, BigNumber, BigNumber],
-  DepositedEventObject
->;
 
-export type DepositedEventFilter = TypedEventFilter<DepositedEvent>;
-
-export interface DepositsRejectedEventObject {
-  lastAnalyzedDepositId: BigNumber;
+export namespace DepositsRejectedEvent {
+  export type InputTuple = [lastAnalyzedDepositId: BigNumberish];
+  export type OutputTuple = [lastAnalyzedDepositId: bigint];
+  export interface OutputObject {
+    lastAnalyzedDepositId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DepositsRejectedEvent = TypedEvent<
-  [BigNumber],
-  DepositsRejectedEventObject
->;
 
-export type DepositsRejectedEventFilter =
-  TypedEventFilter<DepositsRejectedEvent>;
-
-export interface DepositsSubmittedEventObject {
-  lastProcessedDepositId: BigNumber;
+export namespace DepositsSubmittedEvent {
+  export type InputTuple = [lastProcessedDepositId: BigNumberish];
+  export type OutputTuple = [lastProcessedDepositId: bigint];
+  export interface OutputObject {
+    lastProcessedDepositId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type DepositsSubmittedEvent = TypedEvent<
-  [BigNumber],
-  DepositsSubmittedEventObject
->;
-
-export type DepositsSubmittedEventFilter =
-  TypedEventFilter<DepositsSubmittedEvent>;
 
 export interface ILiquidity extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): ILiquidity;
+  waitForDeployment(): Promise<this>;
 
   interface: ILiquidityInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    cancelPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    claimRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    claimWithdrawals(
-      withdrawalIds: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  cancelPendingDeposit: TypedContractMethod<
+    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [void],
+    "nonpayable"
+  >;
 
-    depositERC1155(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  claimRejectedDeposit: TypedContractMethod<
+    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [void],
+    "nonpayable"
+  >;
 
-    depositERC20(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  claimWithdrawals: TypedContractMethod<
+    [withdrawalIds: BigNumberish[]],
+    [void],
+    "nonpayable"
+  >;
 
-    depositERC721(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  depositERC1155: TypedContractMethod<
+    [
+      tokenAddress: AddressLike,
+      recipientSaltHash: BytesLike,
+      tokenId: BigNumberish,
+      amount: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    depositETH(
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  depositERC20: TypedContractMethod<
+    [
+      tokenAddress: AddressLike,
+      recipientSaltHash: BytesLike,
+      amount: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    getDepositCounter(overrides?: CallOverrides): Promise<[BigNumber]>;
+  depositERC721: TypedContractMethod<
+    [
+      tokenAddress: AddressLike,
+      recipientSaltHash: BytesLike,
+      tokenId: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    getLastAnalyzedDepositId(overrides?: CallOverrides): Promise<[BigNumber]>;
+  depositETH: TypedContractMethod<
+    [recipientSaltHash: BytesLike],
+    [void],
+    "payable"
+  >;
 
-    getLastProcessedDepositId(overrides?: CallOverrides): Promise<[BigNumber]>;
+  getDepositCounter: TypedContractMethod<[], [bigint], "view">;
 
-    getPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[ILiquidity.DepositDataStructOutput]>;
+  getLastAnalyzedDepositId: TypedContractMethod<[], [bigint], "view">;
 
-    getRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[ILiquidity.DepositDataStructOutput]>;
+  getLastProcessedDepositId: TypedContractMethod<[], [bigint], "view">;
 
-    processWithdrawals(
-      withdrawals: IRollup.WithdrawalStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  getPendingDeposit: TypedContractMethod<
+    [depositId: BigNumberish],
+    [ILiquidity.DepositDataStructOutput],
+    "view"
+  >;
 
-    rejectDeposits(
-      lastAnalyzedDepositId: PromiseOrValue<BigNumberish>,
-      rejectedDepositIds: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  getRejectedDeposit: TypedContractMethod<
+    [depositId: BigNumberish],
+    [ILiquidity.DepositDataStructOutput],
+    "view"
+  >;
 
-    submitDeposits(
-      lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
+  processWithdrawals: TypedContractMethod<
+    [withdrawals: IRollup.WithdrawalStruct[]],
+    [void],
+    "nonpayable"
+  >;
 
-  cancelPendingDeposit(
-    depositId: PromiseOrValue<BigNumberish>,
-    deposit: ILiquidity.DepositStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  rejectDeposits: TypedContractMethod<
+    [lastAnalyzedDepositId: BigNumberish, rejectedDepositIds: BigNumberish[]],
+    [void],
+    "nonpayable"
+  >;
 
-  claimRejectedDeposit(
-    depositId: PromiseOrValue<BigNumberish>,
-    deposit: ILiquidity.DepositStruct,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  submitDeposits: TypedContractMethod<
+    [lastProcessedDepositId: BigNumberish],
+    [void],
+    "payable"
+  >;
 
-  claimWithdrawals(
-    withdrawalIds: PromiseOrValue<BigNumberish>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
 
-  depositERC1155(
-    tokenAddress: PromiseOrValue<string>,
-    recipientSaltHash: PromiseOrValue<BytesLike>,
-    tokenId: PromiseOrValue<BigNumberish>,
-    amount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getFunction(
+    nameOrSignature: "cancelPendingDeposit"
+  ): TypedContractMethod<
+    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "claimRejectedDeposit"
+  ): TypedContractMethod<
+    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "claimWithdrawals"
+  ): TypedContractMethod<[withdrawalIds: BigNumberish[]], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "depositERC1155"
+  ): TypedContractMethod<
+    [
+      tokenAddress: AddressLike,
+      recipientSaltHash: BytesLike,
+      tokenId: BigNumberish,
+      amount: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "depositERC20"
+  ): TypedContractMethod<
+    [
+      tokenAddress: AddressLike,
+      recipientSaltHash: BytesLike,
+      amount: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "depositERC721"
+  ): TypedContractMethod<
+    [
+      tokenAddress: AddressLike,
+      recipientSaltHash: BytesLike,
+      tokenId: BigNumberish
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "depositETH"
+  ): TypedContractMethod<[recipientSaltHash: BytesLike], [void], "payable">;
+  getFunction(
+    nameOrSignature: "getDepositCounter"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getLastAnalyzedDepositId"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getLastProcessedDepositId"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getPendingDeposit"
+  ): TypedContractMethod<
+    [depositId: BigNumberish],
+    [ILiquidity.DepositDataStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "getRejectedDeposit"
+  ): TypedContractMethod<
+    [depositId: BigNumberish],
+    [ILiquidity.DepositDataStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "processWithdrawals"
+  ): TypedContractMethod<
+    [withdrawals: IRollup.WithdrawalStruct[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "rejectDeposits"
+  ): TypedContractMethod<
+    [lastAnalyzedDepositId: BigNumberish, rejectedDepositIds: BigNumberish[]],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "submitDeposits"
+  ): TypedContractMethod<
+    [lastProcessedDepositId: BigNumberish],
+    [void],
+    "payable"
+  >;
 
-  depositERC20(
-    tokenAddress: PromiseOrValue<string>,
-    recipientSaltHash: PromiseOrValue<BytesLike>,
-    amount: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  depositERC721(
-    tokenAddress: PromiseOrValue<string>,
-    recipientSaltHash: PromiseOrValue<BytesLike>,
-    tokenId: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  depositETH(
-    recipientSaltHash: PromiseOrValue<BytesLike>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  getDepositCounter(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getLastAnalyzedDepositId(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getLastProcessedDepositId(overrides?: CallOverrides): Promise<BigNumber>;
-
-  getPendingDeposit(
-    depositId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<ILiquidity.DepositDataStructOutput>;
-
-  getRejectedDeposit(
-    depositId: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<ILiquidity.DepositDataStructOutput>;
-
-  processWithdrawals(
-    withdrawals: IRollup.WithdrawalStruct[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  rejectDeposits(
-    lastAnalyzedDepositId: PromiseOrValue<BigNumberish>,
-    rejectedDepositIds: PromiseOrValue<BigNumberish>[],
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  submitDeposits(
-    lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    cancelPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    claimRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    claimWithdrawals(
-      withdrawalIds: PromiseOrValue<BigNumberish>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    depositERC1155(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    depositERC20(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    depositERC721(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    depositETH(
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    getDepositCounter(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getLastAnalyzedDepositId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getLastProcessedDepositId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<ILiquidity.DepositDataStructOutput>;
-
-    getRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<ILiquidity.DepositDataStructOutput>;
-
-    processWithdrawals(
-      withdrawals: IRollup.WithdrawalStruct[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    rejectDeposits(
-      lastAnalyzedDepositId: PromiseOrValue<BigNumberish>,
-      rejectedDepositIds: PromiseOrValue<BigNumberish>[],
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    submitDeposits(
-      lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  getEvent(
+    key: "DepositCanceled"
+  ): TypedContractEvent<
+    DepositCanceledEvent.InputTuple,
+    DepositCanceledEvent.OutputTuple,
+    DepositCanceledEvent.OutputObject
+  >;
+  getEvent(
+    key: "Deposited"
+  ): TypedContractEvent<
+    DepositedEvent.InputTuple,
+    DepositedEvent.OutputTuple,
+    DepositedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DepositsRejected"
+  ): TypedContractEvent<
+    DepositsRejectedEvent.InputTuple,
+    DepositsRejectedEvent.OutputTuple,
+    DepositsRejectedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DepositsSubmitted"
+  ): TypedContractEvent<
+    DepositsSubmittedEvent.InputTuple,
+    DepositsSubmittedEvent.OutputTuple,
+    DepositsSubmittedEvent.OutputObject
+  >;
 
   filters: {
-    "DepositCanceled(uint256)"(
-      depositId?: PromiseOrValue<BigNumberish> | null
-    ): DepositCanceledEventFilter;
-    DepositCanceled(
-      depositId?: PromiseOrValue<BigNumberish> | null
-    ): DepositCanceledEventFilter;
+    "DepositCanceled(uint256)": TypedContractEvent<
+      DepositCanceledEvent.InputTuple,
+      DepositCanceledEvent.OutputTuple,
+      DepositCanceledEvent.OutputObject
+    >;
+    DepositCanceled: TypedContractEvent<
+      DepositCanceledEvent.InputTuple,
+      DepositCanceledEvent.OutputTuple,
+      DepositCanceledEvent.OutputObject
+    >;
 
-    "Deposited(uint256,address,bytes32,uint32,uint256,uint256)"(
-      depositId?: PromiseOrValue<BigNumberish> | null,
-      sender?: PromiseOrValue<string> | null,
-      recipientSaltHash?: null,
-      tokenIndex?: null,
-      amount?: null,
-      requestedAt?: null
-    ): DepositedEventFilter;
-    Deposited(
-      depositId?: PromiseOrValue<BigNumberish> | null,
-      sender?: PromiseOrValue<string> | null,
-      recipientSaltHash?: null,
-      tokenIndex?: null,
-      amount?: null,
-      requestedAt?: null
-    ): DepositedEventFilter;
+    "Deposited(uint256,address,bytes32,uint32,uint256,uint256)": TypedContractEvent<
+      DepositedEvent.InputTuple,
+      DepositedEvent.OutputTuple,
+      DepositedEvent.OutputObject
+    >;
+    Deposited: TypedContractEvent<
+      DepositedEvent.InputTuple,
+      DepositedEvent.OutputTuple,
+      DepositedEvent.OutputObject
+    >;
 
-    "DepositsRejected(uint256)"(
-      lastAnalyzedDepositId?: PromiseOrValue<BigNumberish> | null
-    ): DepositsRejectedEventFilter;
-    DepositsRejected(
-      lastAnalyzedDepositId?: PromiseOrValue<BigNumberish> | null
-    ): DepositsRejectedEventFilter;
+    "DepositsRejected(uint256)": TypedContractEvent<
+      DepositsRejectedEvent.InputTuple,
+      DepositsRejectedEvent.OutputTuple,
+      DepositsRejectedEvent.OutputObject
+    >;
+    DepositsRejected: TypedContractEvent<
+      DepositsRejectedEvent.InputTuple,
+      DepositsRejectedEvent.OutputTuple,
+      DepositsRejectedEvent.OutputObject
+    >;
 
-    "DepositsSubmitted(uint256)"(
-      lastProcessedDepositId?: PromiseOrValue<BigNumberish> | null
-    ): DepositsSubmittedEventFilter;
-    DepositsSubmitted(
-      lastProcessedDepositId?: PromiseOrValue<BigNumberish> | null
-    ): DepositsSubmittedEventFilter;
-  };
-
-  estimateGas: {
-    cancelPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    claimRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    claimWithdrawals(
-      withdrawalIds: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    depositERC1155(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    depositERC20(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    depositERC721(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    depositETH(
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    getDepositCounter(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getLastAnalyzedDepositId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getLastProcessedDepositId(overrides?: CallOverrides): Promise<BigNumber>;
-
-    getPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    processWithdrawals(
-      withdrawals: IRollup.WithdrawalStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    rejectDeposits(
-      lastAnalyzedDepositId: PromiseOrValue<BigNumberish>,
-      rejectedDepositIds: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    submitDeposits(
-      lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    cancelPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    claimRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      deposit: ILiquidity.DepositStruct,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    claimWithdrawals(
-      withdrawalIds: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    depositERC1155(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    depositERC20(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      amount: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    depositERC721(
-      tokenAddress: PromiseOrValue<string>,
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      tokenId: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    depositETH(
-      recipientSaltHash: PromiseOrValue<BytesLike>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    getDepositCounter(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    getLastAnalyzedDepositId(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLastProcessedDepositId(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getPendingDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRejectedDeposit(
-      depositId: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    processWithdrawals(
-      withdrawals: IRollup.WithdrawalStruct[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    rejectDeposits(
-      lastAnalyzedDepositId: PromiseOrValue<BigNumberish>,
-      rejectedDepositIds: PromiseOrValue<BigNumberish>[],
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    submitDeposits(
-      lastProcessedDepositId: PromiseOrValue<BigNumberish>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    "DepositsSubmitted(uint256)": TypedContractEvent<
+      DepositsSubmittedEvent.InputTuple,
+      DepositsSubmittedEvent.OutputTuple,
+      DepositsSubmittedEvent.OutputObject
+    >;
+    DepositsSubmitted: TypedContractEvent<
+      DepositsSubmittedEvent.InputTuple,
+      DepositsSubmittedEvent.OutputTuple,
+      DepositsSubmittedEvent.OutputObject
+    >;
   };
 }

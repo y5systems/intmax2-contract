@@ -2,8 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import type { Provider } from "@ethersproject/providers";
+import { Contract, Interface, type ContractRunner } from "ethers";
 import type { IRollup, IRollupInterface } from "../../contracts/IRollup";
 
 const _abi = [
@@ -321,12 +320,9 @@ const _abi = [
 export class IRollup__factory {
   static readonly abi = _abi;
   static createInterface(): IRollupInterface {
-    return new utils.Interface(_abi) as IRollupInterface;
+    return new Interface(_abi) as IRollupInterface;
   }
-  static connect(
-    address: string,
-    signerOrProvider: Signer | Provider
-  ): IRollup {
-    return new Contract(address, _abi, signerOrProvider) as IRollup;
+  static connect(address: string, runner?: ContractRunner | null): IRollup {
+    return new Contract(address, _abi, runner) as unknown as IRollup;
   }
 }

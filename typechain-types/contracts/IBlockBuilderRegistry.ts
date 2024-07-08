@@ -3,67 +3,53 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumber,
   BigNumberish,
   BytesLike,
-  CallOverrides,
-  ContractTransaction,
-  Overrides,
-  PayableOverrides,
-  PopulatedTransaction,
-  Signer,
-  utils,
-} from "ethers";
-import type {
   FunctionFragment,
   Result,
+  Interface,
   EventFragment,
-} from "@ethersproject/abi";
-import type { Listener, Provider } from "@ethersproject/providers";
+  AddressLike,
+  ContractRunner,
+  ContractMethod,
+  Listener,
+} from "ethers";
 import type {
-  TypedEventFilter,
-  TypedEvent,
+  TypedContractEvent,
+  TypedDeferredTopicFilter,
+  TypedEventLog,
+  TypedLogDescription,
   TypedListener,
-  OnEvent,
-  PromiseOrValue,
+  TypedContractMethod,
 } from "../common";
 
 export declare namespace IBlockBuilderRegistry {
   export type BlockBuilderInfoStruct = {
-    blockBuilderUrl: PromiseOrValue<string>;
-    stakeAmount: PromiseOrValue<BigNumberish>;
-    stopTime: PromiseOrValue<BigNumberish>;
-    numSlashes: PromiseOrValue<BigNumberish>;
-    isValid: PromiseOrValue<boolean>;
+    blockBuilderUrl: string;
+    stakeAmount: BigNumberish;
+    stopTime: BigNumberish;
+    numSlashes: BigNumberish;
+    isValid: boolean;
   };
 
   export type BlockBuilderInfoStructOutput = [
-    string,
-    BigNumber,
-    BigNumber,
-    BigNumber,
-    boolean
+    blockBuilderUrl: string,
+    stakeAmount: bigint,
+    stopTime: bigint,
+    numSlashes: bigint,
+    isValid: boolean
   ] & {
     blockBuilderUrl: string;
-    stakeAmount: BigNumber;
-    stopTime: BigNumber;
-    numSlashes: BigNumber;
+    stakeAmount: bigint;
+    stopTime: bigint;
+    numSlashes: bigint;
     isValid: boolean;
   };
 }
 
-export interface IBlockBuilderRegistryInterface extends utils.Interface {
-  functions: {
-    "getBlockBuilder(address)": FunctionFragment;
-    "isValidBlockBuilder(address)": FunctionFragment;
-    "slashBlockBuilder(uint32,address,address)": FunctionFragment;
-    "stopBlockBuilder()": FunctionFragment;
-    "unstake()": FunctionFragment;
-    "updateBlockBuilder(string)": FunctionFragment;
-  };
-
+export interface IBlockBuilderRegistryInterface extends Interface {
   getFunction(
-    nameOrSignatureOrTopic:
+    nameOrSignature:
       | "getBlockBuilder"
       | "isValidBlockBuilder"
       | "slashBlockBuilder"
@@ -72,21 +58,21 @@ export interface IBlockBuilderRegistryInterface extends utils.Interface {
       | "updateBlockBuilder"
   ): FunctionFragment;
 
+  getEvent(
+    nameOrSignatureOrTopic: "BlockBuilderStoped" | "BlockBuilderUpdated"
+  ): EventFragment;
+
   encodeFunctionData(
     functionFragment: "getBlockBuilder",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "isValidBlockBuilder",
-    values: [PromiseOrValue<string>]
+    values: [AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "slashBlockBuilder",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>
-    ]
+    values: [BigNumberish, AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "stopBlockBuilder",
@@ -95,7 +81,7 @@ export interface IBlockBuilderRegistryInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "unstake", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "updateBlockBuilder",
-    values: [PromiseOrValue<string>]
+    values: [string]
   ): string;
 
   decodeFunctionResult(
@@ -119,237 +105,184 @@ export interface IBlockBuilderRegistryInterface extends utils.Interface {
     functionFragment: "updateBlockBuilder",
     data: BytesLike
   ): Result;
-
-  events: {
-    "BlockBuilderStoped(address)": EventFragment;
-    "BlockBuilderUpdated(address,string,uint256)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "BlockBuilderStoped"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "BlockBuilderUpdated"): EventFragment;
 }
 
-export interface BlockBuilderStopedEventObject {
-  blockBuilder: string;
+export namespace BlockBuilderStopedEvent {
+  export type InputTuple = [blockBuilder: AddressLike];
+  export type OutputTuple = [blockBuilder: string];
+  export interface OutputObject {
+    blockBuilder: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BlockBuilderStopedEvent = TypedEvent<
-  [string],
-  BlockBuilderStopedEventObject
->;
 
-export type BlockBuilderStopedEventFilter =
-  TypedEventFilter<BlockBuilderStopedEvent>;
-
-export interface BlockBuilderUpdatedEventObject {
-  blockBuilder: string;
-  url: string;
-  stakeAmount: BigNumber;
+export namespace BlockBuilderUpdatedEvent {
+  export type InputTuple = [
+    blockBuilder: AddressLike,
+    url: string,
+    stakeAmount: BigNumberish
+  ];
+  export type OutputTuple = [
+    blockBuilder: string,
+    url: string,
+    stakeAmount: bigint
+  ];
+  export interface OutputObject {
+    blockBuilder: string;
+    url: string;
+    stakeAmount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
-export type BlockBuilderUpdatedEvent = TypedEvent<
-  [string, string, BigNumber],
-  BlockBuilderUpdatedEventObject
->;
-
-export type BlockBuilderUpdatedEventFilter =
-  TypedEventFilter<BlockBuilderUpdatedEvent>;
 
 export interface IBlockBuilderRegistry extends BaseContract {
-  connect(signerOrProvider: Signer | Provider | string): this;
-  attach(addressOrName: string): this;
-  deployed(): Promise<this>;
+  connect(runner?: ContractRunner | null): IBlockBuilderRegistry;
+  waitForDeployment(): Promise<this>;
 
   interface: IBlockBuilderRegistryInterface;
 
-  queryFilter<TEvent extends TypedEvent>(
-    event: TypedEventFilter<TEvent>,
+  queryFilter<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
     fromBlockOrBlockhash?: string | number | undefined,
     toBlock?: string | number | undefined
-  ): Promise<Array<TEvent>>;
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
+  queryFilter<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    fromBlockOrBlockhash?: string | number | undefined,
+    toBlock?: string | number | undefined
+  ): Promise<Array<TypedEventLog<TCEvent>>>;
 
-  listeners<TEvent extends TypedEvent>(
-    eventFilter?: TypedEventFilter<TEvent>
-  ): Array<TypedListener<TEvent>>;
-  listeners(eventName?: string): Array<Listener>;
-  removeAllListeners<TEvent extends TypedEvent>(
-    eventFilter: TypedEventFilter<TEvent>
-  ): this;
-  removeAllListeners(eventName?: string): this;
-  off: OnEvent<this>;
-  on: OnEvent<this>;
-  once: OnEvent<this>;
-  removeListener: OnEvent<this>;
+  on<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  on<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-  functions: {
-    getBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[IBlockBuilderRegistry.BlockBuilderInfoStructOutput]>;
+  once<TCEvent extends TypedContractEvent>(
+    event: TCEvent,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
+  once<TCEvent extends TypedContractEvent>(
+    filter: TypedDeferredTopicFilter<TCEvent>,
+    listener: TypedListener<TCEvent>
+  ): Promise<this>;
 
-    isValidBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[boolean] & { ok: boolean }>;
+  listeners<TCEvent extends TypedContractEvent>(
+    event: TCEvent
+  ): Promise<Array<TypedListener<TCEvent>>>;
+  listeners(eventName?: string): Promise<Array<Listener>>;
+  removeAllListeners<TCEvent extends TypedContractEvent>(
+    event?: TCEvent
+  ): Promise<this>;
 
-    slashBlockBuilder(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      challenger: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  getBlockBuilder: TypedContractMethod<
+    [blockBuilder: AddressLike],
+    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
+    "view"
+  >;
 
-    stopBlockBuilder(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  isValidBlockBuilder: TypedContractMethod<
+    [blockBuilder: AddressLike],
+    [boolean],
+    "view"
+  >;
 
-    unstake(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+  slashBlockBuilder: TypedContractMethod<
+    [
+      blockNumber: BigNumberish,
+      blockBuilder: AddressLike,
+      challenger: AddressLike
+    ],
+    [void],
+    "nonpayable"
+  >;
 
-    updateBlockBuilder(
-      url: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-  };
+  stopBlockBuilder: TypedContractMethod<[], [void], "nonpayable">;
 
-  getBlockBuilder(
-    blockBuilder: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<IBlockBuilderRegistry.BlockBuilderInfoStructOutput>;
+  unstake: TypedContractMethod<[], [void], "nonpayable">;
 
-  isValidBlockBuilder(
-    blockBuilder: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
+  updateBlockBuilder: TypedContractMethod<[url: string], [void], "payable">;
 
-  slashBlockBuilder(
-    blockNumber: PromiseOrValue<BigNumberish>,
-    blockBuilder: PromiseOrValue<string>,
-    challenger: PromiseOrValue<string>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
 
-  stopBlockBuilder(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getFunction(
+    nameOrSignature: "getBlockBuilder"
+  ): TypedContractMethod<
+    [blockBuilder: AddressLike],
+    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
+    "view"
+  >;
+  getFunction(
+    nameOrSignature: "isValidBlockBuilder"
+  ): TypedContractMethod<[blockBuilder: AddressLike], [boolean], "view">;
+  getFunction(
+    nameOrSignature: "slashBlockBuilder"
+  ): TypedContractMethod<
+    [
+      blockNumber: BigNumberish,
+      blockBuilder: AddressLike,
+      challenger: AddressLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "stopBlockBuilder"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "unstake"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "updateBlockBuilder"
+  ): TypedContractMethod<[url: string], [void], "payable">;
 
-  unstake(
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  updateBlockBuilder(
-    url: PromiseOrValue<string>,
-    overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
-  callStatic: {
-    getBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<IBlockBuilderRegistry.BlockBuilderInfoStructOutput>;
-
-    isValidBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
-    slashBlockBuilder(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      challenger: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    stopBlockBuilder(overrides?: CallOverrides): Promise<void>;
-
-    unstake(overrides?: CallOverrides): Promise<void>;
-
-    updateBlockBuilder(
-      url: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-  };
+  getEvent(
+    key: "BlockBuilderStoped"
+  ): TypedContractEvent<
+    BlockBuilderStopedEvent.InputTuple,
+    BlockBuilderStopedEvent.OutputTuple,
+    BlockBuilderStopedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BlockBuilderUpdated"
+  ): TypedContractEvent<
+    BlockBuilderUpdatedEvent.InputTuple,
+    BlockBuilderUpdatedEvent.OutputTuple,
+    BlockBuilderUpdatedEvent.OutputObject
+  >;
 
   filters: {
-    "BlockBuilderStoped(address)"(
-      blockBuilder?: PromiseOrValue<string> | null
-    ): BlockBuilderStopedEventFilter;
-    BlockBuilderStoped(
-      blockBuilder?: PromiseOrValue<string> | null
-    ): BlockBuilderStopedEventFilter;
+    "BlockBuilderStoped(address)": TypedContractEvent<
+      BlockBuilderStopedEvent.InputTuple,
+      BlockBuilderStopedEvent.OutputTuple,
+      BlockBuilderStopedEvent.OutputObject
+    >;
+    BlockBuilderStoped: TypedContractEvent<
+      BlockBuilderStopedEvent.InputTuple,
+      BlockBuilderStopedEvent.OutputTuple,
+      BlockBuilderStopedEvent.OutputObject
+    >;
 
-    "BlockBuilderUpdated(address,string,uint256)"(
-      blockBuilder?: PromiseOrValue<string> | null,
-      url?: null,
-      stakeAmount?: null
-    ): BlockBuilderUpdatedEventFilter;
-    BlockBuilderUpdated(
-      blockBuilder?: PromiseOrValue<string> | null,
-      url?: null,
-      stakeAmount?: null
-    ): BlockBuilderUpdatedEventFilter;
-  };
-
-  estimateGas: {
-    getBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    isValidBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    slashBlockBuilder(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      challenger: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    stopBlockBuilder(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    unstake(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    updateBlockBuilder(
-      url: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-  };
-
-  populateTransaction: {
-    getBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    isValidBlockBuilder(
-      blockBuilder: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    slashBlockBuilder(
-      blockNumber: PromiseOrValue<BigNumberish>,
-      blockBuilder: PromiseOrValue<string>,
-      challenger: PromiseOrValue<string>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    stopBlockBuilder(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    unstake(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    updateBlockBuilder(
-      url: PromiseOrValue<string>,
-      overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
+    "BlockBuilderUpdated(address,string,uint256)": TypedContractEvent<
+      BlockBuilderUpdatedEvent.InputTuple,
+      BlockBuilderUpdatedEvent.OutputTuple,
+      BlockBuilderUpdatedEvent.OutputObject
+    >;
+    BlockBuilderUpdated: TypedContractEvent<
+      BlockBuilderUpdatedEvent.InputTuple,
+      BlockBuilderUpdatedEvent.OutputTuple,
+      BlockBuilderUpdatedEvent.OutputObject
+    >;
   };
 }
