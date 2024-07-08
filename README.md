@@ -7,7 +7,6 @@
 
 ## How to run
 
-
 ### Run Rollup Test
 
 ```sh
@@ -37,4 +36,10 @@ npm run send-message-from-l1
 ```sh
 npm run send-message-from-l2
 npm run relay-message-from-l2
+```
+
+### lint
+    
+```sh
+npm run lint
 ```
