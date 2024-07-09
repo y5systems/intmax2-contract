@@ -16,12 +16,13 @@ async function main() {
 		l1MessengerAddress,
 		rollupContractAddress,
 	)
-	await liquidity.deployed()
-	console.log('Liquidity deployed to:', liquidity.address)
+	await liquidity.waitForDeployment()
+	const liquidityAddress = await liquidity.getAddress()
+	console.log('Liquidity deployed to:', liquidityAddress)
 
 	const newContractAddresses = {
 		...contractAddresses,
-		liquidity: liquidity.address,
+		liquidity: liquidityAddress,
 	}
 
 	saveJsonToFile(

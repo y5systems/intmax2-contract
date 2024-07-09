@@ -48,13 +48,13 @@ export interface ScrollMessengerResponse {
 }
 
 export const getBaseFeeFromRpcUrl = async (url: string) => {
-	const provider = new ethers.providers.JsonRpcProvider(url)
-	const feeMethodId = ethers.utils.id('l1BaseFee()').slice(0, 10)
+	const provider = new ethers.JsonRpcProvider(url)
+	const feeMethodId = ethers.id('l1BaseFee()').slice(0, 10)
 	const callResult = await provider.call({
 		to: l1GasPriceOracleAddress,
 		data: feeMethodId,
 	})
-	const baseFee = ethers.BigNumber.from(callResult)
+	const baseFee = BigInt(callResult)
 
 	return baseFee
 }
@@ -93,6 +93,6 @@ export const getBaseFee = async () => {
 
 export const getFee = async (gasLimit: BigNumberish) => {
 	const baseFee = await getBaseFee()
-	const fee = baseFee.mul(gasLimit)
+	const fee = baseFee * BigInt(gasLimit)
 	return fee
 }

@@ -7,14 +7,15 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 	uint256 public constant MIN_STAKE_AMOUNT = 100000000 wei; // TODO: 0.1 ether
 	uint256 public constant CHALLENGE_DURATION = 5 seconds; // TODO: 1 days
 	address _rollupContract;
+	address _burnAddress = 0x000000000000000000000000000000000000dEaD;
 
 	mapping(address => BlockBuilderInfo) _blockBuilders;
 
 	modifier OnlyRollupContract() {
-		// require(
-		//     msg.sender == address(_rollupContract),
-		//     "This method can only be called from Rollup contract."
-		// );
+		require(
+			msg.sender == address(_rollupContract),
+			"This method can only be called from Rollup contract."
+		);
 		_;
 	}
 
@@ -76,12 +77,9 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 	}
 
 	function slashBlockBuilder(
-		uint32 blockNumber,
 		address blockBuilder,
 		address challenger
 	) external OnlyRollupContract {
-		// TODO: Implement the slashing logic.
-
 		_blockBuilders[blockBuilder].numSlashes += 1;
 		if (
 			!_isValidBlockBuilder(blockBuilder) &&
@@ -89,6 +87,35 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 		) {
 			_blockBuilders[blockBuilder].isValid = false;
 		}
+
+		if (_blockBuilders[blockBuilder].stakeAmount < MIN_STAKE_AMOUNT) {
+			// The Block Builder cannot post a block unless it has a minimum amount of stakes,
+			// so it does not normally enter into this process.
+			uint256 slashAmount = _blockBuilders[blockBuilder].stakeAmount;
+			_blockBuilders[blockBuilder].stakeAmount = 0;
+			if (slashAmount < MIN_STAKE_AMOUNT / 2) {
+				payable(challenger).transfer(slashAmount);
+			} else {
+				payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
+				payable(_burnAddress).transfer(
+					slashAmount - (MIN_STAKE_AMOUNT / 2)
+				);
+			}
+		} else {
+			_blockBuilders[blockBuilder].stakeAmount -= MIN_STAKE_AMOUNT;
+
+			// NOTE: A half of the stake lost by the Block Builder will be burned.
+			// This is to prevent the Block Builder from generating invalid blocks and
+			// submitting fraud proofs by oneself, which would place a burden on
+			// the generation of block validity proofs. An invalid block must prove
+			// in the block validity proof that it has been invalidated.
+			payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
+			payable(_burnAddress).transfer(
+				MIN_STAKE_AMOUNT - (MIN_STAKE_AMOUNT / 2)
+			);
+		}
+
+		emit BlockBuilderSlashed(blockBuilder, challenger);
 	}
 
 	function isValidBlockBuilder(

@@ -17,6 +17,18 @@ interface IRollup {
 		bytes32 salt;
 	}
 
+	struct FraudProofPublicInputs {
+		bytes32 blockHash;
+		uint32 blockNumber;
+		address blockBuilder;
+		address challenger;
+	}
+
+	struct WithdrawalProofPublicInputs {
+		bytes32 withdrawalTreeRoot;
+		address withdrawalAggregator;
+	}
+
 	event DepositsProcessed(bytes32 depositTreeRoot);
 
 	event BlockPosted(
@@ -35,8 +47,14 @@ interface IRollup {
 
 	event WithdrawRequested(
 		bytes32 indexed withdrawalRequest,
-		address withdrawAggregator
+		address withdrawalAggregator
 	);
+
+	error FraudProofAlreadySubmitted();
+
+	error FraudProofVerificationFailed();
+
+	error WithdrawalProofVerificationFailed();
 
 	/**
 	 * @notice Post new block by Block Builder.
@@ -54,9 +72,7 @@ interface IRollup {
 	) external returns (uint256 blockNumber);
 
 	function submitBlockFraudProof(
-		uint32 blockNumber,
-		address blockBuilder,
-		uint256[] calldata publicInputs,
+		FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external;
 
@@ -67,7 +83,7 @@ interface IRollup {
 	 */
 	function postWithdrawalRequests(
 		Withdrawal[] calldata withdrawals,
-		uint256[] calldata publicInputs,
+		WithdrawalProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external;
 
@@ -81,7 +97,10 @@ interface IRollup {
 	 * @notice Update the deposit tree branch and root.
 	 * @dev Only Liquidity contract can call this function via Scroll Messenger.
 	 */
-	function processDeposits(ILiquidity.Deposit[] calldata deposits) external;
+	function processDeposits(
+		uint256 lastProcessedDepositId,
+		bytes32[] calldata depositHashes
+	) external;
 
 	function getDepositTreeRoot() external view returns (bytes32);
 

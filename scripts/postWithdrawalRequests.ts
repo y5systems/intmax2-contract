@@ -25,7 +25,8 @@ async function main() {
 		},
 	]
 	console.log('withdrawal request:', withdrawRequests)
-	const publicInputs: string[] = []
+	const withdrawalTreeRoot = '0x' + '0'.repeat(64)
+	const publicInputs = { withdrawalTreeRoot, withdrawalAggregator: owner }
 	const proof = '0x'
 	const tx = await rollup.postWithdrawalRequests(
 		withdrawRequests,

@@ -37,20 +37,35 @@ export declare namespace IRollup {
     amount: bigint,
     salt: string
   ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
-}
 
-export declare namespace ILiquidity {
-  export type DepositStruct = {
-    recipientSaltHash: BytesLike;
-    tokenIndex: BigNumberish;
-    amount: BigNumberish;
+  export type WithdrawalProofPublicInputsStruct = {
+    withdrawalTreeRoot: BytesLike;
+    withdrawalAggregator: AddressLike;
   };
 
-  export type DepositStructOutput = [
-    recipientSaltHash: string,
-    tokenIndex: bigint,
-    amount: bigint
-  ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
+  export type WithdrawalProofPublicInputsStructOutput = [
+    withdrawalTreeRoot: string,
+    withdrawalAggregator: string
+  ] & { withdrawalTreeRoot: string; withdrawalAggregator: string };
+
+  export type FraudProofPublicInputsStruct = {
+    blockHash: BytesLike;
+    blockNumber: BigNumberish;
+    blockBuilder: AddressLike;
+    challenger: AddressLike;
+  };
+
+  export type FraudProofPublicInputsStructOutput = [
+    blockHash: string,
+    blockNumber: bigint,
+    blockBuilder: string,
+    challenger: string
+  ] & {
+    blockHash: string;
+    blockNumber: bigint;
+    blockBuilder: string;
+    challenger: string;
+  };
 }
 
 export interface IRollupInterface extends Interface {
@@ -101,15 +116,19 @@ export interface IRollupInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "postWithdrawalRequests",
-    values: [IRollup.WithdrawalStruct[], BigNumberish[], BytesLike]
+    values: [
+      IRollup.WithdrawalStruct[],
+      IRollup.WithdrawalProofPublicInputsStruct,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "processDeposits",
-    values: [ILiquidity.DepositStruct[]]
+    values: [BigNumberish, BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "submitBlockFraudProof",
-    values: [BigNumberish, AddressLike, BigNumberish[], BytesLike]
+    values: [IRollup.FraudProofPublicInputsStruct, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "submitWithdrawals",
@@ -212,15 +231,15 @@ export namespace DepositsProcessedEvent {
 export namespace WithdrawRequestedEvent {
   export type InputTuple = [
     withdrawalRequest: BytesLike,
-    withdrawAggregator: AddressLike
+    withdrawalAggregator: AddressLike
   ];
   export type OutputTuple = [
     withdrawalRequest: string,
-    withdrawAggregator: string
+    withdrawalAggregator: string
   ];
   export interface OutputObject {
     withdrawalRequest: string;
-    withdrawAggregator: string;
+    withdrawalAggregator: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -304,7 +323,7 @@ export interface IRollup extends BaseContract {
   postWithdrawalRequests: TypedContractMethod<
     [
       withdrawals: IRollup.WithdrawalStruct[],
-      publicInputs: BigNumberish[],
+      publicInputs: IRollup.WithdrawalProofPublicInputsStruct,
       proof: BytesLike
     ],
     [void],
@@ -312,18 +331,13 @@ export interface IRollup extends BaseContract {
   >;
 
   processDeposits: TypedContractMethod<
-    [deposits: ILiquidity.DepositStruct[]],
+    [lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
     [void],
     "nonpayable"
   >;
 
   submitBlockFraudProof: TypedContractMethod<
-    [
-      blockNumber: BigNumberish,
-      blockBuilder: AddressLike,
-      publicInputs: BigNumberish[],
-      proof: BytesLike
-    ],
+    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
     [void],
     "nonpayable"
   >;
@@ -373,7 +387,7 @@ export interface IRollup extends BaseContract {
   ): TypedContractMethod<
     [
       withdrawals: IRollup.WithdrawalStruct[],
-      publicInputs: BigNumberish[],
+      publicInputs: IRollup.WithdrawalProofPublicInputsStruct,
       proof: BytesLike
     ],
     [void],
@@ -382,19 +396,14 @@ export interface IRollup extends BaseContract {
   getFunction(
     nameOrSignature: "processDeposits"
   ): TypedContractMethod<
-    [deposits: ILiquidity.DepositStruct[]],
+    [lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
     [void],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "submitBlockFraudProof"
   ): TypedContractMethod<
-    [
-      blockNumber: BigNumberish,
-      blockBuilder: AddressLike,
-      publicInputs: BigNumberish[],
-      proof: BytesLike
-    ],
+    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
     [void],
     "nonpayable"
   >;

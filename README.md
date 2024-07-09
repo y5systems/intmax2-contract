@@ -7,16 +7,36 @@
 
 ## How to run
 
-### Run Rollup Test
+### Deploy Locally
 
 ```sh
 npm i
-npx hardhat node &
-npx hardhat run ./scripts/deployStep2ToL2.ts --network localhost
-npx hardhat run ./scripts/simpleRollupTest.ts --network localhost
+npx hardhat node
 ```
 
-## Deploying to Scroll & Scroll Sepolia (TODO)
+Open a new terminal and run the following commands:
+
+```sh
+npx hardhat run ./scripts/deployTestErc20.ts --network localhost
+npx hardhat run ./scripts/deployPlonkVerifier.ts --network localhost
+npx hardhat run ./scripts/deployStep1ToL2.ts --network localhost
+npx hardhat run ./scripts/deployStep2ToL1.ts --network localhost
+npx hardhat run ./scripts/deployStep3ToL2.ts --network localhost
+```
+
+### Deposit ETH
+
+```sh
+npx hardhat run ./scripts/depositETH.ts --network localhost
+```
+
+### Deposit ERC20
+
+```sh
+npx hardhat run ./scripts/depositERC20.ts --network localhost
+```
+
+## Deploy to Scroll & Scroll Sepolia (TODO)
 
 You must own ETH in the Sepolia and Scroll Sepolia networks respectively.
 
@@ -39,7 +59,7 @@ npm run relay-message-from-l2
 ```
 
 ### lint
-    
+
 ```sh
 npm run lint
 ```

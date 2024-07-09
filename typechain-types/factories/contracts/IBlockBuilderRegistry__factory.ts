@@ -18,6 +18,25 @@ const _abi = [
         name: "blockBuilder",
         type: "address",
       },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "challenger",
+        type: "address",
+      },
+    ],
+    name: "BlockBuilderSlashed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "blockBuilder",
+        type: "address",
+      },
     ],
     name: "BlockBuilderStoped",
     type: "event",
@@ -114,11 +133,6 @@ const _abi = [
   },
   {
     inputs: [
-      {
-        internalType: "uint32",
-        name: "blockNumber",
-        type: "uint32",
-      },
       {
         internalType: "address",
         name: "blockBuilder",

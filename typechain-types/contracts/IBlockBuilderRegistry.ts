@@ -59,7 +59,10 @@ export interface IBlockBuilderRegistryInterface extends Interface {
   ): FunctionFragment;
 
   getEvent(
-    nameOrSignatureOrTopic: "BlockBuilderStoped" | "BlockBuilderUpdated"
+    nameOrSignatureOrTopic:
+      | "BlockBuilderSlashed"
+      | "BlockBuilderStoped"
+      | "BlockBuilderUpdated"
   ): EventFragment;
 
   encodeFunctionData(
@@ -72,7 +75,7 @@ export interface IBlockBuilderRegistryInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "slashBlockBuilder",
-    values: [BigNumberish, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "stopBlockBuilder",
@@ -105,6 +108,19 @@ export interface IBlockBuilderRegistryInterface extends Interface {
     functionFragment: "updateBlockBuilder",
     data: BytesLike
   ): Result;
+}
+
+export namespace BlockBuilderSlashedEvent {
+  export type InputTuple = [blockBuilder: AddressLike, challenger: AddressLike];
+  export type OutputTuple = [blockBuilder: string, challenger: string];
+  export interface OutputObject {
+    blockBuilder: string;
+    challenger: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace BlockBuilderStopedEvent {
@@ -197,11 +213,7 @@ export interface IBlockBuilderRegistry extends BaseContract {
   >;
 
   slashBlockBuilder: TypedContractMethod<
-    [
-      blockNumber: BigNumberish,
-      blockBuilder: AddressLike,
-      challenger: AddressLike
-    ],
+    [blockBuilder: AddressLike, challenger: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -229,11 +241,7 @@ export interface IBlockBuilderRegistry extends BaseContract {
   getFunction(
     nameOrSignature: "slashBlockBuilder"
   ): TypedContractMethod<
-    [
-      blockNumber: BigNumberish,
-      blockBuilder: AddressLike,
-      challenger: AddressLike
-    ],
+    [blockBuilder: AddressLike, challenger: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -247,6 +255,13 @@ export interface IBlockBuilderRegistry extends BaseContract {
     nameOrSignature: "updateBlockBuilder"
   ): TypedContractMethod<[url: string], [void], "payable">;
 
+  getEvent(
+    key: "BlockBuilderSlashed"
+  ): TypedContractEvent<
+    BlockBuilderSlashedEvent.InputTuple,
+    BlockBuilderSlashedEvent.OutputTuple,
+    BlockBuilderSlashedEvent.OutputObject
+  >;
   getEvent(
     key: "BlockBuilderStoped"
   ): TypedContractEvent<
@@ -263,6 +278,17 @@ export interface IBlockBuilderRegistry extends BaseContract {
   >;
 
   filters: {
+    "BlockBuilderSlashed(address,address)": TypedContractEvent<
+      BlockBuilderSlashedEvent.InputTuple,
+      BlockBuilderSlashedEvent.OutputTuple,
+      BlockBuilderSlashedEvent.OutputObject
+    >;
+    BlockBuilderSlashed: TypedContractEvent<
+      BlockBuilderSlashedEvent.InputTuple,
+      BlockBuilderSlashedEvent.OutputTuple,
+      BlockBuilderSlashedEvent.OutputObject
+    >;
+
     "BlockBuilderStoped(address)": TypedContractEvent<
       BlockBuilderStopedEvent.InputTuple,
       BlockBuilderStopedEvent.OutputTuple,

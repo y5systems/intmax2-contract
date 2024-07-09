@@ -86,9 +86,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ILiquidity__factory>;
     getContractFactory(
+      name: "IPlonkVerifier",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPlonkVerifier__factory>;
+    getContractFactory(
       name: "IRollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IRollup__factory>;
+    getContractFactory(
+      name: "MockPlonkVerifier",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockPlonkVerifier__factory>;
     getContractFactory(
       name: "Liquidity",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -197,10 +205,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ILiquidity>;
     getContractAt(
+      name: "IPlonkVerifier",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPlonkVerifier>;
+    getContractAt(
       name: "IRollup",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.IRollup>;
+    getContractAt(
+      name: "MockPlonkVerifier",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockPlonkVerifier>;
     getContractAt(
       name: "Liquidity",
       address: string | ethers.Addressable,
@@ -295,9 +313,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ILiquidity>;
     deployContract(
+      name: "IPlonkVerifier",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPlonkVerifier>;
+    deployContract(
       name: "IRollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
+    deployContract(
+      name: "MockPlonkVerifier",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockPlonkVerifier>;
     deployContract(
       name: "Liquidity",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -406,10 +432,20 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ILiquidity>;
     deployContract(
+      name: "IPlonkVerifier",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPlonkVerifier>;
+    deployContract(
       name: "IRollup",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
+    deployContract(
+      name: "MockPlonkVerifier",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockPlonkVerifier>;
     deployContract(
       name: "Liquidity",
       args: any[],

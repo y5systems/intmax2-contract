@@ -3,7 +3,7 @@ import 'dotenv/config'
 import contractAddresses from './contractAddresses.json'
 import { ILiquidity, Liquidity } from '../typechain-types'
 import { testTokenSol } from '../typechain-types/contracts/token'
-import { calcRecipientSaltHash } from './utils/hash'
+import { getPubkeySaltHash } from './utils/hash'
 
 const getLatestDepositEvent = async (
 	liquidity: ILiquidity | Liquidity,
@@ -11,7 +11,7 @@ const getLatestDepositEvent = async (
 ) => {
 	// fetch the latest deposit event for the owner
 	const depositEvents = await liquidity.queryFilter(
-		liquidity.filters.Deposited(null, sender),
+		liquidity.filters.Deposited(undefined, sender),
 	)
 	const depositEvent = depositEvents.pop()
 	if (!depositEvent) {
@@ -45,12 +45,12 @@ async function main() {
 	)
 
 	const tokenAddress = contractAddresses.testErc20
-	const recipient = '0x' + '0'.repeat(63) + '1'
+	const recipientIntMaxAddress = BigInt(1)
 	const salt = '0x' + '0'.repeat(64)
-	const recipientSaltHash = calcRecipientSaltHash(recipient, salt)
+	const recipientSaltHash = getPubkeySaltHash(recipientIntMaxAddress, salt)
 	const amount = '1000000'
 
-	const approvalTx = await testErc20.approve(liquidity.address, amount)
+	const approvalTx = await testErc20.approve(liquidityContractAddress, amount)
 	console.log('tx hash:', approvalTx.hash)
 	await approvalTx.wait()
 	console.log('Approved ERC20')

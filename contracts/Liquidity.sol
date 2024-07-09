@@ -16,8 +16,6 @@ contract Liquidity is ILiquidity, ReentrancyGuard {
 	IScrollMessenger public _scrollMessenger;
 	address public _rollupContract;
 
-	uint64 _depositCounter = 1;
-
 	/**
 	 * @dev List of pending deposit requests. They are added when there is a request from a user
 	 *  and removed once processed or rejected.
@@ -32,7 +30,7 @@ contract Liquidity is ILiquidity, ReentrancyGuard {
 	uint256 _lastAnalyzedDepositId;
 	uint256 _lastProcessedDepositId;
 
-	uint256 _nextTokenIndex = 1;
+	uint256 _nextTokenIndex = 0;
 	TokenInfo[] _tokenIndexList;
 	mapping(address => uint32) _fungibleTokenIndexMap;
 	mapping(address => mapping(uint256 => uint32)) _nonFungibleTokenIndexMap;
@@ -61,8 +59,7 @@ contract Liquidity is ILiquidity, ReentrancyGuard {
 	constructor(address scrollMessenger, address rollupContract) {
 		_scrollMessenger = IScrollMessenger(scrollMessenger);
 		_rollupContract = rollupContract;
-		_tokenIndexList.push(TokenInfo(TokenType.ETH, address(0), 0));
-		_fungibleTokenIndexMap[address(0)] = 0;
+		_createTokenIndex(TokenType.ETH, address(0), 0);
 		_pendingDepositData.push(DepositData(0, address(0), 0));
 	}
 
@@ -226,12 +223,7 @@ contract Liquidity is ILiquidity, ReentrancyGuard {
 		uint32 tokenIndex,
 		uint256 amount
 	) internal {
-		require(
-			_depositCounter != type(uint64).max,
-			"Deposit counter overflow"
-		);
-		uint256 depositId = _depositCounter;
-		_depositCounter += 1;
+		uint256 depositId = getDepositCounter();
 		bytes32 depositHash = _calcDepositHash(
 			Deposit(recipientSaltHash, tokenIndex, amount)
 		);
@@ -254,16 +246,58 @@ contract Liquidity is ILiquidity, ReentrancyGuard {
 		address tokenAddress,
 		uint256 tokenId
 	) internal returns (uint32) {
-		if (tokenType == TokenType.ETH) {
-			return 0;
+		(bool ok, uint32 tokenIndex) = _getTokenIndex(
+			tokenType,
+			tokenAddress,
+			tokenId
+		);
+		if (ok) {
+			return tokenIndex;
 		}
 
+		return _createTokenIndex(tokenType, tokenAddress, tokenId);
+	}
+
+	function _getTokenIndex(
+		TokenType tokenType,
+		address tokenAddress,
+		uint256 tokenId
+	) internal view returns (bool, uint32) {
+		if (tokenType == TokenType.ETH) {
+			return (true, 0);
+		}
+
+		uint32 tokenIndex = _fungibleTokenIndexMap[tokenAddress];
+		if (tokenIndex != 0) {
+			return (true, tokenIndex);
+		}
+
+		tokenIndex = _nonFungibleTokenIndexMap[tokenAddress][tokenId];
+		if (tokenIndex != 0) {
+			return (true, tokenIndex);
+		}
+
+		return (false, 0);
+	}
+
+	function _createTokenIndex(
+		TokenType tokenType,
+		address tokenAddress,
+		uint256 tokenId
+	) internal returns (uint32) {
 		uint32 tokenIndex = uint32(_nextTokenIndex);
-		if (tokenType == TokenType.ERC20) {
-			_tokenIndexList.push(TokenInfo(tokenType, tokenAddress, tokenId));
+		_tokenIndexList.push(TokenInfo(tokenType, tokenAddress, tokenId));
+		if (tokenType == TokenType.ETH) {
+			_fungibleTokenIndexMap[address(0)] = tokenIndex;
+		} else if (tokenType == TokenType.ERC20) {
+			if (tokenAddress == address(0)) {
+				revert InvalidTokenAddress();
+			}
 			_fungibleTokenIndexMap[tokenAddress] = tokenIndex;
 		} else {
-			_tokenIndexList.push(TokenInfo(tokenType, tokenAddress, tokenId));
+			if (tokenAddress == address(0)) {
+				revert InvalidTokenAddress();
+			}
 			_nonFungibleTokenIndexMap[tokenAddress][tokenId] = tokenIndex;
 		}
 
@@ -306,7 +340,7 @@ contract Liquidity is ILiquidity, ReentrancyGuard {
 	}
 
 	function getDepositCounter() public view returns (uint256) {
-		return _depositCounter;
+		return _pendingDepositData.length;
 	}
 
 	function getPendingDeposit(
