@@ -5,9 +5,11 @@ import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenge
 import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "./IRollup.sol";
+import {IPlonkVerifier} from "./IPlonkVerifier.sol";
 
 contract Rollup is IRollup {
 	IScrollMessenger public _scrollMessenger;
+	IPlonkVerifier public _verifierAddress;
 	IBlockBuilderRegistry public _blockBuilderRegistryContract;
 	address public _liquidityContract;
 	bytes32 _depositTreeRoot;
@@ -15,6 +17,8 @@ contract Rollup is IRollup {
 	bytes32[] _blockHashes;
 	uint256 _lastProcessedWithdrawId;
 	bytes32[] _withdrawalRequests;
+	uint256 _lastProcessedDepositId;
+	mapping(uint32 => bool) _slashedBlockNumbers;
 
 	// TODO
 	modifier OnlyLiquidityContract() {
@@ -29,8 +33,8 @@ contract Rollup is IRollup {
 		_;
 	}
 
-	constructor(address scrollMessenger) {
-		_initialize(scrollMessenger);
+	constructor(address scrollMessenger, address verifierAddress) {
+		_initialize(scrollMessenger, verifierAddress);
 	}
 
 	function updateDependentContract(
@@ -44,25 +48,19 @@ contract Rollup is IRollup {
 	}
 
 	function processDeposits(
-		ILiquidity.Deposit[] calldata deposits
+		uint256 lastProcessedDepositId,
+		bytes32[] calldata depositHashes
 	) public OnlyLiquidityContract {
 		// for (uint256 i = 0; i < deposits.length; i++) {
-		//     _addLeafHash(
-		//         keccak256(
-		//             abi.encodePacked(
-		//                 deposits[i].recipientSaltHash,
-		//                 deposits[i].tokenIndex,
-		//                 deposits[i].amount
-		//             )
-		//         )
-		//     );
+		//     _deposit(depositHashes);
 		// }
 
 		// // Calculate the deposit tree root.
-		// bytes32 depositTreeRoot = getMerkleRoot();
+		// bytes32 depositTreeRoot = getDepositRoot();
 		bytes32 depositTreeRoot = 0;
 
 		_depositTreeRoot = depositTreeRoot;
+		_lastProcessedDepositId = lastProcessedDepositId;
 
 		emit DepositsProcessed(depositTreeRoot);
 	}
@@ -119,27 +117,64 @@ contract Rollup is IRollup {
 	}
 
 	function submitBlockFraudProof(
-		uint32 blockNumber,
-		address blockBuilder,
-		uint256[] calldata publicInputs,
+		FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) public {
+		if (_slashedBlockNumbers[publicInputs.blockNumber]) {
+			revert FraudProofAlreadySubmitted();
+		}
+
+		bytes32 pisHash = _getFraudProofPublicInputsHash(publicInputs);
+		if (!_verifierAddress.Verify(proof, _splitBytes32(pisHash))) {
+			revert FraudProofVerificationFailed();
+		}
+
+		_slashedBlockNumbers[publicInputs.blockNumber] = true;
 		_blockBuilderRegistryContract.slashBlockBuilder(
-			blockNumber,
-			blockBuilder,
+			publicInputs.blockBuilder,
 			msg.sender
 		);
 
-		emit BlockFraudProofSubmitted(blockNumber, blockBuilder, msg.sender);
+		emit BlockFraudProofSubmitted(publicInputs.blockNumber, publicInputs.blockBuilder, msg.sender);
 	}
+
+	function _getFraudProofPublicInputsHash(
+		FraudProofPublicInputs memory publicInputs
+	) internal pure returns (bytes32) {
+		return
+			keccak256(
+				abi.encodePacked(
+					publicInputs.blockHash,
+					publicInputs.blockNumber,
+					publicInputs.blockBuilder,
+					publicInputs.challenger
+				)
+			);
+	}
+
+	function _splitBytes32(
+        bytes32 input
+    ) internal pure returns (uint256[] memory) {
+        uint256[] memory parts = new uint256[](8);
+        for (uint256 i = 0; i < 8; i++) {
+            parts[i] = uint256(uint32(bytes4(input << (i * 32))));
+        }
+        return parts;
+    }
 
 	function postWithdrawalRequests(
 		Withdrawal[] calldata withdrawalRequests,
-		uint256[] calldata publicInputs,
+		WithdrawalProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) public {
-		// TODO: Implement the verWithdrawaln logic.
-		bytes32 withdrawTreeRoot = 0; // TODO: Calculate the withdrawal tree root from withdrawRequests.
+		bytes32 pisHash = _getWithdrawalProofPublicInputsHash(publicInputs);
+		if (!_verifierAddress.Verify(proof, _splitBytes32(pisHash))) {
+			revert WithdrawalProofVerificationFailed();
+		}
+
+		// TODO: Calculate the withdrawal tree root from withdrawRequests.
+
+		bytes32 withdrawalTreeRoot = publicInputs.withdrawalTreeRoot; 
 
 		for (uint256 i = 0; i < withdrawalRequests.length; i++) {
 			_withdrawalRequests.push(
@@ -147,7 +182,19 @@ contract Rollup is IRollup {
 			);
 		}
 
-		emit WithdrawRequested(withdrawTreeRoot, msg.sender);
+		emit WithdrawRequested(withdrawalTreeRoot, msg.sender);
+	}
+
+	function _getWithdrawalProofPublicInputsHash(
+		WithdrawalProofPublicInputs memory publicInputs
+	) internal pure returns (bytes32) {
+		return
+			keccak256(
+				abi.encodePacked(
+					publicInputs.withdrawalTreeRoot,
+					publicInputs.withdrawalAggregator
+				)
+			);
 	}
 
 	function submitWithdrawals(uint256 lastProcessedWithdrawId) public {
@@ -174,8 +221,13 @@ contract Rollup is IRollup {
 		return _lastProcessedWithdrawId;
 	}
 
-	function _initialize(address scrollMessenger) internal {
+	function getLastProcessedDepositId() public view returns (uint256) {
+		return _lastProcessedDepositId;
+	}
+
+	function _initialize(address scrollMessenger, address verifierAddress) internal {
 		_scrollMessenger = IScrollMessenger(scrollMessenger);
+		_verifierAddress = IPlonkVerifier(verifierAddress);
 		_blockHashes.push(bytes32(0));
 	}
 

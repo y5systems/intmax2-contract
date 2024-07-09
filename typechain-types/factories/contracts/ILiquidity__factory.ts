@@ -10,6 +10,11 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "InvalidTokenAddress",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [
       {

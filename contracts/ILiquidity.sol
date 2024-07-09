@@ -44,6 +44,8 @@ interface ILiquidity {
 
 	event DepositsSubmitted(uint256 indexed lastProcessedDepositId);
 
+	error InvalidTokenAddress();
+
 	function depositETH(bytes32 recipientSaltHash) external payable;
 
 	function depositERC20(

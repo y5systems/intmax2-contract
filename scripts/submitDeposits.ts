@@ -2,7 +2,7 @@ import { ethers, network } from 'hardhat'
 import 'dotenv/config'
 import contractAddresses from './contractAddresses.json'
 import { getFee } from './utils/scrollMessenger'
-import { calcRecipientSaltHash } from './utils/hash'
+import { getPubkeySaltHash } from './utils/hash'
 
 async function main() {
 	const liquidityContractAddress = contractAddresses.liquidity
@@ -21,15 +21,16 @@ async function main() {
 	console.log('balance', (await ethers.provider.getBalance(owner)).toString())
 
 	const lastAnalyzedDepositId = await liquidity.getLastAnalyzedDepositId()
-	const gasLimit = await liquidity.estimateGas.submitDeposits(
+	const gasLimit = await liquidity.submitDeposits.estimateGas(
 		lastAnalyzedDepositId,
 		{
-			value: ethers.provider.getBalance(owner),
+			value: await ethers.provider.getBalance(owner),
 		},
 	)
+	console.log("gasLimit", gasLimit);
 	const fee = await getFee(gasLimit)
 	// const fee = ethers.utils.parseEther('0.00001');
-	console.log('fee:', ethers.utils.formatEther(fee), 'ETH')
+	console.log('fee:', ethers.formatEther(fee), 'ETH')
 	const tx = await liquidity.submitDeposits(lastAnalyzedDepositId, {
 		value: fee,
 	})
@@ -43,9 +44,10 @@ async function main() {
 		const rollupContractAddress = contractAddresses.rollup
 		const rollup = await ethers.getContractAt('Rollup', rollupContractAddress)
 
-		const recipient = '0x' + '0'.repeat(63) + '1'
+		const lastProcessedDepositId = 2;
+		const recipientIntMaxAddress = BigInt(1)
 		const salt = '0x' + '0'.repeat(63) + '1'
-		const recipientSaltHash = calcRecipientSaltHash(recipient, salt)
+		const recipientSaltHash = getPubkeySaltHash(recipientIntMaxAddress, salt)
 		const deposits = [
 			{
 				recipientSaltHash: recipientSaltHash,
@@ -53,7 +55,13 @@ async function main() {
 				amount: 100,
 			},
 		] // TODO: Get withdrawals from the Rollup contract
-		const tx2 = await rollup.processDeposits(deposits)
+		const depositHashes = deposits.map((deposit) => {
+			return ethers.solidityPackedKeccak256(
+				['bytes32', 'uint256', 'uint256'],
+				[deposit.recipientSaltHash, deposit.tokenIndex, deposit.amount],
+			)
+		});
+		const tx2 = await rollup.processDeposits(lastProcessedDepositId, depositHashes)
 		console.log('tx hash:', tx2.hash)
 		await tx2.wait()
 		console.log('Process deposits')

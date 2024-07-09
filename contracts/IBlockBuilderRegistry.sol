@@ -26,6 +26,11 @@ interface IBlockBuilderRegistry {
 
 	event BlockBuilderStoped(address indexed blockBuilder);
 
+	event BlockBuilderSlashed(
+		address indexed blockBuilder,
+		address indexed challenger
+	);
+
 	/**
 	 * @notice Update block builder.
 	 * @dev This method is used to register or update the URL or IP address of the block builder.
@@ -52,7 +57,6 @@ interface IBlockBuilderRegistry {
 	 * @notice Prove that Block Builder has submitted an incorrect block using ZKP.
 	 */
 	function slashBlockBuilder(
-		uint32 blockNumber,
 		address blockBuilder,
 		address challenger
 	) external;

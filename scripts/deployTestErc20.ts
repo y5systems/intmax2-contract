@@ -8,12 +8,13 @@ async function main() {
 	const recipient = process.env.TOKEN_HOLDER || signers[0].address
 	const tokenFactory = await ethers.getContractFactory('TestERC20')
 	const token = await tokenFactory.deploy(recipient)
-	await token.deployed()
-	console.log('TestERC20 deployed to:', token.address)
+	await token.waitForDeployment()
+	const tokenAddress = await token.getAddress()
+	console.log('TestERC20 deployed to:', tokenAddress)
 
 	const newContractAddresses = {
 		...contractAddresses,
-		testErc20: token.address,
+		testErc20: tokenAddress,
 	}
 
 	saveJsonToFile(

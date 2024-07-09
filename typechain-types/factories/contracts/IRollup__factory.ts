@@ -7,6 +7,21 @@ import type { IRollup, IRollupInterface } from "../../contracts/IRollup";
 
 const _abi = [
   {
+    inputs: [],
+    name: "FraudProofAlreadySubmitted",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "FraudProofVerificationFailed",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "WithdrawalProofVerificationFailed",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [
       {
@@ -93,7 +108,7 @@ const _abi = [
       {
         indexed: false,
         internalType: "address",
-        name: "withdrawAggregator",
+        name: "withdrawalAggregator",
         type: "address",
       },
     ],
@@ -229,9 +244,21 @@ const _abi = [
         type: "tuple[]",
       },
       {
-        internalType: "uint256[]",
+        components: [
+          {
+            internalType: "bytes32",
+            name: "withdrawalTreeRoot",
+            type: "bytes32",
+          },
+          {
+            internalType: "address",
+            name: "withdrawalAggregator",
+            type: "address",
+          },
+        ],
+        internalType: "struct IRollup.WithdrawalProofPublicInputs",
         name: "publicInputs",
-        type: "uint256[]",
+        type: "tuple",
       },
       {
         internalType: "bytes",
@@ -247,26 +274,14 @@ const _abi = [
   {
     inputs: [
       {
-        components: [
-          {
-            internalType: "bytes32",
-            name: "recipientSaltHash",
-            type: "bytes32",
-          },
-          {
-            internalType: "uint32",
-            name: "tokenIndex",
-            type: "uint32",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-        ],
-        internalType: "struct ILiquidity.Deposit[]",
-        name: "deposits",
-        type: "tuple[]",
+        internalType: "uint256",
+        name: "lastProcessedDepositId",
+        type: "uint256",
+      },
+      {
+        internalType: "bytes32[]",
+        name: "depositHashes",
+        type: "bytes32[]",
       },
     ],
     name: "processDeposits",
@@ -277,19 +292,31 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint32",
-        name: "blockNumber",
-        type: "uint32",
-      },
-      {
-        internalType: "address",
-        name: "blockBuilder",
-        type: "address",
-      },
-      {
-        internalType: "uint256[]",
+        components: [
+          {
+            internalType: "bytes32",
+            name: "blockHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "uint32",
+            name: "blockNumber",
+            type: "uint32",
+          },
+          {
+            internalType: "address",
+            name: "blockBuilder",
+            type: "address",
+          },
+          {
+            internalType: "address",
+            name: "challenger",
+            type: "address",
+          },
+        ],
+        internalType: "struct IRollup.FraudProofPublicInputs",
         name: "publicInputs",
-        type: "uint256[]",
+        type: "tuple",
       },
       {
         internalType: "bytes",

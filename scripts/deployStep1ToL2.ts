@@ -1,24 +1,29 @@
 import { ethers } from 'hardhat'
 import 'dotenv/config'
-// import contractAddresses from "./contractAddresses.json";
+import contractAddresses from "./contractAddresses.json";
 import { saveJsonToFile } from './utils/saveJsonToFile'
 
 const l2MessengerAddress = '0xBa50f5340FB9F3Bd074bD638c9BE13eCB36E603d'
 
 async function main() {
-	let newContractAddresses: { [contractName: string]: string } = {}
+	let newContractAddresses: { [contractName: string]: string } = contractAddresses
 
 	let rollupContractAddress = (newContractAddresses as any).rollup
 	if (!rollupContractAddress) {
+		const plonkVerifierAddress = contractAddresses.plonkVerifier
+		if (!plonkVerifierAddress) {
+			throw new Error('plonkVerifierAddress is not set')
+		}
+
 		const rollupFactory = await ethers.getContractFactory('Rollup')
-		const rollup = await rollupFactory.deploy(l2MessengerAddress)
-		await rollup.deployed()
-		rollupContractAddress = rollup.address
+		const rollup = await rollupFactory.deploy(l2MessengerAddress, plonkVerifierAddress)
+		await rollup.waitForDeployment()
+		rollupContractAddress = await rollup.getAddress()
 		console.log('Rollup deployed to:', rollupContractAddress)
 
 		newContractAddresses = {
 			...newContractAddresses,
-			rollup: rollup.address,
+			rollup: rollupContractAddress,
 		}
 
 		saveJsonToFile(
@@ -33,8 +38,8 @@ async function main() {
 	const blockBuilderRegistry = await blockBuilderRegistryFactory.deploy(
 		rollupContractAddress,
 	)
-	await blockBuilderRegistry.deployed()
-	const blockBuilderRegistryContractAddress = blockBuilderRegistry.address
+	await blockBuilderRegistry.waitForDeployment()
+	const blockBuilderRegistryContractAddress = await blockBuilderRegistry.getAddress()
 	console.log(
 		'Block Builder Registry deployed to:',
 		blockBuilderRegistryContractAddress,

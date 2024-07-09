@@ -2,12 +2,12 @@ import { ethers } from 'hardhat'
 import 'dotenv/config'
 import contractAddresses from './contractAddresses.json'
 import { Liquidity } from '../typechain-types'
-import { calcRecipientSaltHash } from './utils/hash'
+import { getPubkeySaltHash } from './utils/hash'
 
 const getLatestDepositEvents = async (liquidity: Liquidity, sender: string) => {
 	// fetch the latest deposit event for the owner
 	const depositEvents = await liquidity.queryFilter(
-		liquidity.filters.Deposited(null, sender),
+		liquidity.filters.Deposited(undefined, sender),
 	)
 	const depositEvent = depositEvents.pop()
 	if (!depositEvent) {
@@ -31,10 +31,10 @@ async function main() {
 		liquidityContractAddress,
 	)
 
-	const recipient = '0x' + '0'.repeat(63) + '1'
+	const recipientIntMaxAddress = BigInt(1)
 	const salt = '0x' + '0'.repeat(64)
-	const recipientSaltHash = calcRecipientSaltHash(recipient, salt)
-	const amount = ethers.utils.parseEther('0.0000000001') // 0.1 Gwei
+	const recipientSaltHash = getPubkeySaltHash(recipientIntMaxAddress, salt)
+	const amount = ethers.parseEther('0.0000000001') // 0.1 Gwei
 	const tx = await liquidity.depositETH(recipientSaltHash, {
 		value: amount,
 	})

@@ -39,7 +39,7 @@ npm run relay-message-from-l2
 ```
 
 ### lint
-    
+
 ```sh
 npm run lint
 ```
