@@ -13,8 +13,8 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 
 	modifier OnlyRollupContract() {
 		require(
-		    msg.sender == address(_rollupContract),
-		    "This method can only be called from Rollup contract."
+			msg.sender == address(_rollupContract),
+			"This method can only be called from Rollup contract."
 		);
 		_;
 	}
@@ -97,7 +97,9 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 				payable(challenger).transfer(slashAmount);
 			} else {
 				payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-				payable(_burnAddress).transfer(slashAmount - (MIN_STAKE_AMOUNT / 2));
+				payable(_burnAddress).transfer(
+					slashAmount - (MIN_STAKE_AMOUNT / 2)
+				);
 			}
 		} else {
 			_blockBuilders[blockBuilder].stakeAmount -= MIN_STAKE_AMOUNT;
@@ -108,7 +110,9 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 			// the generation of block validity proofs. An invalid block must prove
 			// in the block validity proof that it has been invalidated.
 			payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-			payable(_burnAddress).transfer(MIN_STAKE_AMOUNT - (MIN_STAKE_AMOUNT / 2));
+			payable(_burnAddress).transfer(
+				MIN_STAKE_AMOUNT - (MIN_STAKE_AMOUNT / 2)
+			);
 		}
 
 		emit BlockBuilderSlashed(blockBuilder, challenger);

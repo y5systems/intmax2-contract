@@ -4,9 +4,8 @@ import contractAddresses from './contractAddresses.json'
 import { saveJsonToFile } from './utils/saveJsonToFile'
 
 async function main() {
-	const plonkVerifierFactory = await ethers.getContractFactory(
-		'MockPlonkVerifier',
-	)
+	const plonkVerifierFactory =
+		await ethers.getContractFactory('MockPlonkVerifier')
 	const plonkVerifier = await plonkVerifierFactory.deploy()
 	await plonkVerifier.waitForDeployment()
 	const plonkVerifierAddress = await plonkVerifier.getAddress()

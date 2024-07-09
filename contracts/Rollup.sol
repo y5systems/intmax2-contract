@@ -135,7 +135,11 @@ contract Rollup is IRollup {
 			msg.sender
 		);
 
-		emit BlockFraudProofSubmitted(publicInputs.blockNumber, publicInputs.blockBuilder, msg.sender);
+		emit BlockFraudProofSubmitted(
+			publicInputs.blockNumber,
+			publicInputs.blockBuilder,
+			msg.sender
+		);
 	}
 
 	function _getFraudProofPublicInputsHash(
@@ -153,14 +157,14 @@ contract Rollup is IRollup {
 	}
 
 	function _splitBytes32(
-        bytes32 input
-    ) internal pure returns (uint256[] memory) {
-        uint256[] memory parts = new uint256[](8);
-        for (uint256 i = 0; i < 8; i++) {
-            parts[i] = uint256(uint32(bytes4(input << (i * 32))));
-        }
-        return parts;
-    }
+		bytes32 input
+	) internal pure returns (uint256[] memory) {
+		uint256[] memory parts = new uint256[](8);
+		for (uint256 i = 0; i < 8; i++) {
+			parts[i] = uint256(uint32(bytes4(input << (i * 32))));
+		}
+		return parts;
+	}
 
 	function postWithdrawalRequests(
 		Withdrawal[] calldata withdrawalRequests,
@@ -174,7 +178,7 @@ contract Rollup is IRollup {
 
 		// TODO: Calculate the withdrawal tree root from withdrawRequests.
 
-		bytes32 withdrawalTreeRoot = publicInputs.withdrawalTreeRoot; 
+		bytes32 withdrawalTreeRoot = publicInputs.withdrawalTreeRoot;
 
 		for (uint256 i = 0; i < withdrawalRequests.length; i++) {
 			_withdrawalRequests.push(
@@ -225,7 +229,10 @@ contract Rollup is IRollup {
 		return _lastProcessedDepositId;
 	}
 
-	function _initialize(address scrollMessenger, address verifierAddress) internal {
+	function _initialize(
+		address scrollMessenger,
+		address verifierAddress
+	) internal {
 		_scrollMessenger = IScrollMessenger(scrollMessenger);
 		_verifierAddress = IPlonkVerifier(verifierAddress);
 		_blockHashes.push(bytes32(0));

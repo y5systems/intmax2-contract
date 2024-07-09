@@ -20,7 +20,7 @@ interface IRollup {
 	struct FraudProofPublicInputs {
 		bytes32 blockHash;
 		uint32 blockNumber;
-  		address blockBuilder;
+		address blockBuilder;
 		address challenger;
 	}
 

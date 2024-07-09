@@ -27,7 +27,7 @@ async function main() {
 			value: await ethers.provider.getBalance(owner),
 		},
 	)
-	console.log("gasLimit", gasLimit);
+	console.log('gasLimit', gasLimit)
 	const fee = await getFee(gasLimit)
 	// const fee = ethers.utils.parseEther('0.00001');
 	console.log('fee:', ethers.formatEther(fee), 'ETH')
@@ -44,7 +44,7 @@ async function main() {
 		const rollupContractAddress = contractAddresses.rollup
 		const rollup = await ethers.getContractAt('Rollup', rollupContractAddress)
 
-		const lastProcessedDepositId = 2;
+		const lastProcessedDepositId = 2
 		const recipientIntMaxAddress = BigInt(1)
 		const salt = '0x' + '0'.repeat(63) + '1'
 		const recipientSaltHash = getPubkeySaltHash(recipientIntMaxAddress, salt)
@@ -60,8 +60,11 @@ async function main() {
 				['bytes32', 'uint256', 'uint256'],
 				[deposit.recipientSaltHash, deposit.tokenIndex, deposit.amount],
 			)
-		});
-		const tx2 = await rollup.processDeposits(lastProcessedDepositId, depositHashes)
+		})
+		const tx2 = await rollup.processDeposits(
+			lastProcessedDepositId,
+			depositHashes,
+		)
 		console.log('tx hash:', tx2.hash)
 		await tx2.wait()
 		console.log('Process deposits')

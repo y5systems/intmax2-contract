@@ -6,7 +6,7 @@ import { saveJsonToFile } from './utils/saveJsonToFile'
 async function main() {
 	if (network.name === 'scrollsepolia' || network.name === 'scroll') {
 		// L1 gas price oracle contract is precompiled on Scroll network (L2).
-		const l1GasPriceOracleAddress = "0x5300000000000000000000000000000000000002"
+		const l1GasPriceOracleAddress = '0x5300000000000000000000000000000000000002'
 		const newContractAddresses = {
 			...contractAddresses,
 			l1GasPriceOracle: l1GasPriceOracleAddress,
@@ -17,7 +17,7 @@ async function main() {
 			JSON.stringify(newContractAddresses, null, 2),
 		)
 
-		return;
+		return
 	}
 
 	const l1GasPriceOracleFactory = await ethers.getContractFactory(
