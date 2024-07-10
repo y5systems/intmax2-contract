@@ -106,6 +106,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BlockBuilderRegistry__factory>;
     getContractFactory(
+      name: "BlockBuilderRegistry",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BlockBuilderRegistry__factory>;
+    getContractFactory(
+      name: "IBlockBuilderRegistry",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IBlockBuilderRegistry__factory>;
+    getContractFactory(
       name: "IBlockBuilderRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBlockBuilderRegistry__factory>;
@@ -258,6 +266,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.BlockBuilderRegistry>;
     getContractAt(
+      name: "BlockBuilderRegistry",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BlockBuilderRegistry>;
+    getContractAt(
+      name: "IBlockBuilderRegistry",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IBlockBuilderRegistry>;
+    getContractAt(
       name: "IBlockBuilderRegistry",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -396,6 +414,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderRegistry>;
     deployContract(
+      name: "BlockBuilderRegistry",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BlockBuilderRegistry>;
+    deployContract(
+      name: "IBlockBuilderRegistry",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IBlockBuilderRegistry>;
+    deployContract(
       name: "IBlockBuilderRegistry",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
@@ -547,6 +573,16 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderRegistry>;
+    deployContract(
+      name: "BlockBuilderRegistry",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BlockBuilderRegistry>;
+    deployContract(
+      name: "IBlockBuilderRegistry",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IBlockBuilderRegistry>;
     deployContract(
       name: "IBlockBuilderRegistry",
       args: any[],

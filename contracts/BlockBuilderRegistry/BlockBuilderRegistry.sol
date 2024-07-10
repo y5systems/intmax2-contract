@@ -13,11 +13,13 @@ contract BlockBuilderRegistry is
 	IBlockBuilderRegistry
 {
 	address private rollupContract;
-	address private constant BURN_ADDRESS =
-		0x000000000000000000000000000000000000dEaD;
+	address private burnAddress = 0x000000000000000000000000000000000000dEaD;
 	mapping(address => BlockBuilderInfo) private _blockBuilders;
 	using BlockBuilderInfoLib for BlockBuilderInfo;
 
+	/**
+	 * @notice Modifier that allows only the rollup contract to call the function.
+	 */
 	modifier onlyRollupContract() {
 		if (_msgSender() != rollupContract) {
 			revert OnlyRollupContract();
@@ -32,6 +34,10 @@ contract BlockBuilderRegistry is
 		_;
 	}
 
+	/**
+	 * @notice Initialize the contract.
+	 * @param _rollupContract The address of the rollup contract.
+	 */
 	function initialize(address _rollupContract) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
@@ -102,7 +108,7 @@ contract BlockBuilderRegistry is
 				payable(challenger).transfer(slashAmount);
 			} else {
 				payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-				payable(BURN_ADDRESS).transfer(
+				payable(burnAddress).transfer(
 					slashAmount - (MIN_STAKE_AMOUNT / 2)
 				);
 			}
@@ -117,7 +123,7 @@ contract BlockBuilderRegistry is
 		// the generation of block validity proofs. An invalid block must prove
 		// in the block validity proof that it has been invalidated.
 		payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-		payable(BURN_ADDRESS).transfer(
+		payable(burnAddress).transfer(
 			MIN_STAKE_AMOUNT - (MIN_STAKE_AMOUNT / 2)
 		);
 	}
@@ -132,6 +138,10 @@ contract BlockBuilderRegistry is
 		address blockBuilder
 	) external view returns (BlockBuilderInfo memory) {
 		return _blockBuilders[blockBuilder];
+	}
+
+	function setBurnAddress(address _burnAddress) external onlyOwner {
+		burnAddress = _burnAddress;
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

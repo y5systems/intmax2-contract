@@ -54,8 +54,8 @@ export type { IScrollMessenger } from "./@scroll-tech/contracts/libraries/IScrol
 export { IScrollMessenger__factory } from "./factories/@scroll-tech/contracts/libraries/IScrollMessenger__factory";
 export type { BlockBuilderRegistry } from "./contracts/BlockBuilderRegistry";
 export { BlockBuilderRegistry__factory } from "./factories/contracts/BlockBuilderRegistry__factory";
-export type { IBlockBuilderRegistry } from "./contracts/IBlockBuilderRegistry";
-export { IBlockBuilderRegistry__factory } from "./factories/contracts/IBlockBuilderRegistry__factory";
+export type { IBlockBuilderRegistry } from "./contracts/BlockBuilderRegistry/IBlockBuilderRegistry";
+export { IBlockBuilderRegistry__factory } from "./factories/contracts/BlockBuilderRegistry/IBlockBuilderRegistry__factory";
 export type { ILiquidity } from "./contracts/ILiquidity";
 export { ILiquidity__factory } from "./factories/contracts/ILiquidity__factory";
 export type { IPlonkVerifier } from "./contracts/IPlonkVerifier";

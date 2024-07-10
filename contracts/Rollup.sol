@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import {IScrollMessenger} from "@scroll-tech/contracts/libraries/IScrollMessenger.sol";
-import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
+import {IBlockBuilderRegistry} from "./BlockBuilderRegistry/IBlockBuilderRegistry.sol";
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "./IRollup.sol";
 import {IPlonkVerifier} from "./IPlonkVerifier.sol";
