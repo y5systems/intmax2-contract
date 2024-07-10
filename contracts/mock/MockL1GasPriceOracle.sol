@@ -14,11 +14,11 @@ contract MockL1GasPriceOracle is IL1GasPriceOracle {
 		return BASE_FEE;
 	}
 
-	function overhead() external view returns (uint256) {
+	function overhead() external pure returns (uint256) {
 		return 0;
 	}
 
-	function scalar() external view returns (uint256) {
+	function scalar() external pure returns (uint256) {
 		return 1;
 	}
 
@@ -26,7 +26,7 @@ contract MockL1GasPriceOracle is IL1GasPriceOracle {
 		return BASE_FEE;
 	}
 
-	function getL1GasUsed(bytes memory) external view returns (uint256) {
+	function getL1GasUsed(bytes memory) external pure returns (uint256) {
 		return 0;
 	}
 

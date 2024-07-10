@@ -2,6 +2,22 @@
 pragma solidity 0.8.24;
 
 interface IBlockBuilderRegistry {
+	error OnlyRollupContract();
+	error InsufficientStakeAmount();
+	error BlockBuilderNotFound();
+	error CannotUnstakeWithin24Hours();
+	event BlockBuilderUpdated(
+		address indexed blockBuilder,
+		string url,
+		uint256 stakeAmount
+	);
+
+	event BlockBuilderStoped(address indexed blockBuilder);
+
+	event BlockBuilderSlashed(
+		address indexed blockBuilder,
+		address indexed challenger
+	);
 	/**
 	 * @notice Block builder information.
 	 * @param blockBuilderUrl The URL or IP address of Block builder.
@@ -17,19 +33,6 @@ interface IBlockBuilderRegistry {
 		uint256 numSlashes;
 		bool isValid;
 	}
-
-	event BlockBuilderUpdated(
-		address indexed blockBuilder,
-		string url,
-		uint256 stakeAmount
-	);
-
-	event BlockBuilderStoped(address indexed blockBuilder);
-
-	event BlockBuilderSlashed(
-		address indexed blockBuilder,
-		address indexed challenger
-	);
 
 	/**
 	 * @notice Update block builder.
@@ -55,17 +58,38 @@ interface IBlockBuilderRegistry {
 
 	/**
 	 * @notice Prove that Block Builder has submitted an incorrect block using ZKP.
+	 * @param blockBuilder The address of the block builder.
+	 * @param challenger The address of the challenger.
 	 */
 	function slashBlockBuilder(
 		address blockBuilder,
 		address challenger
 	) external;
 
+	/**
+	 * @notice Check if the block builder is valid.
+	 * @param blockBuilder The address of the block builder.
+	 * @return True if the block builder is valid.
+	 * @dev The block builder is valid if the stake amount is greater than or equal to 0.1 ETH.
+	 */
 	function isValidBlockBuilder(
 		address blockBuilder
-	) external view returns (bool ok);
+	) external view returns (bool);
 
+	/**
+	 * @notice Get the block builder information.
+	 * @param blockBuilder The address of the block builder.
+	 * @return The block builder information.
+	 * @dev If the block builder is not found, it will return an empty struct.
+	 */
 	function getBlockBuilder(
 		address blockBuilder
 	) external view returns (BlockBuilderInfo memory);
+
+	/**
+	 * @notice Set the burn address.
+	 * @param _burnAddress The burn address.
+	 * @dev The burn address is used to burn the stake amount when the block builder is slashed.
+	 */
+	function setBurnAddress(address _burnAddress) external;
 }

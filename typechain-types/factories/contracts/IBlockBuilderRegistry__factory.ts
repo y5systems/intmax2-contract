@@ -10,6 +10,26 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "BlockBuilderNotFound",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "CannotUnstakeWithin24Hours",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InsufficientStakeAmount",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "OnlyRollupContract",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [
       {

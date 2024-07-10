@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import 'dotenv/config'
 import contractAddresses from './contractAddresses.json'
 import { saveJsonToFile } from './utils/saveJsonToFile'
@@ -39,10 +39,11 @@ async function main() {
 	const blockBuilderRegistryFactory = await ethers.getContractFactory(
 		'BlockBuilderRegistry',
 	)
-	const blockBuilderRegistry = await blockBuilderRegistryFactory.deploy(
-		rollupContractAddress,
+	const blockBuilderRegistry = await upgrades.deployProxy(
+		blockBuilderRegistryFactory,
+		[rollupContractAddress],
+		{ kind: 'uups' },
 	)
-	await blockBuilderRegistry.waitForDeployment()
 	const blockBuilderRegistryContractAddress =
 		await blockBuilderRegistry.getAddress()
 	console.log(
