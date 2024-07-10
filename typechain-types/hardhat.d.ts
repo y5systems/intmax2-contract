@@ -106,14 +106,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BlockBuilderRegistry__factory>;
     getContractFactory(
-      name: "BlockBuilderRegistry",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.BlockBuilderRegistry__factory>;
-    getContractFactory(
-      name: "IBlockBuilderRegistry",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IBlockBuilderRegistry__factory>;
-    getContractFactory(
       name: "IBlockBuilderRegistry",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBlockBuilderRegistry__factory>;
@@ -126,10 +118,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IPlonkVerifier__factory>;
     getContractFactory(
-      name: "IRollup",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IRollup__factory>;
-    getContractFactory(
       name: "MockPlonkVerifier",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockPlonkVerifier__factory>;
@@ -141,6 +129,10 @@ declare module "hardhat/types/runtime" {
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockL1GasPriceOracle__factory>;
+    getContractFactory(
+      name: "IRollup",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IRollup__factory>;
     getContractFactory(
       name: "Rollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -266,16 +258,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.BlockBuilderRegistry>;
     getContractAt(
-      name: "BlockBuilderRegistry",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.BlockBuilderRegistry>;
-    getContractAt(
-      name: "IBlockBuilderRegistry",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IBlockBuilderRegistry>;
-    getContractAt(
       name: "IBlockBuilderRegistry",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -291,11 +273,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IPlonkVerifier>;
     getContractAt(
-      name: "IRollup",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IRollup>;
-    getContractAt(
       name: "MockPlonkVerifier",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -310,6 +287,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MockL1GasPriceOracle>;
+    getContractAt(
+      name: "IRollup",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IRollup>;
     getContractAt(
       name: "Rollup",
       address: string | ethers.Addressable,
@@ -414,14 +396,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderRegistry>;
     deployContract(
-      name: "BlockBuilderRegistry",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.BlockBuilderRegistry>;
-    deployContract(
-      name: "IBlockBuilderRegistry",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IBlockBuilderRegistry>;
-    deployContract(
       name: "IBlockBuilderRegistry",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
@@ -434,10 +408,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IPlonkVerifier>;
     deployContract(
-      name: "IRollup",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IRollup>;
-    deployContract(
       name: "MockPlonkVerifier",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockPlonkVerifier>;
@@ -449,6 +419,10 @@ declare module "hardhat/types/runtime" {
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockL1GasPriceOracle>;
+    deployContract(
+      name: "IRollup",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IRollup>;
     deployContract(
       name: "Rollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -574,16 +548,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderRegistry>;
     deployContract(
-      name: "BlockBuilderRegistry",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.BlockBuilderRegistry>;
-    deployContract(
-      name: "IBlockBuilderRegistry",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IBlockBuilderRegistry>;
-    deployContract(
       name: "IBlockBuilderRegistry",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -599,11 +563,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IPlonkVerifier>;
     deployContract(
-      name: "IRollup",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IRollup>;
-    deployContract(
       name: "MockPlonkVerifier",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -618,6 +577,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockL1GasPriceOracle>;
+    deployContract(
+      name: "IRollup",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IRollup>;
     deployContract(
       name: "Rollup",
       args: any[],

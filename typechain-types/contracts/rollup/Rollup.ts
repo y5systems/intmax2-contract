@@ -21,7 +21,7 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../common";
+} from "../../common";
 
 export declare namespace IRollup {
   export type WithdrawalStruct = {
@@ -442,7 +442,7 @@ export interface Rollup extends BaseContract {
 
   postWithdrawalRequests: TypedContractMethod<
     [
-      withdrawalRequests: IRollup.WithdrawalStruct[],
+      _withdrawalRequests: IRollup.WithdrawalStruct[],
       publicInputs: IRollup.WithdrawalProofPublicInputsStruct,
       proof: BytesLike
     ],
@@ -543,7 +543,7 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "postWithdrawalRequests"
   ): TypedContractMethod<
     [
-      withdrawalRequests: IRollup.WithdrawalStruct[],
+      _withdrawalRequests: IRollup.WithdrawalStruct[],
       publicInputs: IRollup.WithdrawalProofPublicInputsStruct,
       proof: BytesLike
     ],

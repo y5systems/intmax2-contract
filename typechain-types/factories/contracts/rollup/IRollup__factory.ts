@@ -3,7 +3,10 @@
 /* eslint-disable */
 
 import { Contract, Interface, type ContractRunner } from "ethers";
-import type { IRollup, IRollupInterface } from "../../contracts/IRollup";
+import type {
+  IRollup,
+  IRollupInterface,
+} from "../../../contracts/rollup/IRollup";
 
 const _abi = [
   {

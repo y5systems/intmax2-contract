@@ -47,23 +47,16 @@ export declare namespace IBlockBuilderRegistry {
   };
 }
 
-export interface BlockBuilderRegistryInterface extends Interface {
+export interface IBlockBuilderRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "UPGRADE_INTERFACE_VERSION"
       | "getBlockBuilder"
-      | "initialize"
       | "isValidBlockBuilder"
-      | "owner"
-      | "proxiableUUID"
-      | "renounceOwnership"
       | "setBurnAddress"
       | "slashBlockBuilder"
       | "stopBlockBuilder"
-      | "transferOwnership"
       | "unstake"
       | "updateBlockBuilder"
-      | "upgradeToAndCall"
   ): FunctionFragment;
 
   getEvent(
@@ -71,35 +64,15 @@ export interface BlockBuilderRegistryInterface extends Interface {
       | "BlockBuilderSlashed"
       | "BlockBuilderStoped"
       | "BlockBuilderUpdated"
-      | "Initialized"
-      | "OwnershipTransferred"
-      | "Upgraded"
   ): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "UPGRADE_INTERFACE_VERSION",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "getBlockBuilder",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "initialize",
-    values: [AddressLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "isValidBlockBuilder",
     values: [AddressLike]
-  ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "proxiableUUID",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "setBurnAddress",
@@ -113,40 +86,18 @@ export interface BlockBuilderRegistryInterface extends Interface {
     functionFragment: "stopBlockBuilder",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [AddressLike]
-  ): string;
   encodeFunctionData(functionFragment: "unstake", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "updateBlockBuilder",
     values: [string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "upgradeToAndCall",
-    values: [AddressLike, BytesLike]
-  ): string;
 
-  decodeFunctionResult(
-    functionFragment: "UPGRADE_INTERFACE_VERSION",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "getBlockBuilder",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isValidBlockBuilder",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "proxiableUUID",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -161,17 +112,9 @@ export interface BlockBuilderRegistryInterface extends Interface {
     functionFragment: "stopBlockBuilder",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "unstake", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "updateBlockBuilder",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
 }
@@ -223,48 +166,11 @@ export namespace BlockBuilderUpdatedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace InitializedEvent {
-  export type InputTuple = [version: BigNumberish];
-  export type OutputTuple = [version: bigint];
-  export interface OutputObject {
-    version: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace OwnershipTransferredEvent {
-  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
-  export type OutputTuple = [previousOwner: string, newOwner: string];
-  export interface OutputObject {
-    previousOwner: string;
-    newOwner: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace UpgradedEvent {
-  export type InputTuple = [implementation: AddressLike];
-  export type OutputTuple = [implementation: string];
-  export interface OutputObject {
-    implementation: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export interface BlockBuilderRegistry extends BaseContract {
-  connect(runner?: ContractRunner | null): BlockBuilderRegistry;
+export interface IBlockBuilderRegistry extends BaseContract {
+  connect(runner?: ContractRunner | null): IBlockBuilderRegistry;
   waitForDeployment(): Promise<this>;
 
-  interface: BlockBuilderRegistryInterface;
+  interface: IBlockBuilderRegistryInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -303,27 +209,17 @@ export interface BlockBuilderRegistry extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
-
   getBlockBuilder: TypedContractMethod<
     [blockBuilder: AddressLike],
     [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
     "view"
   >;
 
-  initialize: TypedContractMethod<[_rollup: AddressLike], [void], "nonpayable">;
-
   isValidBlockBuilder: TypedContractMethod<
     [blockBuilder: AddressLike],
     [boolean],
     "view"
   >;
-
-  owner: TypedContractMethod<[], [string], "view">;
-
-  proxiableUUID: TypedContractMethod<[], [string], "view">;
-
-  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   setBurnAddress: TypedContractMethod<
     [_burnAddress: AddressLike],
@@ -339,29 +235,14 @@ export interface BlockBuilderRegistry extends BaseContract {
 
   stopBlockBuilder: TypedContractMethod<[], [void], "nonpayable">;
 
-  transferOwnership: TypedContractMethod<
-    [newOwner: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
   unstake: TypedContractMethod<[], [void], "nonpayable">;
 
   updateBlockBuilder: TypedContractMethod<[url: string], [void], "payable">;
-
-  upgradeToAndCall: TypedContractMethod<
-    [newImplementation: AddressLike, data: BytesLike],
-    [void],
-    "payable"
-  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "UPGRADE_INTERFACE_VERSION"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "getBlockBuilder"
   ): TypedContractMethod<
@@ -370,20 +251,8 @@ export interface BlockBuilderRegistry extends BaseContract {
     "view"
   >;
   getFunction(
-    nameOrSignature: "initialize"
-  ): TypedContractMethod<[_rollup: AddressLike], [void], "nonpayable">;
-  getFunction(
     nameOrSignature: "isValidBlockBuilder"
   ): TypedContractMethod<[blockBuilder: AddressLike], [boolean], "view">;
-  getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "proxiableUUID"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "renounceOwnership"
-  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setBurnAddress"
   ): TypedContractMethod<[_burnAddress: AddressLike], [void], "nonpayable">;
@@ -398,21 +267,11 @@ export interface BlockBuilderRegistry extends BaseContract {
     nameOrSignature: "stopBlockBuilder"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "transferOwnership"
-  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
-  getFunction(
     nameOrSignature: "unstake"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "updateBlockBuilder"
   ): TypedContractMethod<[url: string], [void], "payable">;
-  getFunction(
-    nameOrSignature: "upgradeToAndCall"
-  ): TypedContractMethod<
-    [newImplementation: AddressLike, data: BytesLike],
-    [void],
-    "payable"
-  >;
 
   getEvent(
     key: "BlockBuilderSlashed"
@@ -434,27 +293,6 @@ export interface BlockBuilderRegistry extends BaseContract {
     BlockBuilderUpdatedEvent.InputTuple,
     BlockBuilderUpdatedEvent.OutputTuple,
     BlockBuilderUpdatedEvent.OutputObject
-  >;
-  getEvent(
-    key: "Initialized"
-  ): TypedContractEvent<
-    InitializedEvent.InputTuple,
-    InitializedEvent.OutputTuple,
-    InitializedEvent.OutputObject
-  >;
-  getEvent(
-    key: "OwnershipTransferred"
-  ): TypedContractEvent<
-    OwnershipTransferredEvent.InputTuple,
-    OwnershipTransferredEvent.OutputTuple,
-    OwnershipTransferredEvent.OutputObject
-  >;
-  getEvent(
-    key: "Upgraded"
-  ): TypedContractEvent<
-    UpgradedEvent.InputTuple,
-    UpgradedEvent.OutputTuple,
-    UpgradedEvent.OutputObject
   >;
 
   filters: {
@@ -489,39 +327,6 @@ export interface BlockBuilderRegistry extends BaseContract {
       BlockBuilderUpdatedEvent.InputTuple,
       BlockBuilderUpdatedEvent.OutputTuple,
       BlockBuilderUpdatedEvent.OutputObject
-    >;
-
-    "Initialized(uint64)": TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
-    >;
-    Initialized: TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
-    >;
-
-    "OwnershipTransferred(address,address)": TypedContractEvent<
-      OwnershipTransferredEvent.InputTuple,
-      OwnershipTransferredEvent.OutputTuple,
-      OwnershipTransferredEvent.OutputObject
-    >;
-    OwnershipTransferred: TypedContractEvent<
-      OwnershipTransferredEvent.InputTuple,
-      OwnershipTransferredEvent.OutputTuple,
-      OwnershipTransferredEvent.OutputObject
-    >;
-
-    "Upgraded(address)": TypedContractEvent<
-      UpgradedEvent.InputTuple,
-      UpgradedEvent.OutputTuple,
-      UpgradedEvent.OutputObject
-    >;
-    Upgraded: TypedContractEvent<
-      UpgradedEvent.InputTuple,
-      UpgradedEvent.OutputTuple,
-      UpgradedEvent.OutputObject
     >;
   };
 }

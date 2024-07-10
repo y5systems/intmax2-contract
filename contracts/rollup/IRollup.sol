@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {ILiquidity} from "./ILiquidity.sol";
-
 interface IRollup {
+	error InvalidBlockBuilder();
+
+	error FraudProofAlreadySubmitted();
+
+	error FraudProofVerificationFailed();
+
+	error WithdrawalProofVerificationFailed();
+
 	struct Block {
 		bytes32 prevBlockHash;
 		bytes32 depositTreeRoot;
@@ -49,12 +55,6 @@ interface IRollup {
 		bytes32 indexed withdrawalRequest,
 		address withdrawalAggregator
 	);
-
-	error FraudProofAlreadySubmitted();
-
-	error FraudProofVerificationFailed();
-
-	error WithdrawalProofVerificationFailed();
 
 	/**
 	 * @notice Post new block by Block Builder.
