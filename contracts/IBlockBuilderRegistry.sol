@@ -2,6 +2,11 @@
 pragma solidity 0.8.24;
 
 interface IBlockBuilderRegistry {
+	error OnlyRollupContract();
+	error InsufficientStakeAmount();
+	error BlockBuilderNotFound();
+	error CannotUnstakeWithin24Hours();
+
 	/**
 	 * @notice Block builder information.
 	 * @param blockBuilderUrl The URL or IP address of Block builder.

@@ -2,92 +2,97 @@
 pragma solidity 0.8.24;
 
 import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
+import {BlockBuilderInfoLib} from "./BlockBuilderInfoLib.sol";
+import {MIN_STAKE_AMOUNT} from "./BlockBuilderRegistryConst.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract BlockBuilderRegistry is IBlockBuilderRegistry {
-	uint256 public constant MIN_STAKE_AMOUNT = 100000000 wei; // TODO: 0.1 ether
-	uint256 public constant CHALLENGE_DURATION = 5 seconds; // TODO: 1 days
-	address _rollupContract;
-	address _burnAddress = 0x000000000000000000000000000000000000dEaD;
+contract BlockBuilderRegistry is
+	OwnableUpgradeable,
+	UUPSUpgradeable,
+	IBlockBuilderRegistry
+{
+	address private rollupContract;
+	address private constant BURN_ADDRESS =
+		0x000000000000000000000000000000000000dEaD;
+	mapping(address => BlockBuilderInfo) private _blockBuilders;
+	using BlockBuilderInfoLib for BlockBuilderInfo;
 
-	mapping(address => BlockBuilderInfo) _blockBuilders;
-
-	modifier OnlyRollupContract() {
-		require(
-			msg.sender == address(_rollupContract),
-			"This method can only be called from Rollup contract."
-		);
+	modifier onlyRollupContract() {
+		if (_msgSender() != rollupContract) {
+			revert OnlyRollupContract();
+		}
 		_;
 	}
 
-	constructor(address rollupContract) {
-		_rollupContract = rollupContract;
+	modifier isStaking() {
+		if (_blockBuilders[_msgSender()].isStaking() == false) {
+			revert BlockBuilderNotFound();
+		}
+		_;
+	}
+
+	function initialize(address _rollupContract) public initializer {
+		__Ownable_init(_msgSender());
+		__UUPSUpgradeable_init();
+		rollupContract = _rollupContract;
 	}
 
 	function updateBlockBuilder(string memory url) public payable {
-		uint256 stakeAmount = _blockBuilders[msg.sender].stakeAmount +
+		uint256 stakeAmount = _blockBuilders[_msgSender()].stakeAmount +
 			msg.value;
-		require(stakeAmount >= MIN_STAKE_AMOUNT, "Insufficient stake amount");
-
-		// Update the block builder information.
-		_blockBuilders[msg.sender].blockBuilderUrl = url;
-		_blockBuilders[msg.sender].stakeAmount = stakeAmount;
-		_blockBuilders[msg.sender].stopTime = 0;
-		if (_isValidBlockBuilder(msg.sender)) {
-			_blockBuilders[msg.sender].isValid = true;
+		if (stakeAmount < MIN_STAKE_AMOUNT) {
+			revert InsufficientStakeAmount();
 		}
 
-		emit BlockBuilderUpdated(msg.sender, url, stakeAmount);
+		// Update the block builder information.
+		_blockBuilders[_msgSender()].blockBuilderUrl = url;
+		_blockBuilders[_msgSender()].stakeAmount = stakeAmount;
+		_blockBuilders[_msgSender()].stopTime = 0;
+		if (_blockBuilders[_msgSender()].isValidBlockBuilder()) {
+			_blockBuilders[_msgSender()].isValid = true;
+		}
+
+		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
 
-	function stopBlockBuilder() public {
-		require(
-			_blockBuilders[msg.sender].stakeAmount != 0,
-			"Block builder not found"
-		);
-
+	function stopBlockBuilder() public isStaking {
 		// Remove the block builder information.
-		_blockBuilders[msg.sender].stopTime = block.timestamp;
-		_blockBuilders[msg.sender].isValid = false;
+		_blockBuilders[_msgSender()].stopTime = block.timestamp;
+		_blockBuilders[_msgSender()].isValid = false;
 
-		emit BlockBuilderStoped(msg.sender);
+		emit BlockBuilderStoped(_msgSender());
 	}
 
-	function unstake() public {
-		require(
-			_blockBuilders[msg.sender].stakeAmount != 0,
-			"Block builder not found"
-		);
-
+	function unstake() public isStaking {
 		// Check if the last block submission is not within 24 hour.
-		require(
-			block.timestamp - _blockBuilders[msg.sender].stopTime >=
-				CHALLENGE_DURATION,
-			"Cannot unstake within one day of the last block submission"
-		);
-		string memory url = _blockBuilders[msg.sender].blockBuilderUrl;
-		uint256 stakeAmount = _blockBuilders[msg.sender].stakeAmount;
+		if (_blockBuilders[_msgSender()].isChallengeDuration() == false) {
+			revert CannotUnstakeWithin24Hours();
+		}
+		string memory url = _blockBuilders[_msgSender()].blockBuilderUrl;
+		uint256 stakeAmount = _blockBuilders[_msgSender()].stakeAmount;
 
 		// Remove the block builder information.
-		delete _blockBuilders[msg.sender];
+		delete _blockBuilders[_msgSender()];
 
 		// Return the stake amount to the block builder.
-		payable(msg.sender).transfer(stakeAmount);
+		payable(_msgSender()).transfer(stakeAmount);
 
-		emit BlockBuilderUpdated(msg.sender, url, stakeAmount);
+		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
 
 	function slashBlockBuilder(
 		address blockBuilder,
 		address challenger
-	) external OnlyRollupContract {
+	) external onlyRollupContract {
 		_blockBuilders[blockBuilder].numSlashes += 1;
 		if (
-			!_isValidBlockBuilder(blockBuilder) &&
+			!_blockBuilders[blockBuilder].isValidBlockBuilder() &&
 			_blockBuilders[blockBuilder].isValid
 		) {
 			_blockBuilders[blockBuilder].isValid = false;
 		}
-
+		emit BlockBuilderSlashed(blockBuilder, challenger);
 		if (_blockBuilders[blockBuilder].stakeAmount < MIN_STAKE_AMOUNT) {
 			// The Block Builder cannot post a block unless it has a minimum amount of stakes,
 			// so it does not normally enter into this process.
@@ -97,25 +102,24 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 				payable(challenger).transfer(slashAmount);
 			} else {
 				payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-				payable(_burnAddress).transfer(
+				payable(BURN_ADDRESS).transfer(
 					slashAmount - (MIN_STAKE_AMOUNT / 2)
 				);
 			}
-		} else {
-			_blockBuilders[blockBuilder].stakeAmount -= MIN_STAKE_AMOUNT;
-
-			// NOTE: A half of the stake lost by the Block Builder will be burned.
-			// This is to prevent the Block Builder from generating invalid blocks and
-			// submitting fraud proofs by oneself, which would place a burden on
-			// the generation of block validity proofs. An invalid block must prove
-			// in the block validity proof that it has been invalidated.
-			payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-			payable(_burnAddress).transfer(
-				MIN_STAKE_AMOUNT - (MIN_STAKE_AMOUNT / 2)
-			);
+			return;
 		}
+		// solhint-disable-next-line reentrancy
+		_blockBuilders[blockBuilder].stakeAmount -= MIN_STAKE_AMOUNT;
 
-		emit BlockBuilderSlashed(blockBuilder, challenger);
+		// NOTE: A half of the stake lost by the Block Builder will be burned.
+		// This is to prevent the Block Builder from generating invalid blocks and
+		// submitting fraud proofs by oneself, which would place a burden on
+		// the generation of block validity proofs. An invalid block must prove
+		// in the block validity proof that it has been invalidated.
+		payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
+		payable(BURN_ADDRESS).transfer(
+			MIN_STAKE_AMOUNT - (MIN_STAKE_AMOUNT / 2)
+		);
 	}
 
 	function isValidBlockBuilder(
@@ -126,13 +130,9 @@ contract BlockBuilderRegistry is IBlockBuilderRegistry {
 
 	function getBlockBuilder(
 		address blockBuilder
-	) public view returns (BlockBuilderInfo memory) {
+	) external view returns (BlockBuilderInfo memory) {
 		return _blockBuilders[blockBuilder];
 	}
 
-	function _isValidBlockBuilder(
-		address blockBuilder
-	) internal view returns (bool) {
-		return _blockBuilders[blockBuilder].stakeAmount >= MIN_STAKE_AMOUNT;
-	}
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
