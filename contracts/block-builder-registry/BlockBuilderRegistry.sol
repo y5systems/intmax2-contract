@@ -75,7 +75,7 @@ contract BlockBuilderRegistry is
 		// Check if the last block submission is not within 24 hour.
 		BlockBuilderInfo memory info = blockBuilders[_msgSender()];
 		if (info.isChallengeDuration() == false) {
-			revert CannotUnstakeWithin24Hours();
+			revert CannotUnstakeWithinChallengeDuration();
 		}
 		string memory url = info.blockBuilderUrl;
 		uint256 stakeAmount = info.stakeAmount;

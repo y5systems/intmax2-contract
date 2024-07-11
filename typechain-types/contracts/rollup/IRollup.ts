@@ -71,9 +71,6 @@ export declare namespace IRollup {
 export interface IRollupInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "getBlockHash"
-      | "getDepositTreeRoot"
-      | "getLastProcessedWithdrawalId"
       | "postBlock"
       | "postWithdrawalRequests"
       | "processDeposits"
@@ -87,20 +84,9 @@ export interface IRollupInterface extends Interface {
       | "BlockPosted"
       | "DepositsProcessed"
       | "WithdrawRequested"
+      | "WithdrawalsSubmitted"
   ): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "getBlockHash",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getDepositTreeRoot",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLastProcessedWithdrawalId",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "postBlock",
     values: [
@@ -135,18 +121,6 @@ export interface IRollupInterface extends Interface {
     values: [BigNumberish]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "getBlockHash",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getDepositTreeRoot",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLastProcessedWithdrawalId",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "postBlock", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "postWithdrawalRequests",
@@ -247,6 +221,25 @@ export namespace WithdrawRequestedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace WithdrawalsSubmittedEvent {
+  export type InputTuple = [
+    startProcessedWithdrawId: BigNumberish,
+    lastProcessedWithdrawId: BigNumberish
+  ];
+  export type OutputTuple = [
+    startProcessedWithdrawId: bigint,
+    lastProcessedWithdrawId: bigint
+  ];
+  export interface OutputObject {
+    startProcessedWithdrawId: bigint;
+    lastProcessedWithdrawId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export interface IRollup extends BaseContract {
   connect(runner?: ContractRunner | null): IRollup;
   waitForDeployment(): Promise<this>;
@@ -289,16 +282,6 @@ export interface IRollup extends BaseContract {
   removeAllListeners<TCEvent extends TypedContractEvent>(
     event?: TCEvent
   ): Promise<this>;
-
-  getBlockHash: TypedContractMethod<
-    [blockNumber: BigNumberish],
-    [string],
-    "view"
-  >;
-
-  getDepositTreeRoot: TypedContractMethod<[], [string], "view">;
-
-  getLastProcessedWithdrawalId: TypedContractMethod<[], [bigint], "view">;
 
   postBlock: TypedContractMethod<
     [
@@ -352,15 +335,6 @@ export interface IRollup extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "getBlockHash"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [string], "view">;
-  getFunction(
-    nameOrSignature: "getDepositTreeRoot"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "getLastProcessedWithdrawalId"
-  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "postBlock"
   ): TypedContractMethod<
@@ -443,6 +417,13 @@ export interface IRollup extends BaseContract {
     WithdrawRequestedEvent.OutputTuple,
     WithdrawRequestedEvent.OutputObject
   >;
+  getEvent(
+    key: "WithdrawalsSubmitted"
+  ): TypedContractEvent<
+    WithdrawalsSubmittedEvent.InputTuple,
+    WithdrawalsSubmittedEvent.OutputTuple,
+    WithdrawalsSubmittedEvent.OutputObject
+  >;
 
   filters: {
     "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
@@ -487,6 +468,17 @@ export interface IRollup extends BaseContract {
       WithdrawRequestedEvent.InputTuple,
       WithdrawRequestedEvent.OutputTuple,
       WithdrawRequestedEvent.OutputObject
+    >;
+
+    "WithdrawalsSubmitted(uint256,uint256)": TypedContractEvent<
+      WithdrawalsSubmittedEvent.InputTuple,
+      WithdrawalsSubmittedEvent.OutputTuple,
+      WithdrawalsSubmittedEvent.OutputObject
+    >;
+    WithdrawalsSubmitted: TypedContractEvent<
+      WithdrawalsSubmittedEvent.InputTuple,
+      WithdrawalsSubmittedEvent.OutputTuple,
+      WithdrawalsSubmittedEvent.OutputObject
     >;
   };
 }

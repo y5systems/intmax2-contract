@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as predeploys from "./predeploys";
+export { IL2ScrollMessenger__factory } from "./IL2ScrollMessenger__factory";

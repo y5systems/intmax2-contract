@@ -10,6 +10,12 @@ interface IRollup {
 
 	error WithdrawalProofVerificationFailed();
 
+	error InvalidWithdrawalId();
+
+	error OnlyScrollMessenger();
+
+	error OnlyLiquidity();
+
 	struct Block {
 		bytes32 prevBlockHash;
 		bytes32 depositTreeRoot;
@@ -54,6 +60,11 @@ interface IRollup {
 	event WithdrawRequested(
 		bytes32 indexed withdrawalRequest,
 		address withdrawalAggregator
+	);
+
+	event WithdrawalsSubmitted(
+		uint256 startProcessedWithdrawId,
+		uint256 lastProcessedWithdrawId
 	);
 
 	/**
@@ -101,10 +112,4 @@ interface IRollup {
 		uint256 lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external;
-
-	function getDepositTreeRoot() external view returns (bytes32);
-
-	function getBlockHash(uint32 blockNumber) external view returns (bytes32);
-
-	function getLastProcessedWithdrawalId() external view returns (uint256);
 }

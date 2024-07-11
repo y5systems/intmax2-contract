@@ -26,6 +26,21 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "InvalidWithdrawalId",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "OnlyLiquidity",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "OnlyScrollMessenger",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "WithdrawalProofVerificationFailed",
     type: "error",
   },
@@ -124,49 +139,23 @@ const _abi = [
     type: "event",
   },
   {
+    anonymous: false,
     inputs: [
       {
-        internalType: "uint32",
-        name: "blockNumber",
-        type: "uint32",
-      },
-    ],
-    name: "getBlockHash",
-    outputs: [
-      {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getDepositTreeRoot",
-    outputs: [
-      {
-        internalType: "bytes32",
-        name: "",
-        type: "bytes32",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getLastProcessedWithdrawalId",
-    outputs: [
-      {
+        indexed: false,
         internalType: "uint256",
-        name: "",
+        name: "startProcessedWithdrawId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "lastProcessedWithdrawId",
         type: "uint256",
       },
     ],
-    stateMutability: "view",
-    type: "function",
+    name: "WithdrawalsSubmitted",
+    type: "event",
   },
   {
     inputs: [

@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { MockL1GasPriceOracle } from "./MockL1GasPriceOracle";
+export type { MockPlonkVerifier } from "./MockPlonkVerifier";

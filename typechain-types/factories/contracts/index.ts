@@ -3,9 +3,7 @@
 /* eslint-disable */
 export * as blockBuilderRegistry from "./block-builder-registry";
 export * as lib from "./lib";
+export * as liquidity from "./liquidity";
 export * as mock from "./mock";
 export * as rollup from "./rollup";
 export * as token from "./token";
-export { ILiquidity__factory } from "./ILiquidity__factory";
-export { IPlonkVerifier__factory } from "./IPlonkVerifier__factory";
-export { Liquidity__factory } from "./Liquidity__factory";

@@ -72,11 +72,13 @@ export interface RollupInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "getBlockHash"
-      | "getDepositTreeRoot"
-      | "getLastProcessedDepositId"
-      | "getLastProcessedWithdrawalId"
+      | "blockHashes"
+      | "depositCount"
+      | "getDepositRoot"
+      | "getLeafValue"
       | "initialize"
+      | "lastProcessedDepositId"
+      | "lastProcessedWithdrawId"
       | "owner"
       | "postBlock"
       | "postWithdrawalRequests"
@@ -87,6 +89,7 @@ export interface RollupInterface extends Interface {
       | "submitWithdrawals"
       | "transferOwnership"
       | "upgradeToAndCall"
+      | "verifyMerkleProof"
   ): FunctionFragment;
 
   getEvent(
@@ -98,6 +101,7 @@ export interface RollupInterface extends Interface {
       | "OwnershipTransferred"
       | "Upgraded"
       | "WithdrawRequested"
+      | "WithdrawalsSubmitted"
   ): EventFragment;
 
   encodeFunctionData(
@@ -105,24 +109,40 @@ export interface RollupInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getBlockHash",
+    functionFragment: "blockHashes",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "getDepositTreeRoot",
+    functionFragment: "depositCount",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getLastProcessedDepositId",
+    functionFragment: "getDepositRoot",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getLastProcessedWithdrawalId",
-    values?: undefined
+    functionFragment: "getLeafValue",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      AddressLike,
+      BigNumberish,
+      AddressLike,
+      BigNumberish,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
     values: [AddressLike, AddressLike, AddressLike, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "lastProcessedDepositId",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "lastProcessedWithdrawId",
+    values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -174,28 +194,40 @@ export interface RollupInterface extends Interface {
     functionFragment: "upgradeToAndCall",
     values: [AddressLike, BytesLike]
   ): string;
+  encodeFunctionData(
+    functionFragment: "verifyMerkleProof",
+    values: [BytesLike, BytesLike[], BigNumberish, BytesLike]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getBlockHash",
+    functionFragment: "blockHashes",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getDepositTreeRoot",
+    functionFragment: "depositCount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getLastProcessedDepositId",
+    functionFragment: "getDepositRoot",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getLastProcessedWithdrawalId",
+    functionFragment: "getLeafValue",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "lastProcessedDepositId",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "lastProcessedWithdrawId",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "postBlock", data: BytesLike): Result;
   decodeFunctionResult(
@@ -228,6 +260,10 @@ export interface RollupInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "upgradeToAndCall",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "verifyMerkleProof",
     data: BytesLike
   ): Result;
 }
@@ -350,6 +386,25 @@ export namespace WithdrawRequestedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace WithdrawalsSubmittedEvent {
+  export type InputTuple = [
+    startProcessedWithdrawId: BigNumberish,
+    lastProcessedWithdrawId: BigNumberish
+  ];
+  export type OutputTuple = [
+    startProcessedWithdrawId: bigint,
+    lastProcessedWithdrawId: bigint
+  ];
+  export interface OutputObject {
+    startProcessedWithdrawId: bigint;
+    lastProcessedWithdrawId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export interface Rollup extends BaseContract {
   connect(runner?: ContractRunner | null): Rollup;
   waitForDeployment(): Promise<this>;
@@ -395,17 +450,25 @@ export interface Rollup extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  getBlockHash: TypedContractMethod<
-    [blockNumber: BigNumberish],
+  blockHashes: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
+
+  depositCount: TypedContractMethod<[], [bigint], "view">;
+
+  getDepositRoot: TypedContractMethod<[], [string], "view">;
+
+  getLeafValue: TypedContractMethod<
+    [
+      leafType: BigNumberish,
+      originNetwork: BigNumberish,
+      originAddress: AddressLike,
+      destinationNetwork: BigNumberish,
+      destinationAddress: AddressLike,
+      amount: BigNumberish,
+      metadataHash: BytesLike
+    ],
     [string],
     "view"
   >;
-
-  getDepositTreeRoot: TypedContractMethod<[], [string], "view">;
-
-  getLastProcessedDepositId: TypedContractMethod<[], [bigint], "view">;
-
-  getLastProcessedWithdrawalId: TypedContractMethod<[], [bigint], "view">;
 
   initialize: TypedContractMethod<
     [
@@ -417,6 +480,10 @@ export interface Rollup extends BaseContract {
     [void],
     "nonpayable"
   >;
+
+  lastProcessedDepositId: TypedContractMethod<[], [bigint], "view">;
+
+  lastProcessedWithdrawId: TypedContractMethod<[], [bigint], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
@@ -451,7 +518,7 @@ export interface Rollup extends BaseContract {
   >;
 
   processDeposits: TypedContractMethod<
-    [lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
+    [_lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
     [void],
     "nonpayable"
   >;
@@ -467,7 +534,7 @@ export interface Rollup extends BaseContract {
   >;
 
   submitWithdrawals: TypedContractMethod<
-    [lastProcessedWithdrawId: BigNumberish],
+    [_lastProcessedWithdrawId: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -484,6 +551,17 @@ export interface Rollup extends BaseContract {
     "payable"
   >;
 
+  verifyMerkleProof: TypedContractMethod<
+    [
+      leafHash: BytesLike,
+      smtProof: BytesLike[],
+      index: BigNumberish,
+      root: BytesLike
+    ],
+    [boolean],
+    "view"
+  >;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -492,17 +570,29 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "getBlockHash"
-  ): TypedContractMethod<[blockNumber: BigNumberish], [string], "view">;
+    nameOrSignature: "blockHashes"
+  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
   getFunction(
-    nameOrSignature: "getDepositTreeRoot"
+    nameOrSignature: "depositCount"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getDepositRoot"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "getLastProcessedDepositId"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getLastProcessedWithdrawalId"
-  ): TypedContractMethod<[], [bigint], "view">;
+    nameOrSignature: "getLeafValue"
+  ): TypedContractMethod<
+    [
+      leafType: BigNumberish,
+      originNetwork: BigNumberish,
+      originAddress: AddressLike,
+      destinationNetwork: BigNumberish,
+      destinationAddress: AddressLike,
+      amount: BigNumberish,
+      metadataHash: BytesLike
+    ],
+    [string],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
@@ -515,6 +605,12 @@ export interface Rollup extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "lastProcessedDepositId"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "lastProcessedWithdrawId"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
@@ -553,7 +649,7 @@ export interface Rollup extends BaseContract {
   getFunction(
     nameOrSignature: "processDeposits"
   ): TypedContractMethod<
-    [lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
+    [_lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
     [void],
     "nonpayable"
   >;
@@ -573,7 +669,7 @@ export interface Rollup extends BaseContract {
   getFunction(
     nameOrSignature: "submitWithdrawals"
   ): TypedContractMethod<
-    [lastProcessedWithdrawId: BigNumberish],
+    [_lastProcessedWithdrawId: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -586,6 +682,18 @@ export interface Rollup extends BaseContract {
     [newImplementation: AddressLike, data: BytesLike],
     [void],
     "payable"
+  >;
+  getFunction(
+    nameOrSignature: "verifyMerkleProof"
+  ): TypedContractMethod<
+    [
+      leafHash: BytesLike,
+      smtProof: BytesLike[],
+      index: BigNumberish,
+      root: BytesLike
+    ],
+    [boolean],
+    "view"
   >;
 
   getEvent(
@@ -636,6 +744,13 @@ export interface Rollup extends BaseContract {
     WithdrawRequestedEvent.InputTuple,
     WithdrawRequestedEvent.OutputTuple,
     WithdrawRequestedEvent.OutputObject
+  >;
+  getEvent(
+    key: "WithdrawalsSubmitted"
+  ): TypedContractEvent<
+    WithdrawalsSubmittedEvent.InputTuple,
+    WithdrawalsSubmittedEvent.OutputTuple,
+    WithdrawalsSubmittedEvent.OutputObject
   >;
 
   filters: {
@@ -714,6 +829,17 @@ export interface Rollup extends BaseContract {
       WithdrawRequestedEvent.InputTuple,
       WithdrawRequestedEvent.OutputTuple,
       WithdrawRequestedEvent.OutputObject
+    >;
+
+    "WithdrawalsSubmitted(uint256,uint256)": TypedContractEvent<
+      WithdrawalsSubmittedEvent.InputTuple,
+      WithdrawalsSubmittedEvent.OutputTuple,
+      WithdrawalsSubmittedEvent.OutputObject
+    >;
+    WithdrawalsSubmitted: TypedContractEvent<
+      WithdrawalsSubmittedEvent.InputTuple,
+      WithdrawalsSubmittedEvent.OutputTuple,
+      WithdrawalsSubmittedEvent.OutputObject
     >;
   };
 }

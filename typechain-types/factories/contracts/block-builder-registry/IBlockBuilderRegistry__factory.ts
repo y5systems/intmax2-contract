@@ -16,7 +16,7 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "CannotUnstakeWithin24Hours",
+    name: "CannotUnstakeWithinChallengeDuration",
     type: "error",
   },
   {

@@ -2,3 +2,4 @@
 /* tslint:disable */
 /* eslint-disable */
 export { MockL1GasPriceOracle__factory } from "./MockL1GasPriceOracle__factory";
+export { MockPlonkVerifier__factory } from "./MockPlonkVerifier__factory";
