@@ -5,7 +5,7 @@ interface IBlockBuilderRegistry {
 	error OnlyRollupContract();
 	error InsufficientStakeAmount();
 	error BlockBuilderNotFound();
-	error CannotUnstakeWithin24Hours();
+	error CannotUnstakeWithinChallengeDuration();
 	event BlockBuilderUpdated(
 		address indexed blockBuilder,
 		string url,

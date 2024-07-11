@@ -3,3 +3,4 @@
 /* eslint-disable */
 import type * as predeploys from "./predeploys";
 export type { predeploys };
+export type { IL2ScrollMessenger } from "./IL2ScrollMessenger";
