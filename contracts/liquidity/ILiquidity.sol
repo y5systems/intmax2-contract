@@ -13,6 +13,8 @@ interface ILiquidity {
 	error SenderIsNotScrollMessenger();
 	error InvalidRollup();
 	error WithdrawalNotFound();
+	error InvalidRecipientSaltHash();
+	error InvalidAmount();
 
 	struct Deposit {
 		bytes32 recipientSaltHash;

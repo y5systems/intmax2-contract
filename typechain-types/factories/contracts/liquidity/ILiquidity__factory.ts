@@ -11,6 +11,11 @@ import type {
 const _abi = [
   {
     inputs: [],
+    name: "InvalidAmount",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "InvalidDepositHash",
     type: "error",
   },
@@ -22,6 +27,11 @@ const _abi = [
   {
     inputs: [],
     name: "InvalidLastProcessedDepositId",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidRecipientSaltHash",
     type: "error",
   },
   {

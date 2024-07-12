@@ -142,14 +142,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TokenData__factory>;
     getContractFactory(
-      name: "MockL1GasPriceOracle",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MockL1GasPriceOracle__factory>;
-    getContractFactory(
-      name: "MockPlonkVerifier",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.MockPlonkVerifier__factory>;
-    getContractFactory(
       name: "IPlonkVerifier",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IPlonkVerifier__factory>;
@@ -173,10 +165,6 @@ declare module "hardhat/types/runtime" {
       name: "TestERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TestERC20__factory>;
-    getContractFactory(
-      name: "TestERC20",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.TestERC20__factory>;
 
     getContractAt(
       name: "OwnableUpgradeable",
@@ -339,16 +327,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.TokenData>;
     getContractAt(
-      name: "MockL1GasPriceOracle",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.MockL1GasPriceOracle>;
-    getContractAt(
-      name: "MockPlonkVerifier",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.MockPlonkVerifier>;
-    getContractAt(
       name: "IPlonkVerifier",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -373,11 +351,6 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.MockPlonkVerifier>;
-    getContractAt(
-      name: "TestERC20",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.TestERC20>;
     getContractAt(
       name: "TestERC20",
       address: string | ethers.Addressable,
@@ -513,14 +486,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TokenData>;
     deployContract(
-      name: "MockL1GasPriceOracle",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MockL1GasPriceOracle>;
-    deployContract(
-      name: "MockPlonkVerifier",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MockPlonkVerifier>;
-    deployContract(
       name: "IPlonkVerifier",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IPlonkVerifier>;
@@ -540,10 +505,6 @@ declare module "hardhat/types/runtime" {
       name: "MockPlonkVerifier",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockPlonkVerifier>;
-    deployContract(
-      name: "TestERC20",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestERC20>;
     deployContract(
       name: "TestERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -710,16 +671,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TokenData>;
     deployContract(
-      name: "MockL1GasPriceOracle",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MockL1GasPriceOracle>;
-    deployContract(
-      name: "MockPlonkVerifier",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.MockPlonkVerifier>;
-    deployContract(
       name: "IPlonkVerifier",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -744,11 +695,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockPlonkVerifier>;
-    deployContract(
-      name: "TestERC20",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.TestERC20>;
     deployContract(
       name: "TestERC20",
       args: any[],

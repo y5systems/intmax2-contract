@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/Rollup.sol";
+import {TokenData} from "./TokenData.sol";
+import {DepositLib} from "./DepositLib.sol";
+import {WithdrawalLib} from "../rollup/lib/WithdrawalLib.sol";
+import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -11,9 +14,6 @@ import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {TokenData} from "./TokenData.sol";
-import {DepositLib} from "./DepositLib.sol";
-import {WithdrawalLib} from "../rollup/lib/WithdrawalLib.sol";
 
 contract Liquidity is
 	TokenData,
@@ -77,6 +77,9 @@ contract Liquidity is
 	}
 
 	function depositETH(bytes32 recipientSaltHash) external payable {
+		if (recipientSaltHash == bytes32(0)) {
+			revert InvalidRecipientSaltHash();
+		}
 		uint32 tokenIndex = _getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
 	}
@@ -86,6 +89,12 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 amount
 	) public {
+		if (recipientSaltHash == bytes32(0)) {
+			revert InvalidRecipientSaltHash();
+		}
+		if (amount == 0) {
+			revert InvalidAmount();
+		}
 		IERC20(tokenAddress).safeTransferFrom(
 			_msgSender(),
 			address(this),
@@ -104,6 +113,9 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId
 	) public {
+		if (recipientSaltHash == bytes32(0)) {
+			revert InvalidRecipientSaltHash();
+		}
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -123,6 +135,12 @@ contract Liquidity is
 		uint256 tokenId,
 		uint256 amount
 	) public {
+		if (recipientSaltHash == bytes32(0)) {
+			revert InvalidRecipientSaltHash();
+		}
+		if (amount == 0) {
+			revert InvalidAmount();
+		}
 		IERC1155(tokenAddress).safeTransferFrom(
 			_msgSender(),
 			address(this),
