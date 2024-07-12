@@ -6,4 +6,5 @@ export * as lib from "./lib";
 export * as liquidity from "./liquidity";
 export * as mock from "./mock";
 export * as rollup from "./rollup";
+export * as test from "./test";
 export * as token from "./token";

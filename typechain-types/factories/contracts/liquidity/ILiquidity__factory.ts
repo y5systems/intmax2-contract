@@ -11,7 +11,47 @@ import type {
 const _abi = [
   {
     inputs: [],
-    name: "InvalidTokenAddress",
+    name: "InvalidDepositHash",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidDepositId",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidLastProcessedDepositId",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InvalidRollup",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "OnlyRecipientCanCancelDeposit",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "OnlyRecipientCanClaimRejectedDeposit",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "RollupContractNotSet",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "SenderIsNotScrollMessenger",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "WithdrawalNotFound",
     type: "error",
   },
   {
@@ -94,6 +134,47 @@ const _abi = [
       },
     ],
     name: "DepositsSubmitted",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "withdrawalId",
+        type: "uint256",
+      },
+      {
+        components: [
+          {
+            internalType: "address",
+            name: "recipient",
+            type: "address",
+          },
+          {
+            internalType: "uint32",
+            name: "tokenIndex",
+            type: "uint32",
+          },
+          {
+            internalType: "uint256",
+            name: "amount",
+            type: "uint256",
+          },
+          {
+            internalType: "bytes32",
+            name: "salt",
+            type: "bytes32",
+          },
+        ],
+        indexed: false,
+        internalType: "struct IRollup.Withdrawal",
+        name: "withdrawal",
+        type: "tuple",
+      },
+    ],
+    name: "WithdrawalClaimable",
     type: "event",
   },
   {
@@ -264,117 +345,6 @@ const _abi = [
     name: "depositETH",
     outputs: [],
     stateMutability: "payable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getDepositCounter",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getLastAnalyzedDepositId",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "getLastProcessedDepositId",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "depositId",
-        type: "uint256",
-      },
-    ],
-    name: "getPendingDeposit",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "bytes32",
-            name: "depositHash",
-            type: "bytes32",
-          },
-          {
-            internalType: "address",
-            name: "sender",
-            type: "address",
-          },
-          {
-            internalType: "uint256",
-            name: "requestedAt",
-            type: "uint256",
-          },
-        ],
-        internalType: "struct ILiquidity.DepositData",
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "depositId",
-        type: "uint256",
-      },
-    ],
-    name: "getRejectedDeposit",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "bytes32",
-            name: "depositHash",
-            type: "bytes32",
-          },
-          {
-            internalType: "address",
-            name: "sender",
-            type: "address",
-          },
-          {
-            internalType: "uint256",
-            name: "requestedAt",
-            type: "uint256",
-          },
-        ],
-        internalType: "struct ILiquidity.DepositData",
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
     type: "function",
   },
   {

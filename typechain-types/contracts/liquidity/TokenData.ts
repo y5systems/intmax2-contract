@@ -8,6 +8,8 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  EventFragment,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -16,26 +18,44 @@ import type {
   TypedContractEvent,
   TypedDeferredTopicFilter,
   TypedEventLog,
+  TypedLogDescription,
   TypedListener,
   TypedContractMethod,
 } from "../../common";
 
-export interface IPlonkVerifierInterface extends Interface {
-  getFunction(nameOrSignature: "Verify"): FunctionFragment;
+export interface TokenDataInterface extends Interface {
+  getFunction(nameOrSignature: "__TokenInfo_init"): FunctionFragment;
+
+  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "Verify",
-    values: [BytesLike, BigNumberish[]]
+    functionFragment: "__TokenInfo_init",
+    values: [AddressLike, AddressLike]
   ): string;
 
-  decodeFunctionResult(functionFragment: "Verify", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "__TokenInfo_init",
+    data: BytesLike
+  ): Result;
 }
 
-export interface IPlonkVerifier extends BaseContract {
-  connect(runner?: ContractRunner | null): IPlonkVerifier;
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export interface TokenData extends BaseContract {
+  connect(runner?: ContractRunner | null): TokenData;
   waitForDeployment(): Promise<this>;
 
-  interface: IPlonkVerifierInterface;
+  interface: TokenDataInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -74,10 +94,10 @@ export interface IPlonkVerifier extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  Verify: TypedContractMethod<
-    [proof: BytesLike, publicInputs: BigNumberish[]],
-    [boolean],
-    "view"
+  __TokenInfo_init: TypedContractMethod<
+    [_usdc: AddressLike, _wbtc: AddressLike],
+    [void],
+    "nonpayable"
   >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
@@ -85,12 +105,31 @@ export interface IPlonkVerifier extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "Verify"
+    nameOrSignature: "__TokenInfo_init"
   ): TypedContractMethod<
-    [proof: BytesLike, publicInputs: BigNumberish[]],
-    [boolean],
-    "view"
+    [_usdc: AddressLike, _wbtc: AddressLike],
+    [void],
+    "nonpayable"
   >;
 
-  filters: {};
+  getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+
+  filters: {
+    "Initialized(uint64)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+  };
 }

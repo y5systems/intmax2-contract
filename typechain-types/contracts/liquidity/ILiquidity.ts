@@ -23,32 +23,6 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace ILiquidity {
-  export type DepositStruct = {
-    recipientSaltHash: BytesLike;
-    tokenIndex: BigNumberish;
-    amount: BigNumberish;
-  };
-
-  export type DepositStructOutput = [
-    recipientSaltHash: string,
-    tokenIndex: bigint,
-    amount: bigint
-  ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
-
-  export type DepositDataStruct = {
-    depositHash: BytesLike;
-    sender: AddressLike;
-    requestedAt: BigNumberish;
-  };
-
-  export type DepositDataStructOutput = [
-    depositHash: string,
-    sender: string,
-    requestedAt: bigint
-  ] & { depositHash: string; sender: string; requestedAt: bigint };
-}
-
 export declare namespace IRollup {
   export type WithdrawalStruct = {
     recipient: AddressLike;
@@ -65,6 +39,20 @@ export declare namespace IRollup {
   ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
 }
 
+export declare namespace ILiquidity {
+  export type DepositStruct = {
+    recipientSaltHash: BytesLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
+  };
+
+  export type DepositStructOutput = [
+    recipientSaltHash: string,
+    tokenIndex: bigint,
+    amount: bigint
+  ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
+}
+
 export interface ILiquidityInterface extends Interface {
   getFunction(
     nameOrSignature:
@@ -75,11 +63,6 @@ export interface ILiquidityInterface extends Interface {
       | "depositERC20"
       | "depositERC721"
       | "depositETH"
-      | "getDepositCounter"
-      | "getLastAnalyzedDepositId"
-      | "getLastProcessedDepositId"
-      | "getPendingDeposit"
-      | "getRejectedDeposit"
       | "processWithdrawals"
       | "rejectDeposits"
       | "submitDeposits"
@@ -91,6 +74,7 @@ export interface ILiquidityInterface extends Interface {
       | "Deposited"
       | "DepositsRejected"
       | "DepositsSubmitted"
+      | "WithdrawalClaimable"
   ): EventFragment;
 
   encodeFunctionData(
@@ -120,26 +104,6 @@ export interface ILiquidityInterface extends Interface {
   encodeFunctionData(
     functionFragment: "depositETH",
     values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getDepositCounter",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLastAnalyzedDepositId",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLastProcessedDepositId",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getPendingDeposit",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRejectedDeposit",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "processWithdrawals",
@@ -179,26 +143,6 @@ export interface ILiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "depositETH", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getDepositCounter",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLastAnalyzedDepositId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLastProcessedDepositId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getPendingDeposit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRejectedDeposit",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "processWithdrawals",
     data: BytesLike
@@ -273,6 +217,25 @@ export namespace DepositsSubmittedEvent {
   export type OutputTuple = [lastProcessedDepositId: bigint];
   export interface OutputObject {
     lastProcessedDepositId: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace WithdrawalClaimableEvent {
+  export type InputTuple = [
+    withdrawalId: BigNumberish,
+    withdrawal: IRollup.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    withdrawalId: bigint,
+    withdrawal: IRollup.WithdrawalStructOutput
+  ];
+  export interface OutputObject {
+    withdrawalId: bigint;
+    withdrawal: IRollup.WithdrawalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -378,24 +341,6 @@ export interface ILiquidity extends BaseContract {
     "payable"
   >;
 
-  getDepositCounter: TypedContractMethod<[], [bigint], "view">;
-
-  getLastAnalyzedDepositId: TypedContractMethod<[], [bigint], "view">;
-
-  getLastProcessedDepositId: TypedContractMethod<[], [bigint], "view">;
-
-  getPendingDeposit: TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
-  >;
-
-  getRejectedDeposit: TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
-  >;
-
   processWithdrawals: TypedContractMethod<
     [withdrawals: IRollup.WithdrawalStruct[]],
     [void],
@@ -473,29 +418,6 @@ export interface ILiquidity extends BaseContract {
     nameOrSignature: "depositETH"
   ): TypedContractMethod<[recipientSaltHash: BytesLike], [void], "payable">;
   getFunction(
-    nameOrSignature: "getDepositCounter"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getLastAnalyzedDepositId"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getLastProcessedDepositId"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getPendingDeposit"
-  ): TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getRejectedDeposit"
-  ): TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
-  >;
-  getFunction(
     nameOrSignature: "processWithdrawals"
   ): TypedContractMethod<
     [withdrawals: IRollup.WithdrawalStruct[]],
@@ -545,6 +467,13 @@ export interface ILiquidity extends BaseContract {
     DepositsSubmittedEvent.OutputTuple,
     DepositsSubmittedEvent.OutputObject
   >;
+  getEvent(
+    key: "WithdrawalClaimable"
+  ): TypedContractEvent<
+    WithdrawalClaimableEvent.InputTuple,
+    WithdrawalClaimableEvent.OutputTuple,
+    WithdrawalClaimableEvent.OutputObject
+  >;
 
   filters: {
     "DepositCanceled(uint256)": TypedContractEvent<
@@ -589,6 +518,17 @@ export interface ILiquidity extends BaseContract {
       DepositsSubmittedEvent.InputTuple,
       DepositsSubmittedEvent.OutputTuple,
       DepositsSubmittedEvent.OutputObject
+    >;
+
+    "WithdrawalClaimable(uint256,tuple)": TypedContractEvent<
+      WithdrawalClaimableEvent.InputTuple,
+      WithdrawalClaimableEvent.OutputTuple,
+      WithdrawalClaimableEvent.OutputObject
+    >;
+    WithdrawalClaimable: TypedContractEvent<
+      WithdrawalClaimableEvent.InputTuple,
+      WithdrawalClaimableEvent.OutputTuple,
+      WithdrawalClaimableEvent.OutputObject
     >;
   };
 }

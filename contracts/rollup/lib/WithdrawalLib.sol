@@ -17,4 +17,10 @@ library WithdrawalLib {
 				)
 			);
 	}
+
+	function isEmpty(
+		IRollup.Withdrawal memory withdrawal
+	) internal pure returns (bool) {
+		return withdrawal.recipient == address(0);
+	}
 }

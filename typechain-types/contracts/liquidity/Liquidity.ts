@@ -23,44 +23,6 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace ILiquidity {
-  export type DepositStruct = {
-    recipientSaltHash: BytesLike;
-    tokenIndex: BigNumberish;
-    amount: BigNumberish;
-  };
-
-  export type DepositStructOutput = [
-    recipientSaltHash: string,
-    tokenIndex: bigint,
-    amount: bigint
-  ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
-
-  export type DepositDataStruct = {
-    depositHash: BytesLike;
-    sender: AddressLike;
-    requestedAt: BigNumberish;
-  };
-
-  export type DepositDataStructOutput = [
-    depositHash: string,
-    sender: string,
-    requestedAt: bigint
-  ] & { depositHash: string; sender: string; requestedAt: bigint };
-
-  export type TokenInfoStruct = {
-    tokenType: BigNumberish;
-    tokenAddress: AddressLike;
-    tokenId: BigNumberish;
-  };
-
-  export type TokenInfoStructOutput = [
-    tokenType: bigint,
-    tokenAddress: string,
-    tokenId: bigint
-  ] & { tokenType: bigint; tokenAddress: string; tokenId: bigint };
-}
-
 export declare namespace IRollup {
   export type WithdrawalStruct = {
     recipient: AddressLike;
@@ -77,11 +39,25 @@ export declare namespace IRollup {
   ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
 }
 
+export declare namespace ILiquidity {
+  export type DepositStruct = {
+    recipientSaltHash: BytesLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
+  };
+
+  export type DepositStructOutput = [
+    recipientSaltHash: string,
+    tokenIndex: bigint,
+    amount: bigint
+  ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
+}
+
 export interface LiquidityInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "_rollupContract"
-      | "_scrollMessenger"
+      | "UPGRADE_INTERFACE_VERSION"
+      | "__TokenInfo_init"
       | "cancelPendingDeposit"
       | "claimRejectedDeposit"
       | "claimWithdrawals"
@@ -89,16 +65,15 @@ export interface LiquidityInterface extends Interface {
       | "depositERC20"
       | "depositERC721"
       | "depositETH"
-      | "getDepositCounter"
-      | "getLastAnalyzedDepositId"
-      | "getLastProcessedDepositId"
-      | "getPendingDeposit"
-      | "getRejectedDeposit"
-      | "getTokenIndex"
-      | "getTokenInfo"
+      | "initialize"
+      | "owner"
       | "processWithdrawals"
+      | "proxiableUUID"
       | "rejectDeposits"
+      | "renounceOwnership"
       | "submitDeposits"
+      | "transferOwnership"
+      | "upgradeToAndCall"
   ): FunctionFragment;
 
   getEvent(
@@ -107,15 +82,19 @@ export interface LiquidityInterface extends Interface {
       | "Deposited"
       | "DepositsRejected"
       | "DepositsSubmitted"
+      | "Initialized"
+      | "OwnershipTransferred"
+      | "Upgraded"
+      | "WithdrawalClaimable"
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "_rollupContract",
+    functionFragment: "UPGRADE_INTERFACE_VERSION",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "_scrollMessenger",
-    values?: undefined
+    functionFragment: "__TokenInfo_init",
+    values: [AddressLike, AddressLike]
   ): string;
   encodeFunctionData(
     functionFragment: "cancelPendingDeposit",
@@ -146,52 +125,45 @@ export interface LiquidityInterface extends Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "getDepositCounter",
-    values?: undefined
+    functionFragment: "initialize",
+    values: [AddressLike, AddressLike, AddressLike, AddressLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "getLastAnalyzedDepositId",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLastProcessedDepositId",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getPendingDeposit",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRejectedDeposit",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTokenIndex",
-    values: [BigNumberish, AddressLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getTokenInfo",
-    values: [BigNumberish]
-  ): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "processWithdrawals",
     values: [IRollup.WithdrawalStruct[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "proxiableUUID",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "rejectDeposits",
     values: [BigNumberish, BigNumberish[]]
   ): string;
   encodeFunctionData(
+    functionFragment: "renounceOwnership",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "submitDeposits",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "transferOwnership",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "upgradeToAndCall",
+    values: [AddressLike, BytesLike]
+  ): string;
 
   decodeFunctionResult(
-    functionFragment: "_rollupContract",
+    functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "_scrollMessenger",
+    functionFragment: "__TokenInfo_init",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -219,36 +191,14 @@ export interface LiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "depositETH", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "getDepositCounter",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLastAnalyzedDepositId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLastProcessedDepositId",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getPendingDeposit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRejectedDeposit",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getTokenIndex",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getTokenInfo",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "processWithdrawals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "proxiableUUID",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -256,7 +206,19 @@ export interface LiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "renounceOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "submitDeposits",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
 }
@@ -328,6 +290,62 @@ export namespace DepositsSubmittedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace InitializedEvent {
+  export type InputTuple = [version: BigNumberish];
+  export type OutputTuple = [version: bigint];
+  export interface OutputObject {
+    version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace OwnershipTransferredEvent {
+  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
+  export type OutputTuple = [previousOwner: string, newOwner: string];
+  export interface OutputObject {
+    previousOwner: string;
+    newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace UpgradedEvent {
+  export type InputTuple = [implementation: AddressLike];
+  export type OutputTuple = [implementation: string];
+  export interface OutputObject {
+    implementation: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace WithdrawalClaimableEvent {
+  export type InputTuple = [
+    withdrawalId: BigNumberish,
+    withdrawal: IRollup.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    withdrawalId: bigint,
+    withdrawal: IRollup.WithdrawalStructOutput
+  ];
+  export interface OutputObject {
+    withdrawalId: bigint;
+    withdrawal: IRollup.WithdrawalStructOutput;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export interface Liquidity extends BaseContract {
   connect(runner?: ContractRunner | null): Liquidity;
   waitForDeployment(): Promise<this>;
@@ -371,9 +389,13 @@ export interface Liquidity extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  _rollupContract: TypedContractMethod<[], [string], "view">;
+  UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  _scrollMessenger: TypedContractMethod<[], [string], "view">;
+  __TokenInfo_init: TypedContractMethod<
+    [_usdc: AddressLike, _wbtc: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   cancelPendingDeposit: TypedContractMethod<
     [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
@@ -430,35 +452,18 @@ export interface Liquidity extends BaseContract {
     "payable"
   >;
 
-  getDepositCounter: TypedContractMethod<[], [bigint], "view">;
-
-  getLastAnalyzedDepositId: TypedContractMethod<[], [bigint], "view">;
-
-  getLastProcessedDepositId: TypedContractMethod<[], [bigint], "view">;
-
-  getPendingDeposit: TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
+  initialize: TypedContractMethod<
+    [
+      _l1ScrollMessenger: AddressLike,
+      _rollup: AddressLike,
+      _usdc: AddressLike,
+      _wbtc: AddressLike
+    ],
+    [void],
+    "nonpayable"
   >;
 
-  getRejectedDeposit: TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
-  >;
-
-  getTokenIndex: TypedContractMethod<
-    [tokenType: BigNumberish, tokenAddress: AddressLike, tokenId: BigNumberish],
-    [bigint],
-    "view"
-  >;
-
-  getTokenInfo: TypedContractMethod<
-    [tokenIndex: BigNumberish],
-    [ILiquidity.TokenInfoStructOutput],
-    "view"
-  >;
+  owner: TypedContractMethod<[], [string], "view">;
 
   processWithdrawals: TypedContractMethod<
     [withdrawals: IRollup.WithdrawalStruct[]],
@@ -466,14 +471,30 @@ export interface Liquidity extends BaseContract {
     "nonpayable"
   >;
 
+  proxiableUUID: TypedContractMethod<[], [string], "view">;
+
   rejectDeposits: TypedContractMethod<
-    [lastAnalyzedDepositId: BigNumberish, rejectedDepositIds: BigNumberish[]],
+    [_lastAnalyzedDepositId: BigNumberish, rejectedDepositIds: BigNumberish[]],
     [void],
     "nonpayable"
   >;
 
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
   submitDeposits: TypedContractMethod<
-    [lastProcessedDepositId: BigNumberish],
+    [_lastProcessedDepositId: BigNumberish],
+    [void],
+    "payable"
+  >;
+
+  transferOwnership: TypedContractMethod<
+    [newOwner: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  upgradeToAndCall: TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
     [void],
     "payable"
   >;
@@ -483,11 +504,15 @@ export interface Liquidity extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "_rollupContract"
+    nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "_scrollMessenger"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: "__TokenInfo_init"
+  ): TypedContractMethod<
+    [_usdc: AddressLike, _wbtc: AddressLike],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "cancelPendingDeposit"
   ): TypedContractMethod<
@@ -543,42 +568,20 @@ export interface Liquidity extends BaseContract {
     nameOrSignature: "depositETH"
   ): TypedContractMethod<[recipientSaltHash: BytesLike], [void], "payable">;
   getFunction(
-    nameOrSignature: "getDepositCounter"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getLastAnalyzedDepositId"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getLastProcessedDepositId"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getPendingDeposit"
+    nameOrSignature: "initialize"
   ): TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
+    [
+      _l1ScrollMessenger: AddressLike,
+      _rollup: AddressLike,
+      _usdc: AddressLike,
+      _wbtc: AddressLike
+    ],
+    [void],
+    "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "getRejectedDeposit"
-  ): TypedContractMethod<
-    [depositId: BigNumberish],
-    [ILiquidity.DepositDataStructOutput],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getTokenIndex"
-  ): TypedContractMethod<
-    [tokenType: BigNumberish, tokenAddress: AddressLike, tokenId: BigNumberish],
-    [bigint],
-    "view"
-  >;
-  getFunction(
-    nameOrSignature: "getTokenInfo"
-  ): TypedContractMethod<
-    [tokenIndex: BigNumberish],
-    [ILiquidity.TokenInfoStructOutput],
-    "view"
-  >;
+    nameOrSignature: "owner"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "processWithdrawals"
   ): TypedContractMethod<
@@ -587,16 +590,32 @@ export interface Liquidity extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "proxiableUUID"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "rejectDeposits"
   ): TypedContractMethod<
-    [lastAnalyzedDepositId: BigNumberish, rejectedDepositIds: BigNumberish[]],
+    [_lastAnalyzedDepositId: BigNumberish, rejectedDepositIds: BigNumberish[]],
     [void],
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "renounceOwnership"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "submitDeposits"
   ): TypedContractMethod<
-    [lastProcessedDepositId: BigNumberish],
+    [_lastProcessedDepositId: BigNumberish],
+    [void],
+    "payable"
+  >;
+  getFunction(
+    nameOrSignature: "transferOwnership"
+  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "upgradeToAndCall"
+  ): TypedContractMethod<
+    [newImplementation: AddressLike, data: BytesLike],
     [void],
     "payable"
   >;
@@ -628,6 +647,34 @@ export interface Liquidity extends BaseContract {
     DepositsSubmittedEvent.InputTuple,
     DepositsSubmittedEvent.OutputTuple,
     DepositsSubmittedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Initialized"
+  ): TypedContractEvent<
+    InitializedEvent.InputTuple,
+    InitializedEvent.OutputTuple,
+    InitializedEvent.OutputObject
+  >;
+  getEvent(
+    key: "OwnershipTransferred"
+  ): TypedContractEvent<
+    OwnershipTransferredEvent.InputTuple,
+    OwnershipTransferredEvent.OutputTuple,
+    OwnershipTransferredEvent.OutputObject
+  >;
+  getEvent(
+    key: "Upgraded"
+  ): TypedContractEvent<
+    UpgradedEvent.InputTuple,
+    UpgradedEvent.OutputTuple,
+    UpgradedEvent.OutputObject
+  >;
+  getEvent(
+    key: "WithdrawalClaimable"
+  ): TypedContractEvent<
+    WithdrawalClaimableEvent.InputTuple,
+    WithdrawalClaimableEvent.OutputTuple,
+    WithdrawalClaimableEvent.OutputObject
   >;
 
   filters: {
@@ -673,6 +720,50 @@ export interface Liquidity extends BaseContract {
       DepositsSubmittedEvent.InputTuple,
       DepositsSubmittedEvent.OutputTuple,
       DepositsSubmittedEvent.OutputObject
+    >;
+
+    "Initialized(uint64)": TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+    Initialized: TypedContractEvent<
+      InitializedEvent.InputTuple,
+      InitializedEvent.OutputTuple,
+      InitializedEvent.OutputObject
+    >;
+
+    "OwnershipTransferred(address,address)": TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+    OwnershipTransferred: TypedContractEvent<
+      OwnershipTransferredEvent.InputTuple,
+      OwnershipTransferredEvent.OutputTuple,
+      OwnershipTransferredEvent.OutputObject
+    >;
+
+    "Upgraded(address)": TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
+    Upgraded: TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
+
+    "WithdrawalClaimable(uint256,tuple)": TypedContractEvent<
+      WithdrawalClaimableEvent.InputTuple,
+      WithdrawalClaimableEvent.OutputTuple,
+      WithdrawalClaimableEvent.OutputObject
+    >;
+    WithdrawalClaimable: TypedContractEvent<
+      WithdrawalClaimableEvent.InputTuple,
+      WithdrawalClaimableEvent.OutputTuple,
+      WithdrawalClaimableEvent.OutputObject
     >;
   };
 }

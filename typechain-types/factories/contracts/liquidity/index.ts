@@ -2,4 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export { ILiquidity__factory } from "./ILiquidity__factory";
+export { ITokenData__factory } from "./ITokenData__factory";
 export { Liquidity__factory } from "./Liquidity__factory";
+export { TokenData__factory } from "./TokenData__factory";

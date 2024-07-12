@@ -7,6 +7,7 @@ contract MockPlonkVerifier is IPlonkVerifier {
 	/**
 	 * @dev This is a mock implementation of the PlonkVerifier contract.
 	 */
+	// solhint-disable-next-line func-name-mixedcase
 	function Verify(
 		bytes calldata,
 		uint256[] calldata

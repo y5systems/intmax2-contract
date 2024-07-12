@@ -20,7 +20,7 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export interface IPlonkVerifierInterface extends Interface {
+export interface MockPlonkVerifierInterface extends Interface {
   getFunction(nameOrSignature: "Verify"): FunctionFragment;
 
   encodeFunctionData(
@@ -31,11 +31,11 @@ export interface IPlonkVerifierInterface extends Interface {
   decodeFunctionResult(functionFragment: "Verify", data: BytesLike): Result;
 }
 
-export interface IPlonkVerifier extends BaseContract {
-  connect(runner?: ContractRunner | null): IPlonkVerifier;
+export interface MockPlonkVerifier extends BaseContract {
+  connect(runner?: ContractRunner | null): MockPlonkVerifier;
   waitForDeployment(): Promise<this>;
 
-  interface: IPlonkVerifierInterface;
+  interface: MockPlonkVerifierInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -75,7 +75,7 @@ export interface IPlonkVerifier extends BaseContract {
   ): Promise<this>;
 
   Verify: TypedContractMethod<
-    [proof: BytesLike, publicInputs: BigNumberish[]],
+    [arg0: BytesLike, arg1: BigNumberish[]],
     [boolean],
     "view"
   >;
@@ -87,7 +87,7 @@ export interface IPlonkVerifier extends BaseContract {
   getFunction(
     nameOrSignature: "Verify"
   ): TypedContractMethod<
-    [proof: BytesLike, publicInputs: BigNumberish[]],
+    [arg0: BytesLike, arg1: BigNumberish[]],
     [boolean],
     "view"
   >;

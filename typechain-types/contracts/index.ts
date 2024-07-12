@@ -11,5 +11,7 @@ import type * as mock from "./mock";
 export type { mock };
 import type * as rollup from "./rollup";
 export type { rollup };
+import type * as test from "./test";
+export type { test };
 import type * as token from "./token";
 export type { token };

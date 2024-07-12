@@ -98,6 +98,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ReentrancyGuard__factory>;
     getContractFactory(
+      name: "IL1ScrollMessenger",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IL1ScrollMessenger__factory>;
+    getContractFactory(
       name: "IL2ScrollMessenger",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IL2ScrollMessenger__factory>;
@@ -126,9 +130,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ILiquidity__factory>;
     getContractFactory(
+      name: "ITokenData",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ITokenData__factory>;
+    getContractFactory(
       name: "Liquidity",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Liquidity__factory>;
+    getContractFactory(
+      name: "TokenData",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TokenData__factory>;
     getContractFactory(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -149,6 +161,18 @@ declare module "hardhat/types/runtime" {
       name: "Rollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Rollup__factory>;
+    getContractFactory(
+      name: "MockL1GasPriceOracle",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockL1GasPriceOracle__factory>;
+    getContractFactory(
+      name: "MockPlonkVerifier",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.MockPlonkVerifier__factory>;
+    getContractFactory(
+      name: "TestERC20",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.TestERC20__factory>;
     getContractFactory(
       name: "TestERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -260,6 +284,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ReentrancyGuard>;
     getContractAt(
+      name: "IL1ScrollMessenger",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IL1ScrollMessenger>;
+    getContractAt(
       name: "IL2ScrollMessenger",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -295,10 +324,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.ILiquidity>;
     getContractAt(
+      name: "ITokenData",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.ITokenData>;
+    getContractAt(
       name: "Liquidity",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Liquidity>;
+    getContractAt(
+      name: "TokenData",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TokenData>;
     getContractAt(
       name: "MockL1GasPriceOracle",
       address: string | ethers.Addressable,
@@ -324,6 +363,21 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Rollup>;
+    getContractAt(
+      name: "MockL1GasPriceOracle",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockL1GasPriceOracle>;
+    getContractAt(
+      name: "MockPlonkVerifier",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.MockPlonkVerifier>;
+    getContractAt(
+      name: "TestERC20",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.TestERC20>;
     getContractAt(
       name: "TestERC20",
       address: string | ethers.Addressable,
@@ -415,6 +469,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "IL1ScrollMessenger",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IL1ScrollMessenger>;
+    deployContract(
       name: "IL2ScrollMessenger",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IL2ScrollMessenger>;
@@ -443,9 +501,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ILiquidity>;
     deployContract(
+      name: "ITokenData",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ITokenData>;
+    deployContract(
       name: "Liquidity",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Liquidity>;
+    deployContract(
+      name: "TokenData",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TokenData>;
     deployContract(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -466,6 +532,18 @@ declare module "hardhat/types/runtime" {
       name: "Rollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
+    deployContract(
+      name: "MockL1GasPriceOracle",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockL1GasPriceOracle>;
+    deployContract(
+      name: "MockPlonkVerifier",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockPlonkVerifier>;
+    deployContract(
+      name: "TestERC20",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TestERC20>;
     deployContract(
       name: "TestERC20",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -577,6 +655,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ReentrancyGuard>;
     deployContract(
+      name: "IL1ScrollMessenger",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IL1ScrollMessenger>;
+    deployContract(
       name: "IL2ScrollMessenger",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -612,10 +695,20 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ILiquidity>;
     deployContract(
+      name: "ITokenData",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.ITokenData>;
+    deployContract(
       name: "Liquidity",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Liquidity>;
+    deployContract(
+      name: "TokenData",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TokenData>;
     deployContract(
       name: "MockL1GasPriceOracle",
       args: any[],
@@ -641,6 +734,21 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
+    deployContract(
+      name: "MockL1GasPriceOracle",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockL1GasPriceOracle>;
+    deployContract(
+      name: "MockPlonkVerifier",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.MockPlonkVerifier>;
+    deployContract(
+      name: "TestERC20",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.TestERC20>;
     deployContract(
       name: "TestERC20",
       args: any[],

@@ -2,4 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { ILiquidity } from "./ILiquidity";
+export type { ITokenData } from "./ITokenData";
 export type { Liquidity } from "./Liquidity";
+export type { TokenData } from "./TokenData";

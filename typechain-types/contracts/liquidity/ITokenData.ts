@@ -3,10 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumberish,
-  BytesLike,
   FunctionFragment,
-  Result,
   Interface,
   ContractRunner,
   ContractMethod,
@@ -17,25 +14,15 @@ import type {
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
-  TypedContractMethod,
 } from "../../common";
 
-export interface IPlonkVerifierInterface extends Interface {
-  getFunction(nameOrSignature: "Verify"): FunctionFragment;
+export interface ITokenDataInterface extends Interface {}
 
-  encodeFunctionData(
-    functionFragment: "Verify",
-    values: [BytesLike, BigNumberish[]]
-  ): string;
-
-  decodeFunctionResult(functionFragment: "Verify", data: BytesLike): Result;
-}
-
-export interface IPlonkVerifier extends BaseContract {
-  connect(runner?: ContractRunner | null): IPlonkVerifier;
+export interface ITokenData extends BaseContract {
+  connect(runner?: ContractRunner | null): ITokenData;
   waitForDeployment(): Promise<this>;
 
-  interface: IPlonkVerifierInterface;
+  interface: ITokenDataInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -74,23 +61,9 @@ export interface IPlonkVerifier extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  Verify: TypedContractMethod<
-    [proof: BytesLike, publicInputs: BigNumberish[]],
-    [boolean],
-    "view"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
-
-  getFunction(
-    nameOrSignature: "Verify"
-  ): TypedContractMethod<
-    [proof: BytesLike, publicInputs: BigNumberish[]],
-    [boolean],
-    "view"
-  >;
 
   filters: {};
 }
