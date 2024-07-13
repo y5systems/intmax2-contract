@@ -222,7 +222,7 @@ contract Liquidity is
 		}
 		uint256 counter = 0;
 		for (
-			uint256 i = lastProcessedDepositId;
+			uint256 i = lastProcessedDepositId + 1;
 			i <= _lastProcessedDepositId;
 			i++
 		) {
