@@ -4,18 +4,17 @@ pragma solidity 0.8.24;
 import {IRollup} from "../rollup/IRollup.sol";
 
 interface ILiquidity {
-	enum TokenType {
-		ETH,
-		ERC20,
-		ERC721,
-		ERC1155
-	}
-
-	struct TokenInfo {
-		TokenType tokenType;
-		address tokenAddress;
-		uint256 tokenId;
-	}
+	error InvalidDepositId();
+	error OnlyRecipientCanCancelDeposit();
+	error InvalidDepositHash();
+	error OnlyRecipientCanClaimRejectedDeposit();
+	error InvalidLastProcessedDepositId();
+	error RollupContractNotSet();
+	error SenderIsNotScrollMessenger();
+	error InvalidRollup();
+	error WithdrawalNotFound();
+	error InvalidRecipientSaltHash();
+	error InvalidAmount();
 
 	struct Deposit {
 		bytes32 recipientSaltHash;
@@ -26,7 +25,6 @@ interface ILiquidity {
 	struct DepositData {
 		bytes32 depositHash;
 		address sender;
-		uint256 requestedAt; // TODO: remove this
 	}
 
 	event Deposited(
@@ -44,7 +42,10 @@ interface ILiquidity {
 
 	event DepositsSubmitted(uint256 indexed lastProcessedDepositId);
 
-	error InvalidTokenAddress();
+	event WithdrawalClaimable(
+		uint256 indexed withdrawalId,
+		IRollup.Withdrawal withdrawal
+	);
 
 	function depositETH(bytes32 recipientSaltHash) external payable;
 
@@ -101,18 +102,4 @@ interface ILiquidity {
 	) external;
 
 	function claimWithdrawals(uint256[] calldata withdrawalIds) external;
-
-	function getDepositCounter() external view returns (uint256);
-
-	function getPendingDeposit(
-		uint256 depositId
-	) external view returns (DepositData memory);
-
-	function getRejectedDeposit(
-		uint256 depositId
-	) external view returns (DepositData memory);
-
-	function getLastAnalyzedDepositId() external view returns (uint256);
-
-	function getLastProcessedDepositId() external view returns (uint256);
 }

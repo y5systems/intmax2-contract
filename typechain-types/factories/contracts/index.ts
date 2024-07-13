@@ -4,6 +4,5 @@
 export * as blockBuilderRegistry from "./block-builder-registry";
 export * as lib from "./lib";
 export * as liquidity from "./liquidity";
-export * as mock from "./mock";
 export * as rollup from "./rollup";
-export * as token from "./token";
+export * as test from "./test";

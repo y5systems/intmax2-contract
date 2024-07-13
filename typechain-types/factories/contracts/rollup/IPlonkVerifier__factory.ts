@@ -18,7 +18,7 @@ const _abi = [
       },
       {
         internalType: "uint256[]",
-        name: "public_inputs",
+        name: "publicInputs",
         type: "uint256[]",
       },
     ],
