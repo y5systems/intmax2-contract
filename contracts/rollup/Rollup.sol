@@ -70,7 +70,11 @@ contract Rollup is
 		verifier = IPlonkVerifier(_verifier);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
+
+		// The block hash of the genesis block is not referenced during a withdraw request.
+		// Therefore, the genesis block is not included in the postedBlockHashes.
 		blockHashes.pushFirstBlockHash();
+
 		postedBlockBuilders.push(address(0));
 	}
 
@@ -147,10 +151,7 @@ contract Rollup is
 
 		slashedBlockNumbers[publicInputs.blockNumber] = true;
 		address blockBuilder = postedBlockBuilders[publicInputs.blockNumber];
-		blockBuilderRegistry.slashBlockBuilder(
-			blockBuilder,
-			_msgSender()
-		);
+		blockBuilderRegistry.slashBlockBuilder(blockBuilder, _msgSender());
 
 		emit BlockFraudProofSubmitted(
 			publicInputs.blockNumber,
@@ -179,10 +180,9 @@ contract Rollup is
 			}
 			withdrawalRequests.push(_withdrawalRequests[i]);
 			withdrawnTransferHash[transferHash] = true;
-			withdrawalsHash = keccak256(abi.encodePacked(
-				withdrawalsHash,
-				transferHash
-			));
+			withdrawalsHash = keccak256(
+				abi.encodePacked(withdrawalsHash, transferHash)
+			);
 		}
 
 		if (withdrawalsHash != publicInputs.withdrawalsHash) {
@@ -275,7 +275,10 @@ contract Rollup is
 		blockNumber = blockHashes.length;
 		bytes32 prevBlockHash = blockHashes.getPrevHash();
 		bytes32 depositTreeRoot = getDepositRoot();
-		bytes32 blockHash = blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
+		bytes32 blockHash = blockHashes.pushBlockHash(
+			depositTreeRoot,
+			signatureHash
+		);
 		postedBlockBuilders.push(_msgSender());
 
 		// NOTE: Although hash collisions are rare, if a collision does occur, some users may be
