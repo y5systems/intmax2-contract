@@ -73,7 +73,6 @@ export interface RollupInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "blockHashes"
       | "depositCount"
       | "getDepositRoot"
       | "getLeafValue"
@@ -84,7 +83,6 @@ export interface RollupInterface extends Interface {
       | "postNonRegistrationBlock"
       | "postRegistrationBlock"
       | "postWithdrawalRequests"
-      | "postedBlockBuilders"
       | "processDeposits"
       | "proxiableUUID"
       | "renounceOwnership"
@@ -110,10 +108,6 @@ export interface RollupInterface extends Interface {
   encodeFunctionData(
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "blockHashes",
-    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "depositCount",
@@ -180,10 +174,6 @@ export interface RollupInterface extends Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "postedBlockBuilders",
-    values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
     functionFragment: "processDeposits",
     values: [BigNumberish, BytesLike[]]
   ): string;
@@ -221,10 +211,6 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "blockHashes",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "depositCount",
     data: BytesLike
   ): Result;
@@ -256,10 +242,6 @@ export interface RollupInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "postWithdrawalRequests",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "postedBlockBuilders",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -478,8 +460,6 @@ export interface Rollup extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  blockHashes: TypedContractMethod<[arg0: BigNumberish], [string], "view">;
-
   depositCount: TypedContractMethod<[], [bigint], "view">;
 
   getDepositRoot: TypedContractMethod<[], [string], "view">;
@@ -562,12 +542,6 @@ export interface Rollup extends BaseContract {
     "nonpayable"
   >;
 
-  postedBlockBuilders: TypedContractMethod<
-    [arg0: BigNumberish],
-    [string],
-    "view"
-  >;
-
   processDeposits: TypedContractMethod<
     [_lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
     [void],
@@ -620,9 +594,6 @@ export interface Rollup extends BaseContract {
   getFunction(
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "blockHashes"
-  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
   getFunction(
     nameOrSignature: "depositCount"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -715,9 +686,6 @@ export interface Rollup extends BaseContract {
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "postedBlockBuilders"
-  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
   getFunction(
     nameOrSignature: "processDeposits"
   ): TypedContractMethod<

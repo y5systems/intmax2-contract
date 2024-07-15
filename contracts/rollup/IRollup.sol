@@ -29,9 +29,8 @@ interface IRollup {
 	error BlockHashAlreadyPosted();
 
 	struct Block {
-		bytes32 prevBlockHash;
-		bytes32 depositTreeRoot;
-		bytes32 signatureHash;
+		bytes32 hash;
+		address builder;
 	}
 
 	struct Withdrawal {

@@ -6,7 +6,7 @@ import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegi
 import {IRollup} from "./IRollup.sol";
 import {IPlonkVerifier} from "./IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
-import {BlockHashesLib} from "./lib/BlockHashesLib.sol";
+import {BlockLib} from "./lib/BlockLib.sol";
 import {Byte32Lib} from "./lib/Byte32Lib.sol";
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
@@ -21,7 +21,7 @@ contract Rollup is
 	DepositContract,
 	IRollup
 {
-	using BlockHashesLib for bytes32[];
+	using BlockLib for Block[];
 	using FraudProofPublicInputsLib for FraudProofPublicInputs;
 	using WithdrawalLib for Withdrawal;
 	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputs;
@@ -33,11 +33,11 @@ contract Rollup is
 	address private liquidity;
 	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
-	bytes32[] public blockHashes;
+	Block[] private blocks;
 	mapping(bytes32 => uint256) private postedBlockHashes;
 	Withdrawal[] private withdrawalRequests;
 	mapping(bytes32 => bool) private withdrawnTransferHash;
-	address[] public postedBlockBuilders;
+	//address[] public postedBlockBuilders;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 
 	modifier onlyLiquidityContract() {
@@ -73,9 +73,7 @@ contract Rollup is
 
 		// The block hash of the genesis block is not referenced during a withdraw request.
 		// Therefore, the genesis block is not included in the postedBlockHashes.
-		blockHashes.pushFirstBlockHash();
-
-		postedBlockBuilders.push(address(0));
+		blocks.pushFirstBlockInfo();
 	}
 
 	function postRegistrationBlock(
@@ -144,7 +142,7 @@ contract Rollup is
 		}
 
 		slashedBlockNumbers[publicInputs.blockNumber] = true;
-		address blockBuilder = postedBlockBuilders[publicInputs.blockNumber];
+		address blockBuilder = blocks[publicInputs.blockNumber].builder;
 		blockBuilderRegistry.slashBlockBuilder(blockBuilder, _msgSender());
 
 		emit BlockFraudProofSubmitted(
@@ -266,14 +264,14 @@ contract Rollup is
 			)
 		);
 
-		blockNumber = blockHashes.length;
-		bytes32 prevBlockHash = blockHashes.getPrevHash();
+		blockNumber = blocks.length;
+		bytes32 prevBlockHash = blocks.getPrevHash();
 		bytes32 depositTreeRoot = getDepositRoot();
-		bytes32 blockHash = blockHashes.pushBlockHash(
+		bytes32 blockHash = blocks.pushBlockInfo(
 			depositTreeRoot,
-			signatureHash
+			signatureHash,
+			_msgSender()
 		);
-		postedBlockBuilders.push(_msgSender());
 
 		// NOTE: Although hash collisions are rare, if a collision does occur, some users may be
 		// unable to withdraw. Therefore, we ensure that the block hash does not already exist.
