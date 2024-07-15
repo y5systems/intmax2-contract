@@ -132,49 +132,6 @@ contract Rollup is
 		);
 	}
 
-	function _postBlock(
-		bool isRegistrationBlock,
-		bytes32 txTreeRoot,
-		uint128 senderFlags,
-		bytes32 publicKeysHash,
-		bytes32 accountIdsHash,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint
-	) internal returns (uint256 blockNumber) {
-		// Check if the block builder is valid.
-		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
-			revert InvalidBlockBuilder();
-		}
-		bytes32 signatureHash = keccak256(
-			abi.encodePacked(
-				isRegistrationBlock,
-				txTreeRoot,
-				senderFlags,
-				publicKeysHash,
-				accountIdsHash,
-				aggregatedPublicKey,
-				aggregatedSignature,
-				messagePoint
-			)
-		);
-
-		blockNumber = blockHashes.length;
-		bytes32 prevBlockHash = blockHashes.getPrevHash();
-		bytes32 depositTreeRoot = getDepositRoot();
-		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
-
-		emit BlockPosted(
-			prevBlockHash,
-			_msgSender(),
-			blockNumber,
-			depositTreeRoot,
-			signatureHash
-		);
-
-		return blockNumber;
-	}
-
 	function submitBlockFraudProof(
 		FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
@@ -275,6 +232,49 @@ contract Rollup is
 		}
 		lastProcessedDepositId = _lastProcessedDepositId;
 		emit DepositsProcessed(getDepositRoot());
+	}
+
+	function _postBlock(
+		bool isRegistrationBlock,
+		bytes32 txTreeRoot,
+		uint128 senderFlags,
+		bytes32 publicKeysHash,
+		bytes32 accountIdsHash,
+		uint256[2] calldata aggregatedPublicKey,
+		uint256[4] calldata aggregatedSignature,
+		uint256[4] calldata messagePoint
+	) internal returns (uint256 blockNumber) {
+		// Check if the block builder is valid.
+		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
+			revert InvalidBlockBuilder();
+		}
+		bytes32 signatureHash = keccak256(
+			abi.encodePacked(
+				isRegistrationBlock,
+				txTreeRoot,
+				senderFlags,
+				publicKeysHash,
+				accountIdsHash,
+				aggregatedPublicKey,
+				aggregatedSignature,
+				messagePoint
+			)
+		);
+
+		blockNumber = blockHashes.length;
+		bytes32 prevBlockHash = blockHashes.getPrevHash();
+		bytes32 depositTreeRoot = getDepositRoot();
+		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
+
+		emit BlockPosted(
+			prevBlockHash,
+			_msgSender(),
+			blockNumber,
+			depositTreeRoot,
+			signatureHash
+		);
+
+		return blockNumber;
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
