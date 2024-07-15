@@ -10,7 +10,7 @@ library WithdrawalProofPublicInputsLib {
 		return
 			keccak256(
 				abi.encodePacked(
-					inputs.withdrawalTreeRoot,
+					inputs.withdrawalsHash,
 					inputs.withdrawalAggregator
 				)
 			);

@@ -26,6 +26,12 @@ interface IRollup {
 
 	error SenderAccountIdsHashMismatch();
 
+	error WithdrawalBlockHashNotPosted(uint256 requestIndex);
+
+	error WithdrawalsHashMismatch();
+
+	error BlockHashAlreadyPosted();
+
 	struct Block {
 		bytes32 prevBlockHash;
 		bytes32 depositTreeRoot;
@@ -47,7 +53,7 @@ interface IRollup {
 	}
 
 	struct WithdrawalProofPublicInputs {
-		bytes32 withdrawalTreeRoot;
+		bytes32 withdrawalsHash;
 		address withdrawalAggregator;
 	}
 

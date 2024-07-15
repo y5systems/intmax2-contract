@@ -11,6 +11,11 @@ import type {
 const _abi = [
   {
     inputs: [],
+    name: "BlockHashAlreadyPosted",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "FraudProofAlreadySubmitted",
     type: "error",
   },
@@ -65,8 +70,24 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "requestIndex",
+        type: "uint256",
+      },
+    ],
+    name: "WithdrawalBlockHashNotPosted",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "WithdrawalProofVerificationFailed",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "WithdrawalsHashMismatch",
     type: "error",
   },
   {
@@ -311,7 +332,7 @@ const _abi = [
         components: [
           {
             internalType: "bytes32",
-            name: "withdrawalTreeRoot",
+            name: "withdrawalsHash",
             type: "bytes32",
           },
           {

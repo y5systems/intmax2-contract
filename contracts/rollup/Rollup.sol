@@ -34,6 +34,7 @@ contract Rollup is
 	uint256 public lastProcessedWithdrawId;
 	uint256 public lastProcessedDepositId;
 	bytes32[] public blockHashes;
+	mapping(bytes32 => uint256) private postedBlockHashes;
 	Withdrawal[] private withdrawalRequests;
 	mapping(bytes32 => bool) private withdrawnTransferHash;
 	address[] public postedBlockBuilders;
@@ -167,18 +168,28 @@ contract Rollup is
 			revert WithdrawalProofVerificationFailed();
 		}
 
-		// TODO: Calculate the withdrawal tree root from withdrawRequests.
-
+		bytes32 withdrawalsHash = 0;
 		for (uint256 i = 0; i < _withdrawalRequests.length; i++) {
+			if (postedBlockHashes[_withdrawalRequests[i].blockHash] == 0) {
+				revert WithdrawalBlockHashNotPosted(i);
+			}
 			bytes32 transferHash = _withdrawalRequests[i].getHash();
 			if (withdrawnTransferHash[transferHash] == true) {
 				continue;
 			}
 			withdrawalRequests.push(_withdrawalRequests[i]);
 			withdrawnTransferHash[transferHash] = true;
+			withdrawalsHash = keccak256(abi.encodePacked(
+				withdrawalsHash,
+				transferHash
+			));
 		}
 
-		emit WithdrawRequested(publicInputs.withdrawalTreeRoot, _msgSender());
+		if (withdrawalsHash != publicInputs.withdrawalsHash) {
+			revert WithdrawalsHashMismatch();
+		}
+
+		emit WithdrawRequested(publicInputs.withdrawalsHash, _msgSender());
 	}
 
 	function submitWithdrawals(uint256 _lastProcessedWithdrawId) external {
@@ -264,7 +275,15 @@ contract Rollup is
 		blockNumber = blockHashes.length;
 		bytes32 prevBlockHash = blockHashes.getPrevHash();
 		bytes32 depositTreeRoot = getDepositRoot();
-		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
+		bytes32 blockHash = blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
+		postedBlockBuilders.push(_msgSender());
+
+		// NOTE: Although hash collisions are rare, if a collision does occur, some users may be
+		// unable to withdraw. Therefore, we ensure that the block hash does not already exist.
+		if (postedBlockHashes[blockHash] != 0) {
+			revert BlockHashAlreadyPosted();
+		}
+		postedBlockHashes[blockHash] = blockNumber;
 
 		emit BlockPosted(
 			prevBlockHash,

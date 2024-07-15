@@ -30,15 +30,16 @@ library BlockHashesLib {
 		bytes32[] storage blockHashes,
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash
-	) internal {
-		blockHashes.push(
-			_calcBlockHash(
-				getPrevHash(blockHashes),
-				depositTreeRoot,
-				signatureHash,
-				blockHashes.length
-			)
+	) internal returns (bytes32 blockHash) {
+		blockHash = _calcBlockHash(
+			getPrevHash(blockHashes),
+			depositTreeRoot,
+			signatureHash,
+			blockHashes.length
 		);
+		blockHashes.push(blockHash);
+
+		return blockHash;
 	}
 
 	function _calcBlockHash(

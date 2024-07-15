@@ -47,14 +47,14 @@ export declare namespace IRollup {
   };
 
   export type WithdrawalProofPublicInputsStruct = {
-    withdrawalTreeRoot: BytesLike;
+    withdrawalsHash: BytesLike;
     withdrawalAggregator: AddressLike;
   };
 
   export type WithdrawalProofPublicInputsStructOutput = [
-    withdrawalTreeRoot: string,
+    withdrawalsHash: string,
     withdrawalAggregator: string
-  ] & { withdrawalTreeRoot: string; withdrawalAggregator: string };
+  ] & { withdrawalsHash: string; withdrawalAggregator: string };
 
   export type FraudProofPublicInputsStruct = {
     blockHash: BytesLike;
