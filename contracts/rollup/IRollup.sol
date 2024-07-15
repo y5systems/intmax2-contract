@@ -16,6 +16,16 @@ interface IRollup {
 
 	error OnlyLiquidity();
 
+	error SenderPublicKeysEmpty();
+
+	error SenderPublicKeysHashMismatch();
+
+	error SenderAccountIdsEmpty();
+
+	error SenderAccountIdsInvalidLength();
+
+	error SenderAccountIdsHashMismatch();
+
 	struct Block {
 		bytes32 prevBlockHash;
 		bytes32 depositTreeRoot;
@@ -27,12 +37,12 @@ interface IRollup {
 		uint32 tokenIndex;
 		uint256 amount;
 		bytes32 salt;
+		bytes32 blockHash;
 	}
 
 	struct FraudProofPublicInputs {
 		bytes32 blockHash;
 		uint32 blockNumber;
-		address blockBuilder;
 		address challenger;
 	}
 
@@ -68,19 +78,33 @@ interface IRollup {
 	);
 
 	/**
-	 * @notice Post new block by Block Builder.
+	 * @notice Post a new block for senders who have not been assigned an account ID.
 	 * @dev Only valid Block Builders can call this function.
 	 */
-	function postBlock(
-		bool isRegistrationBlock,
+	function postRegistrationBlock(
+		bytes32 txTreeRoot,
+		uint128 senderFlags,
+		bytes32 publicKeysHash,
+		uint256[2] calldata aggregatedPublicKey,
+		uint256[4] calldata aggregatedSignature,
+		uint256[4] calldata messagePoint,
+		uint256[] calldata senderPublicKeys
+	) external;
+
+	/**
+	 * @notice Post a new block for the sender to whom the account ID is allocated.
+	 * @dev Only valid Block Builders can call this function.
+	 */
+	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
 		uint128 senderFlags,
 		bytes32 publicKeysHash,
 		bytes32 accountIdsHash,
 		uint256[2] calldata aggregatedPublicKey,
 		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint
-	) external returns (uint256 blockNumber);
+		uint256[4] calldata messagePoint,
+		bytes calldata senderAccountIds
+	) external;
 
 	function submitBlockFraudProof(
 		FraudProofPublicInputs calldata publicInputs,

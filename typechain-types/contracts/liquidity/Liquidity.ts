@@ -29,14 +29,22 @@ export declare namespace IRollup {
     tokenIndex: BigNumberish;
     amount: BigNumberish;
     salt: BytesLike;
+    blockHash: BytesLike;
   };
 
   export type WithdrawalStructOutput = [
     recipient: string,
     tokenIndex: bigint,
     amount: bigint,
-    salt: string
-  ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
+    salt: string,
+    blockHash: string
+  ] & {
+    recipient: string;
+    tokenIndex: bigint;
+    amount: bigint;
+    salt: string;
+    blockHash: string;
+  };
 }
 
 export declare namespace ILiquidity {

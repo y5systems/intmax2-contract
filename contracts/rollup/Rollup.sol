@@ -36,6 +36,7 @@ contract Rollup is
 	bytes32[] public blockHashes;
 	Withdrawal[] private withdrawalRequests;
 	mapping(bytes32 => bool) private withdrawnTransferHash;
+	address[] public postedBlockBuilders;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 
 	modifier onlyLiquidityContract() {
@@ -69,9 +70,69 @@ contract Rollup is
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
 		blockHashes.pushFirstBlockHash();
+		postedBlockBuilders.push(address(0));
 	}
 
-	function postBlock(
+	function postRegistrationBlock(
+		bytes32 txTreeRoot,
+		uint128 senderFlags,
+		bytes32 publicKeysHash,
+		uint256[2] calldata aggregatedPublicKey,
+		uint256[4] calldata aggregatedSignature,
+		uint256[4] calldata messagePoint,
+		uint256[] calldata senderPublicKeys
+	) public {
+		if (senderPublicKeys.length == 0) {
+			revert SenderPublicKeysEmpty();
+		}
+		if (keccak256(abi.encodePacked(senderPublicKeys)) != publicKeysHash) {
+			revert SenderPublicKeysHashMismatch();
+		}
+		bytes32 accountIdsHash = 0;
+		_postBlock(
+			true,
+			txTreeRoot,
+			senderFlags,
+			publicKeysHash,
+			accountIdsHash,
+			aggregatedPublicKey,
+			aggregatedSignature,
+			messagePoint
+		);
+	}
+
+	function postNonRegistrationBlock(
+		bytes32 txTreeRoot,
+		uint128 senderFlags,
+		bytes32 publicKeysHash,
+		bytes32 accountIdsHash,
+		uint256[2] calldata aggregatedPublicKey,
+		uint256[4] calldata aggregatedSignature,
+		uint256[4] calldata messagePoint,
+		bytes calldata senderAccountIds
+	) public {
+		if (senderAccountIds.length == 0) {
+			revert SenderAccountIdsEmpty();
+		}
+		if (senderAccountIds.length % 5 != 0) {
+			revert SenderAccountIdsInvalidLength();
+		}
+		if (keccak256(senderAccountIds) != accountIdsHash) {
+			revert SenderAccountIdsHashMismatch();
+		}
+		_postBlock(
+			false,
+			txTreeRoot,
+			senderFlags,
+			publicKeysHash,
+			accountIdsHash,
+			aggregatedPublicKey,
+			aggregatedSignature,
+			messagePoint
+		);
+	}
+
+	function _postBlock(
 		bool isRegistrationBlock,
 		bytes32 txTreeRoot,
 		uint128 senderFlags,
@@ -80,7 +141,7 @@ contract Rollup is
 		uint256[2] calldata aggregatedPublicKey,
 		uint256[4] calldata aggregatedSignature,
 		uint256[4] calldata messagePoint
-	) external returns (uint256 blockNumber) {
+	) internal returns (uint256 blockNumber) {
 		// Check if the block builder is valid.
 		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
 			revert InvalidBlockBuilder();
@@ -127,14 +188,15 @@ contract Rollup is
 		}
 
 		slashedBlockNumbers[publicInputs.blockNumber] = true;
+		address blockBuilder = postedBlockBuilders[publicInputs.blockNumber];
 		blockBuilderRegistry.slashBlockBuilder(
-			publicInputs.blockBuilder,
+			blockBuilder,
 			_msgSender()
 		);
 
 		emit BlockFraudProofSubmitted(
 			publicInputs.blockNumber,
-			publicInputs.blockBuilder,
+			blockBuilder,
 			_msgSender()
 		);
 	}

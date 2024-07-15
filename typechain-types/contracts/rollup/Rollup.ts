@@ -29,14 +29,22 @@ export declare namespace IRollup {
     tokenIndex: BigNumberish;
     amount: BigNumberish;
     salt: BytesLike;
+    blockHash: BytesLike;
   };
 
   export type WithdrawalStructOutput = [
     recipient: string,
     tokenIndex: bigint,
     amount: bigint,
-    salt: string
-  ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
+    salt: string,
+    blockHash: string
+  ] & {
+    recipient: string;
+    tokenIndex: bigint;
+    amount: bigint;
+    salt: string;
+    blockHash: string;
+  };
 
   export type WithdrawalProofPublicInputsStruct = {
     withdrawalTreeRoot: BytesLike;
@@ -51,21 +59,14 @@ export declare namespace IRollup {
   export type FraudProofPublicInputsStruct = {
     blockHash: BytesLike;
     blockNumber: BigNumberish;
-    blockBuilder: AddressLike;
     challenger: AddressLike;
   };
 
   export type FraudProofPublicInputsStructOutput = [
     blockHash: string,
     blockNumber: bigint,
-    blockBuilder: string,
     challenger: string
-  ] & {
-    blockHash: string;
-    blockNumber: bigint;
-    blockBuilder: string;
-    challenger: string;
-  };
+  ] & { blockHash: string; blockNumber: bigint; challenger: string };
 }
 
 export interface RollupInterface extends Interface {
@@ -80,8 +81,10 @@ export interface RollupInterface extends Interface {
       | "lastProcessedDepositId"
       | "lastProcessedWithdrawId"
       | "owner"
-      | "postBlock"
+      | "postNonRegistrationBlock"
+      | "postRegistrationBlock"
       | "postWithdrawalRequests"
+      | "postedBlockBuilders"
       | "processDeposits"
       | "proxiableUUID"
       | "renounceOwnership"
@@ -146,16 +149,28 @@ export interface RollupInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "postBlock",
+    functionFragment: "postNonRegistrationBlock",
     values: [
-      boolean,
       BytesLike,
       BigNumberish,
       BytesLike,
       BytesLike,
       [BigNumberish, BigNumberish],
       [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      BytesLike
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "postRegistrationBlock",
+    values: [
+      BytesLike,
+      BigNumberish,
+      BytesLike,
+      [BigNumberish, BigNumberish],
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      BigNumberish[]
     ]
   ): string;
   encodeFunctionData(
@@ -165,6 +180,10 @@ export interface RollupInterface extends Interface {
       IRollup.WithdrawalProofPublicInputsStruct,
       BytesLike
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "postedBlockBuilders",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "processDeposits",
@@ -229,9 +248,20 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "postBlock", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "postNonRegistrationBlock",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "postRegistrationBlock",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "postWithdrawalRequests",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "postedBlockBuilders",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -487,9 +517,8 @@ export interface Rollup extends BaseContract {
 
   owner: TypedContractMethod<[], [string], "view">;
 
-  postBlock: TypedContractMethod<
+  postNonRegistrationBlock: TypedContractMethod<
     [
-      isRegistrationBlock: boolean,
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
       publicKeysHash: BytesLike,
@@ -501,9 +530,29 @@ export interface Rollup extends BaseContract {
         BigNumberish,
         BigNumberish
       ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderAccountIds: BytesLike
     ],
-    [bigint],
+    [void],
+    "nonpayable"
+  >;
+
+  postRegistrationBlock: TypedContractMethod<
+    [
+      txTreeRoot: BytesLike,
+      senderFlags: BigNumberish,
+      publicKeysHash: BytesLike,
+      aggregatedPublicKey: [BigNumberish, BigNumberish],
+      aggregatedSignature: [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
+      ],
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderPublicKeys: BigNumberish[]
+    ],
+    [void],
     "nonpayable"
   >;
 
@@ -515,6 +564,12 @@ export interface Rollup extends BaseContract {
     ],
     [void],
     "nonpayable"
+  >;
+
+  postedBlockBuilders: TypedContractMethod<
+    [arg0: BigNumberish],
+    [string],
+    "view"
   >;
 
   processDeposits: TypedContractMethod<
@@ -615,10 +670,9 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "postBlock"
+    nameOrSignature: "postNonRegistrationBlock"
   ): TypedContractMethod<
     [
-      isRegistrationBlock: boolean,
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
       publicKeysHash: BytesLike,
@@ -630,9 +684,30 @@ export interface Rollup extends BaseContract {
         BigNumberish,
         BigNumberish
       ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderAccountIds: BytesLike
     ],
-    [bigint],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "postRegistrationBlock"
+  ): TypedContractMethod<
+    [
+      txTreeRoot: BytesLike,
+      senderFlags: BigNumberish,
+      publicKeysHash: BytesLike,
+      aggregatedPublicKey: [BigNumberish, BigNumberish],
+      aggregatedSignature: [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
+      ],
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderPublicKeys: BigNumberish[]
+    ],
+    [void],
     "nonpayable"
   >;
   getFunction(
@@ -646,6 +721,9 @@ export interface Rollup extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "postedBlockBuilders"
+  ): TypedContractMethod<[arg0: BigNumberish], [string], "view">;
   getFunction(
     nameOrSignature: "processDeposits"
   ): TypedContractMethod<

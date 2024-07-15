@@ -1,9 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {IRollup} from "../IRollup.sol";
+
 library BlockHashesLib {
 	function pushFirstBlockHash(bytes32[] storage blockHashes) internal {
-		blockHashes.push(bytes32(0));
+		// The initial state of the deposit tree is a height-32 Keccak Merkle tree where all leaves are 0,
+		// and initialDepositTreeRoot is the Merkle root of this tree.
+		bytes32 initialDepositTreeRoot = 0;
+		for (uint256 i = 0; i < 32; i++) {
+			initialDepositTreeRoot = keccak256(abi.encodePacked(initialDepositTreeRoot, initialDepositTreeRoot));
+		}
+
+		blockHashes.push(_calcBlockHash(
+			0,
+			initialDepositTreeRoot,
+			0,
+			0
+		));
 	}
 
 	function getPrevHash(

@@ -41,6 +41,31 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "SenderAccountIdsEmpty",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "SenderAccountIdsHashMismatch",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "SenderAccountIdsInvalidLength",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "SenderPublicKeysEmpty",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "SenderPublicKeysHashMismatch",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "WithdrawalProofVerificationFailed",
     type: "error",
   },
@@ -160,11 +185,6 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "bool",
-        name: "isRegistrationBlock",
-        type: "bool",
-      },
-      {
         internalType: "bytes32",
         name: "txTreeRoot",
         type: "bytes32",
@@ -199,15 +219,57 @@ const _abi = [
         name: "messagePoint",
         type: "uint256[4]",
       },
-    ],
-    name: "postBlock",
-    outputs: [
       {
-        internalType: "uint256",
-        name: "blockNumber",
-        type: "uint256",
+        internalType: "bytes",
+        name: "senderAccountIds",
+        type: "bytes",
       },
     ],
+    name: "postNonRegistrationBlock",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "txTreeRoot",
+        type: "bytes32",
+      },
+      {
+        internalType: "uint128",
+        name: "senderFlags",
+        type: "uint128",
+      },
+      {
+        internalType: "bytes32",
+        name: "publicKeysHash",
+        type: "bytes32",
+      },
+      {
+        internalType: "uint256[2]",
+        name: "aggregatedPublicKey",
+        type: "uint256[2]",
+      },
+      {
+        internalType: "uint256[4]",
+        name: "aggregatedSignature",
+        type: "uint256[4]",
+      },
+      {
+        internalType: "uint256[4]",
+        name: "messagePoint",
+        type: "uint256[4]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "senderPublicKeys",
+        type: "uint256[]",
+      },
+    ],
+    name: "postRegistrationBlock",
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
@@ -233,6 +295,11 @@ const _abi = [
           {
             internalType: "bytes32",
             name: "salt",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "blockHash",
             type: "bytes32",
           },
         ],
@@ -299,11 +366,6 @@ const _abi = [
             internalType: "uint32",
             name: "blockNumber",
             type: "uint32",
-          },
-          {
-            internalType: "address",
-            name: "blockBuilder",
-            type: "address",
           },
           {
             internalType: "address",
