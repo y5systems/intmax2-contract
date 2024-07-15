@@ -28,22 +28,22 @@ contract Liquidity is
 
 	IL1ScrollMessenger private l1ScrollMessenger;
 	address private rollup;
-	uint256 private withdrawalIdCounter = 0;
+	uint256 private withdrawalIdCounter;
 	mapping(uint256 => IRollup.Withdrawal) private claimableWithdrawals;
 
 	/**
 	 * @dev List of pending deposit requests. They are added when there is a request from a user
 	 *  and removed once processed or rejected.
 	 */
-	DepositData[] private pendingDepositData;
+	DepositData[] public pendingDepositData;
 
 	/**
 	 * @dev List of rejected deposit requests. They are removed once claimed.
 	 */
 	mapping(uint256 => DepositData) private rejectedDepositData;
 
-	uint256 private lastAnalyzedDepositId;
-	uint256 private lastProcessedDepositId;
+	uint256 public lastAnalyzedDepositId;
+	uint256 public lastProcessedDepositId;
 
 	modifier onlyRollup() {
 		// note

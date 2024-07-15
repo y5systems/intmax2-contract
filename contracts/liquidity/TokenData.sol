@@ -9,7 +9,7 @@ contract TokenData is Initializable, ITokenData {
 	using EnumerableSet for EnumerableSet.UintSet;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndexes;
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
-	uint256 private nextTokenIndex = 0;
+	uint256 private nextTokenIndex;
 	TokenInfo[] private tokenInfoList;
 	mapping(address => uint32) private fungibleTokenIndexMap;
 	mapping(address => mapping(uint256 => uint32))
