@@ -31,7 +31,7 @@ contract Rollup is
 	IPlonkVerifier private verifier;
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
-	uint256 public lastProcessedWithdrawId;
+	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
 	bytes32[] public blockHashes;
 	mapping(bytes32 => uint256) private postedBlockHashes;
@@ -186,29 +186,29 @@ contract Rollup is
 		emit WithdrawRequested(publicInputs.withdrawalsHash, _msgSender());
 	}
 
-	function submitWithdrawals(uint256 _lastProcessedWithdrawId) external {
+	function submitWithdrawals(uint256 _lastProcessedWithdrawalId) external {
 		if (
-			_lastProcessedWithdrawId <= lastProcessedWithdrawId ||
-			_lastProcessedWithdrawId > withdrawalRequests.length
+			_lastProcessedWithdrawalId <= lastProcessedWithdrawalId ||
+			_lastProcessedWithdrawalId > withdrawalRequests.length
 		) {
 			revert InvalidWithdrawalId();
 		}
 		Withdrawal[] memory withdrawals = new Withdrawal[](
-			_lastProcessedWithdrawId - lastProcessedWithdrawId + 1
+			_lastProcessedWithdrawalId - lastProcessedWithdrawalId + 1
 		);
 		uint256 counter = 0;
 		for (
-			uint256 i = lastProcessedWithdrawId;
-			i <= _lastProcessedWithdrawId;
+			uint256 i = lastProcessedWithdrawalId;
+			i <= _lastProcessedWithdrawalId;
 			i++
 		) {
 			withdrawals[counter] = withdrawalRequests[i];
 		}
 		emit WithdrawalsSubmitted(
-			lastProcessedWithdrawId,
-			_lastProcessedWithdrawId
+			lastProcessedWithdrawalId,
+			_lastProcessedWithdrawalId
 		);
-		lastProcessedWithdrawId = _lastProcessedWithdrawId;
+		lastProcessedWithdrawalId = _lastProcessedWithdrawalId;
 		// note
 		// The specification of ScrollMessenger may change in the future.
 		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/

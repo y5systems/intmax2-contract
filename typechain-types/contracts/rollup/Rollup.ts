@@ -79,7 +79,7 @@ export interface RollupInterface extends Interface {
       | "getLeafValue"
       | "initialize"
       | "lastProcessedDepositId"
-      | "lastProcessedWithdrawId"
+      | "lastProcessedWithdrawalId"
       | "owner"
       | "postNonRegistrationBlock"
       | "postRegistrationBlock"
@@ -144,7 +144,7 @@ export interface RollupInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "lastProcessedWithdrawId",
+    functionFragment: "lastProcessedWithdrawalId",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -242,7 +242,7 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "lastProcessedWithdrawId",
+    functionFragment: "lastProcessedWithdrawalId",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -416,16 +416,16 @@ export namespace WithdrawRequestedEvent {
 
 export namespace WithdrawalsSubmittedEvent {
   export type InputTuple = [
-    startProcessedWithdrawId: BigNumberish,
-    lastProcessedWithdrawId: BigNumberish
+    startProcessedWithdrawalId: BigNumberish,
+    lastProcessedWithdrawalId: BigNumberish
   ];
   export type OutputTuple = [
-    startProcessedWithdrawId: bigint,
-    lastProcessedWithdrawId: bigint
+    startProcessedWithdrawalId: bigint,
+    lastProcessedWithdrawalId: bigint
   ];
   export interface OutputObject {
-    startProcessedWithdrawId: bigint;
-    lastProcessedWithdrawId: bigint;
+    startProcessedWithdrawalId: bigint;
+    lastProcessedWithdrawalId: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -511,7 +511,7 @@ export interface Rollup extends BaseContract {
 
   lastProcessedDepositId: TypedContractMethod<[], [bigint], "view">;
 
-  lastProcessedWithdrawId: TypedContractMethod<[], [bigint], "view">;
+  lastProcessedWithdrawalId: TypedContractMethod<[], [bigint], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
@@ -585,7 +585,7 @@ export interface Rollup extends BaseContract {
   >;
 
   submitWithdrawals: TypedContractMethod<
-    [_lastProcessedWithdrawId: BigNumberish],
+    [_lastProcessedWithdrawalId: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -660,7 +660,7 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "lastProcessedDepositId"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
-    nameOrSignature: "lastProcessedWithdrawId"
+    nameOrSignature: "lastProcessedWithdrawalId"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "owner"
@@ -741,7 +741,7 @@ export interface Rollup extends BaseContract {
   getFunction(
     nameOrSignature: "submitWithdrawals"
   ): TypedContractMethod<
-    [_lastProcessedWithdrawId: BigNumberish],
+    [_lastProcessedWithdrawalId: BigNumberish],
     [void],
     "nonpayable"
   >;

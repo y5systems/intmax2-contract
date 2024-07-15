@@ -242,16 +242,16 @@ export namespace WithdrawRequestedEvent {
 
 export namespace WithdrawalsSubmittedEvent {
   export type InputTuple = [
-    startProcessedWithdrawId: BigNumberish,
-    lastProcessedWithdrawId: BigNumberish
+    startProcessedWithdrawalId: BigNumberish,
+    lastProcessedWithdrawalId: BigNumberish
   ];
   export type OutputTuple = [
-    startProcessedWithdrawId: bigint,
-    lastProcessedWithdrawId: bigint
+    startProcessedWithdrawalId: bigint,
+    lastProcessedWithdrawalId: bigint
   ];
   export interface OutputObject {
-    startProcessedWithdrawId: bigint;
-    lastProcessedWithdrawId: bigint;
+    startProcessedWithdrawalId: bigint;
+    lastProcessedWithdrawalId: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -362,7 +362,7 @@ export interface IRollup extends BaseContract {
   >;
 
   submitWithdrawals: TypedContractMethod<
-    [lastProcessedWithdrawId: BigNumberish],
+    [lastProcessedWithdrawalId: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -438,7 +438,7 @@ export interface IRollup extends BaseContract {
   getFunction(
     nameOrSignature: "submitWithdrawals"
   ): TypedContractMethod<
-    [lastProcessedWithdrawId: BigNumberish],
+    [lastProcessedWithdrawalId: BigNumberish],
     [void],
     "nonpayable"
   >;

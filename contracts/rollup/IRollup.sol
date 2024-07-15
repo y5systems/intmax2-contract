@@ -75,8 +75,8 @@ interface IRollup {
 	);
 
 	event WithdrawalsSubmitted(
-		uint256 startProcessedWithdrawId,
-		uint256 lastProcessedWithdrawId
+		uint256 startProcessedWithdrawalId,
+		uint256 lastProcessedWithdrawalId
 	);
 
 	/**
@@ -126,7 +126,7 @@ interface IRollup {
 	 * @notice Submit the withdrawals.
 	 * @dev This method is called by the Withdraw Aggregator.
 	 */
-	function submitWithdrawals(uint256 lastProcessedWithdrawId) external;
+	function submitWithdrawals(uint256 lastProcessedWithdrawalId) external;
 
 	/**
 	 * @notice Update the deposit tree branch and root.

@@ -180,13 +180,13 @@ const _abi = [
       {
         indexed: false,
         internalType: "uint256",
-        name: "startProcessedWithdrawId",
+        name: "startProcessedWithdrawalId",
         type: "uint256",
       },
       {
         indexed: false,
         internalType: "uint256",
-        name: "lastProcessedWithdrawId",
+        name: "lastProcessedWithdrawalId",
         type: "uint256",
       },
     ],
@@ -393,7 +393,7 @@ const _abi = [
     inputs: [
       {
         internalType: "uint256",
-        name: "lastProcessedWithdrawId",
+        name: "lastProcessedWithdrawalId",
         type: "uint256",
       },
     ],
