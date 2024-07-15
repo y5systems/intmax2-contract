@@ -51,22 +51,12 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "SenderAccountIdsHashMismatch",
-    type: "error",
-  },
-  {
-    inputs: [],
     name: "SenderAccountIdsInvalidLength",
     type: "error",
   },
   {
     inputs: [],
     name: "SenderPublicKeysEmpty",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "SenderPublicKeysHashMismatch",
     type: "error",
   },
   {
@@ -221,11 +211,6 @@ const _abi = [
         type: "bytes32",
       },
       {
-        internalType: "bytes32",
-        name: "accountIdsHash",
-        type: "bytes32",
-      },
-      {
         internalType: "uint256[2]",
         name: "aggregatedPublicKey",
         type: "uint256[2]",
@@ -262,11 +247,6 @@ const _abi = [
         internalType: "uint128",
         name: "senderFlags",
         type: "uint128",
-      },
-      {
-        internalType: "bytes32",
-        name: "publicKeysHash",
-        type: "bytes32",
       },
       {
         internalType: "uint256[2]",

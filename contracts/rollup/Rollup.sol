@@ -81,7 +81,6 @@ contract Rollup is
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
 		uint128 senderFlags,
-		bytes32 publicKeysHash,
 		uint256[2] calldata aggregatedPublicKey,
 		uint256[4] calldata aggregatedSignature,
 		uint256[4] calldata messagePoint,
@@ -90,9 +89,7 @@ contract Rollup is
 		if (senderPublicKeys.length == 0) {
 			revert SenderPublicKeysEmpty();
 		}
-		if (keccak256(abi.encodePacked(senderPublicKeys)) != publicKeysHash) {
-			revert SenderPublicKeysHashMismatch();
-		}
+		bytes32 publicKeysHash = keccak256(abi.encodePacked(senderPublicKeys));
 		bytes32 accountIdsHash = 0;
 		_postBlock(
 			true,
@@ -110,7 +107,6 @@ contract Rollup is
 		bytes32 txTreeRoot,
 		uint128 senderFlags,
 		bytes32 publicKeysHash,
-		bytes32 accountIdsHash,
 		uint256[2] calldata aggregatedPublicKey,
 		uint256[4] calldata aggregatedSignature,
 		uint256[4] calldata messagePoint,
@@ -122,9 +118,7 @@ contract Rollup is
 		if (senderAccountIds.length % 5 != 0) {
 			revert SenderAccountIdsInvalidLength();
 		}
-		if (keccak256(senderAccountIds) != accountIdsHash) {
-			revert SenderAccountIdsHashMismatch();
-		}
+		bytes32 accountIdsHash = keccak256(senderAccountIds);
 		_postBlock(
 			false,
 			txTreeRoot,

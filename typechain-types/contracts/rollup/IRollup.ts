@@ -95,7 +95,6 @@ export interface IRollupInterface extends Interface {
       BytesLike,
       BigNumberish,
       BytesLike,
-      BytesLike,
       [BigNumberish, BigNumberish],
       [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
       [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
@@ -107,7 +106,6 @@ export interface IRollupInterface extends Interface {
     values: [
       BytesLike,
       BigNumberish,
-      BytesLike,
       [BigNumberish, BigNumberish],
       [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
       [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
@@ -309,7 +307,6 @@ export interface IRollup extends BaseContract {
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
       publicKeysHash: BytesLike,
-      accountIdsHash: BytesLike,
       aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
         BigNumberish,
@@ -328,7 +325,6 @@ export interface IRollup extends BaseContract {
     [
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
-      publicKeysHash: BytesLike,
       aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
         BigNumberish,
@@ -382,7 +378,6 @@ export interface IRollup extends BaseContract {
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
       publicKeysHash: BytesLike,
-      accountIdsHash: BytesLike,
       aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
         BigNumberish,
@@ -402,7 +397,6 @@ export interface IRollup extends BaseContract {
     [
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
-      publicKeysHash: BytesLike,
       aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
         BigNumberish,

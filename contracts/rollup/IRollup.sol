@@ -18,13 +18,9 @@ interface IRollup {
 
 	error SenderPublicKeysEmpty();
 
-	error SenderPublicKeysHashMismatch();
-
 	error SenderAccountIdsEmpty();
 
 	error SenderAccountIdsInvalidLength();
-
-	error SenderAccountIdsHashMismatch();
 
 	error WithdrawalBlockHashNotPosted(uint256 requestIndex);
 
@@ -90,7 +86,6 @@ interface IRollup {
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
 		uint128 senderFlags,
-		bytes32 publicKeysHash,
 		uint256[2] calldata aggregatedPublicKey,
 		uint256[4] calldata aggregatedSignature,
 		uint256[4] calldata messagePoint,
@@ -105,7 +100,6 @@ interface IRollup {
 		bytes32 txTreeRoot,
 		uint128 senderFlags,
 		bytes32 publicKeysHash,
-		bytes32 accountIdsHash,
 		uint256[2] calldata aggregatedPublicKey,
 		uint256[4] calldata aggregatedSignature,
 		uint256[4] calldata messagePoint,
