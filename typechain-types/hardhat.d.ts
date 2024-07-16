@@ -154,6 +154,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Rollup__factory>;
     getContractFactory(
+      name: "BlockBuilderInfoLibTest",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BlockBuilderInfoLibTest__factory>;
+    getContractFactory(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockL1GasPriceOracle__factory>;
@@ -342,6 +346,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.Rollup>;
     getContractAt(
+      name: "BlockBuilderInfoLibTest",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BlockBuilderInfoLibTest>;
+    getContractAt(
       name: "MockL1GasPriceOracle",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -498,6 +507,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
     deployContract(
+      name: "BlockBuilderInfoLibTest",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BlockBuilderInfoLibTest>;
+    deployContract(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockL1GasPriceOracle>;
@@ -685,6 +698,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
+    deployContract(
+      name: "BlockBuilderInfoLibTest",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BlockBuilderInfoLibTest>;
     deployContract(
       name: "MockL1GasPriceOracle",
       args: any[],
