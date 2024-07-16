@@ -77,16 +77,6 @@ interface IBlockBuilderRegistry {
 	) external view returns (bool);
 
 	/**
-	 * @notice Get the block builder information.
-	 * @param blockBuilder The address of the block builder.
-	 * @return The block builder information.
-	 * @dev If the block builder is not found, it will return an empty struct.
-	 */
-	function getBlockBuilder(
-		address blockBuilder
-	) external view returns (BlockBuilderInfo memory);
-
-	/**
 	 * @notice Set the burn address.
 	 * @param _burnAddress The burn address.
 	 * @dev The burn address is used to burn the stake amount when the block builder is slashed.

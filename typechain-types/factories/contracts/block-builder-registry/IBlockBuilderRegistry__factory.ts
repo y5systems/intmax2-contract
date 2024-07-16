@@ -94,52 +94,6 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "getBlockBuilder",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "string",
-            name: "blockBuilderUrl",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "stakeAmount",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "stopTime",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "numSlashes",
-            type: "uint256",
-          },
-          {
-            internalType: "bool",
-            name: "isValid",
-            type: "bool",
-          },
-        ],
-        internalType: "struct IBlockBuilderRegistry.BlockBuilderInfo",
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "blockBuilder",
-        type: "address",
-      },
-    ],
     name: "isValidBlockBuilder",
     outputs: [
       {

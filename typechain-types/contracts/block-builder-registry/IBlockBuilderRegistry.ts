@@ -23,34 +23,9 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace IBlockBuilderRegistry {
-  export type BlockBuilderInfoStruct = {
-    blockBuilderUrl: string;
-    stakeAmount: BigNumberish;
-    stopTime: BigNumberish;
-    numSlashes: BigNumberish;
-    isValid: boolean;
-  };
-
-  export type BlockBuilderInfoStructOutput = [
-    blockBuilderUrl: string,
-    stakeAmount: bigint,
-    stopTime: bigint,
-    numSlashes: bigint,
-    isValid: boolean
-  ] & {
-    blockBuilderUrl: string;
-    stakeAmount: bigint;
-    stopTime: bigint;
-    numSlashes: bigint;
-    isValid: boolean;
-  };
-}
-
 export interface IBlockBuilderRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "getBlockBuilder"
       | "isValidBlockBuilder"
       | "setBurnAddress"
       | "slashBlockBuilder"
@@ -66,10 +41,6 @@ export interface IBlockBuilderRegistryInterface extends Interface {
       | "BlockBuilderUpdated"
   ): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "getBlockBuilder",
-    values: [AddressLike]
-  ): string;
   encodeFunctionData(
     functionFragment: "isValidBlockBuilder",
     values: [AddressLike]
@@ -92,10 +63,6 @@ export interface IBlockBuilderRegistryInterface extends Interface {
     values: [string]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "getBlockBuilder",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "isValidBlockBuilder",
     data: BytesLike
@@ -209,12 +176,6 @@ export interface IBlockBuilderRegistry extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  getBlockBuilder: TypedContractMethod<
-    [blockBuilder: AddressLike],
-    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
-    "view"
-  >;
-
   isValidBlockBuilder: TypedContractMethod<
     [blockBuilder: AddressLike],
     [boolean],
@@ -243,13 +204,6 @@ export interface IBlockBuilderRegistry extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "getBlockBuilder"
-  ): TypedContractMethod<
-    [blockBuilder: AddressLike],
-    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
-    "view"
-  >;
   getFunction(
     nameOrSignature: "isValidBlockBuilder"
   ): TypedContractMethod<[blockBuilder: AddressLike], [boolean], "view">;

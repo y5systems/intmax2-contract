@@ -14,7 +14,7 @@ contract BlockBuilderRegistry is
 {
 	address private rollup;
 	address private burnAddress;
-	mapping(address => BlockBuilderInfo) private blockBuilders;
+	mapping(address => BlockBuilderInfo) public blockBuilders;
 	using BlockBuilderInfoLib for BlockBuilderInfo;
 
 	/**
@@ -41,7 +41,7 @@ contract BlockBuilderRegistry is
 	function initialize(address _rollup) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
-		_rollup = _rollup;
+		rollup = _rollup;
 		burnAddress = 0x000000000000000000000000000000000000dEaD;
 	}
 
@@ -51,14 +51,14 @@ contract BlockBuilderRegistry is
 		if (stakeAmount < MIN_STAKE_AMOUNT) {
 			revert InsufficientStakeAmount();
 		}
-
-		// Update the block builder information.
-		info.blockBuilderUrl = url;
-		info.stakeAmount = stakeAmount;
-		info.stopTime = 0;
-		if (info.isValidBlockBuilder()) {
-			info.isValid = true;
-		}
+		BlockBuilderInfo memory newInfo = BlockBuilderInfo({
+			blockBuilderUrl: url,
+			stakeAmount: stakeAmount,
+			stopTime: 0,
+			numSlashes: 0,
+			isValid: true
+		});
+		blockBuilders[_msgSender()] = newInfo;
 
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
@@ -131,12 +131,6 @@ contract BlockBuilderRegistry is
 		address blockBuilder
 	) public view returns (bool) {
 		return blockBuilders[blockBuilder].isValid;
-	}
-
-	function getBlockBuilder(
-		address blockBuilder
-	) external view returns (BlockBuilderInfo memory) {
-		return blockBuilders[blockBuilder];
 	}
 
 	function setBurnAddress(address _burnAddress) external onlyOwner {

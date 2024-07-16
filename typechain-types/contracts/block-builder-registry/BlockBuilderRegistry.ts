@@ -23,35 +23,11 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace IBlockBuilderRegistry {
-  export type BlockBuilderInfoStruct = {
-    blockBuilderUrl: string;
-    stakeAmount: BigNumberish;
-    stopTime: BigNumberish;
-    numSlashes: BigNumberish;
-    isValid: boolean;
-  };
-
-  export type BlockBuilderInfoStructOutput = [
-    blockBuilderUrl: string,
-    stakeAmount: bigint,
-    stopTime: bigint,
-    numSlashes: bigint,
-    isValid: boolean
-  ] & {
-    blockBuilderUrl: string;
-    stakeAmount: bigint;
-    stopTime: bigint;
-    numSlashes: bigint;
-    isValid: boolean;
-  };
-}
-
 export interface BlockBuilderRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "getBlockBuilder"
+      | "blockBuilders"
       | "initialize"
       | "isValidBlockBuilder"
       | "owner"
@@ -81,7 +57,7 @@ export interface BlockBuilderRegistryInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getBlockBuilder",
+    functionFragment: "blockBuilders",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -132,7 +108,7 @@ export interface BlockBuilderRegistryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getBlockBuilder",
+    functionFragment: "blockBuilders",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -305,9 +281,17 @@ export interface BlockBuilderRegistry extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  getBlockBuilder: TypedContractMethod<
-    [blockBuilder: AddressLike],
-    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
+  blockBuilders: TypedContractMethod<
+    [arg0: AddressLike],
+    [
+      [string, bigint, bigint, bigint, boolean] & {
+        blockBuilderUrl: string;
+        stakeAmount: bigint;
+        stopTime: bigint;
+        numSlashes: bigint;
+        isValid: boolean;
+      }
+    ],
     "view"
   >;
 
@@ -363,10 +347,18 @@ export interface BlockBuilderRegistry extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "getBlockBuilder"
+    nameOrSignature: "blockBuilders"
   ): TypedContractMethod<
-    [blockBuilder: AddressLike],
-    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
+    [arg0: AddressLike],
+    [
+      [string, bigint, bigint, bigint, boolean] & {
+        blockBuilderUrl: string;
+        stakeAmount: bigint;
+        stopTime: bigint;
+        numSlashes: bigint;
+        isValid: boolean;
+      }
+    ],
     "view"
   >;
   getFunction(
