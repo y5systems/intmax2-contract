@@ -177,6 +177,11 @@ const _abi = [
             name: "salt",
             type: "bytes32",
           },
+          {
+            internalType: "bytes32",
+            name: "blockHash",
+            type: "bytes32",
+          },
         ],
         indexed: false,
         internalType: "struct IRollup.Withdrawal",
@@ -379,6 +384,11 @@ const _abi = [
           {
             internalType: "bytes32",
             name: "salt",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "blockHash",
             type: "bytes32",
           },
         ],

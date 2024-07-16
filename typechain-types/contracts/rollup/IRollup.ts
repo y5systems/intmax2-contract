@@ -29,49 +29,51 @@ export declare namespace IRollup {
     tokenIndex: BigNumberish;
     amount: BigNumberish;
     salt: BytesLike;
+    blockHash: BytesLike;
   };
 
   export type WithdrawalStructOutput = [
     recipient: string,
     tokenIndex: bigint,
     amount: bigint,
-    salt: string
-  ] & { recipient: string; tokenIndex: bigint; amount: bigint; salt: string };
+    salt: string,
+    blockHash: string
+  ] & {
+    recipient: string;
+    tokenIndex: bigint;
+    amount: bigint;
+    salt: string;
+    blockHash: string;
+  };
 
   export type WithdrawalProofPublicInputsStruct = {
-    withdrawalTreeRoot: BytesLike;
+    withdrawalsHash: BytesLike;
     withdrawalAggregator: AddressLike;
   };
 
   export type WithdrawalProofPublicInputsStructOutput = [
-    withdrawalTreeRoot: string,
+    withdrawalsHash: string,
     withdrawalAggregator: string
-  ] & { withdrawalTreeRoot: string; withdrawalAggregator: string };
+  ] & { withdrawalsHash: string; withdrawalAggregator: string };
 
   export type FraudProofPublicInputsStruct = {
     blockHash: BytesLike;
     blockNumber: BigNumberish;
-    blockBuilder: AddressLike;
     challenger: AddressLike;
   };
 
   export type FraudProofPublicInputsStructOutput = [
     blockHash: string,
     blockNumber: bigint,
-    blockBuilder: string,
     challenger: string
-  ] & {
-    blockHash: string;
-    blockNumber: bigint;
-    blockBuilder: string;
-    challenger: string;
-  };
+  ] & { blockHash: string; blockNumber: bigint; challenger: string };
 }
 
 export interface IRollupInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "postBlock"
+      | "postNonRegistrationBlock"
+      | "postRegistrationBlock"
       | "postWithdrawalRequests"
       | "processDeposits"
       | "submitBlockFraudProof"
@@ -88,16 +90,26 @@ export interface IRollupInterface extends Interface {
   ): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "postBlock",
+    functionFragment: "postNonRegistrationBlock",
     values: [
-      boolean,
       BytesLike,
       BigNumberish,
       BytesLike,
-      BytesLike,
       [BigNumberish, BigNumberish],
       [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      BytesLike
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "postRegistrationBlock",
+    values: [
+      BytesLike,
+      BigNumberish,
+      [BigNumberish, BigNumberish],
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      BigNumberish[]
     ]
   ): string;
   encodeFunctionData(
@@ -121,7 +133,14 @@ export interface IRollupInterface extends Interface {
     values: [BigNumberish]
   ): string;
 
-  decodeFunctionResult(functionFragment: "postBlock", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "postNonRegistrationBlock",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "postRegistrationBlock",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "postWithdrawalRequests",
     data: BytesLike
@@ -223,16 +242,16 @@ export namespace WithdrawRequestedEvent {
 
 export namespace WithdrawalsSubmittedEvent {
   export type InputTuple = [
-    startProcessedWithdrawId: BigNumberish,
-    lastProcessedWithdrawId: BigNumberish
+    startProcessedWithdrawalId: BigNumberish,
+    lastProcessedWithdrawalId: BigNumberish
   ];
   export type OutputTuple = [
-    startProcessedWithdrawId: bigint,
-    lastProcessedWithdrawId: bigint
+    startProcessedWithdrawalId: bigint,
+    lastProcessedWithdrawalId: bigint
   ];
   export interface OutputObject {
-    startProcessedWithdrawId: bigint;
-    lastProcessedWithdrawId: bigint;
+    startProcessedWithdrawalId: bigint;
+    lastProcessedWithdrawalId: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -283,13 +302,11 @@ export interface IRollup extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  postBlock: TypedContractMethod<
+  postNonRegistrationBlock: TypedContractMethod<
     [
-      isRegistrationBlock: boolean,
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
       publicKeysHash: BytesLike,
-      accountIdsHash: BytesLike,
       aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
         BigNumberish,
@@ -297,9 +314,28 @@ export interface IRollup extends BaseContract {
         BigNumberish,
         BigNumberish
       ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderAccountIds: BytesLike
     ],
-    [bigint],
+    [void],
+    "nonpayable"
+  >;
+
+  postRegistrationBlock: TypedContractMethod<
+    [
+      txTreeRoot: BytesLike,
+      senderFlags: BigNumberish,
+      aggregatedPublicKey: [BigNumberish, BigNumberish],
+      aggregatedSignature: [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
+      ],
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderPublicKeys: BigNumberish[]
+    ],
+    [void],
     "nonpayable"
   >;
 
@@ -326,7 +362,7 @@ export interface IRollup extends BaseContract {
   >;
 
   submitWithdrawals: TypedContractMethod<
-    [lastProcessedWithdrawId: BigNumberish],
+    [lastProcessedWithdrawalId: BigNumberish],
     [void],
     "nonpayable"
   >;
@@ -336,14 +372,12 @@ export interface IRollup extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "postBlock"
+    nameOrSignature: "postNonRegistrationBlock"
   ): TypedContractMethod<
     [
-      isRegistrationBlock: boolean,
       txTreeRoot: BytesLike,
       senderFlags: BigNumberish,
       publicKeysHash: BytesLike,
-      accountIdsHash: BytesLike,
       aggregatedPublicKey: [BigNumberish, BigNumberish],
       aggregatedSignature: [
         BigNumberish,
@@ -351,9 +385,29 @@ export interface IRollup extends BaseContract {
         BigNumberish,
         BigNumberish
       ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish]
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderAccountIds: BytesLike
     ],
-    [bigint],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "postRegistrationBlock"
+  ): TypedContractMethod<
+    [
+      txTreeRoot: BytesLike,
+      senderFlags: BigNumberish,
+      aggregatedPublicKey: [BigNumberish, BigNumberish],
+      aggregatedSignature: [
+        BigNumberish,
+        BigNumberish,
+        BigNumberish,
+        BigNumberish
+      ],
+      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderPublicKeys: BigNumberish[]
+    ],
+    [void],
     "nonpayable"
   >;
   getFunction(
@@ -384,7 +438,7 @@ export interface IRollup extends BaseContract {
   getFunction(
     nameOrSignature: "submitWithdrawals"
   ): TypedContractMethod<
-    [lastProcessedWithdrawId: BigNumberish],
+    [lastProcessedWithdrawalId: BigNumberish],
     [void],
     "nonpayable"
   >;

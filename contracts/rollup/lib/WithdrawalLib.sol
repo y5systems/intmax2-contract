@@ -13,7 +13,8 @@ library WithdrawalLib {
 					withdrawal.recipient,
 					withdrawal.tokenIndex,
 					withdrawal.amount,
-					withdrawal.salt
+					withdrawal.salt,
+					withdrawal.blockHash
 				)
 			);
 	}
@@ -21,6 +22,6 @@ library WithdrawalLib {
 	function isEmpty(
 		IRollup.Withdrawal memory withdrawal
 	) internal pure returns (bool) {
-		return withdrawal.recipient == address(0);
+		return withdrawal.blockHash == 0;
 	}
 }

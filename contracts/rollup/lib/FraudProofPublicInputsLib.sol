@@ -12,7 +12,6 @@ library FraudProofPublicInputsLib {
 				abi.encodePacked(
 					inputs.blockHash,
 					inputs.blockNumber,
-					inputs.blockBuilder,
 					inputs.challenger
 				)
 			);

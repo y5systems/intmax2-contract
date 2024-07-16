@@ -6,7 +6,7 @@ import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegi
 import {IRollup} from "./IRollup.sol";
 import {IPlonkVerifier} from "./IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
-import {BlockHashesLib} from "./lib/BlockHashesLib.sol";
+import {BlockLib} from "./lib/BlockLib.sol";
 import {Byte32Lib} from "./lib/Byte32Lib.sol";
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
@@ -21,7 +21,7 @@ contract Rollup is
 	DepositContract,
 	IRollup
 {
-	using BlockHashesLib for bytes32[];
+	using BlockLib for Block[];
 	using FraudProofPublicInputsLib for FraudProofPublicInputs;
 	using WithdrawalLib for Withdrawal;
 	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputs;
@@ -31,11 +31,13 @@ contract Rollup is
 	IPlonkVerifier private verifier;
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
-	uint256 public lastProcessedWithdrawId;
+	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
-	bytes32[] public blockHashes;
+	Block[] private blocks;
+	mapping(bytes32 => uint256) private postedBlockHashes;
 	Withdrawal[] private withdrawalRequests;
 	mapping(bytes32 => bool) private withdrawnTransferHash;
+	//address[] public postedBlockBuilders;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 
 	modifier onlyLiquidityContract() {
@@ -68,50 +70,63 @@ contract Rollup is
 		verifier = IPlonkVerifier(_verifier);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
-		blockHashes.pushFirstBlockHash();
+
+		// The block hash of the genesis block is not referenced during a withdraw request.
+		// Therefore, the genesis block is not included in the postedBlockHashes.
+		blocks.pushFirstBlockInfo();
 	}
 
-	function postBlock(
-		bool isRegistrationBlock,
+	function postRegistrationBlock(
+		bytes32 txTreeRoot,
+		uint128 senderFlags,
+		uint256[2] calldata aggregatedPublicKey,
+		uint256[4] calldata aggregatedSignature,
+		uint256[4] calldata messagePoint,
+		uint256[] calldata senderPublicKeys
+	) public {
+		if (senderPublicKeys.length == 0) {
+			revert SenderPublicKeysEmpty();
+		}
+		bytes32 publicKeysHash = keccak256(abi.encodePacked(senderPublicKeys));
+		bytes32 accountIdsHash = 0;
+		_postBlock(
+			true,
+			txTreeRoot,
+			senderFlags,
+			publicKeysHash,
+			accountIdsHash,
+			aggregatedPublicKey,
+			aggregatedSignature,
+			messagePoint
+		);
+	}
+
+	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
 		uint128 senderFlags,
 		bytes32 publicKeysHash,
-		bytes32 accountIdsHash,
 		uint256[2] calldata aggregatedPublicKey,
 		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint
-	) external returns (uint256 blockNumber) {
-		// Check if the block builder is valid.
-		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
-			revert InvalidBlockBuilder();
+		uint256[4] calldata messagePoint,
+		bytes calldata senderAccountIds
+	) public {
+		if (senderAccountIds.length == 0) {
+			revert SenderAccountIdsEmpty();
 		}
-		bytes32 signatureHash = keccak256(
-			abi.encodePacked(
-				isRegistrationBlock,
-				txTreeRoot,
-				senderFlags,
-				publicKeysHash,
-				accountIdsHash,
-				aggregatedPublicKey,
-				aggregatedSignature,
-				messagePoint
-			)
+		if (senderAccountIds.length % 5 != 0) {
+			revert SenderAccountIdsInvalidLength();
+		}
+		bytes32 accountIdsHash = keccak256(senderAccountIds);
+		_postBlock(
+			false,
+			txTreeRoot,
+			senderFlags,
+			publicKeysHash,
+			accountIdsHash,
+			aggregatedPublicKey,
+			aggregatedSignature,
+			messagePoint
 		);
-
-		blockNumber = blockHashes.length;
-		bytes32 prevBlockHash = blockHashes.getPrevHash();
-		bytes32 depositTreeRoot = getDepositRoot();
-		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
-
-		emit BlockPosted(
-			prevBlockHash,
-			_msgSender(),
-			blockNumber,
-			depositTreeRoot,
-			signatureHash
-		);
-
-		return blockNumber;
 	}
 
 	function submitBlockFraudProof(
@@ -127,14 +142,12 @@ contract Rollup is
 		}
 
 		slashedBlockNumbers[publicInputs.blockNumber] = true;
-		blockBuilderRegistry.slashBlockBuilder(
-			publicInputs.blockBuilder,
-			_msgSender()
-		);
+		address blockBuilder = blocks[publicInputs.blockNumber].builder;
+		blockBuilderRegistry.slashBlockBuilder(blockBuilder, _msgSender());
 
 		emit BlockFraudProofSubmitted(
 			publicInputs.blockNumber,
-			publicInputs.blockBuilder,
+			blockBuilder,
 			_msgSender()
 		);
 	}
@@ -148,43 +161,52 @@ contract Rollup is
 			revert WithdrawalProofVerificationFailed();
 		}
 
-		// TODO: Calculate the withdrawal tree root from withdrawRequests.
-
+		bytes32 withdrawalsHash = 0;
 		for (uint256 i = 0; i < _withdrawalRequests.length; i++) {
+			if (postedBlockHashes[_withdrawalRequests[i].blockHash] == 0) {
+				revert WithdrawalBlockHashNotPosted(i);
+			}
 			bytes32 transferHash = _withdrawalRequests[i].getHash();
 			if (withdrawnTransferHash[transferHash] == true) {
 				continue;
 			}
 			withdrawalRequests.push(_withdrawalRequests[i]);
 			withdrawnTransferHash[transferHash] = true;
+			withdrawalsHash = keccak256(
+				abi.encodePacked(withdrawalsHash, transferHash)
+			);
 		}
 
-		emit WithdrawRequested(publicInputs.withdrawalTreeRoot, _msgSender());
+		if (withdrawalsHash != publicInputs.withdrawalsHash) {
+			revert WithdrawalsHashMismatch();
+		}
+
+		emit WithdrawRequested(publicInputs.withdrawalsHash, _msgSender());
 	}
 
-	function submitWithdrawals(uint256 _lastProcessedWithdrawId) external {
+	function submitWithdrawals(uint256 _lastProcessedWithdrawalId) external {
 		if (
-			_lastProcessedWithdrawId <= lastProcessedWithdrawId ||
-			_lastProcessedWithdrawId > withdrawalRequests.length
+			_lastProcessedWithdrawalId <= lastProcessedWithdrawalId ||
+			_lastProcessedWithdrawalId > withdrawalRequests.length
 		) {
 			revert InvalidWithdrawalId();
 		}
 		Withdrawal[] memory withdrawals = new Withdrawal[](
-			_lastProcessedWithdrawId - lastProcessedWithdrawId + 1
+			_lastProcessedWithdrawalId - lastProcessedWithdrawalId + 1
 		);
 		uint256 counter = 0;
 		for (
-			uint256 i = lastProcessedWithdrawId;
-			i <= _lastProcessedWithdrawId;
+			uint256 i = lastProcessedWithdrawalId;
+			i <= _lastProcessedWithdrawalId;
 			i++
 		) {
 			withdrawals[counter] = withdrawalRequests[i];
 		}
 		emit WithdrawalsSubmitted(
-			lastProcessedWithdrawId,
-			_lastProcessedWithdrawId
+			lastProcessedWithdrawalId,
+			_lastProcessedWithdrawalId
 		);
-		lastProcessedWithdrawId = _lastProcessedWithdrawId;
+		lastProcessedWithdrawalId = _lastProcessedWithdrawalId;
 		// note
 		// The specification of ScrollMessenger may change in the future.
 		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
@@ -213,6 +235,60 @@ contract Rollup is
 		}
 		lastProcessedDepositId = _lastProcessedDepositId;
 		emit DepositsProcessed(getDepositRoot());
+	}
+
+	function _postBlock(
+		bool isRegistrationBlock,
+		bytes32 txTreeRoot,
+		uint128 senderFlags,
+		bytes32 publicKeysHash,
+		bytes32 accountIdsHash,
+		uint256[2] calldata aggregatedPublicKey,
+		uint256[4] calldata aggregatedSignature,
+		uint256[4] calldata messagePoint
+	) internal returns (uint256 blockNumber) {
+		// Check if the block builder is valid.
+		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
+			revert InvalidBlockBuilder();
+		}
+		bytes32 signatureHash = keccak256(
+			abi.encodePacked(
+				isRegistrationBlock,
+				txTreeRoot,
+				senderFlags,
+				publicKeysHash,
+				accountIdsHash,
+				aggregatedPublicKey,
+				aggregatedSignature,
+				messagePoint
+			)
+		);
+
+		blockNumber = blocks.length;
+		bytes32 prevBlockHash = blocks.getPrevHash();
+		bytes32 depositTreeRoot = getDepositRoot();
+		bytes32 blockHash = blocks.pushBlockInfo(
+			depositTreeRoot,
+			signatureHash,
+			_msgSender()
+		);
+
+		// NOTE: Although hash collisions are rare, if a collision does occur, some users may be
+		// unable to withdraw. Therefore, we ensure that the block hash does not already exist.
+		if (postedBlockHashes[blockHash] != 0) {
+			revert BlockHashAlreadyPosted();
+		}
+		postedBlockHashes[blockHash] = blockNumber;
+
+		emit BlockPosted(
+			prevBlockHash,
+			_msgSender(),
+			blockNumber,
+			depositTreeRoot,
+			signatureHash
+		);
+
+		return blockNumber;
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
