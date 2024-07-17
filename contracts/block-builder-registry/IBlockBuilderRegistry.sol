@@ -12,7 +12,7 @@ interface IBlockBuilderRegistry {
 		uint256 stakeAmount
 	);
 
-	event BlockBuilderStoped(address indexed blockBuilder);
+	event BlockBuilderStopped(address indexed blockBuilder);
 
 	event BlockBuilderSlashed(
 		address indexed blockBuilder,

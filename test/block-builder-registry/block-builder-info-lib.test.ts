@@ -6,9 +6,9 @@ import {
 } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { type BlockBuilderInfoLibTest } from '../../typechain-types/contracts/test/block-builder-registry/BlockBuilderInfoLibTest'
 import { IBlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/IBlockBuilderRegistry'
+import { ONE_DAY_SECONDS } from './const.test'
 
 describe('BlockBuilderInfoLib', () => {
-	const ONE_DAY_SECONDS = 60 * 60 * 24
 	const MIN_STAKE_AMOUNT = ethers.parseEther('0.1')
 	async function setup(): Promise<BlockBuilderInfoLibTest> {
 		const lib = await ethers.deployContract('BlockBuilderInfoLibTest')

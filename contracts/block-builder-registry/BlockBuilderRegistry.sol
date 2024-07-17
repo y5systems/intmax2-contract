@@ -51,14 +51,11 @@ contract BlockBuilderRegistry is
 		if (stakeAmount < MIN_STAKE_AMOUNT) {
 			revert InsufficientStakeAmount();
 		}
-		BlockBuilderInfo memory newInfo = BlockBuilderInfo({
-			blockBuilderUrl: url,
-			stakeAmount: stakeAmount,
-			stopTime: 0,
-			numSlashes: 0,
-			isValid: true
-		});
-		blockBuilders[_msgSender()] = newInfo;
+		info.blockBuilderUrl = url;
+		info.stakeAmount = stakeAmount;
+		info.stopTime = 0;
+		info.isValid = true;
+		blockBuilders[_msgSender()] = info;
 
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
@@ -68,8 +65,9 @@ contract BlockBuilderRegistry is
 		BlockBuilderInfo memory info = blockBuilders[_msgSender()];
 		info.stopTime = block.timestamp;
 		info.isValid = false;
+		blockBuilders[_msgSender()] = info;
 
-		emit BlockBuilderStoped(_msgSender());
+		emit BlockBuilderStopped(_msgSender());
 	}
 
 	function unstake() public isStaking {
@@ -82,7 +80,7 @@ contract BlockBuilderRegistry is
 		uint256 stakeAmount = info.stakeAmount;
 
 		// Remove the block builder information.
-		delete info;
+		delete blockBuilders[_msgSender()];
 
 		// Return the stake amount to the block builder.
 		payable(_msgSender()).transfer(stakeAmount);
@@ -96,7 +94,7 @@ contract BlockBuilderRegistry is
 	) external onlyRollupContract {
 		BlockBuilderInfo memory info = blockBuilders[blockBuilder];
 		info.numSlashes += 1;
-		if (!info.isValidBlockBuilder() && info.isValid) {
+		if (!info.isStakeAmountSufficient() && info.isValid) {
 			info.isValid = false;
 		}
 		emit BlockBuilderSlashed(blockBuilder, challenger);

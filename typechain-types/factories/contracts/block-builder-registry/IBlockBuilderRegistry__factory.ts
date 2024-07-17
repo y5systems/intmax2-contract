@@ -58,7 +58,7 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "BlockBuilderStoped",
+    name: "BlockBuilderStopped",
     type: "event",
   },
   {
