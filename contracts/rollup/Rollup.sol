@@ -15,6 +15,8 @@ import {DepositContract} from "../lib/DepositContract.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import "hardhat/console.sol";
+
 contract Rollup is
 	OwnableUpgradeable,
 	UUPSUpgradeable,
@@ -145,9 +147,10 @@ contract Rollup is
 		}
 		// Pad with 5-byte representation of 1 (0x0000000001)
 		for (uint256 i = length; i < FULL_ACCOUNT_IDS_BYTES; i += 5) {
-			paddedAccountIds[i] = 0x01;
+			paddedAccountIds[i + 4] = 0x01;
 		}
 		bytes32 accountIdsHash = keccak256(paddedAccountIds);
+
 		_postBlock(
 			false,
 			txTreeRoot,
@@ -294,12 +297,13 @@ contract Rollup is
 		bytes32[4] calldata messagePoint
 	) internal returns (uint256 blockNumber) {
 		// Check if the block builder is valid.
-		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
-			revert InvalidBlockBuilder();
-		}
+		// if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
+		// 	revert InvalidBlockBuilder();
+		// }
+
 		bytes32 signatureHash = keccak256(
 			abi.encodePacked(
-				isRegistrationBlock,
+				uint32(isRegistrationBlock ? 1 : 0),
 				txTreeRoot,
 				senderFlags,
 				publicKeysHash,
@@ -313,6 +317,7 @@ contract Rollup is
 		blockNumber = blocks.length;
 		bytes32 prevBlockHash = blocks.getPrevHash();
 		bytes32 depositTreeRoot = getDepositRoot();
+
 		bytes32 blockHash = blocks.pushBlockInfo(
 			depositTreeRoot,
 			signatureHash,
