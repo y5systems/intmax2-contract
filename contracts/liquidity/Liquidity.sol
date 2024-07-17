@@ -223,7 +223,7 @@ contract Liquidity is
 		}
 		bytes32[] memory depositHashes = new bytes32[](counter);
 		for (
-			uint256 i = lastProcessedDepositId + 1; // change
+			uint256 i = lastProcessedDepositId + 1; 
 			i <= _lastProcessedDepositId;
 			i++
 		) {
