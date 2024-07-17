@@ -84,6 +84,8 @@ interface IRollup {
 
 	event ClaimableWithdrawalQueued(WithdrawalLib.Withdrawal withdrawal);
 
+	event DirectWithdrawalQueued(WithdrawalLib.Withdrawal withdrawal);
+
 	/**
 	 * @notice Post a new block for senders who have not been assigned an account ID.
 	 * @dev Only valid Block Builders can call this function.

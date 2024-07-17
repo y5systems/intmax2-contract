@@ -244,6 +244,7 @@ contract Rollup is
 				);
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
 				directWithdrawalsQueue.push(withdrawal);
+				emit DirectWithdrawalQueued(withdrawal);
 			} else {
 				claimableWithdrawalsQueue.push(withdrawal.getHash());
 				emit ClaimableWithdrawalQueued(withdrawal);
