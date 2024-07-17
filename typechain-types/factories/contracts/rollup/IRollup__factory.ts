@@ -33,16 +33,16 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "address",
-        name: "given",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "expected",
-        type: "address",
+        internalType: "bytes32",
+        name: "blockHash",
+        type: "bytes32",
       },
     ],
+    name: "BlockHashNotExists",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "ChallengerMismatch",
     type: "error",
   },
@@ -107,6 +107,11 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [],
+    name: "WithdrawalAggregatorMismatch",
+    type: "error",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",
@@ -115,6 +120,11 @@ const _abi = [
       },
     ],
     name: "WithdrawalBlockHashNotPosted",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "WithdrawalChainVerificationFailed",
     type: "error",
   },
   {
@@ -212,6 +222,41 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
+        components: [
+          {
+            internalType: "address",
+            name: "recipient",
+            type: "address",
+          },
+          {
+            internalType: "uint32",
+            name: "tokenIndex",
+            type: "uint32",
+          },
+          {
+            internalType: "uint256",
+            name: "amount",
+            type: "uint256",
+          },
+          {
+            internalType: "bytes32",
+            name: "nullifier",
+            type: "bytes32",
+          },
+        ],
+        indexed: false,
+        internalType: "struct WithdrawalLib.Withdrawal",
+        name: "withdrawal",
+        type: "tuple",
+      },
+    ],
+    name: "ClaimableWithdrawalQueued",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
         indexed: false,
         internalType: "bytes32",
         name: "depositTreeRoot",
@@ -238,44 +283,6 @@ const _abi = [
       },
     ],
     name: "PubKeysPosted",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "bytes32",
-        name: "withdrawalRequest",
-        type: "bytes32",
-      },
-      {
-        indexed: false,
-        internalType: "address",
-        name: "withdrawalAggregator",
-        type: "address",
-      },
-    ],
-    name: "WithdrawRequested",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "startProcessedWithdrawalId",
-        type: "uint256",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "lastProcessedWithdrawalId",
-        type: "uint256",
-      },
-    ],
-    name: "WithdrawalsSubmitted",
     type: "event",
   },
   {
@@ -364,6 +371,11 @@ const _abi = [
       {
         components: [
           {
+            internalType: "bytes32",
+            name: "prevWithdrawalHash",
+            type: "bytes32",
+          },
+          {
             internalType: "address",
             name: "recipient",
             type: "address",
@@ -380,7 +392,7 @@ const _abi = [
           },
           {
             internalType: "bytes32",
-            name: "salt",
+            name: "nullifier",
             type: "bytes32",
           },
           {
@@ -389,7 +401,7 @@ const _abi = [
             type: "bytes32",
           },
         ],
-        internalType: "struct IRollup.Withdrawal[]",
+        internalType: "struct ChainedWithdrawalLib.ChainedWithdrawal[]",
         name: "withdrawals",
         type: "tuple[]",
       },
@@ -397,7 +409,7 @@ const _abi = [
         components: [
           {
             internalType: "bytes32",
-            name: "withdrawalsHash",
+            name: "lastWithdrawalHash",
             type: "bytes32",
           },
           {
@@ -406,7 +418,8 @@ const _abi = [
             type: "address",
           },
         ],
-        internalType: "struct IRollup.WithdrawalProofPublicInputs",
+        internalType:
+          "struct WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs",
         name: "publicInputs",
         type: "tuple",
       },
@@ -416,7 +429,7 @@ const _abi = [
         type: "bytes",
       },
     ],
-    name: "postWithdrawalRequests",
+    name: "postWithdrawal",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -435,6 +448,20 @@ const _abi = [
       },
     ],
     name: "processDeposits",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "relayClaimableWithdrawals",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "relayDirectWithdrawals",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -470,19 +497,6 @@ const _abi = [
       },
     ],
     name: "submitBlockFraudProof",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "lastProcessedWithdrawalId",
-        type: "uint256",
-      },
-    ],
-    name: "submitWithdrawals",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

@@ -3,11 +3,8 @@ pragma solidity 0.8.24;
 
 import {ITokenData} from "./ITokenData.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract TokenData is Initializable, ITokenData {
-	using EnumerableSet for EnumerableSet.UintSet;
-	EnumerableSet.UintSet internal directWithdrawalTokenIndexes;
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
 	uint256 private nextTokenIndex;
 	TokenInfo[] private tokenInfoList;
@@ -20,9 +17,9 @@ contract TokenData is Initializable, ITokenData {
 		address _usdc,
 		address _wbtc
 	) public onlyInitializing {
-		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0, true);
-		_createTokenIndex(TokenType.ERC20, _usdc, 0, true);
-		_createTokenIndex(TokenType.ERC20, _wbtc, 0, true);
+		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
+		_createTokenIndex(TokenType.ERC20, _usdc, 0);
+		_createTokenIndex(TokenType.ERC20, _wbtc, 0);
 	}
 
 	function _getOrCreateTokenIndex(
@@ -39,7 +36,7 @@ contract TokenData is Initializable, ITokenData {
 			return tokenIndex;
 		}
 
-		return _createTokenIndex(tokenType, tokenAddress, tokenId, false);
+		return _createTokenIndex(tokenType, tokenAddress, tokenId);
 	}
 
 	function _getNativeTokenIndex() internal view returns (uint32) {
@@ -75,15 +72,11 @@ contract TokenData is Initializable, ITokenData {
 	function _createTokenIndex(
 		TokenType tokenType,
 		address tokenAddress,
-		uint256 tokenId,
-		bool addDirectWithdrawalList
+		uint256 tokenId
 	) private returns (uint32) {
 		uint32 tokenIndex = uint32(nextTokenIndex);
 		nextTokenIndex += 1;
 		tokenInfoList.push(TokenInfo(tokenType, tokenAddress, tokenId));
-		if (addDirectWithdrawalList) {
-			directWithdrawalTokenIndexes.add(tokenIndex);
-		}
 		if (tokenType == TokenType.NATIVE) {
 			fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = tokenIndex;
 			return tokenIndex;
@@ -104,11 +97,5 @@ contract TokenData is Initializable, ITokenData {
 		uint32 tokenIndex
 	) internal view returns (TokenInfo memory) {
 		return tokenInfoList[tokenIndex];
-	}
-
-	function _isDirectWithdrawalToken(
-		uint32 tokenIndex
-	) internal view returns (bool) {
-		return directWithdrawalTokenIndexes.contains(tokenIndex);
 	}
 }

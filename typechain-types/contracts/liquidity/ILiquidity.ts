@@ -23,30 +23,6 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace IRollup {
-  export type WithdrawalStruct = {
-    recipient: AddressLike;
-    tokenIndex: BigNumberish;
-    amount: BigNumberish;
-    salt: BytesLike;
-    blockHash: BytesLike;
-  };
-
-  export type WithdrawalStructOutput = [
-    recipient: string,
-    tokenIndex: bigint,
-    amount: bigint,
-    salt: string,
-    blockHash: string
-  ] & {
-    recipient: string;
-    tokenIndex: bigint;
-    amount: bigint;
-    salt: string;
-    blockHash: string;
-  };
-}
-
 export declare namespace DepositLib {
   export type DepositStruct = {
     recipientSaltHash: BytesLike;
@@ -61,6 +37,27 @@ export declare namespace DepositLib {
   ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
 }
 
+export declare namespace WithdrawalLib {
+  export type WithdrawalStruct = {
+    recipient: AddressLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
+    nullifier: BytesLike;
+  };
+
+  export type WithdrawalStructOutput = [
+    recipient: string,
+    tokenIndex: bigint,
+    amount: bigint,
+    nullifier: string
+  ] & {
+    recipient: string;
+    tokenIndex: bigint;
+    amount: bigint;
+    nullifier: string;
+  };
+}
+
 export interface ILiquidityInterface extends Interface {
   getFunction(
     nameOrSignature:
@@ -71,7 +68,8 @@ export interface ILiquidityInterface extends Interface {
       | "depositERC20"
       | "depositERC721"
       | "depositETH"
-      | "processWithdrawals"
+      | "processClaimableWithdrawals"
+      | "processDirectWithdrawals"
       | "rejectDeposits"
       | "submitDeposits"
   ): FunctionFragment;
@@ -95,7 +93,7 @@ export interface ILiquidityInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "claimWithdrawals",
-    values: [BigNumberish[]]
+    values: [WithdrawalLib.WithdrawalStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "depositERC1155",
@@ -114,8 +112,12 @@ export interface ILiquidityInterface extends Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "processWithdrawals",
-    values: [IRollup.WithdrawalStruct[]]
+    functionFragment: "processClaimableWithdrawals",
+    values: [BytesLike[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "processDirectWithdrawals",
+    values: [WithdrawalLib.WithdrawalStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "rejectDeposits",
@@ -152,7 +154,11 @@ export interface ILiquidityInterface extends Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "depositETH", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "processWithdrawals",
+    functionFragment: "processClaimableWithdrawals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "processDirectWithdrawals",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -233,17 +239,10 @@ export namespace DepositsSubmittedEvent {
 }
 
 export namespace WithdrawalClaimableEvent {
-  export type InputTuple = [
-    withdrawalId: BigNumberish,
-    withdrawal: IRollup.WithdrawalStruct
-  ];
-  export type OutputTuple = [
-    withdrawalId: bigint,
-    withdrawal: IRollup.WithdrawalStructOutput
-  ];
+  export type InputTuple = [withdrawalHash: BytesLike];
+  export type OutputTuple = [withdrawalHash: string];
   export interface OutputObject {
-    withdrawalId: bigint;
-    withdrawal: IRollup.WithdrawalStructOutput;
+    withdrawalHash: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -307,7 +306,7 @@ export interface ILiquidity extends BaseContract {
   >;
 
   claimWithdrawals: TypedContractMethod<
-    [withdrawalIds: BigNumberish[]],
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
     [void],
     "nonpayable"
   >;
@@ -349,8 +348,14 @@ export interface ILiquidity extends BaseContract {
     "payable"
   >;
 
-  processWithdrawals: TypedContractMethod<
-    [withdrawals: IRollup.WithdrawalStruct[]],
+  processClaimableWithdrawals: TypedContractMethod<
+    [withdrawalHahes: BytesLike[]],
+    [void],
+    "nonpayable"
+  >;
+
+  processDirectWithdrawals: TypedContractMethod<
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
     [void],
     "nonpayable"
   >;
@@ -387,7 +392,11 @@ export interface ILiquidity extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "claimWithdrawals"
-  ): TypedContractMethod<[withdrawalIds: BigNumberish[]], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "depositERC1155"
   ): TypedContractMethod<
@@ -426,9 +435,12 @@ export interface ILiquidity extends BaseContract {
     nameOrSignature: "depositETH"
   ): TypedContractMethod<[recipientSaltHash: BytesLike], [void], "payable">;
   getFunction(
-    nameOrSignature: "processWithdrawals"
+    nameOrSignature: "processClaimableWithdrawals"
+  ): TypedContractMethod<[withdrawalHahes: BytesLike[]], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "processDirectWithdrawals"
   ): TypedContractMethod<
-    [withdrawals: IRollup.WithdrawalStruct[]],
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
     [void],
     "nonpayable"
   >;
@@ -528,7 +540,7 @@ export interface ILiquidity extends BaseContract {
       DepositsSubmittedEvent.OutputObject
     >;
 
-    "WithdrawalClaimable(uint256,tuple)": TypedContractEvent<
+    "WithdrawalClaimable(bytes32)": TypedContractEvent<
       WithdrawalClaimableEvent.InputTuple,
       WithdrawalClaimableEvent.OutputTuple,
       WithdrawalClaimableEvent.OutputObject

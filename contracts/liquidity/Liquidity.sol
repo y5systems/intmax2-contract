@@ -5,7 +5,7 @@ import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/Rollup.sol";
 import {TokenData} from "./TokenData.sol";
 import {DepositLib} from "../lib/DepositLib.sol";
-import {WithdrawalLib} from "../rollup/lib/WithdrawalLib.sol";
+import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
 import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -24,12 +24,11 @@ contract Liquidity is
 {
 	using SafeERC20 for IERC20;
 	using DepositLib for DepositLib.Deposit;
-	using WithdrawalLib for IRollup.Withdrawal;
+	using WithdrawalLib for WithdrawalLib.Withdrawal;
 
 	IL1ScrollMessenger private l1ScrollMessenger;
 	address private rollup;
-	uint256 private withdrawalIdCounter;
-	mapping(uint256 => IRollup.Withdrawal) private claimableWithdrawals;
+	mapping(bytes32 => uint256) private claimableWithdrawals;
 
 	/**
 	 * @dev List of pending deposit requests. They are added when there is a request from a user
@@ -255,38 +254,43 @@ contract Liquidity is
 		emit DepositsSubmitted(lastProcessedDepositId);
 	}
 
-	function processWithdrawals(
-		IRollup.Withdrawal[] calldata withdrawals
+	function processDirectWithdrawals(
+		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external onlyRollup {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
-			IRollup.Withdrawal memory withdrawal = withdrawals[i];
-			TokenInfo memory tokenInfo = getTokenInfo(withdrawal.tokenIndex);
-			if (_isDirectWithdrawalToken(withdrawal.tokenIndex)) {
-				sendToken(
-					tokenInfo.tokenType,
-					tokenInfo.tokenAddress,
-					withdrawal.recipient,
-					withdrawal.amount,
-					tokenInfo.tokenId
-				);
-				continue;
-			}
-			claimableWithdrawals[withdrawalIdCounter] = withdrawal;
-			emit WithdrawalClaimable(withdrawalIdCounter, withdrawal);
-			withdrawalIdCounter++;
+			TokenInfo memory tokenInfo = getTokenInfo(
+				withdrawals[i].tokenIndex
+			);
+			sendToken(
+				tokenInfo.tokenType,
+				tokenInfo.tokenAddress,
+				withdrawals[i].recipient,
+				withdrawals[i].amount,
+				tokenInfo.tokenId
+			);
 		}
 	}
 
-	function claimWithdrawals(uint256[] calldata withdrawalIds) external {
-		for (uint256 i = 0; i < withdrawalIds.length; i++) {
-			IRollup.Withdrawal memory withdrawal = claimableWithdrawals[
-				withdrawalIds[i]
-			];
-			if (withdrawal.isEmpty()) {
+	function processClaimableWithdrawals(
+		bytes32[] calldata withdrawalHahes
+	) external onlyRollup {
+		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
+			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
+			emit WithdrawalClaimable(withdrawalHahes[i]);
+		}
+	}
+
+	function claimWithdrawals(
+		WithdrawalLib.Withdrawal[] calldata withdrawals
+	) external {
+		for (uint256 i = 0; i < withdrawals.length; i++) {
+			WithdrawalLib.Withdrawal memory withdrawal = withdrawals[i];
+			bytes32 withdrawalHash = withdrawal.getHash();
+			if (claimableWithdrawals[withdrawalHash] == 0) {
 				revert WithdrawalNotFound();
 			}
 			TokenInfo memory tokenInfo = getTokenInfo(withdrawal.tokenIndex);
-			delete claimableWithdrawals[withdrawalIds[i]];
+			delete claimableWithdrawals[withdrawalHash];
 			sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,

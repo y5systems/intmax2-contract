@@ -151,42 +151,9 @@ const _abi = [
     inputs: [
       {
         indexed: true,
-        internalType: "uint256",
-        name: "withdrawalId",
-        type: "uint256",
-      },
-      {
-        components: [
-          {
-            internalType: "address",
-            name: "recipient",
-            type: "address",
-          },
-          {
-            internalType: "uint32",
-            name: "tokenIndex",
-            type: "uint32",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-          {
-            internalType: "bytes32",
-            name: "salt",
-            type: "bytes32",
-          },
-          {
-            internalType: "bytes32",
-            name: "blockHash",
-            type: "bytes32",
-          },
-        ],
-        indexed: false,
-        internalType: "struct IRollup.Withdrawal",
-        name: "withdrawal",
-        type: "tuple",
+        internalType: "bytes32",
+        name: "withdrawalHash",
+        type: "bytes32",
       },
     ],
     name: "WithdrawalClaimable",
@@ -265,9 +232,31 @@ const _abi = [
   {
     inputs: [
       {
-        internalType: "uint256[]",
-        name: "withdrawalIds",
-        type: "uint256[]",
+        components: [
+          {
+            internalType: "address",
+            name: "recipient",
+            type: "address",
+          },
+          {
+            internalType: "uint32",
+            name: "tokenIndex",
+            type: "uint32",
+          },
+          {
+            internalType: "uint256",
+            name: "amount",
+            type: "uint256",
+          },
+          {
+            internalType: "bytes32",
+            name: "nullifier",
+            type: "bytes32",
+          },
+        ],
+        internalType: "struct WithdrawalLib.Withdrawal[]",
+        name: "withdrawals",
+        type: "tuple[]",
       },
     ],
     name: "claimWithdrawals",
@@ -365,6 +354,19 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "bytes32[]",
+        name: "withdrawalHahes",
+        type: "bytes32[]",
+      },
+    ],
+    name: "processClaimableWithdrawals",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         components: [
           {
             internalType: "address",
@@ -383,21 +385,16 @@ const _abi = [
           },
           {
             internalType: "bytes32",
-            name: "salt",
-            type: "bytes32",
-          },
-          {
-            internalType: "bytes32",
-            name: "blockHash",
+            name: "nullifier",
             type: "bytes32",
           },
         ],
-        internalType: "struct IRollup.Withdrawal[]",
+        internalType: "struct WithdrawalLib.Withdrawal[]",
         name: "withdrawals",
         type: "tuple[]",
       },
     ],
-    name: "processWithdrawals",
+    name: "processDirectWithdrawals",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

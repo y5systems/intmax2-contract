@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import {IRollup} from "../rollup/IRollup.sol";
 import {DepositLib} from "../lib/DepositLib.sol";
+import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
 
 interface ILiquidity {
 	error InvalidDepositId();
@@ -22,6 +23,12 @@ interface ILiquidity {
 		address sender;
 	}
 
+	struct Withdrawal {
+		address recipient;
+		uint32 tokenIndex;
+		uint256 amount;
+	}
+
 	event Deposited(
 		uint256 indexed depositId,
 		address indexed sender,
@@ -37,10 +44,7 @@ interface ILiquidity {
 
 	event DepositsSubmitted(uint256 indexed lastProcessedDepositId);
 
-	event WithdrawalClaimable(
-		uint256 indexed withdrawalId,
-		IRollup.Withdrawal withdrawal
-	);
+	event WithdrawalClaimable(bytes32 indexed withdrawalHash);
 
 	function depositETH(bytes32 recipientSaltHash) external payable;
 
@@ -92,9 +96,15 @@ interface ILiquidity {
 	 * @dev This method is called by the Rollup contract via Scroll Messenger.
 	 * @param withdrawals The list of withdrawals to process
 	 */
-	function processWithdrawals(
-		IRollup.Withdrawal[] calldata withdrawals
+	function processDirectWithdrawals(
+		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;
 
-	function claimWithdrawals(uint256[] calldata withdrawalIds) external;
+	function processClaimableWithdrawals(
+		bytes32[] calldata withdrawalHahes
+	) external;
+
+	function claimWithdrawals(
+		WithdrawalLib.Withdrawal[] calldata withdrawals
+	) external;
 }

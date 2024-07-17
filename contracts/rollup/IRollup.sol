@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
+import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
+import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
+
 interface IRollup {
 	error InvalidBlockBuilder();
 
@@ -32,34 +36,27 @@ interface IRollup {
 
 	error BlockHashAlreadyPosted();
 
+	error BlockHashNotExists(bytes32 blockHash);
+
 	error BlockHashMismatch(bytes32 given, bytes32 expected);
 
-	error ChallengerMismatch(address given, address expected);
+	error ChallengerMismatch();
 
 	error PairingCheckFailed();
+
+	error WithdrawalChainVerificationFailed();
+
+	error WithdrawalAggregatorMismatch();
 
 	struct Block {
 		bytes32 hash;
 		address builder;
 	}
 
-	struct Withdrawal {
-		address recipient;
-		uint32 tokenIndex;
-		uint256 amount;
-		bytes32 salt;
-		bytes32 blockHash;
-	}
-
 	struct FraudProofPublicInputs {
 		bytes32 blockHash;
 		uint32 blockNumber;
 		address challenger;
-	}
-
-	struct WithdrawalProofPublicInputs {
-		bytes32 withdrawalsHash;
-		address withdrawalAggregator;
 	}
 
 	event DepositsProcessed(bytes32 depositTreeRoot);
@@ -85,15 +82,7 @@ interface IRollup {
 		address indexed challenger
 	);
 
-	event WithdrawRequested(
-		bytes32 indexed withdrawalRequest,
-		address withdrawalAggregator
-	);
-
-	event WithdrawalsSubmitted(
-		uint256 startProcessedWithdrawalId,
-		uint256 lastProcessedWithdrawalId
-	);
+	event ClaimableWithdrawalQueued(WithdrawalLib.Withdrawal withdrawal);
 
 	/**
 	 * @notice Post a new block for senders who have not been assigned an account ID.
@@ -128,21 +117,20 @@ interface IRollup {
 	) external;
 
 	/**
-	 * @notice Post the withdrawal requests.
+	 * @notice Post withdrawals
 	 * @dev This method is called by the Withdraw Aggregator.
 	 * @param withdrawals The list of withdrawals.
 	 */
-	function postWithdrawalRequests(
-		Withdrawal[] calldata withdrawals,
-		WithdrawalProofPublicInputs calldata publicInputs,
+	function postWithdrawal(
+		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
+		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
+			calldata publicInputs,
 		bytes calldata proof
 	) external;
 
-	/**
-	 * @notice Submit the withdrawals.
-	 * @dev This method is called by the Withdraw Aggregator.
-	 */
-	function submitWithdrawals(uint256 lastProcessedWithdrawalId) external;
+	function relayDirectWithdrawals() external;
+
+	function relayClaimableWithdrawals() external;
 
 	/**
 	 * @notice Update the deposit tree branch and root.
