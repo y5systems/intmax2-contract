@@ -35,11 +35,15 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 	function __Withdrawal_init(
 		address _scrollMessenger,
 		address _withdrawalVerifier,
-		address _liquidity
+		address _liquidity,
+		uint256[] memory _directWithdrawalTokenIndices
 	) internal {
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
 		liquidity = _liquidity;
+		for (uint256 i = 0; i < _directWithdrawalTokenIndices.length; i++) {
+			directWithdrawalTokenIndices.add(_directWithdrawalTokenIndices[i]);
+		}
 	}
 
 	function postWithdrawal(

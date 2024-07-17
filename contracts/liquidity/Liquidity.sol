@@ -64,13 +64,12 @@ contract Liquidity is
 	function initialize(
 		address _l1ScrollMessenger,
 		address _rollup,
-		address _usdc,
-		address _wbtc
+		address[] memory inititialERC20Tokens
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
-		__TokenInfo_init(_usdc, _wbtc);
+		__TokenData_init(inititialERC20Tokens);
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
 		rollup = _rollup;
 	}

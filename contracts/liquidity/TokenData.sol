@@ -13,13 +13,13 @@ contract TokenData is Initializable, ITokenData {
 		private nonFungibleTokenIndexMap;
 
 	// solhint-disable-next-line func-name-mixedcase
-	function __TokenInfo_init(
-		address _usdc,
-		address _wbtc
+	function __TokenData_init(
+		address[] memory initialERC20Tokens
 	) public onlyInitializing {
 		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
-		_createTokenIndex(TokenType.ERC20, _usdc, 0);
-		_createTokenIndex(TokenType.ERC20, _wbtc, 0);
+		for (uint256 i = 0; i < initialERC20Tokens.length; i++) {
+			_createTokenIndex(TokenType.ERC20, initialERC20Tokens[i], 0);
+		}
 	}
 
 	function _getOrCreateTokenIndex(

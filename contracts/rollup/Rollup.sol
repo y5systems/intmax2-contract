@@ -60,13 +60,19 @@ contract Rollup is
 		address _scrollMessenger,
 		address _verifier,
 		address _liquidity,
-		address _blockBuilderRegistry
+		address _blockBuilderRegistry,
+		uint256[] calldata _directWithdrawalTokenIndices
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
 		__DepositContract_init();
-		__Withdrawal_init(_scrollMessenger, _verifier, _liquidity);
+		__Withdrawal_init(
+			_scrollMessenger,
+			_verifier,
+			_liquidity,
+			_directWithdrawalTokenIndices
+		);
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		verifier = IPlonkVerifier(_verifier);
 		liquidity = _liquidity;
