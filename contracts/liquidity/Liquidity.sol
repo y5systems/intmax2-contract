@@ -77,9 +77,6 @@ contract Liquidity is
 	}
 
 	function depositETH(bytes32 recipientSaltHash) external payable {
-		if (recipientSaltHash == bytes32(0)) {
-			revert InvalidRecipientSaltHash();
-		}
 		uint32 tokenIndex = _getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
 	}
@@ -89,9 +86,6 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 amount
 	) public {
-		if (recipientSaltHash == bytes32(0)) {
-			revert InvalidRecipientSaltHash();
-		}
 		if (amount == 0) {
 			revert InvalidAmount();
 		}
@@ -113,9 +107,6 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId
 	) public {
-		if (recipientSaltHash == bytes32(0)) {
-			revert InvalidRecipientSaltHash();
-		}
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -232,7 +223,7 @@ contract Liquidity is
 		}
 		bytes32[] memory depositHashes = new bytes32[](counter);
 		for (
-			uint256 i = lastProcessedDepositId;
+			uint256 i = lastProcessedDepositId + 1; // change
 			i <= _lastProcessedDepositId;
 			i++
 		) {
@@ -350,20 +341,20 @@ contract Liquidity is
 	function sendToken(
 		TokenType tokenType,
 		address token,
-		address sender,
+		address recipient,
 		uint256 amount,
 		uint256 tokenId
 	) private {
 		if (tokenType == TokenType.NATIVE) {
-			payable(sender).transfer(amount);
+			payable(recipient).transfer(amount);
 		} else if (tokenType == TokenType.ERC20) {
-			IERC20(token).safeTransfer(sender, amount);
+			IERC20(token).safeTransfer(recipient, amount);
 		} else if (tokenType == TokenType.ERC721) {
-			IERC721(token).transferFrom(address(this), sender, tokenId);
+			IERC721(token).transferFrom(address(this), recipient, tokenId);
 		} else {
 			IERC1155(token).safeTransferFrom(
 				address(this),
-				sender,
+				recipient,
 				tokenId,
 				amount,
 				bytes("")
