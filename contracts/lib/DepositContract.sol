@@ -28,18 +28,20 @@ contract DepositContract is ReentrancyGuardUpgradeable {
 	// Counter of current deposits
 	uint256 public depositCount;
 
+	bytes32 internal defaultHash;
+
+	function __DepositContract_init() internal {
+		defaultHash = DepositLib.getHash(DepositLib.Deposit(0, 0, 0));
+	}
+
 	function getDepositRoot() public view returns (bytes32) {
-		DepositLib.Deposit memory leaf = DepositLib.Deposit(0, 0, 0);
-		bytes32 defaultHash = DepositLib.getHash(leaf);
-		return _getDepositRoot(defaultHash);
+		return _getDepositRoot();
 	}
 
 	/**
 	 * @notice Computes and returns the merkle root
 	 */
-	function _getDepositRoot(
-		bytes32 defaultHash
-	) internal view returns (bytes32) {
+	function _getDepositRoot() internal view returns (bytes32) {
 		bytes32 node = defaultHash;
 		uint256 size = depositCount;
 		bytes32 currentZeroHashHeight = defaultHash;

@@ -174,6 +174,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IRollup__factory>;
     getContractFactory(
+      name: "PairingLib",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PairingLib__factory>;
+    getContractFactory(
       name: "Rollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Rollup__factory>;
@@ -391,6 +395,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IRollup>;
     getContractAt(
+      name: "PairingLib",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PairingLib>;
+    getContractAt(
       name: "Rollup",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -572,6 +581,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
     deployContract(
+      name: "PairingLib",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PairingLib>;
+    deployContract(
       name: "Rollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
@@ -788,6 +801,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
+    deployContract(
+      name: "PairingLib",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PairingLib>;
     deployContract(
       name: "Rollup",
       args: any[],

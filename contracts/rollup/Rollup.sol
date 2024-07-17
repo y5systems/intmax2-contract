@@ -72,6 +72,7 @@ contract Rollup is
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
+		__DepositContract_init();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		verifier = IPlonkVerifier(_verifier);
 		liquidity = _liquidity;

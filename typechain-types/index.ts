@@ -88,6 +88,8 @@ export type { IPlonkVerifier } from "./contracts/rollup/IPlonkVerifier";
 export { IPlonkVerifier__factory } from "./factories/contracts/rollup/IPlonkVerifier__factory";
 export type { IRollup } from "./contracts/rollup/IRollup";
 export { IRollup__factory } from "./factories/contracts/rollup/IRollup__factory";
+export type { PairingLib } from "./contracts/rollup/lib/PairingLib";
+export { PairingLib__factory } from "./factories/contracts/rollup/lib/PairingLib__factory";
 export type { Rollup } from "./contracts/rollup/Rollup";
 export { Rollup__factory } from "./factories/contracts/rollup/Rollup__factory";
 export type { MockL1GasPriceOracle } from "./contracts/test/MockL1GasPriceOracle";
