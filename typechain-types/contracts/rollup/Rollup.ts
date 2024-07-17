@@ -24,6 +24,13 @@ import type {
 } from "../../common";
 
 export declare namespace IRollup {
+  export type BlockStruct = { hash: BytesLike; builder: AddressLike };
+
+  export type BlockStructOutput = [hash: string, builder: string] & {
+    hash: string;
+    builder: string;
+  };
+
   export type WithdrawalStruct = {
     recipient: AddressLike;
     tokenIndex: BigNumberish;
@@ -74,6 +81,7 @@ export interface RollupInterface extends Interface {
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
       | "depositCount"
+      | "getBlocks"
       | "getDepositRoot"
       | "initialize"
       | "lastProcessedDepositId"
@@ -113,6 +121,7 @@ export interface RollupInterface extends Interface {
     functionFragment: "depositCount",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "getBlocks", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "getDepositRoot",
     values?: undefined
@@ -198,6 +207,7 @@ export interface RollupInterface extends Interface {
     functionFragment: "depositCount",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getBlocks", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getDepositRoot",
     data: BytesLike
@@ -467,6 +477,8 @@ export interface Rollup extends BaseContract {
 
   depositCount: TypedContractMethod<[], [bigint], "view">;
 
+  getBlocks: TypedContractMethod<[], [IRollup.BlockStructOutput[]], "view">;
+
   getDepositRoot: TypedContractMethod<[], [string], "view">;
 
   initialize: TypedContractMethod<
@@ -567,6 +579,9 @@ export interface Rollup extends BaseContract {
   getFunction(
     nameOrSignature: "depositCount"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getBlocks"
+  ): TypedContractMethod<[], [IRollup.BlockStructOutput[]], "view">;
   getFunction(
     nameOrSignature: "getDepositRoot"
   ): TypedContractMethod<[], [string], "view">;

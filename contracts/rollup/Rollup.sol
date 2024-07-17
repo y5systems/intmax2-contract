@@ -337,5 +337,9 @@ contract Rollup is
 		return blockNumber;
 	}
 
+	function getBlocks() external view returns (Block[] memory) {
+		return blocks;
+	}
+
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

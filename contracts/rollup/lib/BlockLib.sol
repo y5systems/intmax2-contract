@@ -32,7 +32,7 @@ library BlockLib {
 			getPrevHash(blocks),
 			depositTreeRoot,
 			signatureHash,
-			blocks.length
+			uint32(blocks.length)
 		);
 		blocks.push(IRollup.Block({hash: blockHash, builder: _builder}));
 
@@ -43,7 +43,7 @@ library BlockLib {
 		bytes32 prevBlockHash,
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash,
-		uint256 blockNumber
+		uint32 blockNumber
 	) private pure returns (bytes32) {
 		return
 			keccak256(
