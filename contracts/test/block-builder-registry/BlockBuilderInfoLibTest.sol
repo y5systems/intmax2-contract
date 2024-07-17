@@ -19,9 +19,9 @@ contract BlockBuilderInfoLibTest {
 		return info.isChallengeDuration();
 	}
 
-	function isValidBlockBuilder(
+	function isStakeAmountSufficient(
 		IBlockBuilderRegistry.BlockBuilderInfo memory info
 	) external pure returns (bool) {
-		return info.isValidBlockBuilder();
+		return info.isStakeAmountSufficient();
 	}
 }

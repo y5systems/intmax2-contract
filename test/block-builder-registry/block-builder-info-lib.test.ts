@@ -59,17 +59,17 @@ describe('BlockBuilderInfoLib', () => {
 			expect(value).to.false
 		})
 	})
-	describe('isValidBlockBuilder', () => {
+	describe('isStakeAmountSufficient', () => {
 		it('valid block builder', async () => {
 			const lib = await loadFixture(setup)
-			const value = await lib.isValidBlockBuilder(
+			const value = await lib.isStakeAmountSufficient(
 				getDefaultBlockBuilderInfo(MIN_STAKE_AMOUNT),
 			)
 			expect(value).to.true
 		})
 		it('invalid block builder', async () => {
 			const lib = await loadFixture(setup)
-			const value = await lib.isValidBlockBuilder(
+			const value = await lib.isStakeAmountSufficient(
 				getDefaultBlockBuilderInfo(MIN_STAKE_AMOUNT - 1n),
 			)
 			expect(value).to.false

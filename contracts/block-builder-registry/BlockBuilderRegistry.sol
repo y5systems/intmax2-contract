@@ -93,6 +93,9 @@ contract BlockBuilderRegistry is
 		address challenger
 	) external onlyRollupContract {
 		BlockBuilderInfo memory info = blockBuilders[blockBuilder];
+		if (info.isStaking() == false) {
+			revert BlockBuilderNotFound();
+		}
 		info.numSlashes += 1;
 		if (!info.isStakeAmountSufficient() && info.isValid) {
 			info.isValid = false;
@@ -103,6 +106,7 @@ contract BlockBuilderRegistry is
 			// so it does not normally enter into this process.
 			uint256 slashAmount = info.stakeAmount;
 			info.stakeAmount = 0;
+			blockBuilders[blockBuilder] = info;
 			if (slashAmount < MIN_STAKE_AMOUNT / 2) {
 				payable(challenger).transfer(slashAmount);
 			} else {
@@ -113,8 +117,9 @@ contract BlockBuilderRegistry is
 			}
 			return;
 		}
-		// solhint-disable-next-line reentrancy
 		info.stakeAmount -= MIN_STAKE_AMOUNT;
+		// solhint-disable-next-line reentrancy
+		blockBuilders[blockBuilder] = info;
 
 		// NOTE: A half of the stake lost by the Block Builder will be burned.
 		// This is to prevent the Block Builder from generating invalid blocks and

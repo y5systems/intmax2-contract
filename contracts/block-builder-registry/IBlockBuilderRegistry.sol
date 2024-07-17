@@ -6,6 +6,7 @@ interface IBlockBuilderRegistry {
 	error InsufficientStakeAmount();
 	error BlockBuilderNotFound();
 	error CannotUnstakeWithinChallengeDuration();
+
 	event BlockBuilderUpdated(
 		address indexed blockBuilder,
 		string url,

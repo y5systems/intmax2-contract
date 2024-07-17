@@ -46,7 +46,10 @@ export declare namespace IBlockBuilderRegistry {
 
 export interface BlockBuilderInfoLibTestInterface extends Interface {
   getFunction(
-    nameOrSignature: "isChallengeDuration" | "isStaking" | "isValidBlockBuilder"
+    nameOrSignature:
+      | "isChallengeDuration"
+      | "isStakeAmountSufficient"
+      | "isStaking"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -54,11 +57,11 @@ export interface BlockBuilderInfoLibTestInterface extends Interface {
     values: [IBlockBuilderRegistry.BlockBuilderInfoStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "isStaking",
+    functionFragment: "isStakeAmountSufficient",
     values: [IBlockBuilderRegistry.BlockBuilderInfoStruct]
   ): string;
   encodeFunctionData(
-    functionFragment: "isValidBlockBuilder",
+    functionFragment: "isStaking",
     values: [IBlockBuilderRegistry.BlockBuilderInfoStruct]
   ): string;
 
@@ -66,11 +69,11 @@ export interface BlockBuilderInfoLibTestInterface extends Interface {
     functionFragment: "isChallengeDuration",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "isStaking", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "isValidBlockBuilder",
+    functionFragment: "isStakeAmountSufficient",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "isStaking", data: BytesLike): Result;
 }
 
 export interface BlockBuilderInfoLibTest extends BaseContract {
@@ -122,13 +125,13 @@ export interface BlockBuilderInfoLibTest extends BaseContract {
     "view"
   >;
 
-  isStaking: TypedContractMethod<
+  isStakeAmountSufficient: TypedContractMethod<
     [info: IBlockBuilderRegistry.BlockBuilderInfoStruct],
     [boolean],
     "view"
   >;
 
-  isValidBlockBuilder: TypedContractMethod<
+  isStaking: TypedContractMethod<
     [info: IBlockBuilderRegistry.BlockBuilderInfoStruct],
     [boolean],
     "view"
@@ -146,14 +149,14 @@ export interface BlockBuilderInfoLibTest extends BaseContract {
     "view"
   >;
   getFunction(
-    nameOrSignature: "isStaking"
+    nameOrSignature: "isStakeAmountSufficient"
   ): TypedContractMethod<
     [info: IBlockBuilderRegistry.BlockBuilderInfoStruct],
     [boolean],
     "view"
   >;
   getFunction(
-    nameOrSignature: "isValidBlockBuilder"
+    nameOrSignature: "isStaking"
   ): TypedContractMethod<
     [info: IBlockBuilderRegistry.BlockBuilderInfoStruct],
     [boolean],
