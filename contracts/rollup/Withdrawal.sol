@@ -7,12 +7,12 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IPlonkVerifier} from "./IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
 import {Byte32Lib} from "./lib/Byte32Lib.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
 
-contract Withdrawal is IWithdrawal, OwnableUpgradeable {
+contract Withdrawal is IWithdrawal, ContextUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
 	using ChainedWithdrawalLib for ChainedWithdrawalLib.ChainedWithdrawal[];

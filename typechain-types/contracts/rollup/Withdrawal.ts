@@ -86,13 +86,10 @@ export declare namespace WithdrawalProofPublicInputsLib {
 export interface WithdrawalInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "owner"
       | "postWithdrawal"
       | "postedBlockHashes"
       | "relayClaimableWithdrawals"
       | "relayDirectWithdrawals"
-      | "renounceOwnership"
-      | "transferOwnership"
   ): FunctionFragment;
 
   getEvent(
@@ -100,10 +97,8 @@ export interface WithdrawalInterface extends Interface {
       | "ClaimableWithdrawalQueued"
       | "DirectWithdrawalQueued"
       | "Initialized"
-      | "OwnershipTransferred"
   ): EventFragment;
 
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "postWithdrawal",
     values: [
@@ -124,16 +119,7 @@ export interface WithdrawalInterface extends Interface {
     functionFragment: "relayDirectWithdrawals",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [AddressLike]
-  ): string;
 
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "postWithdrawal",
     data: BytesLike
@@ -148,14 +134,6 @@ export interface WithdrawalInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "relayDirectWithdrawals",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
 }
@@ -189,19 +167,6 @@ export namespace InitializedEvent {
   export type OutputTuple = [version: bigint];
   export interface OutputObject {
     version: bigint;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace OwnershipTransferredEvent {
-  export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
-  export type OutputTuple = [previousOwner: string, newOwner: string];
-  export interface OutputObject {
-    previousOwner: string;
-    newOwner: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -252,8 +217,6 @@ export interface Withdrawal extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  owner: TypedContractMethod<[], [string], "view">;
-
   postWithdrawal: TypedContractMethod<
     [
       withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
@@ -270,21 +233,10 @@ export interface Withdrawal extends BaseContract {
 
   relayDirectWithdrawals: TypedContractMethod<[], [void], "nonpayable">;
 
-  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
-
-  transferOwnership: TypedContractMethod<
-    [newOwner: AddressLike],
-    [void],
-    "nonpayable"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "owner"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "postWithdrawal"
   ): TypedContractMethod<
@@ -305,12 +257,6 @@ export interface Withdrawal extends BaseContract {
   getFunction(
     nameOrSignature: "relayDirectWithdrawals"
   ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "renounceOwnership"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "transferOwnership"
-  ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
 
   getEvent(
     key: "ClaimableWithdrawalQueued"
@@ -332,13 +278,6 @@ export interface Withdrawal extends BaseContract {
     InitializedEvent.InputTuple,
     InitializedEvent.OutputTuple,
     InitializedEvent.OutputObject
-  >;
-  getEvent(
-    key: "OwnershipTransferred"
-  ): TypedContractEvent<
-    OwnershipTransferredEvent.InputTuple,
-    OwnershipTransferredEvent.OutputTuple,
-    OwnershipTransferredEvent.OutputObject
   >;
 
   filters: {
@@ -373,17 +312,6 @@ export interface Withdrawal extends BaseContract {
       InitializedEvent.InputTuple,
       InitializedEvent.OutputTuple,
       InitializedEvent.OutputObject
-    >;
-
-    "OwnershipTransferred(address,address)": TypedContractEvent<
-      OwnershipTransferredEvent.InputTuple,
-      OwnershipTransferredEvent.OutputTuple,
-      OwnershipTransferredEvent.OutputObject
-    >;
-    OwnershipTransferred: TypedContractEvent<
-      OwnershipTransferredEvent.InputTuple,
-      OwnershipTransferredEvent.OutputTuple,
-      OwnershipTransferredEvent.OutputObject
     >;
   };
 }

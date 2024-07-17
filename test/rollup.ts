@@ -2,13 +2,13 @@ import { ethers, ignition, upgrades } from 'hardhat'
 import type { Rollup } from '../typechain-types'
 import * as fs from 'fs'
 import { expect } from 'chai'
-import testRollupModule from '../ignition/modules/test/testRollup'
+import rollupModule from '../ignition/modules/rollup'
 
 describe('Rollup', function () {
 	let rollup: Rollup
 
 	this.beforeEach(async function () {
-		const { rollup: rollup_ } = await ignition.deploy(testRollupModule)
+		const { rollup: rollup_ } = await ignition.deploy(rollupModule)
 		rollup = rollup_ as unknown as Rollup
 	})
 
