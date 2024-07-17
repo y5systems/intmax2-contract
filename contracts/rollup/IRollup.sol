@@ -18,7 +18,11 @@ interface IRollup {
 
 	error SenderPublicKeysEmpty();
 
+	error TooManySenderPublicKeys();
+
 	error SenderAccountIdsEmpty();
+
+	error TooManyAccountIds();
 
 	error SenderAccountIdsInvalidLength();
 
@@ -27,6 +31,10 @@ interface IRollup {
 	error WithdrawalsHashMismatch();
 
 	error BlockHashAlreadyPosted();
+
+	error BlockHashMismatch(bytes32 given, bytes32 expected);
+
+	error ChallengerMismatch(address given, address expected);
 
 	struct Block {
 		bytes32 hash;
@@ -62,6 +70,13 @@ interface IRollup {
 		bytes32 signatureHash
 	);
 
+	event PubKeysPosted(
+		uint256 indexed blockNumber,
+		uint256[] senderPublicKeys
+	);
+
+	event AccountIdsPosted(uint256 indexed blockNumber, bytes accountIds);
+
 	event BlockFraudProofSubmitted(
 		uint32 indexed blockNumber,
 		address indexed blockBuilder,
@@ -84,10 +99,10 @@ interface IRollup {
 	 */
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		uint256[] calldata senderPublicKeys
 	) external;
 
@@ -97,11 +112,11 @@ interface IRollup {
 	 */
 	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		bytes32 publicKeysHash,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
 		bytes calldata senderAccountIds
 	) external;
 

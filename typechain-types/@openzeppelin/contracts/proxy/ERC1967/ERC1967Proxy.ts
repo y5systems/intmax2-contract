@@ -3,12 +3,10 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumberish,
-  BytesLike,
   FunctionFragment,
-  Result,
   Interface,
   EventFragment,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -19,40 +17,17 @@ import type {
   TypedEventLog,
   TypedLogDescription,
   TypedListener,
-  TypedContractMethod,
-} from "../../common";
+} from "../../../../common";
 
-export interface DepositContractInterface extends Interface {
-  getFunction(
-    nameOrSignature: "depositCount" | "getDepositRoot"
-  ): FunctionFragment;
-
-  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-
-  encodeFunctionData(
-    functionFragment: "depositCount",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getDepositRoot",
-    values?: undefined
-  ): string;
-
-  decodeFunctionResult(
-    functionFragment: "depositCount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getDepositRoot",
-    data: BytesLike
-  ): Result;
+export interface ERC1967ProxyInterface extends Interface {
+  getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
-export namespace InitializedEvent {
-  export type InputTuple = [version: BigNumberish];
-  export type OutputTuple = [version: bigint];
+export namespace UpgradedEvent {
+  export type InputTuple = [implementation: AddressLike];
+  export type OutputTuple = [implementation: string];
   export interface OutputObject {
-    version: bigint;
+    implementation: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -60,11 +35,11 @@ export namespace InitializedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface DepositContract extends BaseContract {
-  connect(runner?: ContractRunner | null): DepositContract;
+export interface ERC1967Proxy extends BaseContract {
+  connect(runner?: ContractRunner | null): ERC1967Proxy;
   waitForDeployment(): Promise<this>;
 
-  interface: DepositContractInterface;
+  interface: ERC1967ProxyInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -103,39 +78,28 @@ export interface DepositContract extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  depositCount: TypedContractMethod<[], [bigint], "view">;
-
-  getDepositRoot: TypedContractMethod<[], [string], "view">;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "depositCount"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getDepositRoot"
-  ): TypedContractMethod<[], [string], "view">;
-
   getEvent(
-    key: "Initialized"
+    key: "Upgraded"
   ): TypedContractEvent<
-    InitializedEvent.InputTuple,
-    InitializedEvent.OutputTuple,
-    InitializedEvent.OutputObject
+    UpgradedEvent.InputTuple,
+    UpgradedEvent.OutputTuple,
+    UpgradedEvent.OutputObject
   >;
 
   filters: {
-    "Initialized(uint64)": TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
+    "Upgraded(address)": TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
     >;
-    Initialized: TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
+    Upgraded: TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
     >;
   };
 }

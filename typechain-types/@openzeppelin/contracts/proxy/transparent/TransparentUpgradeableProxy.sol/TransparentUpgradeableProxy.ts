@@ -3,12 +3,10 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumberish,
-  BytesLike,
   FunctionFragment,
-  Result,
   Interface,
   EventFragment,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -19,40 +17,18 @@ import type {
   TypedEventLog,
   TypedLogDescription,
   TypedListener,
-  TypedContractMethod,
-} from "../../common";
+} from "../../../../../common";
 
-export interface DepositContractInterface extends Interface {
-  getFunction(
-    nameOrSignature: "depositCount" | "getDepositRoot"
-  ): FunctionFragment;
-
-  getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
-
-  encodeFunctionData(
-    functionFragment: "depositCount",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getDepositRoot",
-    values?: undefined
-  ): string;
-
-  decodeFunctionResult(
-    functionFragment: "depositCount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getDepositRoot",
-    data: BytesLike
-  ): Result;
+export interface TransparentUpgradeableProxyInterface extends Interface {
+  getEvent(nameOrSignatureOrTopic: "AdminChanged" | "Upgraded"): EventFragment;
 }
 
-export namespace InitializedEvent {
-  export type InputTuple = [version: BigNumberish];
-  export type OutputTuple = [version: bigint];
+export namespace AdminChangedEvent {
+  export type InputTuple = [previousAdmin: AddressLike, newAdmin: AddressLike];
+  export type OutputTuple = [previousAdmin: string, newAdmin: string];
   export interface OutputObject {
-    version: bigint;
+    previousAdmin: string;
+    newAdmin: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -60,11 +36,23 @@ export namespace InitializedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface DepositContract extends BaseContract {
-  connect(runner?: ContractRunner | null): DepositContract;
+export namespace UpgradedEvent {
+  export type InputTuple = [implementation: AddressLike];
+  export type OutputTuple = [implementation: string];
+  export interface OutputObject {
+    implementation: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export interface TransparentUpgradeableProxy extends BaseContract {
+  connect(runner?: ContractRunner | null): TransparentUpgradeableProxy;
   waitForDeployment(): Promise<this>;
 
-  interface: DepositContractInterface;
+  interface: TransparentUpgradeableProxyInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -103,39 +91,46 @@ export interface DepositContract extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  depositCount: TypedContractMethod<[], [bigint], "view">;
-
-  getDepositRoot: TypedContractMethod<[], [string], "view">;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "depositCount"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getDepositRoot"
-  ): TypedContractMethod<[], [string], "view">;
-
   getEvent(
-    key: "Initialized"
+    key: "AdminChanged"
   ): TypedContractEvent<
-    InitializedEvent.InputTuple,
-    InitializedEvent.OutputTuple,
-    InitializedEvent.OutputObject
+    AdminChangedEvent.InputTuple,
+    AdminChangedEvent.OutputTuple,
+    AdminChangedEvent.OutputObject
+  >;
+  getEvent(
+    key: "Upgraded"
+  ): TypedContractEvent<
+    UpgradedEvent.InputTuple,
+    UpgradedEvent.OutputTuple,
+    UpgradedEvent.OutputObject
   >;
 
   filters: {
-    "Initialized(uint64)": TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
+    "AdminChanged(address,address)": TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
     >;
-    Initialized: TypedContractEvent<
-      InitializedEvent.InputTuple,
-      InitializedEvent.OutputTuple,
-      InitializedEvent.OutputObject
+    AdminChanged: TypedContractEvent<
+      AdminChangedEvent.InputTuple,
+      AdminChangedEvent.OutputTuple,
+      AdminChangedEvent.OutputObject
+    >;
+
+    "Upgraded(address)": TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
+    >;
+    Upgraded: TypedContractEvent<
+      UpgradedEvent.InputTuple,
+      UpgradedEvent.OutputTuple,
+      UpgradedEvent.OutputObject
     >;
   };
 }

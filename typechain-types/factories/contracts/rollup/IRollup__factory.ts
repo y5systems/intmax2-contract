@@ -15,6 +15,38 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "given",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes32",
+        name: "expected",
+        type: "bytes32",
+      },
+    ],
+    name: "BlockHashMismatch",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "given",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "expected",
+        type: "address",
+      },
+    ],
+    name: "ChallengerMismatch",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "FraudProofAlreadySubmitted",
     type: "error",
@@ -60,6 +92,16 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [],
+    name: "TooManyAccountIds",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TooManySenderPublicKeys",
+    type: "error",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",
@@ -79,6 +121,25 @@ const _abi = [
     inputs: [],
     name: "WithdrawalsHashMismatch",
     type: "error",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "blockNumber",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bytes",
+        name: "accountIds",
+        type: "bytes",
+      },
+    ],
+    name: "AccountIdsPosted",
+    type: "event",
   },
   {
     anonymous: false,
@@ -160,6 +221,25 @@ const _abi = [
     inputs: [
       {
         indexed: true,
+        internalType: "uint256",
+        name: "blockNumber",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "uint256[]",
+        name: "senderPublicKeys",
+        type: "uint256[]",
+      },
+    ],
+    name: "PubKeysPosted",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
         internalType: "bytes32",
         name: "withdrawalRequest",
         type: "bytes32",
@@ -201,29 +281,29 @@ const _abi = [
         type: "bytes32",
       },
       {
-        internalType: "uint128",
+        internalType: "bytes16",
         name: "senderFlags",
-        type: "uint128",
+        type: "bytes16",
+      },
+      {
+        internalType: "bytes32[2]",
+        name: "aggregatedPublicKey",
+        type: "bytes32[2]",
+      },
+      {
+        internalType: "bytes32[4]",
+        name: "aggregatedSignature",
+        type: "bytes32[4]",
+      },
+      {
+        internalType: "bytes32[4]",
+        name: "messagePoint",
+        type: "bytes32[4]",
       },
       {
         internalType: "bytes32",
         name: "publicKeysHash",
         type: "bytes32",
-      },
-      {
-        internalType: "uint256[2]",
-        name: "aggregatedPublicKey",
-        type: "uint256[2]",
-      },
-      {
-        internalType: "uint256[4]",
-        name: "aggregatedSignature",
-        type: "uint256[4]",
-      },
-      {
-        internalType: "uint256[4]",
-        name: "messagePoint",
-        type: "uint256[4]",
       },
       {
         internalType: "bytes",
@@ -244,24 +324,24 @@ const _abi = [
         type: "bytes32",
       },
       {
-        internalType: "uint128",
+        internalType: "bytes16",
         name: "senderFlags",
-        type: "uint128",
+        type: "bytes16",
       },
       {
-        internalType: "uint256[2]",
+        internalType: "bytes32[2]",
         name: "aggregatedPublicKey",
-        type: "uint256[2]",
+        type: "bytes32[2]",
       },
       {
-        internalType: "uint256[4]",
+        internalType: "bytes32[4]",
         name: "aggregatedSignature",
-        type: "uint256[4]",
+        type: "bytes32[4]",
       },
       {
-        internalType: "uint256[4]",
+        internalType: "bytes32[4]",
         name: "messagePoint",
-        type: "uint256[4]",
+        type: "bytes32[4]",
       },
       {
         internalType: "uint256[]",

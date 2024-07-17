@@ -75,7 +75,6 @@ export interface RollupInterface extends Interface {
       | "UPGRADE_INTERFACE_VERSION"
       | "depositCount"
       | "getDepositRoot"
-      | "getLeafValue"
       | "initialize"
       | "lastProcessedDepositId"
       | "lastProcessedWithdrawalId"
@@ -90,16 +89,17 @@ export interface RollupInterface extends Interface {
       | "submitWithdrawals"
       | "transferOwnership"
       | "upgradeToAndCall"
-      | "verifyMerkleProof"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "AccountIdsPosted"
       | "BlockFraudProofSubmitted"
       | "BlockPosted"
       | "DepositsProcessed"
       | "Initialized"
       | "OwnershipTransferred"
+      | "PubKeysPosted"
       | "Upgraded"
       | "WithdrawRequested"
       | "WithdrawalsSubmitted"
@@ -118,18 +118,6 @@ export interface RollupInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getLeafValue",
-    values: [
-      BigNumberish,
-      BigNumberish,
-      AddressLike,
-      BigNumberish,
-      AddressLike,
-      BigNumberish,
-      BytesLike
-    ]
-  ): string;
-  encodeFunctionData(
     functionFragment: "initialize",
     values: [AddressLike, AddressLike, AddressLike, AddressLike]
   ): string;
@@ -146,11 +134,11 @@ export interface RollupInterface extends Interface {
     functionFragment: "postNonRegistrationBlock",
     values: [
       BytesLike,
-      BigNumberish,
       BytesLike,
-      [BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      [BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
+      BytesLike,
       BytesLike
     ]
   ): string;
@@ -158,10 +146,10 @@ export interface RollupInterface extends Interface {
     functionFragment: "postRegistrationBlock",
     values: [
       BytesLike,
-      BigNumberish,
-      [BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      BytesLike,
+      [BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
       BigNumberish[]
     ]
   ): string;
@@ -201,10 +189,6 @@ export interface RollupInterface extends Interface {
     functionFragment: "upgradeToAndCall",
     values: [AddressLike, BytesLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "verifyMerkleProof",
-    values: [BytesLike, BytesLike[], BigNumberish, BytesLike]
-  ): string;
 
   decodeFunctionResult(
     functionFragment: "UPGRADE_INTERFACE_VERSION",
@@ -216,10 +200,6 @@ export interface RollupInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getDepositRoot",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLeafValue",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -272,10 +252,19 @@ export interface RollupInterface extends Interface {
     functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "verifyMerkleProof",
-    data: BytesLike
-  ): Result;
+}
+
+export namespace AccountIdsPostedEvent {
+  export type InputTuple = [blockNumber: BigNumberish, accountIds: BytesLike];
+  export type OutputTuple = [blockNumber: bigint, accountIds: string];
+  export interface OutputObject {
+    blockNumber: bigint;
+    accountIds: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace BlockFraudProofSubmittedEvent {
@@ -358,6 +347,22 @@ export namespace OwnershipTransferredEvent {
   export interface OutputObject {
     previousOwner: string;
     newOwner: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PubKeysPostedEvent {
+  export type InputTuple = [
+    blockNumber: BigNumberish,
+    senderPublicKeys: BigNumberish[]
+  ];
+  export type OutputTuple = [blockNumber: bigint, senderPublicKeys: bigint[]];
+  export interface OutputObject {
+    blockNumber: bigint;
+    senderPublicKeys: bigint[];
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -464,20 +469,6 @@ export interface Rollup extends BaseContract {
 
   getDepositRoot: TypedContractMethod<[], [string], "view">;
 
-  getLeafValue: TypedContractMethod<
-    [
-      leafType: BigNumberish,
-      originNetwork: BigNumberish,
-      originAddress: AddressLike,
-      destinationNetwork: BigNumberish,
-      destinationAddress: AddressLike,
-      amount: BigNumberish,
-      metadataHash: BytesLike
-    ],
-    [string],
-    "view"
-  >;
-
   initialize: TypedContractMethod<
     [
       _scrollMessenger: AddressLike,
@@ -498,16 +489,11 @@ export interface Rollup extends BaseContract {
   postNonRegistrationBlock: TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       publicKeysHash: BytesLike,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
       senderAccountIds: BytesLike
     ],
     [void],
@@ -517,15 +503,10 @@ export interface Rollup extends BaseContract {
   postRegistrationBlock: TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       senderPublicKeys: BigNumberish[]
     ],
     [void],
@@ -576,17 +557,6 @@ export interface Rollup extends BaseContract {
     "payable"
   >;
 
-  verifyMerkleProof: TypedContractMethod<
-    [
-      leafHash: BytesLike,
-      smtProof: BytesLike[],
-      index: BigNumberish,
-      root: BytesLike
-    ],
-    [boolean],
-    "view"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -600,21 +570,6 @@ export interface Rollup extends BaseContract {
   getFunction(
     nameOrSignature: "getDepositRoot"
   ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "getLeafValue"
-  ): TypedContractMethod<
-    [
-      leafType: BigNumberish,
-      originNetwork: BigNumberish,
-      originAddress: AddressLike,
-      destinationNetwork: BigNumberish,
-      destinationAddress: AddressLike,
-      amount: BigNumberish,
-      metadataHash: BytesLike
-    ],
-    [string],
-    "view"
-  >;
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
@@ -641,16 +596,11 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       publicKeysHash: BytesLike,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
       senderAccountIds: BytesLike
     ],
     [void],
@@ -661,15 +611,10 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       senderPublicKeys: BigNumberish[]
     ],
     [void],
@@ -723,19 +668,14 @@ export interface Rollup extends BaseContract {
     [void],
     "payable"
   >;
-  getFunction(
-    nameOrSignature: "verifyMerkleProof"
-  ): TypedContractMethod<
-    [
-      leafHash: BytesLike,
-      smtProof: BytesLike[],
-      index: BigNumberish,
-      root: BytesLike
-    ],
-    [boolean],
-    "view"
-  >;
 
+  getEvent(
+    key: "AccountIdsPosted"
+  ): TypedContractEvent<
+    AccountIdsPostedEvent.InputTuple,
+    AccountIdsPostedEvent.OutputTuple,
+    AccountIdsPostedEvent.OutputObject
+  >;
   getEvent(
     key: "BlockFraudProofSubmitted"
   ): TypedContractEvent<
@@ -772,6 +712,13 @@ export interface Rollup extends BaseContract {
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
+    key: "PubKeysPosted"
+  ): TypedContractEvent<
+    PubKeysPostedEvent.InputTuple,
+    PubKeysPostedEvent.OutputTuple,
+    PubKeysPostedEvent.OutputObject
+  >;
+  getEvent(
     key: "Upgraded"
   ): TypedContractEvent<
     UpgradedEvent.InputTuple,
@@ -794,6 +741,17 @@ export interface Rollup extends BaseContract {
   >;
 
   filters: {
+    "AccountIdsPosted(uint256,bytes)": TypedContractEvent<
+      AccountIdsPostedEvent.InputTuple,
+      AccountIdsPostedEvent.OutputTuple,
+      AccountIdsPostedEvent.OutputObject
+    >;
+    AccountIdsPosted: TypedContractEvent<
+      AccountIdsPostedEvent.InputTuple,
+      AccountIdsPostedEvent.OutputTuple,
+      AccountIdsPostedEvent.OutputObject
+    >;
+
     "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
       BlockFraudProofSubmittedEvent.InputTuple,
       BlockFraudProofSubmittedEvent.OutputTuple,
@@ -847,6 +805,17 @@ export interface Rollup extends BaseContract {
       OwnershipTransferredEvent.InputTuple,
       OwnershipTransferredEvent.OutputTuple,
       OwnershipTransferredEvent.OutputObject
+    >;
+
+    "PubKeysPosted(uint256,uint256[])": TypedContractEvent<
+      PubKeysPostedEvent.InputTuple,
+      PubKeysPostedEvent.OutputTuple,
+      PubKeysPostedEvent.OutputObject
+    >;
+    PubKeysPosted: TypedContractEvent<
+      PubKeysPostedEvent.InputTuple,
+      PubKeysPostedEvent.OutputTuple,
+      PubKeysPostedEvent.OutputObject
     >;
 
     "Upgraded(address)": TypedContractEvent<

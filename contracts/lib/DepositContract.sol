@@ -2,6 +2,7 @@
 pragma solidity 0.8.24;
 
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {DepositLib} from "./DepositLib.sol";
 
 /**
  * This contract will be used as a helper for all the sparse merkle tree related functions
@@ -27,19 +28,21 @@ contract DepositContract is ReentrancyGuardUpgradeable {
 	// Counter of current deposits
 	uint256 public depositCount;
 
-	/**
-	 * @dev This empty reserved space is put in place to allow future versions to add new
-	 * variables without shifting down storage in the inheritance chain.
-	 */
-	uint256[10] private _gap;
+	function getDepositRoot() public view returns (bytes32) {
+		DepositLib.Deposit memory leaf = DepositLib.Deposit(0, 0, 0);
+		bytes32 defaultHash = DepositLib.getHash(leaf);
+		return _getDepositRoot(defaultHash);
+	}
 
 	/**
 	 * @notice Computes and returns the merkle root
 	 */
-	function getDepositRoot() public view returns (bytes32) {
-		bytes32 node;
+	function _getDepositRoot(
+		bytes32 defaultHash
+	) internal view returns (bytes32) {
+		bytes32 node = defaultHash;
 		uint256 size = depositCount;
-		bytes32 currentZeroHashHeight = 0;
+		bytes32 currentZeroHashHeight = defaultHash;
 
 		for (
 			uint256 height = 0;
@@ -86,67 +89,5 @@ contract DepositContract is ReentrancyGuardUpgradeable {
 		// As the loop should always end prematurely with the `return` statement,
 		// this code should be unreachable. We assert `false` just to be safe.
 		assert(false);
-	}
-
-	/**
-	 * @notice Verify merkle proof
-	 * @param leafHash Leaf hash
-	 * @param smtProof Smt proof
-	 * @param index Index of the leaf
-	 * @param root Merkle root
-	 */
-	function verifyMerkleProof(
-		bytes32 leafHash,
-		bytes32[_DEPOSIT_CONTRACT_TREE_DEPTH] calldata smtProof,
-		uint32 index,
-		bytes32 root
-	) public pure returns (bool) {
-		bytes32 node = leafHash;
-
-		// Check merkle proof
-		for (
-			uint256 height = 0;
-			height < _DEPOSIT_CONTRACT_TREE_DEPTH;
-			height++
-		) {
-			if (((index >> height) & 1) == 1)
-				node = keccak256(abi.encodePacked(smtProof[height], node));
-			else node = keccak256(abi.encodePacked(node, smtProof[height]));
-		}
-
-		return node == root;
-	}
-
-	/**
-	 * @notice Given the leaf data returns the leaf value
-	 * @param leafType Leaf type -->  [0] transfer Ether / ERC20 tokens, [1] message
-	 * @param originNetwork Origin Network
-	 * @param originAddress [0] Origin token address, 0 address is reserved for ether, [1] msg.sender of the message
-	 * @param destinationNetwork Destination network
-	 * @param destinationAddress Destination address
-	 * @param amount [0] Amount of tokens/ether, [1] Amount of ether
-	 * @param metadataHash Hash of the metadata
-	 */
-	function getLeafValue(
-		uint8 leafType,
-		uint32 originNetwork,
-		address originAddress,
-		uint32 destinationNetwork,
-		address destinationAddress,
-		uint256 amount,
-		bytes32 metadataHash
-	) public pure returns (bytes32) {
-		return
-			keccak256(
-				abi.encodePacked(
-					leafType,
-					originNetwork,
-					originAddress,
-					destinationNetwork,
-					destinationAddress,
-					amount,
-					metadataHash
-				)
-			);
 	}
 }

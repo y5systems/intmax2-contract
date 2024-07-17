@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/Rollup.sol";
 import {TokenData} from "./TokenData.sol";
-import {DepositLib} from "./DepositLib.sol";
+import {DepositLib} from "../lib/DepositLib.sol";
 import {WithdrawalLib} from "../rollup/lib/WithdrawalLib.sol";
 import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -23,7 +23,7 @@ contract Liquidity is
 	ILiquidity
 {
 	using SafeERC20 for IERC20;
-	using DepositLib for Deposit;
+	using DepositLib for DepositLib.Deposit;
 	using WithdrawalLib for IRollup.Withdrawal;
 
 	IL1ScrollMessenger private l1ScrollMessenger;
@@ -152,7 +152,7 @@ contract Liquidity is
 	 */
 	function cancelPendingDeposit(
 		uint256 depositId,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) public {
 		if (depositId >= pendingDepositData.length) {
 			revert InvalidDepositId();
@@ -189,7 +189,7 @@ contract Liquidity is
 	 */
 	function claimRejectedDeposit(
 		uint256 depositId,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) public {
 		DepositData memory depositData = rejectedDepositData[depositId];
 		if (depositData.sender != _msgSender()) {
@@ -223,7 +223,7 @@ contract Liquidity is
 		}
 		bytes32[] memory depositHashes = new bytes32[](counter);
 		for (
-			uint256 i = lastProcessedDepositId + 1; 
+			uint256 i = lastProcessedDepositId + 1;
 			i <= _lastProcessedDepositId;
 			i++
 		) {
@@ -299,7 +299,7 @@ contract Liquidity is
 
 	function _cancelDeposit(
 		DepositData memory depositData,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) private {
 		if (depositData.depositHash == bytes32(0)) {
 			revert InvalidDepositHash();
@@ -324,7 +324,8 @@ contract Liquidity is
 		uint256 amount
 	) internal {
 		uint256 depositId = pendingDepositData.length;
-		bytes32 depositHash = Deposit(recipientSaltHash, tokenIndex, amount)
+		bytes32 depositHash = DepositLib
+			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
 		pendingDepositData.push(DepositData(depositHash, sender));
 

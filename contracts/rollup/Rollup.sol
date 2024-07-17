@@ -27,6 +27,9 @@ contract Rollup is
 	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputs;
 	using Byte32Lib for bytes32;
 
+	uint256 constant NUM_SENDERS_IN_BLOCK = 128;
+	uint256 constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
+
 	IL2ScrollMessenger private l2ScrollMessenger;
 	IPlonkVerifier private verifier;
 	IBlockBuilderRegistry private blockBuilderRegistry;
@@ -73,21 +76,35 @@ contract Rollup is
 
 		// The block hash of the genesis block is not referenced during a withdraw request.
 		// Therefore, the genesis block is not included in the postedBlockHashes.
-		blocks.pushFirstBlockInfo();
+		blocks.pushGenesisBlock(getDepositRoot());
 	}
 
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		uint256[] calldata senderPublicKeys
 	) public {
-		if (senderPublicKeys.length == 0) {
+		uint256 length = senderPublicKeys.length;
+		if (length == 0) {
 			revert SenderPublicKeysEmpty();
 		}
-		bytes32 publicKeysHash = keccak256(abi.encodePacked(senderPublicKeys));
+		if (length > NUM_SENDERS_IN_BLOCK) {
+			revert TooManySenderPublicKeys();
+		}
+		uint256 blockNumber = blocks.length;
+		emit PubKeysPosted(blockNumber, senderPublicKeys);
+
+		uint256[NUM_SENDERS_IN_BLOCK] memory paddedKeys;
+		for (uint256 i = 0; i < length; i++) {
+			paddedKeys[i] = senderPublicKeys[i];
+		}
+		for (uint256 i = length; i < NUM_SENDERS_IN_BLOCK; i++) {
+			paddedKeys[i] = 1;
+		}
+		bytes32 publicKeysHash = keccak256(abi.encodePacked(paddedKeys));
 		bytes32 accountIdsHash = 0;
 		_postBlock(
 			true,
@@ -103,20 +120,34 @@ contract Rollup is
 
 	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		bytes32 publicKeysHash,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
 		bytes calldata senderAccountIds
 	) public {
-		if (senderAccountIds.length == 0) {
+		uint256 length = senderAccountIds.length;
+		if (length == 0) {
 			revert SenderAccountIdsEmpty();
 		}
-		if (senderAccountIds.length % 5 != 0) {
+		if (length > FULL_ACCOUNT_IDS_BYTES) {
+			revert TooManyAccountIds();
+		}
+		if (length % 5 != 0) {
 			revert SenderAccountIdsInvalidLength();
 		}
-		bytes32 accountIdsHash = keccak256(senderAccountIds);
+		uint256 blockNumber = blocks.length;
+		emit AccountIdsPosted(blockNumber, senderAccountIds);
+		bytes memory paddedAccountIds = new bytes(FULL_ACCOUNT_IDS_BYTES);
+		for (uint256 i = 0; i < length; i++) {
+			paddedAccountIds[i] = senderAccountIds[i];
+		}
+		// Pad with 5-byte representation of 1 (0x0000000001)
+		for (uint256 i = length; i < FULL_ACCOUNT_IDS_BYTES; i += 5) {
+			paddedAccountIds[i] = 0x01;
+		}
+		bytes32 accountIdsHash = keccak256(paddedAccountIds);
 		_postBlock(
 			false,
 			txTreeRoot,
@@ -133,6 +164,20 @@ contract Rollup is
 		FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external {
+		if (publicInputs.blockHash != blocks[publicInputs.blockNumber].hash) {
+			revert BlockHashMismatch({
+				given: publicInputs.blockHash,
+				expected: blocks[publicInputs.blockNumber].hash
+			});
+		}
+
+		if (publicInputs.challenger != _msgSender()) {
+			revert ChallengerMismatch({
+				given: publicInputs.challenger,
+				expected: _msgSender()
+			});
+		}
+
 		if (slashedBlockNumbers[publicInputs.blockNumber]) {
 			revert FraudProofAlreadySubmitted();
 		}
@@ -184,6 +229,7 @@ contract Rollup is
 		emit WithdrawRequested(publicInputs.withdrawalsHash, _msgSender());
 	}
 
+	// pass message to messanger
 	function submitWithdrawals(uint256 _lastProcessedWithdrawalId) external {
 		if (
 			_lastProcessedWithdrawalId <= lastProcessedWithdrawalId ||
@@ -240,12 +286,12 @@ contract Rollup is
 	function _postBlock(
 		bool isRegistrationBlock,
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
+		bytes16 senderFlags,
 		bytes32 publicKeysHash,
 		bytes32 accountIdsHash,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint
 	) internal returns (uint256 blockNumber) {
 		// Check if the block builder is valid.
 		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {

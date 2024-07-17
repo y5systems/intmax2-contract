@@ -47,7 +47,7 @@ export declare namespace IRollup {
   };
 }
 
-export declare namespace ILiquidity {
+export declare namespace DepositLib {
   export type DepositStruct = {
     recipientSaltHash: BytesLike;
     tokenIndex: BigNumberish;
@@ -109,11 +109,11 @@ export interface LiquidityInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "cancelPendingDeposit",
-    values: [BigNumberish, ILiquidity.DepositStruct]
+    values: [BigNumberish, DepositLib.DepositStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "claimRejectedDeposit",
-    values: [BigNumberish, ILiquidity.DepositStruct]
+    values: [BigNumberish, DepositLib.DepositStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "claimWithdrawals",
@@ -433,13 +433,13 @@ export interface Liquidity extends BaseContract {
   >;
 
   cancelPendingDeposit: TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;
 
   claimRejectedDeposit: TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;
@@ -561,14 +561,14 @@ export interface Liquidity extends BaseContract {
   getFunction(
     nameOrSignature: "cancelPendingDeposit"
   ): TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "claimRejectedDeposit"
   ): TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;

@@ -2,6 +2,7 @@
 pragma solidity 0.8.24;
 
 import {IRollup} from "../rollup/IRollup.sol";
+import {DepositLib} from "../lib/DepositLib.sol";
 
 interface ILiquidity {
 	error InvalidDepositId();
@@ -15,12 +16,6 @@ interface ILiquidity {
 	error WithdrawalNotFound();
 	error InvalidRecipientSaltHash();
 	error InvalidAmount();
-
-	struct Deposit {
-		bytes32 recipientSaltHash;
-		uint32 tokenIndex;
-		uint256 amount;
-	}
 
 	struct DepositData {
 		bytes32 depositHash;
@@ -70,12 +65,12 @@ interface ILiquidity {
 
 	function cancelPendingDeposit(
 		uint256 depositId,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) external;
 
 	function claimRejectedDeposit(
 		uint256 depositId,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) external;
 
 	/**

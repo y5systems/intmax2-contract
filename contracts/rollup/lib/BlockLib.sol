@@ -4,15 +4,10 @@ pragma solidity 0.8.24;
 import {IRollup} from "../IRollup.sol";
 
 library BlockLib {
-	function pushFirstBlockInfo(IRollup.Block[] storage blocks) internal {
-		// The initial state of the deposit tree is a height-32 Keccak Merkle tree where all leaves are 0,
-		// and initialDepositTreeRoot is the Merkle root of this tree.
-		bytes32 initialDepositTreeRoot = 0;
-		for (uint256 i = 0; i < 32; i++) {
-			initialDepositTreeRoot = keccak256(
-				abi.encodePacked(initialDepositTreeRoot, initialDepositTreeRoot)
-			);
-		}
+	function pushGenesisBlock(
+		IRollup.Block[] storage blocks,
+		bytes32 initialDepositTreeRoot
+	) internal {
 		blocks.push(
 			IRollup.Block({
 				hash: _calcBlockHash(0, initialDepositTreeRoot, 0, 0),
