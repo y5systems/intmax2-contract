@@ -14,6 +14,7 @@ import {WithdrawalLib} from "./lib/WithdrawalLib.sol";
 import {DepositContract} from "../lib/DepositContract.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PairingLib} from "./lib/PairingLib.sol";
 
 import "hardhat/console.sol";
 
@@ -297,9 +298,19 @@ contract Rollup is
 		bytes32[4] calldata messagePoint
 	) internal returns (uint256 blockNumber) {
 		// Check if the block builder is valid.
+		// disable for testing
 		// if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
 		// 	revert InvalidBlockBuilder();
 		// }
+
+		bool success = PairingLib.pairing(
+			aggregatedPublicKey,
+			aggregatedSignature,
+			messagePoint
+		);
+		if (!success) {
+			revert PairingCheckFailed();
+		}
 
 		bytes32 signatureHash = keccak256(
 			abi.encodePacked(

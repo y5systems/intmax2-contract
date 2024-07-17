@@ -78,6 +78,11 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "PairingCheckFailed",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "SenderAccountIdsEmpty",
     type: "error",
   },

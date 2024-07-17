@@ -36,6 +36,8 @@ interface IRollup {
 
 	error ChallengerMismatch(address given, address expected);
 
+	error PairingCheckFailed();
+
 	struct Block {
 		bytes32 hash;
 		address builder;
