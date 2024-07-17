@@ -66,6 +66,7 @@ contract Rollup is
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
 		__DepositContract_init();
+		__Withdrawal_init(_scrollMessenger, _verifier, _liquidity);
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		verifier = IPlonkVerifier(_verifier);
 		liquidity = _liquidity;

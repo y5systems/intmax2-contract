@@ -28,9 +28,19 @@ contract Withdrawal is IWithdrawal, OwnableUpgradeable {
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 	mapping(bytes32 => uint256) public postedBlockHashes;
 
-	IPlonkVerifier private verifier;
+	IPlonkVerifier private withdrawalVerifier;
 	IL2ScrollMessenger private l2ScrollMessenger;
 	address private liquidity;
+
+	function __Withdrawal_init(
+		address _scrollMessenger,
+		address _withdrawalVerifier,
+		address _liquidity
+	) internal {
+		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
+		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
+		liquidity = _liquidity;
+	}
 
 	function postWithdrawal(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
@@ -47,7 +57,7 @@ contract Withdrawal is IWithdrawal, OwnableUpgradeable {
 		if (publicInputs.withdrawalAggregator != _msgSender()) {
 			revert WithdrawalAggregatorMismatch();
 		}
-		if (!verifier.Verify(proof, publicInputs.getHash().split())) {
+		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert WithdrawalProofVerificationFailed();
 		}
 		for (uint256 i = 0; i < withdrawals.length; i++) {
