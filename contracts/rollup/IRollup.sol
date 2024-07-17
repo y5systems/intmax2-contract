@@ -1,20 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
-import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
-import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
-
 interface IRollup {
 	error InvalidBlockBuilder();
 
 	error FraudProofAlreadySubmitted();
 
 	error FraudProofVerificationFailed();
-
-	error WithdrawalProofVerificationFailed();
-
-	error InvalidWithdrawalId();
 
 	error OnlyScrollMessenger();
 
@@ -30,23 +22,13 @@ interface IRollup {
 
 	error SenderAccountIdsInvalidLength();
 
-	error WithdrawalBlockHashNotPosted(uint256 requestIndex);
-
-	error WithdrawalsHashMismatch();
-
 	error BlockHashAlreadyPosted();
-
-	error BlockHashNotExists(bytes32 blockHash);
 
 	error BlockHashMismatch(bytes32 given, bytes32 expected);
 
 	error ChallengerMismatch();
 
 	error PairingCheckFailed();
-
-	error WithdrawalChainVerificationFailed();
-
-	error WithdrawalAggregatorMismatch();
 
 	struct Block {
 		bytes32 hash;
@@ -82,10 +64,6 @@ interface IRollup {
 		address indexed challenger
 	);
 
-	event ClaimableWithdrawalQueued(WithdrawalLib.Withdrawal withdrawal);
-
-	event DirectWithdrawalQueued(WithdrawalLib.Withdrawal withdrawal);
-
 	/**
 	 * @notice Post a new block for senders who have not been assigned an account ID.
 	 * @dev Only valid Block Builders can call this function.
@@ -117,22 +95,6 @@ interface IRollup {
 		FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external;
-
-	/**
-	 * @notice Post withdrawals
-	 * @dev This method is called by the Withdraw Aggregator.
-	 * @param withdrawals The list of withdrawals.
-	 */
-	function postWithdrawal(
-		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
-		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
-			calldata publicInputs,
-		bytes calldata proof
-	) external;
-
-	function relayDirectWithdrawals() external;
-
-	function relayClaimableWithdrawals() external;
 
 	/**
 	 * @notice Update the deposit tree branch and root.

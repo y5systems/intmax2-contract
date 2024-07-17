@@ -174,6 +174,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IRollup__factory>;
     getContractFactory(
+      name: "IWithdrawal",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IWithdrawal__factory>;
+    getContractFactory(
       name: "PairingLib",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PairingLib__factory>;
@@ -181,6 +185,10 @@ declare module "hardhat/types/runtime" {
       name: "Rollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Rollup__factory>;
+    getContractFactory(
+      name: "Withdrawal",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Withdrawal__factory>;
     getContractFactory(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -395,6 +403,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IRollup>;
     getContractAt(
+      name: "IWithdrawal",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IWithdrawal>;
+    getContractAt(
       name: "PairingLib",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -404,6 +417,11 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Rollup>;
+    getContractAt(
+      name: "Withdrawal",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Withdrawal>;
     getContractAt(
       name: "MockL1GasPriceOracle",
       address: string | ethers.Addressable,
@@ -581,6 +599,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
     deployContract(
+      name: "IWithdrawal",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IWithdrawal>;
+    deployContract(
       name: "PairingLib",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PairingLib>;
@@ -588,6 +610,10 @@ declare module "hardhat/types/runtime" {
       name: "Rollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
+    deployContract(
+      name: "Withdrawal",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Withdrawal>;
     deployContract(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -802,6 +828,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
     deployContract(
+      name: "IWithdrawal",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IWithdrawal>;
+    deployContract(
       name: "PairingLib",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -811,6 +842,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
+    deployContract(
+      name: "Withdrawal",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Withdrawal>;
     deployContract(
       name: "MockL1GasPriceOracle",
       args: any[],

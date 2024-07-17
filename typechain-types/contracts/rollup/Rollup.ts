@@ -118,6 +118,7 @@ export interface RollupInterface extends Interface {
       | "postNonRegistrationBlock"
       | "postRegistrationBlock"
       | "postWithdrawal"
+      | "postedBlockHashes"
       | "processDeposits"
       | "proxiableUUID"
       | "relayClaimableWithdrawals"
@@ -135,6 +136,7 @@ export interface RollupInterface extends Interface {
       | "BlockPosted"
       | "ClaimableWithdrawalQueued"
       | "DepositsProcessed"
+      | "DirectWithdrawalQueued"
       | "Initialized"
       | "OwnershipTransferred"
       | "PubKeysPosted"
@@ -197,6 +199,10 @@ export interface RollupInterface extends Interface {
       WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
       BytesLike
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "postedBlockHashes",
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "processDeposits",
@@ -264,6 +270,10 @@ export interface RollupInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "postWithdrawal",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "postedBlockHashes",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -380,6 +390,18 @@ export namespace DepositsProcessedEvent {
   export type OutputTuple = [depositTreeRoot: string];
   export interface OutputObject {
     depositTreeRoot: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DirectWithdrawalQueuedEvent {
+  export type InputTuple = [withdrawal: WithdrawalLib.WithdrawalStruct];
+  export type OutputTuple = [withdrawal: WithdrawalLib.WithdrawalStructOutput];
+  export interface OutputObject {
+    withdrawal: WithdrawalLib.WithdrawalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -545,6 +567,8 @@ export interface Rollup extends BaseContract {
     "nonpayable"
   >;
 
+  postedBlockHashes: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+
   processDeposits: TypedContractMethod<
     [_lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
     [void],
@@ -655,6 +679,9 @@ export interface Rollup extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "postedBlockHashes"
+  ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
+  getFunction(
     nameOrSignature: "processDeposits"
   ): TypedContractMethod<
     [_lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
@@ -725,6 +752,13 @@ export interface Rollup extends BaseContract {
     DepositsProcessedEvent.InputTuple,
     DepositsProcessedEvent.OutputTuple,
     DepositsProcessedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DirectWithdrawalQueued"
+  ): TypedContractEvent<
+    DirectWithdrawalQueuedEvent.InputTuple,
+    DirectWithdrawalQueuedEvent.OutputTuple,
+    DirectWithdrawalQueuedEvent.OutputObject
   >;
   getEvent(
     key: "Initialized"
@@ -809,6 +843,17 @@ export interface Rollup extends BaseContract {
       DepositsProcessedEvent.InputTuple,
       DepositsProcessedEvent.OutputTuple,
       DepositsProcessedEvent.OutputObject
+    >;
+
+    "DirectWithdrawalQueued(tuple)": TypedContractEvent<
+      DirectWithdrawalQueuedEvent.InputTuple,
+      DirectWithdrawalQueuedEvent.OutputTuple,
+      DirectWithdrawalQueuedEvent.OutputObject
+    >;
+    DirectWithdrawalQueued: TypedContractEvent<
+      DirectWithdrawalQueuedEvent.InputTuple,
+      DirectWithdrawalQueuedEvent.OutputTuple,
+      DirectWithdrawalQueuedEvent.OutputObject
     >;
 
     "Initialized(uint64)": TypedContractEvent<

@@ -31,17 +31,6 @@ const _abi = [
     type: "error",
   },
   {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "blockHash",
-        type: "bytes32",
-      },
-    ],
-    name: "BlockHashNotExists",
-    type: "error",
-  },
-  {
     inputs: [],
     name: "ChallengerMismatch",
     type: "error",
@@ -59,11 +48,6 @@ const _abi = [
   {
     inputs: [],
     name: "InvalidBlockBuilder",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "InvalidWithdrawalId",
     type: "error",
   },
   {
@@ -104,37 +88,6 @@ const _abi = [
   {
     inputs: [],
     name: "TooManySenderPublicKeys",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "WithdrawalAggregatorMismatch",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "requestIndex",
-        type: "uint256",
-      },
-    ],
-    name: "WithdrawalBlockHashNotPosted",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "WithdrawalChainVerificationFailed",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "WithdrawalProofVerificationFailed",
-    type: "error",
-  },
-  {
-    inputs: [],
-    name: "WithdrawalsHashMismatch",
     type: "error",
   },
   {
@@ -216,41 +169,6 @@ const _abi = [
       },
     ],
     name: "BlockPosted",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        components: [
-          {
-            internalType: "address",
-            name: "recipient",
-            type: "address",
-          },
-          {
-            internalType: "uint32",
-            name: "tokenIndex",
-            type: "uint32",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-          {
-            internalType: "bytes32",
-            name: "nullifier",
-            type: "bytes32",
-          },
-        ],
-        indexed: false,
-        internalType: "struct WithdrawalLib.Withdrawal",
-        name: "withdrawal",
-        type: "tuple",
-      },
-    ],
-    name: "ClaimableWithdrawalQueued",
     type: "event",
   },
   {
@@ -369,74 +287,6 @@ const _abi = [
   {
     inputs: [
       {
-        components: [
-          {
-            internalType: "bytes32",
-            name: "prevWithdrawalHash",
-            type: "bytes32",
-          },
-          {
-            internalType: "address",
-            name: "recipient",
-            type: "address",
-          },
-          {
-            internalType: "uint32",
-            name: "tokenIndex",
-            type: "uint32",
-          },
-          {
-            internalType: "uint256",
-            name: "amount",
-            type: "uint256",
-          },
-          {
-            internalType: "bytes32",
-            name: "nullifier",
-            type: "bytes32",
-          },
-          {
-            internalType: "bytes32",
-            name: "blockHash",
-            type: "bytes32",
-          },
-        ],
-        internalType: "struct ChainedWithdrawalLib.ChainedWithdrawal[]",
-        name: "withdrawals",
-        type: "tuple[]",
-      },
-      {
-        components: [
-          {
-            internalType: "bytes32",
-            name: "lastWithdrawalHash",
-            type: "bytes32",
-          },
-          {
-            internalType: "address",
-            name: "withdrawalAggregator",
-            type: "address",
-          },
-        ],
-        internalType:
-          "struct WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs",
-        name: "publicInputs",
-        type: "tuple",
-      },
-      {
-        internalType: "bytes",
-        name: "proof",
-        type: "bytes",
-      },
-    ],
-    name: "postWithdrawal",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
         internalType: "uint256",
         name: "lastProcessedDepositId",
         type: "uint256",
@@ -448,20 +298,6 @@ const _abi = [
       },
     ],
     name: "processDeposits",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "relayClaimableWithdrawals",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "relayDirectWithdrawals",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
