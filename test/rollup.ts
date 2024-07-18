@@ -1,15 +1,24 @@
-import { ethers, ignition, upgrades } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import type { Rollup } from '../typechain-types'
 import * as fs from 'fs'
 import { expect } from 'chai'
-import rollupModule from '../ignition/modules/rollup'
 
 describe('Rollup', function () {
 	let rollup: Rollup
 
 	this.beforeEach(async function () {
-		const { rollup: rollup_ } = await ignition.deploy(rollupModule)
-		rollup = rollup_ as unknown as Rollup
+		const rollupFactory = await ethers.getContractFactory('Rollup')
+		rollup = (await upgrades.deployProxy(rollupFactory, [], {
+			initializer: false,
+			kind: 'uups',
+		})) as unknown as Rollup
+		await rollup.initialize(
+			ethers.ZeroAddress,
+			ethers.ZeroAddress,
+			ethers.ZeroAddress,
+			ethers.ZeroAddress,
+			[],
+		)
 	})
 
 	it('should match block hashes', async function () {
@@ -27,7 +36,7 @@ describe('Rollup', function () {
 function loadFullBlocks(): FullBlock[] {
 	let fullBlocks = []
 	for (let i = 0; i < 3; i++) {
-		const data = fs.readFileSync(`block_data/block${i}.json`, 'utf8')
+		const data = fs.readFileSync(`test_data/block${i}.json`, 'utf8')
 		const jsonData = JSON.parse(data) as FullBlock
 		fullBlocks.push(jsonData)
 	}

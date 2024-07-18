@@ -62,7 +62,7 @@ export interface LiquidityInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "__TokenInfo_init"
+      | "__TokenData_init"
       | "cancelPendingDeposit"
       | "claimRejectedDeposit"
       | "claimWithdrawals"
@@ -102,8 +102,8 @@ export interface LiquidityInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "__TokenInfo_init",
-    values: [AddressLike, AddressLike]
+    functionFragment: "__TokenData_init",
+    values: [AddressLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "cancelPendingDeposit",
@@ -135,7 +135,7 @@ export interface LiquidityInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "lastAnalyzedDepositId",
@@ -188,7 +188,7 @@ export interface LiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "__TokenInfo_init",
+    functionFragment: "__TokenData_init",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -425,8 +425,8 @@ export interface Liquidity extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  __TokenInfo_init: TypedContractMethod<
-    [_usdc: AddressLike, _wbtc: AddressLike],
+  __TokenData_init: TypedContractMethod<
+    [initialERC20Tokens: AddressLike[]],
     [void],
     "nonpayable"
   >;
@@ -490,8 +490,7 @@ export interface Liquidity extends BaseContract {
     [
       _l1ScrollMessenger: AddressLike,
       _rollup: AddressLike,
-      _usdc: AddressLike,
-      _wbtc: AddressLike
+      inititialERC20Tokens: AddressLike[]
     ],
     [void],
     "nonpayable"
@@ -557,9 +556,9 @@ export interface Liquidity extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "__TokenInfo_init"
+    nameOrSignature: "__TokenData_init"
   ): TypedContractMethod<
-    [_usdc: AddressLike, _wbtc: AddressLike],
+    [initialERC20Tokens: AddressLike[]],
     [void],
     "nonpayable"
   >;
@@ -627,8 +626,7 @@ export interface Liquidity extends BaseContract {
     [
       _l1ScrollMessenger: AddressLike,
       _rollup: AddressLike,
-      _usdc: AddressLike,
-      _wbtc: AddressLike
+      inititialERC20Tokens: AddressLike[]
     ],
     [void],
     "nonpayable"

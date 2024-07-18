@@ -158,7 +158,7 @@ export interface RollupInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike, AddressLike, BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "lastProcessedDepositId",
@@ -518,7 +518,8 @@ export interface Rollup extends BaseContract {
       _scrollMessenger: AddressLike,
       _verifier: AddressLike,
       _liquidity: AddressLike,
-      _blockBuilderRegistry: AddressLike
+      _blockBuilderRegistry: AddressLike,
+      _directWithdrawalTokenIndices: BigNumberish[]
     ],
     [void],
     "nonpayable"
@@ -624,7 +625,8 @@ export interface Rollup extends BaseContract {
       _scrollMessenger: AddressLike,
       _verifier: AddressLike,
       _liquidity: AddressLike,
-      _blockBuilderRegistry: AddressLike
+      _blockBuilderRegistry: AddressLike,
+      _directWithdrawalTokenIndices: BigNumberish[]
     ],
     [void],
     "nonpayable"
