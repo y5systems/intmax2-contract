@@ -55,6 +55,18 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 		}
 	}
 
+	function getDirectWithdrawalsQueueSize() external view returns (uint256) {
+		return directWithdrawalsQueue.size();
+	}
+
+	function getClaimableWithdrawalsQueueSize()
+		external
+		view
+		returns (uint256)
+	{
+		return claimableWithdrawalsQueue.size();
+	}
+
 	function submitWithdrawalProof(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
