@@ -2,3 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { BlockBuilderInfoLibTest } from "./BlockBuilderInfoLibTest";
+export type { BlockBuilderRegistry2Test } from "./BlockBuilderRegistry2Test";
+export type { SlashBlockBuilderReentrancyTest } from "./SlashBlockBuilderReentrancyTest";
+export type { UnstakeReentrancyTest } from "./UnstakeReentrancyTest";

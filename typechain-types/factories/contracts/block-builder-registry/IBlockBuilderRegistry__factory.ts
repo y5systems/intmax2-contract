@@ -20,6 +20,22 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "to",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "FailedTransfer",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "InsufficientStakeAmount",
     type: "error",

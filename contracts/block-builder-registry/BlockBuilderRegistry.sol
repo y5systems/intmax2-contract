@@ -81,9 +81,8 @@ contract BlockBuilderRegistry is
 
 		// Remove the block builder information.
 		delete blockBuilders[_msgSender()];
-
 		// Return the stake amount to the block builder.
-		payable(_msgSender()).transfer(stakeAmount);
+		transfer(_msgSender(), stakeAmount);
 
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
@@ -108,12 +107,10 @@ contract BlockBuilderRegistry is
 			info.stakeAmount = 0;
 			blockBuilders[blockBuilder] = info;
 			if (slashAmount < MIN_STAKE_AMOUNT / 2) {
-				payable(challenger).transfer(slashAmount);
+				transfer(challenger, slashAmount);
 			} else {
-				payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-				payable(burnAddress).transfer(
-					slashAmount - (MIN_STAKE_AMOUNT / 2)
-				);
+				transfer(challenger, MIN_STAKE_AMOUNT / 2);
+				transfer(burnAddress, slashAmount - (MIN_STAKE_AMOUNT / 2));
 			}
 			return;
 		}
@@ -126,8 +123,8 @@ contract BlockBuilderRegistry is
 		// submitting fraud proofs by oneself, which would place a burden on
 		// the generation of block validity proofs. An invalid block must prove
 		// in the block validity proof that it has been invalidated.
-		payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-		payable(burnAddress).transfer(MIN_STAKE_AMOUNT / 2);
+		transfer(challenger, MIN_STAKE_AMOUNT / 2);
+		transfer(burnAddress, MIN_STAKE_AMOUNT / 2);
 	}
 
 	function isValidBlockBuilder(
@@ -140,5 +137,11 @@ contract BlockBuilderRegistry is
 		burnAddress = _burnAddress;
 	}
 
+	function transfer(address to, uint256 _value) private {
+		(bool sent, ) = to.call{value: _value}("");
+		if (sent == false) {
+			revert FailedTransfer(to, _value);
+		}
+	}
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

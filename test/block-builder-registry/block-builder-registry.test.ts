@@ -1,12 +1,14 @@
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
-import { ContractTransactionResponse, HDNodeWallet } from 'ethers'
+import { ContractTransactionResponse } from 'ethers'
 import {
 	loadFixture,
 	time,
 } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 import { BlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/BlockBuilderRegistry'
+import { UnstakeReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/UnstakeReentrancyTest'
+import { SlashBlockBuilderReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/SlashBlockBuilderReentrancyTest'
 import { IBlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/BlockBuilderInfoLib'
 import { ONE_DAY_SECONDS } from './const.test'
 
@@ -712,6 +714,93 @@ describe('BlockBuilderRegistry', () => {
 				signers.blockBuilder.address,
 			)
 			expect(result).to.be.true
+		})
+	})
+	describe('upgrade', () => {
+		it('channel contract is upgradable', async () => {
+			const blockBuilderRegistry = await loadFixture(setup)
+			const signers = await getSigners()
+
+			const stakeAmount = ethers.parseEther('0.3')
+			await blockBuilderRegistry
+				.connect(signers.blockBuilder)
+				.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
+
+			const registry2Factory = await ethers.getContractFactory(
+				'BlockBuilderRegistry2Test',
+			)
+			const next = await upgrades.upgradeProxy(
+				await blockBuilderRegistry.getAddress(),
+				registry2Factory,
+			)
+			const blockBuilderInfo = await blockBuilderRegistry.blockBuilders(
+				signers.blockBuilder.address,
+			)
+			expect(blockBuilderInfo.blockBuilderUrl).to.equal(DUMMY_URL)
+			const val = await next.getVal()
+			expect(val).to.equal(1)
+		})
+		it('Cannot upgrade except for a deployer.', async () => {
+			const blockBuilderRegistry = await loadFixture(setup)
+			const signers = await getSigners()
+			const registryFactory = await ethers.getContractFactory(
+				'BlockBuilderRegistry2Test',
+				signers.user,
+			)
+			await expect(
+				upgrades.upgradeProxy(
+					await blockBuilderRegistry.getAddress(),
+					registryFactory,
+				),
+			)
+				.to.be.revertedWithCustomError(
+					blockBuilderRegistry,
+					'OwnableUnauthorizedAccount',
+				)
+				.withArgs(signers.user.address)
+		})
+	})
+	describe('reentrancy', () => {
+		it('unstake', async () => {
+			const blockBuilderRegistry = await loadFixture(setup)
+			const reentrancyFactory = await ethers.getContractFactory(
+				'UnstakeReentrancyTest',
+			)
+			const reentrancy = (await reentrancyFactory.deploy(
+				await blockBuilderRegistry.getAddress(),
+			)) as unknown as UnstakeReentrancyTest
+			const stakeAmount = ethers.parseEther('0.3')
+			await reentrancy.updateBlockBuilder({ value: stakeAmount })
+			await reentrancy.stopBlockBuilder()
+			await time.increase(ONE_DAY_SECONDS)
+
+			await expect(reentrancy.unstake())
+				.to.be.revertedWithCustomError(blockBuilderRegistry, 'FailedTransfer')
+				.withArgs(await reentrancy.getAddress(), stakeAmount)
+		})
+		it('slashBlockBuilder', async () => {
+			const blockBuilderRegistry = await loadFixture(setup)
+			const signers = await getSigners()
+			const reentrancyFactory = await ethers.getContractFactory(
+				'SlashBlockBuilderReentrancyTest',
+			)
+			const reentrancy = (await reentrancyFactory.deploy(
+				await blockBuilderRegistry.getAddress(),
+			)) as unknown as SlashBlockBuilderReentrancyTest
+			const stakeAmount = ethers.parseEther('0.3')
+			await blockBuilderRegistry
+				.connect(signers.blockBuilder)
+				.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
+			await expect(
+				blockBuilderRegistry
+					.connect(signers.rollup)
+					.slashBlockBuilder(
+						signers.blockBuilder.address,
+						reentrancy.getAddress(),
+					),
+			)
+				.to.be.revertedWithCustomError(blockBuilderRegistry, 'FailedTransfer')
+				.withArgs(await reentrancy.getAddress(), MIN_STAKE_AMOUNT / 2n)
 		})
 	})
 })

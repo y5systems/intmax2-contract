@@ -158,6 +158,18 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BlockBuilderInfoLibTest__factory>;
     getContractFactory(
+      name: "BlockBuilderRegistry2Test",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.BlockBuilderRegistry2Test__factory>;
+    getContractFactory(
+      name: "SlashBlockBuilderReentrancyTest",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SlashBlockBuilderReentrancyTest__factory>;
+    getContractFactory(
+      name: "UnstakeReentrancyTest",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.UnstakeReentrancyTest__factory>;
+    getContractFactory(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockL1GasPriceOracle__factory>;
@@ -351,6 +363,21 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.BlockBuilderInfoLibTest>;
     getContractAt(
+      name: "BlockBuilderRegistry2Test",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.BlockBuilderRegistry2Test>;
+    getContractAt(
+      name: "SlashBlockBuilderReentrancyTest",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SlashBlockBuilderReentrancyTest>;
+    getContractAt(
+      name: "UnstakeReentrancyTest",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.UnstakeReentrancyTest>;
+    getContractAt(
       name: "MockL1GasPriceOracle",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -511,6 +538,18 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderInfoLibTest>;
     deployContract(
+      name: "BlockBuilderRegistry2Test",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BlockBuilderRegistry2Test>;
+    deployContract(
+      name: "SlashBlockBuilderReentrancyTest",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SlashBlockBuilderReentrancyTest>;
+    deployContract(
+      name: "UnstakeReentrancyTest",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.UnstakeReentrancyTest>;
+    deployContract(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockL1GasPriceOracle>;
@@ -703,6 +742,21 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderInfoLibTest>;
+    deployContract(
+      name: "BlockBuilderRegistry2Test",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.BlockBuilderRegistry2Test>;
+    deployContract(
+      name: "SlashBlockBuilderReentrancyTest",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SlashBlockBuilderReentrancyTest>;
+    deployContract(
+      name: "UnstakeReentrancyTest",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.UnstakeReentrancyTest>;
     deployContract(
       name: "MockL1GasPriceOracle",
       args: any[],

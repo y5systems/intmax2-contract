@@ -2,3 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export { BlockBuilderInfoLibTest__factory } from "./BlockBuilderInfoLibTest__factory";
+export { BlockBuilderRegistry2Test__factory } from "./BlockBuilderRegistry2Test__factory";
+export { SlashBlockBuilderReentrancyTest__factory } from "./SlashBlockBuilderReentrancyTest__factory";
+export { UnstakeReentrancyTest__factory } from "./UnstakeReentrancyTest__factory";
