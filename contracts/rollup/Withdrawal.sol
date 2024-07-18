@@ -155,17 +155,19 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 		_relayMessage(message);
 	}
 
+	// The specification of ScrollMessenger may change in the future.
+	// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
 	function _relayMessage(bytes memory message) internal {
-		// note
-		// The specification of ScrollMessenger may change in the future.
-		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
-		// processWithdrawals is not payable, so value should be 0
-		// TODO In the testnet, the gas limit was 0 and there was no problem. In production, it is necessary to check what will happen.
-		l2ScrollMessenger.sendMessage{value: 0}( // TODO msg.value is 0, ok?
+		uint256 value = 0; // relay to non-payable function
+		// In the current implementation of ScrollMessenger, the `gasLimit` is simply included in the L2 event log
+		// and does not impose any restrictions on the L1 gas limit. However, considering the possibility of
+		// future implementation changes, we will specify a maximum value.
+		uint256 gasLimit = type(uint256).max;
+		l2ScrollMessenger.sendMessage{value: value}(
 			liquidity,
-			0, // value
+			value,
 			message,
-			0, // TODO gaslimit
+			gasLimit,
 			_msgSender()
 		);
 	}
