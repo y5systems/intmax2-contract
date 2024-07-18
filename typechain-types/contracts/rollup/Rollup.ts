@@ -53,6 +53,20 @@ export declare namespace BlockLib {
   };
 }
 
+export declare namespace FraudProofPublicInputsLib {
+  export type FraudProofPublicInputsStruct = {
+    blockHash: BytesLike;
+    blockNumber: BigNumberish;
+    challenger: AddressLike;
+  };
+
+  export type FraudProofPublicInputsStructOutput = [
+    blockHash: string,
+    blockNumber: bigint,
+    challenger: string
+  ] & { blockHash: string; blockNumber: bigint; challenger: string };
+}
+
 export declare namespace ChainedWithdrawalLib {
   export type ChainedWithdrawalStruct = {
     recipient: AddressLike;
@@ -89,20 +103,6 @@ export declare namespace WithdrawalProofPublicInputsLib {
   ] & { lastWithdrawalHash: string; withdrawalAggregator: string };
 }
 
-export declare namespace FraudProofPublicInputsLib {
-  export type FraudProofPublicInputsStruct = {
-    blockHash: BytesLike;
-    blockNumber: BigNumberish;
-    challenger: AddressLike;
-  };
-
-  export type FraudProofPublicInputsStructOutput = [
-    blockHash: string,
-    blockNumber: bigint,
-    challenger: string
-  ] & { blockHash: string; blockNumber: bigint; challenger: string };
-}
-
 export interface RollupInterface extends Interface {
   getFunction(
     nameOrSignature:
@@ -116,7 +116,6 @@ export interface RollupInterface extends Interface {
       | "owner"
       | "postNonRegistrationBlock"
       | "postRegistrationBlock"
-      | "postWithdrawal"
       | "postedBlockHashes"
       | "processDeposits"
       | "proxiableUUID"
@@ -124,6 +123,7 @@ export interface RollupInterface extends Interface {
       | "relayDirectWithdrawals"
       | "renounceOwnership"
       | "submitBlockFraudProof"
+      | "submitWithdrawalProof"
       | "transferOwnership"
       | "upgradeToAndCall"
   ): FunctionFragment;
@@ -199,14 +199,6 @@ export interface RollupInterface extends Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "postWithdrawal",
-    values: [
-      ChainedWithdrawalLib.ChainedWithdrawalStruct[],
-      WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
-      BytesLike
-    ]
-  ): string;
-  encodeFunctionData(
     functionFragment: "postedBlockHashes",
     values: [BytesLike]
   ): string;
@@ -233,6 +225,14 @@ export interface RollupInterface extends Interface {
   encodeFunctionData(
     functionFragment: "submitBlockFraudProof",
     values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "submitWithdrawalProof",
+    values: [
+      ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -275,10 +275,6 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "postWithdrawal",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "postedBlockHashes",
     data: BytesLike
   ): Result;
@@ -304,6 +300,10 @@ export interface RollupInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "submitBlockFraudProof",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "submitWithdrawalProof",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -579,16 +579,6 @@ export interface Rollup extends BaseContract {
     "nonpayable"
   >;
 
-  postWithdrawal: TypedContractMethod<
-    [
-      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
-      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
-
   postedBlockHashes: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
 
   processDeposits: TypedContractMethod<
@@ -616,6 +606,16 @@ export interface Rollup extends BaseContract {
   submitBlockFraudProof: TypedContractMethod<
     [
       publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  submitWithdrawalProof: TypedContractMethod<
+    [
+      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
       proof: BytesLike
     ],
     [void],
@@ -703,17 +703,6 @@ export interface Rollup extends BaseContract {
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "postWithdrawal"
-  ): TypedContractMethod<
-    [
-      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
-      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
     nameOrSignature: "postedBlockHashes"
   ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
   getFunction(
@@ -740,6 +729,17 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<
     [
       publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "submitWithdrawalProof"
+  ): TypedContractMethod<
+    [
+      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
       proof: BytesLike
     ],
     [void],

@@ -40,7 +40,7 @@ describe('Rollup', function () {
 
 	it('should be able to withdraw', async function () {
 		const withdrawalInfo = loadWithdrawalInfo()
-		await rollup.postWithdrawal(
+		await rollup.submitWithdrawalProof(
 			withdrawalInfo.withdrawals,
 			withdrawalInfo.withdrawalProofPublicInputs,
 			'0x',

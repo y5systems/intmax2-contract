@@ -33,11 +33,11 @@ interface IWithdrawal {
 	);
 
 	/**
-	 * @notice Post withdrawals
+	 * @notice Submit withdrawal proof
 	 * @dev This method is called by the Withdraw Aggregator.
 	 * @param withdrawals The list of withdrawals.
 	 */
-	function postWithdrawal(
+	function submitWithdrawalProof(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
 			calldata publicInputs,

@@ -55,7 +55,7 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 		}
 	}
 
-	function postWithdrawal(
+	function submitWithdrawalProof(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
 			calldata publicInputs,

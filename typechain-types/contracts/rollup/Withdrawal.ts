@@ -83,10 +83,10 @@ export declare namespace WithdrawalProofPublicInputsLib {
 export interface WithdrawalInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "postWithdrawal"
       | "postedBlockHashes"
       | "relayClaimableWithdrawals"
       | "relayDirectWithdrawals"
+      | "submitWithdrawalProof"
   ): FunctionFragment;
 
   getEvent(
@@ -96,14 +96,6 @@ export interface WithdrawalInterface extends Interface {
       | "Initialized"
   ): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "postWithdrawal",
-    values: [
-      ChainedWithdrawalLib.ChainedWithdrawalStruct[],
-      WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
-      BytesLike
-    ]
-  ): string;
   encodeFunctionData(
     functionFragment: "postedBlockHashes",
     values: [BytesLike]
@@ -116,11 +108,15 @@ export interface WithdrawalInterface extends Interface {
     functionFragment: "relayDirectWithdrawals",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "submitWithdrawalProof",
+    values: [
+      ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
+      BytesLike
+    ]
+  ): string;
 
-  decodeFunctionResult(
-    functionFragment: "postWithdrawal",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "postedBlockHashes",
     data: BytesLike
@@ -131,6 +127,10 @@ export interface WithdrawalInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "relayDirectWithdrawals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "submitWithdrawalProof",
     data: BytesLike
   ): Result;
 }
@@ -228,16 +228,6 @@ export interface Withdrawal extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  postWithdrawal: TypedContractMethod<
-    [
-      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
-      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
-
   postedBlockHashes: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
 
   relayClaimableWithdrawals: TypedContractMethod<
@@ -252,13 +242,7 @@ export interface Withdrawal extends BaseContract {
     "nonpayable"
   >;
 
-  getFunction<T extends ContractMethod = ContractMethod>(
-    key: string | FunctionFragment
-  ): T;
-
-  getFunction(
-    nameOrSignature: "postWithdrawal"
-  ): TypedContractMethod<
+  submitWithdrawalProof: TypedContractMethod<
     [
       withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
       publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
@@ -267,6 +251,11 @@ export interface Withdrawal extends BaseContract {
     [void],
     "nonpayable"
   >;
+
+  getFunction<T extends ContractMethod = ContractMethod>(
+    key: string | FunctionFragment
+  ): T;
+
   getFunction(
     nameOrSignature: "postedBlockHashes"
   ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
@@ -276,6 +265,17 @@ export interface Withdrawal extends BaseContract {
   getFunction(
     nameOrSignature: "relayDirectWithdrawals"
   ): TypedContractMethod<[processUpToId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "submitWithdrawalProof"
+  ): TypedContractMethod<
+    [
+      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
 
   getEvent(
     key: "ClaimableWithdrawalQueued"

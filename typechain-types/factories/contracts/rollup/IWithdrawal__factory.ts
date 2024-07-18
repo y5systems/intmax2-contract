@@ -158,6 +158,32 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "uint256",
+        name: "processUpToId",
+        type: "uint256",
+      },
+    ],
+    name: "relayClaimableWithdrawals",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "processUpToId",
+        type: "uint256",
+      },
+    ],
+    name: "relayDirectWithdrawals",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
         components: [
           {
             internalType: "address",
@@ -213,33 +239,7 @@ const _abi = [
         type: "bytes",
       },
     ],
-    name: "postWithdrawal",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "processUpToId",
-        type: "uint256",
-      },
-    ],
-    name: "relayClaimableWithdrawals",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "uint256",
-        name: "processUpToId",
-        type: "uint256",
-      },
-    ],
-    name: "relayDirectWithdrawals",
+    name: "submitWithdrawalProof",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
