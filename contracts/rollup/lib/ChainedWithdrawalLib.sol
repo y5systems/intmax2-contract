@@ -3,7 +3,6 @@ pragma solidity 0.8.24;
 
 library ChainedWithdrawalLib {
 	struct ChainedWithdrawal {
-		bytes32 prevWithdrawalHash;
 		address recipient;
 		uint32 tokenIndex;
 		uint256 amount;
@@ -11,13 +10,14 @@ library ChainedWithdrawalLib {
 		bytes32 blockHash;
 	}
 
-	function getHash(
-		ChainedWithdrawal memory withdrawal
+	function hashWithPrevHash(
+		ChainedWithdrawal memory withdrawal,
+		bytes32 prevWithdrawalHash
 	) internal pure returns (bytes32) {
 		return
 			keccak256(
 				abi.encodePacked(
-					withdrawal.prevWithdrawalHash,
+					prevWithdrawalHash,
 					withdrawal.recipient,
 					withdrawal.tokenIndex,
 					withdrawal.amount,
@@ -34,10 +34,10 @@ library ChainedWithdrawalLib {
 		bytes32 prevWithdrawalHash = 0;
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawal memory withdrawal = withdrawals[i];
-			if (withdrawal.prevWithdrawalHash != prevWithdrawalHash) {
-				return false;
-			}
-			prevWithdrawalHash = getHash(withdrawal);
+			prevWithdrawalHash = hashWithPrevHash(
+				withdrawal,
+				prevWithdrawalHash
+			);
 		}
 		if (prevWithdrawalHash != lastWithdrawalHash) {
 			return false;

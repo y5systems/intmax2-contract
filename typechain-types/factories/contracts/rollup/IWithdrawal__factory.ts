@@ -126,11 +126,6 @@ const _abi = [
       {
         components: [
           {
-            internalType: "bytes32",
-            name: "prevWithdrawalHash",
-            type: "bytes32",
-          },
-          {
             internalType: "address",
             name: "recipient",
             type: "address",

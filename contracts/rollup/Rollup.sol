@@ -4,7 +4,6 @@ pragma solidity 0.8.24;
 import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
 import {IRollup} from "./IRollup.sol";
 import {IPlonkVerifier} from "./IPlonkVerifier.sol";
-import {ILiquidity} from "../liquidity/ILiquidity.sol";
 import {BlockLib} from "./lib/BlockLib.sol";
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
@@ -29,7 +28,7 @@ contract Rollup is
 	uint256 constant NUM_SENDERS_IN_BLOCK = 128;
 	uint256 constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
 
-	IPlonkVerifier private verifier;
+	IPlonkVerifier private fraudVerifier;
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
 	uint256 public lastProcessedWithdrawalId;
@@ -58,7 +57,8 @@ contract Rollup is
 
 	function initialize(
 		address _scrollMessenger,
-		address _verifier,
+		address _fraudVerifier,
+		address _withdrawalVerifier,
 		address _liquidity,
 		address _blockBuilderRegistry,
 		uint256[] calldata _directWithdrawalTokenIndices
@@ -69,12 +69,12 @@ contract Rollup is
 		__DepositContract_init();
 		__Withdrawal_init(
 			_scrollMessenger,
-			_verifier,
+			_withdrawalVerifier,
 			_liquidity,
 			_directWithdrawalTokenIndices
 		);
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
-		verifier = IPlonkVerifier(_verifier);
+		fraudVerifier = IPlonkVerifier(_fraudVerifier);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
 
@@ -181,7 +181,7 @@ contract Rollup is
 		if (slashedBlockNumbers[publicInputs.blockNumber]) {
 			revert FraudProofAlreadySubmitted();
 		}
-		if (!verifier.Verify(proof, publicInputs.getHash().split())) {
+		if (!fraudVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert FraudProofVerificationFailed();
 		}
 		slashedBlockNumbers[publicInputs.blockNumber] = true;

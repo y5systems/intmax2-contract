@@ -17,6 +17,7 @@ describe('Rollup', function () {
 			ethers.ZeroAddress,
 			ethers.ZeroAddress,
 			ethers.ZeroAddress,
+			ethers.ZeroAddress,
 			[],
 		)
 	})

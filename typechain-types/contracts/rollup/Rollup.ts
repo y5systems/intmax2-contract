@@ -67,7 +67,6 @@ export declare namespace IRollup {
 
 export declare namespace ChainedWithdrawalLib {
   export type ChainedWithdrawalStruct = {
-    prevWithdrawalHash: BytesLike;
     recipient: AddressLike;
     tokenIndex: BigNumberish;
     amount: BigNumberish;
@@ -76,14 +75,12 @@ export declare namespace ChainedWithdrawalLib {
   };
 
   export type ChainedWithdrawalStructOutput = [
-    prevWithdrawalHash: string,
     recipient: string,
     tokenIndex: bigint,
     amount: bigint,
     nullifier: string,
     blockHash: string
   ] & {
-    prevWithdrawalHash: string;
     recipient: string;
     tokenIndex: bigint;
     amount: bigint;
@@ -158,7 +155,14 @@ export interface RollupInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike, BigNumberish[]]
+    values: [
+      AddressLike,
+      AddressLike,
+      AddressLike,
+      AddressLike,
+      AddressLike,
+      BigNumberish[]
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "lastProcessedDepositId",
@@ -516,7 +520,8 @@ export interface Rollup extends BaseContract {
   initialize: TypedContractMethod<
     [
       _scrollMessenger: AddressLike,
-      _verifier: AddressLike,
+      _fraudVerifier: AddressLike,
+      _withdrawalVerifier: AddressLike,
       _liquidity: AddressLike,
       _blockBuilderRegistry: AddressLike,
       _directWithdrawalTokenIndices: BigNumberish[]
@@ -623,7 +628,8 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<
     [
       _scrollMessenger: AddressLike,
-      _verifier: AddressLike,
+      _fraudVerifier: AddressLike,
+      _withdrawalVerifier: AddressLike,
       _liquidity: AddressLike,
       _blockBuilderRegistry: AddressLike,
       _directWithdrawalTokenIndices: BigNumberish[]

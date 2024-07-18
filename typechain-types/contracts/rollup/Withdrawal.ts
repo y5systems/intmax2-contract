@@ -46,7 +46,6 @@ export declare namespace WithdrawalLib {
 
 export declare namespace ChainedWithdrawalLib {
   export type ChainedWithdrawalStruct = {
-    prevWithdrawalHash: BytesLike;
     recipient: AddressLike;
     tokenIndex: BigNumberish;
     amount: BigNumberish;
@@ -55,14 +54,12 @@ export declare namespace ChainedWithdrawalLib {
   };
 
   export type ChainedWithdrawalStructOutput = [
-    prevWithdrawalHash: string,
     recipient: string,
     tokenIndex: bigint,
     amount: bigint,
     nullifier: string,
     blockHash: string
   ] & {
-    prevWithdrawalHash: string;
     recipient: string;
     tokenIndex: bigint;
     amount: bigint;
