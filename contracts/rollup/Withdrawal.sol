@@ -37,7 +37,7 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 		address _withdrawalVerifier,
 		address _liquidity,
 		uint256[] memory _directWithdrawalTokenIndices
-	) internal {
+	) internal onlyInitializing {
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
 		liquidity = _liquidity;

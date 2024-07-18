@@ -30,7 +30,7 @@ contract DepositContract is ReentrancyGuardUpgradeable {
 
 	bytes32 internal defaultHash;
 
-	function __DepositContract_init() internal {
+	function __DepositContract_init() internal onlyInitializing {
 		defaultHash = DepositLib.getHash(DepositLib.Deposit(0, 0, 0));
 	}
 
