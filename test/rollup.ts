@@ -32,7 +32,11 @@ describe('Rollup', function () {
 		for (let i = 1; i < 3; i++) {
 			await postBlock(fullBlocks[i], rollup)
 		}
-		const blocks = await rollup.getBlocks()
+		let blocks = []
+		for (let i = 0; i < 3; i++) {
+			const block = await rollup.blocks(i)
+			blocks.push(block)
+		}
 		expect(blocks[0].hash).to.equal(fullBlocks[0].blockHash)
 		expect(blocks[1].hash).to.equal(fullBlocks[1].blockHash)
 		expect(blocks[2].hash).to.equal(fullBlocks[2].blockHash)

@@ -34,7 +34,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 	address private liquidity;
 	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
-	BlockLib.Block[] private blocks;
+	BlockLib.Block[] public blocks;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 	IL2ScrollMessenger private l2ScrollMessenger;
 	DepositTreeLib.DepositTree private depositTree;
@@ -270,10 +270,6 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		);
 
 		return blockNumber;
-	}
-
-	function getBlocks() external view returns (BlockLib.Block[] memory) {
-		return blocks;
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

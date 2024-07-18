@@ -44,15 +44,6 @@ export declare namespace WithdrawalLib {
   };
 }
 
-export declare namespace BlockLib {
-  export type BlockStruct = { hash: BytesLike; builder: AddressLike };
-
-  export type BlockStructOutput = [hash: string, builder: string] & {
-    hash: string;
-    builder: string;
-  };
-}
-
 export declare namespace FraudProofPublicInputsLib {
   export type FraudProofPublicInputsStruct = {
     blockHash: BytesLike;
@@ -107,7 +98,7 @@ export interface RollupInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "getBlocks"
+      | "blocks"
       | "getClaimableWithdrawalsQueueSize"
       | "getDirectWithdrawalsQueueSize"
       | "initialize"
@@ -146,7 +137,10 @@ export interface RollupInterface extends Interface {
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "getBlocks", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "blocks",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "getClaimableWithdrawalsQueueSize",
     values?: undefined
@@ -247,7 +241,7 @@ export interface RollupInterface extends Interface {
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "getBlocks", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "blocks", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getClaimableWithdrawalsQueueSize",
     data: BytesLike
@@ -527,7 +521,11 @@ export interface Rollup extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  getBlocks: TypedContractMethod<[], [BlockLib.BlockStructOutput[]], "view">;
+  blocks: TypedContractMethod<
+    [arg0: BigNumberish],
+    [[string, string] & { hash: string; builder: string }],
+    "view"
+  >;
 
   getClaimableWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
 
@@ -642,8 +640,12 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "getBlocks"
-  ): TypedContractMethod<[], [BlockLib.BlockStructOutput[]], "view">;
+    nameOrSignature: "blocks"
+  ): TypedContractMethod<
+    [arg0: BigNumberish],
+    [[string, string] & { hash: string; builder: string }],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "getClaimableWithdrawalsQueueSize"
   ): TypedContractMethod<[], [bigint], "view">;
