@@ -18,9 +18,19 @@ interface IWithdrawal {
 
 	error WithdrawalProofVerificationFailed();
 
-	event ClaimableWithdrawalQueued(WithdrawalLib.Withdrawal withdrawal);
+	error TooManyRelayDirectWithdrawals(uint256 count);
 
-	event DirectWithdrawalQueued(WithdrawalLib.Withdrawal withdrawal);
+	error TooManyRelayClaimableWithdrawals(uint256 count);
+
+	event ClaimableWithdrawalQueued(
+		uint256 id,
+		WithdrawalLib.Withdrawal withdrawal
+	);
+
+	event DirectWithdrawalQueued(
+		uint256 id,
+		WithdrawalLib.Withdrawal withdrawal
+	);
 
 	/**
 	 * @notice Post withdrawals
@@ -34,7 +44,7 @@ interface IWithdrawal {
 		bytes calldata proof
 	) external;
 
-	function relayDirectWithdrawals() external;
+	function relayDirectWithdrawals(uint256 processUpToId) external;
 
-	function relayClaimableWithdrawals() external;
+	function relayClaimableWithdrawals(uint256 processUpToId) external;
 }

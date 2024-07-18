@@ -21,6 +21,28 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "count",
+        type: "uint256",
+      },
+    ],
+    name: "TooManyRelayClaimableWithdrawals",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "count",
+        type: "uint256",
+      },
+    ],
+    name: "TooManyRelayDirectWithdrawals",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "WithdrawalAggregatorMismatch",
     type: "error",
@@ -54,6 +76,12 @@ const _abi = [
   {
     anonymous: false,
     inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
       {
         components: [
           {
@@ -89,6 +117,12 @@ const _abi = [
   {
     anonymous: false,
     inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "id",
+        type: "uint256",
+      },
       {
         components: [
           {
@@ -185,14 +219,26 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "processUpToId",
+        type: "uint256",
+      },
+    ],
     name: "relayClaimableWithdrawals",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "processUpToId",
+        type: "uint256",
+      },
+    ],
     name: "relayDirectWithdrawals",
     outputs: [],
     stateMutability: "nonpayable",

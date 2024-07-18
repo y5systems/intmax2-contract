@@ -104,11 +104,11 @@ export interface IWithdrawalInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "relayClaimableWithdrawals",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "relayDirectWithdrawals",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
 
   decodeFunctionResult(
@@ -126,9 +126,16 @@ export interface IWithdrawalInterface extends Interface {
 }
 
 export namespace ClaimableWithdrawalQueuedEvent {
-  export type InputTuple = [withdrawal: WithdrawalLib.WithdrawalStruct];
-  export type OutputTuple = [withdrawal: WithdrawalLib.WithdrawalStructOutput];
+  export type InputTuple = [
+    id: BigNumberish,
+    withdrawal: WithdrawalLib.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    id: bigint,
+    withdrawal: WithdrawalLib.WithdrawalStructOutput
+  ];
   export interface OutputObject {
+    id: bigint;
     withdrawal: WithdrawalLib.WithdrawalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -138,9 +145,16 @@ export namespace ClaimableWithdrawalQueuedEvent {
 }
 
 export namespace DirectWithdrawalQueuedEvent {
-  export type InputTuple = [withdrawal: WithdrawalLib.WithdrawalStruct];
-  export type OutputTuple = [withdrawal: WithdrawalLib.WithdrawalStructOutput];
+  export type InputTuple = [
+    id: BigNumberish,
+    withdrawal: WithdrawalLib.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    id: bigint,
+    withdrawal: WithdrawalLib.WithdrawalStructOutput
+  ];
   export interface OutputObject {
+    id: bigint;
     withdrawal: WithdrawalLib.WithdrawalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -202,9 +216,17 @@ export interface IWithdrawal extends BaseContract {
     "nonpayable"
   >;
 
-  relayClaimableWithdrawals: TypedContractMethod<[], [void], "nonpayable">;
+  relayClaimableWithdrawals: TypedContractMethod<
+    [processUpToId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-  relayDirectWithdrawals: TypedContractMethod<[], [void], "nonpayable">;
+  relayDirectWithdrawals: TypedContractMethod<
+    [processUpToId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -223,10 +245,10 @@ export interface IWithdrawal extends BaseContract {
   >;
   getFunction(
     nameOrSignature: "relayClaimableWithdrawals"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+  ): TypedContractMethod<[processUpToId: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "relayDirectWithdrawals"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+  ): TypedContractMethod<[processUpToId: BigNumberish], [void], "nonpayable">;
 
   getEvent(
     key: "ClaimableWithdrawalQueued"
@@ -244,7 +266,7 @@ export interface IWithdrawal extends BaseContract {
   >;
 
   filters: {
-    "ClaimableWithdrawalQueued(tuple)": TypedContractEvent<
+    "ClaimableWithdrawalQueued(uint256,tuple)": TypedContractEvent<
       ClaimableWithdrawalQueuedEvent.InputTuple,
       ClaimableWithdrawalQueuedEvent.OutputTuple,
       ClaimableWithdrawalQueuedEvent.OutputObject
@@ -255,7 +277,7 @@ export interface IWithdrawal extends BaseContract {
       ClaimableWithdrawalQueuedEvent.OutputObject
     >;
 
-    "DirectWithdrawalQueued(tuple)": TypedContractEvent<
+    "DirectWithdrawalQueued(uint256,tuple)": TypedContractEvent<
       DirectWithdrawalQueuedEvent.InputTuple,
       DirectWithdrawalQueuedEvent.OutputTuple,
       DirectWithdrawalQueuedEvent.OutputObject

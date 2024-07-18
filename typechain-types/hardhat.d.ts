@@ -150,6 +150,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DepositContract__factory>;
     getContractFactory(
+      name: "Bytes32QueueLib",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Bytes32QueueLib__factory>;
+    getContractFactory(
+      name: "WithdrawalQueueLib",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.WithdrawalQueueLib__factory>;
+    getContractFactory(
       name: "ILiquidity",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ILiquidity__factory>;
@@ -373,6 +381,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.DepositContract>;
     getContractAt(
+      name: "Bytes32QueueLib",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Bytes32QueueLib>;
+    getContractAt(
+      name: "WithdrawalQueueLib",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.WithdrawalQueueLib>;
+    getContractAt(
       name: "ILiquidity",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -575,6 +593,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.DepositContract>;
     deployContract(
+      name: "Bytes32QueueLib",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Bytes32QueueLib>;
+    deployContract(
+      name: "WithdrawalQueueLib",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.WithdrawalQueueLib>;
+    deployContract(
       name: "ILiquidity",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ILiquidity>;
@@ -797,6 +823,16 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.DepositContract>;
+    deployContract(
+      name: "Bytes32QueueLib",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Bytes32QueueLib>;
+    deployContract(
+      name: "WithdrawalQueueLib",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.WithdrawalQueueLib>;
     deployContract(
       name: "ILiquidity",
       args: any[],

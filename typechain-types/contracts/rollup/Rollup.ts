@@ -218,11 +218,11 @@ export interface RollupInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "relayClaimableWithdrawals",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "relayDirectWithdrawals",
-    values?: undefined
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -378,9 +378,16 @@ export namespace BlockPostedEvent {
 }
 
 export namespace ClaimableWithdrawalQueuedEvent {
-  export type InputTuple = [withdrawal: WithdrawalLib.WithdrawalStruct];
-  export type OutputTuple = [withdrawal: WithdrawalLib.WithdrawalStructOutput];
+  export type InputTuple = [
+    id: BigNumberish,
+    withdrawal: WithdrawalLib.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    id: bigint,
+    withdrawal: WithdrawalLib.WithdrawalStructOutput
+  ];
   export interface OutputObject {
+    id: bigint;
     withdrawal: WithdrawalLib.WithdrawalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -402,9 +409,16 @@ export namespace DepositsProcessedEvent {
 }
 
 export namespace DirectWithdrawalQueuedEvent {
-  export type InputTuple = [withdrawal: WithdrawalLib.WithdrawalStruct];
-  export type OutputTuple = [withdrawal: WithdrawalLib.WithdrawalStructOutput];
+  export type InputTuple = [
+    id: BigNumberish,
+    withdrawal: WithdrawalLib.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    id: bigint,
+    withdrawal: WithdrawalLib.WithdrawalStructOutput
+  ];
   export interface OutputObject {
+    id: bigint;
     withdrawal: WithdrawalLib.WithdrawalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
@@ -583,9 +597,17 @@ export interface Rollup extends BaseContract {
 
   proxiableUUID: TypedContractMethod<[], [string], "view">;
 
-  relayClaimableWithdrawals: TypedContractMethod<[], [void], "nonpayable">;
+  relayClaimableWithdrawals: TypedContractMethod<
+    [processUpToId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
-  relayDirectWithdrawals: TypedContractMethod<[], [void], "nonpayable">;
+  relayDirectWithdrawals: TypedContractMethod<
+    [processUpToId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -701,10 +723,10 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "relayClaimableWithdrawals"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+  ): TypedContractMethod<[processUpToId: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "relayDirectWithdrawals"
-  ): TypedContractMethod<[], [void], "nonpayable">;
+  ): TypedContractMethod<[processUpToId: BigNumberish], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -831,7 +853,7 @@ export interface Rollup extends BaseContract {
       BlockPostedEvent.OutputObject
     >;
 
-    "ClaimableWithdrawalQueued(tuple)": TypedContractEvent<
+    "ClaimableWithdrawalQueued(uint256,tuple)": TypedContractEvent<
       ClaimableWithdrawalQueuedEvent.InputTuple,
       ClaimableWithdrawalQueuedEvent.OutputTuple,
       ClaimableWithdrawalQueuedEvent.OutputObject
@@ -853,7 +875,7 @@ export interface Rollup extends BaseContract {
       DepositsProcessedEvent.OutputObject
     >;
 
-    "DirectWithdrawalQueued(tuple)": TypedContractEvent<
+    "DirectWithdrawalQueued(uint256,tuple)": TypedContractEvent<
       DirectWithdrawalQueuedEvent.InputTuple,
       DirectWithdrawalQueuedEvent.OutputTuple,
       DirectWithdrawalQueuedEvent.OutputObject
