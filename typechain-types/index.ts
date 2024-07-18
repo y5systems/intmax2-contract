@@ -60,8 +60,6 @@ export type { BlockBuilderRegistry } from "./contracts/block-builder-registry/Bl
 export { BlockBuilderRegistry__factory } from "./factories/contracts/block-builder-registry/BlockBuilderRegistry__factory";
 export type { IBlockBuilderRegistry } from "./contracts/block-builder-registry/IBlockBuilderRegistry";
 export { IBlockBuilderRegistry__factory } from "./factories/contracts/block-builder-registry/IBlockBuilderRegistry__factory";
-export type { DepositContract } from "./contracts/lib/DepositContract";
-export { DepositContract__factory } from "./factories/contracts/lib/DepositContract__factory";
 export type { Bytes32QueueLib } from "./contracts/lib/queue/Bytes32QueueLib";
 export { Bytes32QueueLib__factory } from "./factories/contracts/lib/queue/Bytes32QueueLib__factory";
 export type { WithdrawalQueueLib } from "./contracts/lib/queue/WithdrawalQueueLib";

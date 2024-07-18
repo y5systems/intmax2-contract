@@ -118,10 +118,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBlockBuilderRegistry__factory>;
     getContractFactory(
-      name: "DepositContract",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.DepositContract__factory>;
-    getContractFactory(
       name: "Bytes32QueueLib",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Bytes32QueueLib__factory>;
@@ -317,11 +313,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IBlockBuilderRegistry>;
     getContractAt(
-      name: "DepositContract",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.DepositContract>;
-    getContractAt(
       name: "Bytes32QueueLib",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -506,10 +497,6 @@ declare module "hardhat/types/runtime" {
       name: "IBlockBuilderRegistry",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
-    deployContract(
-      name: "DepositContract",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.DepositContract>;
     deployContract(
       name: "Bytes32QueueLib",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -705,11 +692,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
-    deployContract(
-      name: "DepositContract",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.DepositContract>;
     deployContract(
       name: "Bytes32QueueLib",
       args: any[],
