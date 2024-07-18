@@ -158,6 +158,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IWithdrawal__factory>;
     getContractFactory(
+      name: "DepositTreeLib",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.DepositTreeLib__factory>;
+    getContractFactory(
       name: "PairingLib",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.PairingLib__factory>;
@@ -363,6 +367,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IWithdrawal>;
     getContractAt(
+      name: "DepositTreeLib",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.DepositTreeLib>;
+    getContractAt(
       name: "PairingLib",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -538,6 +547,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IWithdrawal>;
     deployContract(
+      name: "DepositTreeLib",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DepositTreeLib>;
+    deployContract(
       name: "PairingLib",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.PairingLib>;
@@ -742,6 +755,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IWithdrawal>;
+    deployContract(
+      name: "DepositTreeLib",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DepositTreeLib>;
     deployContract(
       name: "PairingLib",
       args: any[],

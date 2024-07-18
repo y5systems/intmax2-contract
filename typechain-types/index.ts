@@ -80,6 +80,8 @@ export type { IRollup } from "./contracts/rollup/IRollup";
 export { IRollup__factory } from "./factories/contracts/rollup/IRollup__factory";
 export type { IWithdrawal } from "./contracts/rollup/IWithdrawal";
 export { IWithdrawal__factory } from "./factories/contracts/rollup/IWithdrawal__factory";
+export type { DepositTreeLib } from "./contracts/rollup/lib/DepositTreeLib";
+export { DepositTreeLib__factory } from "./factories/contracts/rollup/lib/DepositTreeLib__factory";
 export type { PairingLib } from "./contracts/rollup/lib/PairingLib";
 export { PairingLib__factory } from "./factories/contracts/rollup/lib/PairingLib__factory";
 export type { Rollup } from "./contracts/rollup/Rollup";

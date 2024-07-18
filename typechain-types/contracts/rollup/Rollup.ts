@@ -107,9 +107,9 @@ export interface RollupInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "depositCount"
       | "getBlocks"
-      | "getDepositRoot"
+      | "getClaimableWithdrawalsQueueSize"
+      | "getDirectWithdrawalsQueueSize"
       | "initialize"
       | "lastProcessedDepositId"
       | "lastProcessedWithdrawalId"
@@ -146,13 +146,13 @@ export interface RollupInterface extends Interface {
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "depositCount",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "getBlocks", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "getDepositRoot",
+    functionFragment: "getClaimableWithdrawalsQueueSize",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDirectWithdrawalsQueueSize",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -247,13 +247,13 @@ export interface RollupInterface extends Interface {
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "depositCount",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "getBlocks", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getDepositRoot",
+    functionFragment: "getClaimableWithdrawalsQueueSize",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDirectWithdrawalsQueueSize",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -527,11 +527,11 @@ export interface Rollup extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  depositCount: TypedContractMethod<[], [bigint], "view">;
-
   getBlocks: TypedContractMethod<[], [BlockLib.BlockStructOutput[]], "view">;
 
-  getDepositRoot: TypedContractMethod<[], [string], "view">;
+  getClaimableWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
+
+  getDirectWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
 
   initialize: TypedContractMethod<
     [
@@ -642,14 +642,14 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "depositCount"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
     nameOrSignature: "getBlocks"
   ): TypedContractMethod<[], [BlockLib.BlockStructOutput[]], "view">;
   getFunction(
-    nameOrSignature: "getDepositRoot"
-  ): TypedContractMethod<[], [string], "view">;
+    nameOrSignature: "getClaimableWithdrawalsQueueSize"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getDirectWithdrawalsQueueSize"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<

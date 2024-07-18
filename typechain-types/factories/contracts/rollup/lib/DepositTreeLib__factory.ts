@@ -10,31 +10,31 @@ import {
 import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
 import type { NonPayableOverrides } from "../../../../common";
 import type {
-  PairingLib,
-  PairingLibInterface,
-} from "../../../../contracts/rollup/lib/PairingLib";
+  DepositTreeLib,
+  DepositTreeLibInterface,
+} from "../../../../contracts/rollup/lib/DepositTreeLib";
 
 const _abi = [
   {
     inputs: [],
-    name: "PairingOpCodeFailed",
+    name: "MerkleTreeFull",
     type: "error",
   },
 ] as const;
 
 const _bytecode =
-  "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212209355c145a796a8493beab161e0412ee556082b8e0b3df162b1d5209e6e315d1164736f6c63430008180033";
+  "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea26469706673582212206da7b39007a1eace21476fbf7e5b419b80d45714ff81cde4c727d8097638318764736f6c63430008180033";
 
-type PairingLibConstructorParams =
+type DepositTreeLibConstructorParams =
   | [signer?: Signer]
   | ConstructorParameters<typeof ContractFactory>;
 
 const isSuperArgs = (
-  xs: PairingLibConstructorParams
+  xs: DepositTreeLibConstructorParams
 ): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
 
-export class PairingLib__factory extends ContractFactory {
-  constructor(...args: PairingLibConstructorParams) {
+export class DepositTreeLib__factory extends ContractFactory {
+  constructor(...args: DepositTreeLibConstructorParams) {
     if (isSuperArgs(args)) {
       super(...args);
     } else {
@@ -49,21 +49,24 @@ export class PairingLib__factory extends ContractFactory {
   }
   override deploy(overrides?: NonPayableOverrides & { from?: string }) {
     return super.deploy(overrides || {}) as Promise<
-      PairingLib & {
+      DepositTreeLib & {
         deploymentTransaction(): ContractTransactionResponse;
       }
     >;
   }
-  override connect(runner: ContractRunner | null): PairingLib__factory {
-    return super.connect(runner) as PairingLib__factory;
+  override connect(runner: ContractRunner | null): DepositTreeLib__factory {
+    return super.connect(runner) as DepositTreeLib__factory;
   }
 
   static readonly bytecode = _bytecode;
   static readonly abi = _abi;
-  static createInterface(): PairingLibInterface {
-    return new Interface(_abi) as PairingLibInterface;
+  static createInterface(): DepositTreeLibInterface {
+    return new Interface(_abi) as DepositTreeLibInterface;
   }
-  static connect(address: string, runner?: ContractRunner | null): PairingLib {
-    return new Contract(address, _abi, runner) as unknown as PairingLib;
+  static connect(
+    address: string,
+    runner?: ContractRunner | null
+  ): DepositTreeLib {
+    return new Contract(address, _abi, runner) as unknown as DepositTreeLib;
   }
 }

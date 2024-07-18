@@ -8,27 +8,23 @@ import {IPlonkVerifier} from "./IPlonkVerifier.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
 // contracts
-import {DepositContract} from "../lib/DepositContract.sol";
+
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // libs
+import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
 import {BlockLib} from "./lib/BlockLib.sol";
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 import {Withdrawal} from "./Withdrawal.sol";
 import {Byte32Lib} from "./lib/Byte32Lib.sol";
 import {PairingLib} from "./lib/PairingLib.sol";
 
-contract Rollup is
-	OwnableUpgradeable,
-	UUPSUpgradeable,
-	DepositContract,
-	Withdrawal,
-	IRollup
-{
+contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 	using BlockLib for BlockLib.Block[];
 	using FraudProofPublicInputsLib for FraudProofPublicInputsLib.FraudProofPublicInputs;
 	using Byte32Lib for bytes32;
+	using DepositTreeLib for DepositTreeLib.DepositTree;
 
 	uint256 constant NUM_SENDERS_IN_BLOCK = 128;
 	uint256 constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
@@ -41,6 +37,7 @@ contract Rollup is
 	BlockLib.Block[] private blocks;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 	IL2ScrollMessenger private l2ScrollMessenger;
+	DepositTreeLib.DepositTree private depositTree;
 
 	modifier onlyLiquidityContract() {
 		// note
@@ -69,14 +66,13 @@ contract Rollup is
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
-		__ReentrancyGuard_init();
-		__DepositContract_init();
 		__Withdrawal_init(
 			_scrollMessenger,
 			_withdrawalVerifier,
 			_liquidity,
 			_directWithdrawalTokenIndices
 		);
+		depositTree.initialize();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		fraudVerifier = IPlonkVerifier(_fraudVerifier);
 		liquidity = _liquidity;
@@ -84,7 +80,7 @@ contract Rollup is
 
 		// The block hash of the genesis block is not referenced during a withdraw request.
 		// Therefore, the genesis block is not included in the postedBlockHashes.
-		blocks.pushGenesisBlock(getDepositRoot());
+		blocks.pushGenesisBlock(depositTree.getRoot());
 	}
 
 	function postRegistrationBlock(
@@ -204,10 +200,10 @@ contract Rollup is
 		bytes32[] calldata depositHashes
 	) external onlyLiquidityContract {
 		for (uint256 i = 0; i < depositHashes.length; i++) {
-			_deposit(depositHashes[i]);
+			depositTree.deposit(depositHashes[i]);
 		}
 		lastProcessedDepositId = _lastProcessedDepositId;
-		emit DepositsProcessed(getDepositRoot());
+		emit DepositsProcessed(depositTree.getRoot());
 	}
 
 	function _postBlock(
@@ -250,7 +246,7 @@ contract Rollup is
 
 		blockNumber = blocks.length;
 		bytes32 prevBlockHash = blocks.getPrevHash();
-		bytes32 depositTreeRoot = getDepositRoot();
+		bytes32 depositTreeRoot = depositTree.getRoot();
 
 		bytes32 blockHash = blocks.pushBlockInfo(
 			depositTreeRoot,

@@ -83,6 +83,8 @@ export declare namespace WithdrawalProofPublicInputsLib {
 export interface WithdrawalInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "getClaimableWithdrawalsQueueSize"
+      | "getDirectWithdrawalsQueueSize"
       | "postedBlockHashes"
       | "relayClaimableWithdrawals"
       | "relayDirectWithdrawals"
@@ -96,6 +98,14 @@ export interface WithdrawalInterface extends Interface {
       | "Initialized"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "getClaimableWithdrawalsQueueSize",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getDirectWithdrawalsQueueSize",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "postedBlockHashes",
     values: [BytesLike]
@@ -117,6 +127,14 @@ export interface WithdrawalInterface extends Interface {
     ]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "getClaimableWithdrawalsQueueSize",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getDirectWithdrawalsQueueSize",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "postedBlockHashes",
     data: BytesLike
@@ -228,6 +246,10 @@ export interface Withdrawal extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  getClaimableWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
+
+  getDirectWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
+
   postedBlockHashes: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
 
   relayClaimableWithdrawals: TypedContractMethod<
@@ -256,6 +278,12 @@ export interface Withdrawal extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "getClaimableWithdrawalsQueueSize"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getDirectWithdrawalsQueueSize"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "postedBlockHashes"
   ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
