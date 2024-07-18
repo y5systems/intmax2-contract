@@ -44,25 +44,13 @@ export declare namespace WithdrawalLib {
   };
 }
 
-export declare namespace IRollup {
+export declare namespace BlockLib {
   export type BlockStruct = { hash: BytesLike; builder: AddressLike };
 
   export type BlockStructOutput = [hash: string, builder: string] & {
     hash: string;
     builder: string;
   };
-
-  export type FraudProofPublicInputsStruct = {
-    blockHash: BytesLike;
-    blockNumber: BigNumberish;
-    challenger: AddressLike;
-  };
-
-  export type FraudProofPublicInputsStructOutput = [
-    blockHash: string,
-    blockNumber: bigint,
-    challenger: string
-  ] & { blockHash: string; blockNumber: bigint; challenger: string };
 }
 
 export declare namespace ChainedWithdrawalLib {
@@ -99,6 +87,20 @@ export declare namespace WithdrawalProofPublicInputsLib {
     lastWithdrawalHash: string,
     withdrawalAggregator: string
   ] & { lastWithdrawalHash: string; withdrawalAggregator: string };
+}
+
+export declare namespace FraudProofPublicInputsLib {
+  export type FraudProofPublicInputsStruct = {
+    blockHash: BytesLike;
+    blockNumber: BigNumberish;
+    challenger: AddressLike;
+  };
+
+  export type FraudProofPublicInputsStructOutput = [
+    blockHash: string,
+    blockNumber: bigint,
+    challenger: string
+  ] & { blockHash: string; blockNumber: bigint; challenger: string };
 }
 
 export interface RollupInterface extends Interface {
@@ -230,7 +232,7 @@ export interface RollupInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "submitBlockFraudProof",
-    values: [IRollup.FraudProofPublicInputsStruct, BytesLike]
+    values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -527,7 +529,7 @@ export interface Rollup extends BaseContract {
 
   depositCount: TypedContractMethod<[], [bigint], "view">;
 
-  getBlocks: TypedContractMethod<[], [IRollup.BlockStructOutput[]], "view">;
+  getBlocks: TypedContractMethod<[], [BlockLib.BlockStructOutput[]], "view">;
 
   getDepositRoot: TypedContractMethod<[], [string], "view">;
 
@@ -612,7 +614,10 @@ export interface Rollup extends BaseContract {
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   submitBlockFraudProof: TypedContractMethod<
-    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
@@ -641,7 +646,7 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "getBlocks"
-  ): TypedContractMethod<[], [IRollup.BlockStructOutput[]], "view">;
+  ): TypedContractMethod<[], [BlockLib.BlockStructOutput[]], "view">;
   getFunction(
     nameOrSignature: "getDepositRoot"
   ): TypedContractMethod<[], [string], "view">;
@@ -733,7 +738,10 @@ export interface Rollup extends BaseContract {
   getFunction(
     nameOrSignature: "submitBlockFraudProof"
   ): TypedContractMethod<
-    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;

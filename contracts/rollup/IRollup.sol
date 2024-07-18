@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
+
 interface IRollup {
 	error InvalidBlockBuilder();
 
@@ -29,17 +31,6 @@ interface IRollup {
 	error ChallengerMismatch();
 
 	error PairingCheckFailed();
-
-	struct Block {
-		bytes32 hash;
-		address builder;
-	}
-
-	struct FraudProofPublicInputs {
-		bytes32 blockHash;
-		uint32 blockNumber;
-		address challenger;
-	}
 
 	event DepositsProcessed(bytes32 depositTreeRoot);
 
@@ -92,7 +83,7 @@ interface IRollup {
 	) external;
 
 	function submitBlockFraudProof(
-		FraudProofPublicInputs calldata publicInputs,
+		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external;
 

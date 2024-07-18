@@ -322,7 +322,7 @@ const _abi = [
             type: "address",
           },
         ],
-        internalType: "struct IRollup.FraudProofPublicInputs",
+        internalType: "struct FraudProofPublicInputsLib.FraudProofPublicInputs",
         name: "publicInputs",
         type: "tuple",
       },

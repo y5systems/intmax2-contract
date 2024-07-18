@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
+// interfaces
 import {IRollup} from "./IRollup.sol";
+import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
 import {IPlonkVerifier} from "./IPlonkVerifier.sol";
-import {BlockLib} from "./lib/BlockLib.sol";
-import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
+
+// contracts
 import {DepositContract} from "../lib/DepositContract.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {PairingLib} from "./lib/PairingLib.sol";
+
+// libs
+import {BlockLib} from "./lib/BlockLib.sol";
+import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 import {Withdrawal} from "./Withdrawal.sol";
 import {Byte32Lib} from "./lib/Byte32Lib.sol";
+import {PairingLib} from "./lib/PairingLib.sol";
 
 contract Rollup is
 	OwnableUpgradeable,
@@ -21,8 +26,8 @@ contract Rollup is
 	Withdrawal,
 	IRollup
 {
-	using BlockLib for Block[];
-	using FraudProofPublicInputsLib for FraudProofPublicInputs;
+	using BlockLib for BlockLib.Block[];
+	using FraudProofPublicInputsLib for FraudProofPublicInputsLib.FraudProofPublicInputs;
 	using Byte32Lib for bytes32;
 
 	uint256 constant NUM_SENDERS_IN_BLOCK = 128;
@@ -33,8 +38,7 @@ contract Rollup is
 	address private liquidity;
 	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
-	Block[] private blocks;
-
+	BlockLib.Block[] private blocks;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 	IL2ScrollMessenger private l2ScrollMessenger;
 
@@ -166,7 +170,7 @@ contract Rollup is
 	}
 
 	function submitBlockFraudProof(
-		FraudProofPublicInputs calldata publicInputs,
+		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external {
 		if (publicInputs.blockHash != blocks[publicInputs.blockNumber].hash) {
@@ -272,7 +276,7 @@ contract Rollup is
 		return blockNumber;
 	}
 
-	function getBlocks() external view returns (Block[] memory) {
+	function getBlocks() external view returns (BlockLib.Block[] memory) {
 		return blocks;
 	}
 

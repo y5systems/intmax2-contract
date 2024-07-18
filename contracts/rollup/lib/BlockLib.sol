@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IRollup} from "../IRollup.sol";
-
 library BlockLib {
+	struct Block {
+		bytes32 hash;
+		address builder;
+	}
+
 	function pushGenesisBlock(
-		IRollup.Block[] storage blocks,
+		Block[] storage blocks,
 		bytes32 initialDepositTreeRoot
 	) internal {
 		blocks.push(
-			IRollup.Block({
+			Block({
 				hash: _calcBlockHash(0, initialDepositTreeRoot, 0, 0),
 				builder: address(0)
 			})
@@ -17,13 +20,13 @@ library BlockLib {
 	}
 
 	function getPrevHash(
-		IRollup.Block[] memory blocks
+		Block[] memory blocks
 	) internal pure returns (bytes32) {
 		return blocks[blocks.length - 1].hash;
 	}
 
 	function pushBlockInfo(
-		IRollup.Block[] storage blocks,
+		Block[] storage blocks,
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash,
 		address _builder
@@ -34,7 +37,7 @@ library BlockLib {
 			signatureHash,
 			uint32(blocks.length)
 		);
-		blocks.push(IRollup.Block({hash: blockHash, builder: _builder}));
+		blocks.push(Block({hash: blockHash, builder: _builder}));
 
 		return blockHash;
 	}

@@ -1,18 +1,21 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
+// interfaces
 import {IWithdrawal} from "./IWithdrawal.sol";
+import {IPlonkVerifier} from "./IPlonkVerifier.sol";
+import {ILiquidity} from "../liquidity/ILiquidity.sol";
+import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
+
+// contracts
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+
+// libs
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
-import {IPlonkVerifier} from "./IPlonkVerifier.sol";
-import {ILiquidity} from "../liquidity/ILiquidity.sol";
 import {Byte32Lib} from "./lib/Byte32Lib.sol";
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-
-// queue
 import {WithdrawalQueueLib} from "../lib/queue/WithdrawalQueueLib.sol";
 import {Bytes32QueueLib} from "../lib/queue/Bytes32QueueLib.sol";
 
@@ -28,16 +31,15 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 	uint256 constant MAX_RELAY_DIRECT_WITHDRAWALS = 20;
 	uint256 constant MAX_RELAY_CLAIMABLE_WITHDRAWALS = 100;
 
-	WithdrawalQueueLib.Queue private directWithdrawalsQueue;
-	Bytes32QueueLib.Queue private claimableWithdrawalsQueue;
-
-	mapping(bytes32 => bool) private nullifiers;
-	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
-	mapping(bytes32 => uint256) public postedBlockHashes;
-
 	IPlonkVerifier private withdrawalVerifier;
 	IL2ScrollMessenger private l2ScrollMessenger;
 	address private liquidity;
+
+	WithdrawalQueueLib.Queue private directWithdrawalsQueue;
+	Bytes32QueueLib.Queue private claimableWithdrawalsQueue;
+	mapping(bytes32 => bool) private nullifiers;
+	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
+	mapping(bytes32 => uint256) public postedBlockHashes;
 
 	function __Withdrawal_init(
 		address _scrollMessenger,

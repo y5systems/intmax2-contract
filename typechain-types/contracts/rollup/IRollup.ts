@@ -23,7 +23,7 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace IRollup {
+export declare namespace FraudProofPublicInputsLib {
   export type FraudProofPublicInputsStruct = {
     blockHash: BytesLike;
     blockNumber: BigNumberish;
@@ -84,7 +84,7 @@ export interface IRollupInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "submitBlockFraudProof",
-    values: [IRollup.FraudProofPublicInputsStruct, BytesLike]
+    values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
   ): string;
 
   decodeFunctionResult(
@@ -273,7 +273,10 @@ export interface IRollup extends BaseContract {
   >;
 
   submitBlockFraudProof: TypedContractMethod<
-    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
@@ -321,7 +324,10 @@ export interface IRollup extends BaseContract {
   getFunction(
     nameOrSignature: "submitBlockFraudProof"
   ): TypedContractMethod<
-    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
