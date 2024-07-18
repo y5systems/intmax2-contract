@@ -38,7 +38,7 @@ library PairingLib {
 			}
 		}
 		if (!success) {
-			revert("PairingOpCodeFailed");
+			revert PairingOpCodeFailed();
 		}
 		return out[0] != 0;
 	}
