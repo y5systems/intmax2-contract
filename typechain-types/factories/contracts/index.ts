@@ -3,7 +3,6 @@
 /* eslint-disable */
 export * as blockBuilderRegistry from "./block-builder-registry";
 export * as common from "./common";
-export * as lib from "./lib";
 export * as liquidity from "./liquidity";
 export * as rollup from "./rollup";
 export * as test from "./test";

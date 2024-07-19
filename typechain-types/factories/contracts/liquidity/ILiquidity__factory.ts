@@ -41,6 +41,11 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "InvalidValue",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "OnlyRecipientCanCancelDeposit",
     type: "error",
   },
@@ -142,8 +147,45 @@ const _abi = [
         name: "lastProcessedDepositId",
         type: "uint256",
       },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "gasLimit",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bytes",
+        name: "message",
+        type: "bytes",
+      },
     ],
-    name: "DepositsSubmitted",
+    name: "DepositsRelayed",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint32",
+        name: "newGasLimit",
+        type: "uint32",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "messageNonce",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bytes",
+        name: "message",
+        type: "bytes",
+      },
+    ],
+    name: "DepositsReplayed",
     type: "event",
   },
   {
@@ -420,12 +462,22 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "bytes",
+        name: "message",
+        type: "bytes",
+      },
+      {
+        internalType: "uint32",
+        name: "newGasLimit",
+        type: "uint32",
+      },
+      {
         internalType: "uint256",
-        name: "lastProcessedDepositId",
+        name: "messageNonce",
         type: "uint256",
       },
     ],
-    name: "submitDeposits",
+    name: "replayDeposits",
     outputs: [],
     stateMutability: "payable",
     type: "function",

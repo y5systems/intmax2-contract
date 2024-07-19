@@ -71,7 +71,7 @@ export interface ILiquidityInterface extends Interface {
       | "processClaimableWithdrawals"
       | "processDirectWithdrawals"
       | "rejectDeposits"
-      | "submitDeposits"
+      | "replayDeposits"
   ): FunctionFragment;
 
   getEvent(
@@ -79,7 +79,8 @@ export interface ILiquidityInterface extends Interface {
       | "DepositCanceled"
       | "Deposited"
       | "DepositsRejected"
-      | "DepositsSubmitted"
+      | "DepositsRelayed"
+      | "DepositsReplayed"
       | "WithdrawalClaimable"
   ): EventFragment;
 
@@ -124,8 +125,8 @@ export interface ILiquidityInterface extends Interface {
     values: [BigNumberish, BigNumberish[]]
   ): string;
   encodeFunctionData(
-    functionFragment: "submitDeposits",
-    values: [BigNumberish]
+    functionFragment: "replayDeposits",
+    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
 
   decodeFunctionResult(
@@ -166,7 +167,7 @@ export interface ILiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "submitDeposits",
+    functionFragment: "replayDeposits",
     data: BytesLike
   ): Result;
 }
@@ -226,11 +227,43 @@ export namespace DepositsRejectedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace DepositsSubmittedEvent {
-  export type InputTuple = [lastProcessedDepositId: BigNumberish];
-  export type OutputTuple = [lastProcessedDepositId: bigint];
+export namespace DepositsRelayedEvent {
+  export type InputTuple = [
+    lastProcessedDepositId: BigNumberish,
+    gasLimit: BigNumberish,
+    message: BytesLike
+  ];
+  export type OutputTuple = [
+    lastProcessedDepositId: bigint,
+    gasLimit: bigint,
+    message: string
+  ];
   export interface OutputObject {
     lastProcessedDepositId: bigint;
+    gasLimit: bigint;
+    message: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DepositsReplayedEvent {
+  export type InputTuple = [
+    newGasLimit: BigNumberish,
+    messageNonce: BigNumberish,
+    message: BytesLike
+  ];
+  export type OutputTuple = [
+    newGasLimit: bigint,
+    messageNonce: bigint,
+    message: string
+  ];
+  export interface OutputObject {
+    newGasLimit: bigint;
+    messageNonce: bigint;
+    message: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -366,8 +399,8 @@ export interface ILiquidity extends BaseContract {
     "nonpayable"
   >;
 
-  submitDeposits: TypedContractMethod<
-    [lastProcessedDepositId: BigNumberish],
+  replayDeposits: TypedContractMethod<
+    [message: BytesLike, newGasLimit: BigNumberish, messageNonce: BigNumberish],
     [void],
     "payable"
   >;
@@ -452,9 +485,9 @@ export interface ILiquidity extends BaseContract {
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "submitDeposits"
+    nameOrSignature: "replayDeposits"
   ): TypedContractMethod<
-    [lastProcessedDepositId: BigNumberish],
+    [message: BytesLike, newGasLimit: BigNumberish, messageNonce: BigNumberish],
     [void],
     "payable"
   >;
@@ -481,11 +514,18 @@ export interface ILiquidity extends BaseContract {
     DepositsRejectedEvent.OutputObject
   >;
   getEvent(
-    key: "DepositsSubmitted"
+    key: "DepositsRelayed"
   ): TypedContractEvent<
-    DepositsSubmittedEvent.InputTuple,
-    DepositsSubmittedEvent.OutputTuple,
-    DepositsSubmittedEvent.OutputObject
+    DepositsRelayedEvent.InputTuple,
+    DepositsRelayedEvent.OutputTuple,
+    DepositsRelayedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DepositsReplayed"
+  ): TypedContractEvent<
+    DepositsReplayedEvent.InputTuple,
+    DepositsReplayedEvent.OutputTuple,
+    DepositsReplayedEvent.OutputObject
   >;
   getEvent(
     key: "WithdrawalClaimable"
@@ -529,15 +569,26 @@ export interface ILiquidity extends BaseContract {
       DepositsRejectedEvent.OutputObject
     >;
 
-    "DepositsSubmitted(uint256)": TypedContractEvent<
-      DepositsSubmittedEvent.InputTuple,
-      DepositsSubmittedEvent.OutputTuple,
-      DepositsSubmittedEvent.OutputObject
+    "DepositsRelayed(uint256,uint256,bytes)": TypedContractEvent<
+      DepositsRelayedEvent.InputTuple,
+      DepositsRelayedEvent.OutputTuple,
+      DepositsRelayedEvent.OutputObject
     >;
-    DepositsSubmitted: TypedContractEvent<
-      DepositsSubmittedEvent.InputTuple,
-      DepositsSubmittedEvent.OutputTuple,
-      DepositsSubmittedEvent.OutputObject
+    DepositsRelayed: TypedContractEvent<
+      DepositsRelayedEvent.InputTuple,
+      DepositsRelayedEvent.OutputTuple,
+      DepositsRelayedEvent.OutputObject
+    >;
+
+    "DepositsReplayed(uint32,uint256,bytes)": TypedContractEvent<
+      DepositsReplayedEvent.InputTuple,
+      DepositsReplayedEvent.OutputTuple,
+      DepositsReplayedEvent.OutputObject
+    >;
+    DepositsReplayed: TypedContractEvent<
+      DepositsReplayedEvent.InputTuple,
+      DepositsReplayedEvent.OutputTuple,
+      DepositsReplayedEvent.OutputObject
     >;
 
     "WithdrawalClaimable(bytes32)": TypedContractEvent<

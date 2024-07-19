@@ -16,6 +16,7 @@ interface ILiquidity {
 	error WithdrawalNotFound();
 	error InvalidRecipientSaltHash();
 	error InvalidAmount();
+	error InvalidValue();
 
 	struct DepositData {
 		bytes32 depositHash;
@@ -41,7 +42,17 @@ interface ILiquidity {
 
 	event DepositsRejected(uint256 indexed lastAnalyzedDepositId);
 
-	event DepositsSubmitted(uint256 indexed lastProcessedDepositId);
+	event DepositsRelayed(
+		uint256 indexed lastProcessedDepositId,
+		uint256 gasLimit,
+		bytes message
+	);
+
+	event DepositsReplayed(
+		uint32 newGasLimit,
+		uint256 messageNonce,
+		bytes message
+	);
 
 	event WithdrawalClaimable(bytes32 indexed withdrawalHash);
 
@@ -85,10 +96,11 @@ interface ILiquidity {
 		uint256[] calldata rejectedDepositIds
 	) external;
 
-	/**
-	 * @notice Submit the deposit root
-	 */
-	function submitDeposits(uint256 lastProcessedDepositId) external payable;
+	function replayDeposits(
+		bytes memory message,
+		uint32 newGasLimit,
+		uint256 messageNonce
+	) external payable;
 
 	/**
 	 * @notice Process the withdrawals.

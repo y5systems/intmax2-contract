@@ -48,7 +48,6 @@ contract Liquidity is
 		// note
 		// The specification of ScrollMessenger may change in the future.
 		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
-
 		if (rollup == address(0)) {
 			revert RollupContractNotSet();
 		}
@@ -75,6 +74,9 @@ contract Liquidity is
 	}
 
 	function depositETH(bytes32 recipientSaltHash) external payable {
+		if (msg.value == 0) {
+			revert InvalidValue();
+		}
 		uint32 tokenIndex = _getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
 	}
@@ -200,9 +202,10 @@ contract Liquidity is
 		emit DepositCanceled(depositId);
 	}
 
-	function submitDeposits(
-		uint256 _lastProcessedDepositId
-	) public payable nonReentrant {
+	function relayDeposits(
+		uint256 _lastProcessedDepositId,
+		uint256 gasLimit
+	) external payable nonReentrant {
 		if (lastProcessedDepositId < _lastProcessedDepositId) {
 			revert InvalidLastProcessedDepositId();
 		}
@@ -229,28 +232,51 @@ contract Liquidity is
 				depositHashes[i] = (pendingDepositData[i].depositHash);
 			}
 		}
-
 		lastProcessedDepositId = _lastProcessedDepositId;
-
-		// note
-		// The specification of ScrollMessenger may change in the future.
-		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
 		bytes memory message = abi.encodeWithSelector(
 			IRollup.processDeposits.selector,
 			lastProcessedDepositId,
 			depositHashes
 		);
 
-		// processDeposits is not payable, so value should be 0
-		// TODO Check that the value of gaslimit is correct for both testnet and mainnet.
+		// note
+		// The specification of ScrollMessenger may change in the future.
+		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
 		l1ScrollMessenger.sendMessage{value: msg.value}(
-			rollup,
+			rollup, // to
 			0, // value
 			message,
-			200000, // gaslimit
+			gasLimit,
 			_msgSender()
 		);
-		emit DepositsSubmitted(lastProcessedDepositId);
+		emit DepositsRelayed(lastProcessedDepositId, gasLimit, message);
+	}
+
+	/**
+	 * @notice Retries sending a message to L2 that has been previously sent (and presumably failed).
+	 * @dev The `messageNonce` can be obtained from the `SentMessage` event emitted by `l1ScrollMessenger` during `relayDeposits` execution.
+	 * @dev Security considerations:
+	 *      - If this function attempts to send a message that has never been sent before, `l1ScrollMessenger` will revert.
+	 *      - The L2 ScrollMessenger ensures that even if multiple attempts are made, only one will succeed.
+	 * @param message The message to be sent to L2.
+	 * @param newGasLimit The new gas limit for the message.
+	 * @param messageNonce The nonce of the message to be retried.
+	 */
+	function replayDeposits(
+		bytes memory message,
+		uint32 newGasLimit,
+		uint256 messageNonce
+	) external payable nonReentrant {
+		l1ScrollMessenger.replayMessage{value: msg.value}(
+			address(this), // from
+			rollup, // to
+			0, // value
+			messageNonce,
+			message,
+			newGasLimit,
+			_msgSender()
+		);
+		emit DepositsReplayed(newGasLimit, messageNonce, message);
 	}
 
 	function processDirectWithdrawals(

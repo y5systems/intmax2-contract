@@ -94,10 +94,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165__factory>;
     getContractFactory(
-      name: "ReentrancyGuard",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ReentrancyGuard__factory>;
-    getContractFactory(
       name: "IL1ScrollMessenger",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IL1ScrollMessenger__factory>;
@@ -134,14 +130,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.WithdrawalQueueLib__factory>;
     getContractFactory(
-      name: "Bytes32QueueLib",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.Bytes32QueueLib__factory>;
-    getContractFactory(
-      name: "WithdrawalQueueLib",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.WithdrawalQueueLib__factory>;
-    getContractFactory(
       name: "ILiquidity",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ILiquidity__factory>;
@@ -157,10 +145,6 @@ declare module "hardhat/types/runtime" {
       name: "TokenData",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TokenData__factory>;
-    getContractFactory(
-      name: "IPlonkVerifier",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IPlonkVerifier__factory>;
     getContractFactory(
       name: "IRollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -201,10 +185,6 @@ declare module "hardhat/types/runtime" {
       name: "UnstakeReentrancyTest",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.UnstakeReentrancyTest__factory>;
-    getContractFactory(
-      name: "DepositLibTest",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.DepositLibTest__factory>;
     getContractFactory(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -319,11 +299,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165>;
     getContractAt(
-      name: "ReentrancyGuard",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ReentrancyGuard>;
-    getContractAt(
       name: "IL1ScrollMessenger",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -369,16 +344,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.WithdrawalQueueLib>;
     getContractAt(
-      name: "Bytes32QueueLib",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.Bytes32QueueLib>;
-    getContractAt(
-      name: "WithdrawalQueueLib",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.WithdrawalQueueLib>;
-    getContractAt(
       name: "ILiquidity",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -398,11 +363,6 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.TokenData>;
-    getContractAt(
-      name: "IPlonkVerifier",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IPlonkVerifier>;
     getContractAt(
       name: "IRollup",
       address: string | ethers.Addressable,
@@ -453,11 +413,6 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.UnstakeReentrancyTest>;
-    getContractAt(
-      name: "DepositLibTest",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.DepositLibTest>;
     getContractAt(
       name: "MockL1GasPriceOracle",
       address: string | ethers.Addressable,
@@ -555,10 +510,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165>;
     deployContract(
-      name: "ReentrancyGuard",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ReentrancyGuard>;
-    deployContract(
       name: "IL1ScrollMessenger",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IL1ScrollMessenger>;
@@ -595,14 +546,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.WithdrawalQueueLib>;
     deployContract(
-      name: "Bytes32QueueLib",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Bytes32QueueLib>;
-    deployContract(
-      name: "WithdrawalQueueLib",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.WithdrawalQueueLib>;
-    deployContract(
       name: "ILiquidity",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.ILiquidity>;
@@ -618,10 +561,6 @@ declare module "hardhat/types/runtime" {
       name: "TokenData",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TokenData>;
-    deployContract(
-      name: "IPlonkVerifier",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IPlonkVerifier>;
     deployContract(
       name: "IRollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -662,10 +601,6 @@ declare module "hardhat/types/runtime" {
       name: "UnstakeReentrancyTest",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.UnstakeReentrancyTest>;
-    deployContract(
-      name: "DepositLibTest",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.DepositLibTest>;
     deployContract(
       name: "MockL1GasPriceOracle",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -780,11 +715,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165>;
     deployContract(
-      name: "ReentrancyGuard",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ReentrancyGuard>;
-    deployContract(
       name: "IL1ScrollMessenger",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -830,16 +760,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.WithdrawalQueueLib>;
     deployContract(
-      name: "Bytes32QueueLib",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.Bytes32QueueLib>;
-    deployContract(
-      name: "WithdrawalQueueLib",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.WithdrawalQueueLib>;
-    deployContract(
       name: "ILiquidity",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -859,11 +779,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TokenData>;
-    deployContract(
-      name: "IPlonkVerifier",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IPlonkVerifier>;
     deployContract(
       name: "IRollup",
       args: any[],
@@ -914,11 +829,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.UnstakeReentrancyTest>;
-    deployContract(
-      name: "DepositLibTest",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.DepositLibTest>;
     deployContract(
       name: "MockL1GasPriceOracle",
       args: any[],

@@ -79,8 +79,9 @@ export interface LiquidityInterface extends Interface {
       | "processDirectWithdrawals"
       | "proxiableUUID"
       | "rejectDeposits"
+      | "relayDeposits"
       | "renounceOwnership"
-      | "submitDeposits"
+      | "replayDeposits"
       | "transferOwnership"
       | "upgradeToAndCall"
   ): FunctionFragment;
@@ -90,7 +91,8 @@ export interface LiquidityInterface extends Interface {
       | "DepositCanceled"
       | "Deposited"
       | "DepositsRejected"
-      | "DepositsSubmitted"
+      | "DepositsRelayed"
+      | "DepositsReplayed"
       | "Initialized"
       | "OwnershipTransferred"
       | "Upgraded"
@@ -167,12 +169,16 @@ export interface LiquidityInterface extends Interface {
     values: [BigNumberish, BigNumberish[]]
   ): string;
   encodeFunctionData(
+    functionFragment: "relayDeposits",
+    values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "submitDeposits",
-    values: [BigNumberish]
+    functionFragment: "replayDeposits",
+    values: [BytesLike, BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -247,11 +253,15 @@ export interface LiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "relayDeposits",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "submitDeposits",
+    functionFragment: "replayDeposits",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -319,11 +329,43 @@ export namespace DepositsRejectedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace DepositsSubmittedEvent {
-  export type InputTuple = [lastProcessedDepositId: BigNumberish];
-  export type OutputTuple = [lastProcessedDepositId: bigint];
+export namespace DepositsRelayedEvent {
+  export type InputTuple = [
+    lastProcessedDepositId: BigNumberish,
+    gasLimit: BigNumberish,
+    message: BytesLike
+  ];
+  export type OutputTuple = [
+    lastProcessedDepositId: bigint,
+    gasLimit: bigint,
+    message: string
+  ];
   export interface OutputObject {
     lastProcessedDepositId: bigint;
+    gasLimit: bigint;
+    message: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DepositsReplayedEvent {
+  export type InputTuple = [
+    newGasLimit: BigNumberish,
+    messageNonce: BigNumberish,
+    message: BytesLike
+  ];
+  export type OutputTuple = [
+    newGasLimit: bigint,
+    messageNonce: bigint,
+    message: string
+  ];
+  export interface OutputObject {
+    newGasLimit: bigint;
+    messageNonce: bigint;
+    message: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -528,10 +570,16 @@ export interface Liquidity extends BaseContract {
     "nonpayable"
   >;
 
+  relayDeposits: TypedContractMethod<
+    [_lastProcessedDepositId: BigNumberish, gasLimit: BigNumberish],
+    [void],
+    "payable"
+  >;
+
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  submitDeposits: TypedContractMethod<
-    [_lastProcessedDepositId: BigNumberish],
+  replayDeposits: TypedContractMethod<
+    [message: BytesLike, newGasLimit: BigNumberish, messageNonce: BigNumberish],
     [void],
     "payable"
   >;
@@ -668,12 +716,19 @@ export interface Liquidity extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "relayDeposits"
+  ): TypedContractMethod<
+    [_lastProcessedDepositId: BigNumberish, gasLimit: BigNumberish],
+    [void],
+    "payable"
+  >;
+  getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "submitDeposits"
+    nameOrSignature: "replayDeposits"
   ): TypedContractMethod<
-    [_lastProcessedDepositId: BigNumberish],
+    [message: BytesLike, newGasLimit: BigNumberish, messageNonce: BigNumberish],
     [void],
     "payable"
   >;
@@ -710,11 +765,18 @@ export interface Liquidity extends BaseContract {
     DepositsRejectedEvent.OutputObject
   >;
   getEvent(
-    key: "DepositsSubmitted"
+    key: "DepositsRelayed"
   ): TypedContractEvent<
-    DepositsSubmittedEvent.InputTuple,
-    DepositsSubmittedEvent.OutputTuple,
-    DepositsSubmittedEvent.OutputObject
+    DepositsRelayedEvent.InputTuple,
+    DepositsRelayedEvent.OutputTuple,
+    DepositsRelayedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DepositsReplayed"
+  ): TypedContractEvent<
+    DepositsReplayedEvent.InputTuple,
+    DepositsReplayedEvent.OutputTuple,
+    DepositsReplayedEvent.OutputObject
   >;
   getEvent(
     key: "Initialized"
@@ -779,15 +841,26 @@ export interface Liquidity extends BaseContract {
       DepositsRejectedEvent.OutputObject
     >;
 
-    "DepositsSubmitted(uint256)": TypedContractEvent<
-      DepositsSubmittedEvent.InputTuple,
-      DepositsSubmittedEvent.OutputTuple,
-      DepositsSubmittedEvent.OutputObject
+    "DepositsRelayed(uint256,uint256,bytes)": TypedContractEvent<
+      DepositsRelayedEvent.InputTuple,
+      DepositsRelayedEvent.OutputTuple,
+      DepositsRelayedEvent.OutputObject
     >;
-    DepositsSubmitted: TypedContractEvent<
-      DepositsSubmittedEvent.InputTuple,
-      DepositsSubmittedEvent.OutputTuple,
-      DepositsSubmittedEvent.OutputObject
+    DepositsRelayed: TypedContractEvent<
+      DepositsRelayedEvent.InputTuple,
+      DepositsRelayedEvent.OutputTuple,
+      DepositsRelayedEvent.OutputObject
+    >;
+
+    "DepositsReplayed(uint32,uint256,bytes)": TypedContractEvent<
+      DepositsReplayedEvent.InputTuple,
+      DepositsReplayedEvent.OutputTuple,
+      DepositsReplayedEvent.OutputObject
+    >;
+    DepositsReplayed: TypedContractEvent<
+      DepositsReplayedEvent.InputTuple,
+      DepositsReplayedEvent.OutputTuple,
+      DepositsReplayedEvent.OutputObject
     >;
 
     "Initialized(uint64)": TypedContractEvent<
