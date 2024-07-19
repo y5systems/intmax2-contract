@@ -5,28 +5,14 @@ import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 
 interface ILiquidity {
-	error InvalidDepositId();
 	error OnlyRecipientCanCancelDeposit();
-	error InvalidDepositHash();
-	error OnlyRecipientCanClaimRejectedDeposit();
-	error InvalidLastProcessedDepositId();
+	error InvalidDepositHash(bytes32 depositDataHash, bytes32 calculatedHash);
 	error RollupContractNotSet();
 	error SenderIsNotScrollMessenger();
 	error InvalidRollup();
-	error WithdrawalNotFound();
-	error InvalidRecipientSaltHash();
+	error WithdrawalNotFound(bytes32 withdrawalHash);
 	error InvalidAmount();
-
-	struct DepositData {
-		bytes32 depositHash;
-		address sender;
-	}
-
-	struct Withdrawal {
-		address recipient;
-		uint32 tokenIndex;
-		uint256 amount;
-	}
+	error InvalidValue();
 
 	event Deposited(
 		uint256 indexed depositId,
@@ -37,13 +23,34 @@ interface ILiquidity {
 		uint256 requestedAt
 	);
 
+	event DepositsAnalyzed(
+		uint256 indexed lastAnalyzedDepositId,
+		uint256[] rejectedIndices
+	);
+
 	event DepositCanceled(uint256 indexed depositId);
 
-	event DepositsRejected(uint256 indexed lastAnalyzedDepositId);
+	event DepositsRelayed(
+		uint256 indexed lastRelayedDepositId,
+		uint256 gasLimit,
+		bytes message
+	);
 
-	event DepositsSubmitted(uint256 indexed lastProcessedDepositId);
+	event DepositsReplayed(
+		uint32 newGasLimit,
+		uint256 messageNonce,
+		bytes message
+	);
 
 	event WithdrawalClaimable(bytes32 indexed withdrawalHash);
+
+	event DirectWithdrawalsProcessed(
+		uint256 indexed lastProcessedDirectWithdrawalId
+	);
+
+	event ClaimableWithdrawalsProcessed(
+		uint256 indexed lastProcessedClaimableWithdrawalId
+	);
 
 	function depositETH(bytes32 recipientSaltHash) external payable;
 
@@ -66,40 +73,53 @@ interface ILiquidity {
 		uint256 amount
 	) external;
 
-	function cancelPendingDeposit(
-		uint256 depositId,
-		DepositLib.Deposit memory deposit
-	) external;
-
-	function claimRejectedDeposit(
-		uint256 depositId,
-		DepositLib.Deposit memory deposit
-	) external;
-
-	/**
-	 * @param lastAnalyzedDepositId The last deposit ID that was analyzed
-	 * @param rejectedDepositIds The list of deposit IDs that were rejected
-	 */
-	function rejectDeposits(
-		uint256 lastAnalyzedDepositId,
-		uint256[] calldata rejectedDepositIds
+	/// @notice Trusted nodes submit the IDs of deposits that do not meet AML standards by this method.
+	/// @dev upToDepositId specifies the last deposit id that have been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
+	/// @dev rejectDepositIndices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
+	/// @param upToDepositId The upper limit of the Deposit ID that has been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
+	/// @param rejectDepositIndices An array of indices of deposits to exclude. These indices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
+	function analyzeDeposits(
+		uint256 upToDepositId,
+		uint256[] memory rejectDepositIndices
 	) external;
 
 	/**
-	 * @notice Submit the deposit root
+	 * @notice Relays deposits that have already been analyzed.
+	 * @dev The `gasLimit` must be set according to the number of deposits. If the gas limit is too low, the L2 Rollup may not be able to execute.
+	 * @dev The messaging fee calculated from the `gasLimit` must be sent as `msg.value`. Any excess amount will be refunded to the caller.
+	 *      However, if the `gasLimit` is set higher than the actual gas consumed, the excess messaging fee will still be charged. There will be no refund for the unused gas.
+	 * @dev Note: If the transaction fails on the L2 Rollup due to insufficient gas, it can be retried using `replayDeposits`.
+	 * @param lastProcessedDepositId The ID of the last deposit to be relayed.
+	 * @param gasLimit The gas limit for the transaction.
 	 */
-	function submitDeposits(uint256 lastProcessedDepositId) external payable;
+	function relayDeposits(
+		uint256 lastProcessedDepositId,
+		uint256 gasLimit
+	) external payable;
 
 	/**
-	 * @notice Process the withdrawals.
-	 * @dev This method is called by the Rollup contract via Scroll Messenger.
-	 * @param withdrawals The list of withdrawals to process
+	 * @notice Retries sending a message to L2 that has been previously sent (and presumably failed).
+	 * @dev The `messageNonce` can be obtained from the `SentMessage` event emitted by `l1ScrollMessenger` during `relayDeposits` execution.
+	 * @dev Security considerations:
+	 *      - If this function attempts to send a message that has never been sent before, `l1ScrollMessenger` will revert.
+	 *      - The L2 ScrollMessenger ensures that even if multiple attempts are made, only one will succeed.
+	 * @param message The message to be sent to L2.
+	 * @param newGasLimit The new gas limit for the message.
+	 * @param messageNonce The nonce of the message to be retried.
 	 */
+	function replayDeposits(
+		bytes memory message,
+		uint32 newGasLimit,
+		uint256 messageNonce
+	) external payable;
+
 	function processDirectWithdrawals(
+		uint256 lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;
 
 	function processClaimableWithdrawals(
+		uint256 lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
 	) external;
 
