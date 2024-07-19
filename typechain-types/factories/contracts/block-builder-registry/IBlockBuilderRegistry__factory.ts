@@ -72,11 +72,6 @@ const _abi = [
     type: "error",
   },
   {
-    inputs: [],
-    name: "OnlyRollupContract",
-    type: "error",
-  },
-  {
     anonymous: false,
     inputs: [
       {

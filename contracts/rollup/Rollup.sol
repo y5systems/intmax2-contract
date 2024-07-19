@@ -22,8 +22,8 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 	using BlockLib for BlockLib.Block[];
 	using DepositTreeLib for DepositTreeLib.DepositTree;
 
-	uint256 constant NUM_SENDERS_IN_BLOCK = 128;
-	uint256 constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
+	uint256 private constant NUM_SENDERS_IN_BLOCK = 128;
+	uint256 private constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
 
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
@@ -83,7 +83,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint,
 		uint256[] calldata senderPublicKeys
-	) public {
+	) external {
 		uint256 length = senderPublicKeys.length;
 		if (length == 0) {
 			revert SenderPublicKeysEmpty();
@@ -123,7 +123,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		bytes32[4] calldata messagePoint,
 		bytes32 publicKeysHash,
 		bytes calldata senderAccountIds
-	) public {
+	) external {
 		uint256 length = senderAccountIds.length;
 		if (length == 0) {
 			revert SenderAccountIdsEmpty();
@@ -179,12 +179,6 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint
 	) internal returns (uint256 blockNumber) {
-		// Check if the block builder is valid.
-		// disable for testing
-		// if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
-		// 	revert InvalidBlockBuilder();
-		// }
-
 		bool success = PairingLib.pairing(
 			aggregatedPublicKey,
 			aggregatedSignature,

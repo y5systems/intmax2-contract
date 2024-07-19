@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IRollup} from "../IRollup.sol";
-
 library WithdrawalProofPublicInputsLib {
 	struct WithdrawalProofPublicInputs {
 		bytes32 lastWithdrawalHash;

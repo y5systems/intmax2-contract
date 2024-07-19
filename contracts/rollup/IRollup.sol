@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {BlockLib} from "./lib/BlockLib.sol";
-
 interface IRollup {
-	error InvalidBlockBuilder();
-
 	error OnlyScrollMessenger();
 
 	error OnlyLiquidity();

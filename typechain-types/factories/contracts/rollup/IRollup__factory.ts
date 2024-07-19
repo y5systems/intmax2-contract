@@ -16,11 +16,6 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "InvalidBlockBuilder",
-    type: "error",
-  },
-  {
-    inputs: [],
     name: "OnlyLiquidity",
     type: "error",
   },

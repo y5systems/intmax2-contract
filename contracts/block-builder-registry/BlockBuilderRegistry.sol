@@ -48,7 +48,7 @@ contract BlockBuilderRegistry is
 		burnAddress = 0x000000000000000000000000000000000000dEaD;
 	}
 
-	function updateBlockBuilder(string memory url) public payable {
+	function updateBlockBuilder(string memory url) external payable {
 		BlockBuilderInfo memory info = blockBuilders[_msgSender()];
 		uint256 stakeAmount = info.stakeAmount + msg.value;
 		if (stakeAmount < MIN_STAKE_AMOUNT) {
@@ -63,7 +63,7 @@ contract BlockBuilderRegistry is
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
 
-	function stopBlockBuilder() public isStaking {
+	function stopBlockBuilder() external isStaking {
 		// Remove the block builder information.
 		BlockBuilderInfo memory info = blockBuilders[_msgSender()];
 		info.stopTime = block.timestamp;
@@ -73,7 +73,7 @@ contract BlockBuilderRegistry is
 		emit BlockBuilderStopped(_msgSender());
 	}
 
-	function unstake() public isStaking {
+	function unstake() external isStaking {
 		// Check if the last block submission is not within 24 hour.
 		BlockBuilderInfo memory info = blockBuilders[_msgSender()];
 		if (info.isChallengeDuration() == false) {
@@ -165,7 +165,7 @@ contract BlockBuilderRegistry is
 
 	function isValidBlockBuilder(
 		address blockBuilder
-	) public view returns (bool) {
+	) external view returns (bool) {
 		return blockBuilders[blockBuilder].isValid;
 	}
 

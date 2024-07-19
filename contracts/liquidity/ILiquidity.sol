@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IRollup} from "../rollup/IRollup.sol";
 import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 

@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as lib from "./lib";
+export { IPlonkVerifier__factory } from "./IPlonkVerifier__factory";
 export { IRollup__factory } from "./IRollup__factory";
 export { IWithdrawal__factory } from "./IWithdrawal__factory";
 export { Rollup__factory } from "./Rollup__factory";

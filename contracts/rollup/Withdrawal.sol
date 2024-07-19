@@ -28,8 +28,8 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 	using WithdrawalQueueLib for WithdrawalQueueLib.Queue;
 	using Bytes32QueueLib for Bytes32QueueLib.Queue;
 
-	uint256 constant MAX_RELAY_DIRECT_WITHDRAWALS = 20;
-	uint256 constant MAX_RELAY_CLAIMABLE_WITHDRAWALS = 100;
+	uint256 private constant MAX_RELAY_DIRECT_WITHDRAWALS = 20;
+	uint256 private constant MAX_RELAY_CLAIMABLE_WITHDRAWALS = 100;
 
 	IPlonkVerifier private withdrawalVerifier;
 	IL2ScrollMessenger private l2ScrollMessenger;
@@ -41,6 +41,7 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 	mapping(bytes32 => uint256) public postedBlockHashes;
 
+	// solhint-disable-next-line func-name-mixedcase
 	function __Withdrawal_init(
 		address _scrollMessenger,
 		address _withdrawalVerifier,

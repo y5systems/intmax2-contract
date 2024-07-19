@@ -22,6 +22,7 @@ library PairingLib {
 		uint256[1] memory out;
 		bool success;
 		uint256 inputSize = input.length;
+		// solhint-disable-next-line no-inline-assembly
 		assembly {
 			success := staticcall(
 				sub(gas(), 2000),

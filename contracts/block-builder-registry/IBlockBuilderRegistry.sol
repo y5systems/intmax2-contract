@@ -4,7 +4,6 @@ pragma solidity 0.8.24;
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 
 interface IBlockBuilderRegistry {
-	error OnlyRollupContract();
 	error InsufficientStakeAmount();
 	error BlockBuilderNotFound();
 	error CannotUnstakeWithinChallengeDuration();
