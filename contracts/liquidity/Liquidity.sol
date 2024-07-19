@@ -217,7 +217,10 @@ contract Liquidity is
 			revert OnlyRecipientCanCancelDeposit();
 		}
 		if (depositData.depositHash != deposit.getHash()) {
-			revert InvalidDepositHash();
+			revert InvalidDepositHash(
+				depositData.depositHash,
+				deposit.getHash()
+			);
 		}
 		TokenInfo memory tokenInfo = getTokenInfo(deposit.tokenIndex);
 		sendToken(
