@@ -35,6 +35,9 @@ contract Liquidity is
 	mapping(bytes32 => uint256) private claimableWithdrawals;
 	DepositQueueLib.DepositQueue private depositQueue;
 
+	uint256 public lastProcessedDirectWithdrawalId;
+	uint256 public lastProcessedClaimableWithdrawalId;
+
 	modifier onlyRollup() {
 		// note
 		// The specification of ScrollMessenger may change in the future.
@@ -277,8 +280,8 @@ contract Liquidity is
 		}
 	}
 
-	// called by Rollup contract
 	function processDirectWithdrawals(
+		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external onlyRollup {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
@@ -293,16 +296,20 @@ contract Liquidity is
 				tokenInfo.tokenId
 			);
 		}
+		lastProcessedDirectWithdrawalId = _lastProcessedDirectWithdrawalId;
+		emit DirectWithdrawalsProcessed(lastProcessedDirectWithdrawalId);
 	}
 
-	// called by Rollup contract
 	function processClaimableWithdrawals(
+		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
 	) external onlyRollup {
 		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
 			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
 			emit WithdrawalClaimable(withdrawalHahes[i]);
 		}
+		lastProcessedClaimableWithdrawalId = _lastProcessedClaimableWithdrawalId;
+		emit ClaimableWithdrawalsProcessed(lastProcessedClaimableWithdrawalId);
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

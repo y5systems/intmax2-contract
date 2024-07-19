@@ -20,7 +20,10 @@ interface IRollup {
 
 	error PairingCheckFailed();
 
-	event DepositsProcessed(bytes32 depositTreeRoot);
+	event DepositsProcessed(
+		uint256 indexed lastProcessedDepositId,
+		bytes32 depositTreeRoot
+	);
 
 	event BlockPosted(
 		bytes32 indexed prevBlockHash,

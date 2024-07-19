@@ -166,7 +166,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 			depositTree.deposit(depositHashes[i]);
 		}
 		lastProcessedDepositId = _lastProcessedDepositId;
-		emit DepositsProcessed(depositTree.getRoot());
+		emit DepositsProcessed(lastProcessedDepositId, depositTree.getRoot());
 	}
 
 	function _postBlock(

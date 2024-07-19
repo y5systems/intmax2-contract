@@ -44,6 +44,14 @@ interface ILiquidity {
 
 	event WithdrawalClaimable(bytes32 indexed withdrawalHash);
 
+	event DirectWithdrawalsProcessed(
+		uint256 indexed lastProcessedDirectWithdrawalId
+	);
+
+	event ClaimableWithdrawalsProcessed(
+		uint256 indexed lastProcessedClaimableWithdrawalId
+	);
+
 	function depositETH(bytes32 recipientSaltHash) external payable;
 
 	function depositERC20(
@@ -65,6 +73,11 @@ interface ILiquidity {
 		uint256 amount
 	) external;
 
+	/// @notice Trusted nodes submit the IDs of deposits that do not meet AML standards by this method.
+	/// @dev upToDepositId specifies the last deposit id that have been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
+	/// @dev rejectDepositIndices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
+	/// @param upToDepositId The upper limit of the Deposit ID that has been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
+	/// @param rejectDepositIndices An array of indices of deposits to exclude. These indices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
 	function analyzeDeposits(
 		uint256 upToDepositId,
 		uint256[] memory rejectDepositIndices
@@ -100,16 +113,13 @@ interface ILiquidity {
 		uint256 messageNonce
 	) external payable;
 
-	/**
-	 * @notice Process the withdrawals.
-	 * @dev This method is called by the Rollup contract via Scroll Messenger.
-	 * @param withdrawals The list of withdrawals to process
-	 */
 	function processDirectWithdrawals(
+		uint256 lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;
 
 	function processClaimableWithdrawals(
+		uint256 lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
 	) external;
 
