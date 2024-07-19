@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 // interfaces
 import {IWithdrawal} from "./IWithdrawal.sol";
-import {IPlonkVerifier} from "./IPlonkVerifier.sol";
+import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
@@ -14,10 +14,10 @@ import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Cont
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
-import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
-import {Byte32Lib} from "./lib/Byte32Lib.sol";
-import {WithdrawalQueueLib} from "../lib/queue/WithdrawalQueueLib.sol";
-import {Bytes32QueueLib} from "../lib/queue/Bytes32QueueLib.sol";
+import {WithdrawalLib} from "../common/WithdrawalLib.sol";
+import {Byte32Lib} from "../common/Byte32Lib.sol";
+import {WithdrawalQueueLib} from "../common/queue/WithdrawalQueueLib.sol";
+import {Bytes32QueueLib} from "../common/queue/Bytes32QueueLib.sol";
 
 contract Withdrawal is IWithdrawal, ContextUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;

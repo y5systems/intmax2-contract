@@ -10,31 +10,31 @@ import {
 import type { Signer, ContractDeployTransaction, ContractRunner } from "ethers";
 import type { NonPayableOverrides } from "../../../../common";
 import type {
-  DepositTreeLib,
-  DepositTreeLibInterface,
-} from "../../../../contracts/rollup/lib/DepositTreeLib";
+  WithdrawalQueueLib,
+  WithdrawalQueueLibInterface,
+} from "../../../../contracts/common/queue/WithdrawalQueueLib";
 
 const _abi = [
   {
     inputs: [],
-    name: "MerkleTreeFull",
+    name: "QueueIsEmpty",
     type: "error",
   },
 ] as const;
 
 const _bytecode =
-  "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220c7a8ae1fab17751fc3a2da28075df62eea0e1733e2886e0241828e99aeb748c464736f6c63430008180033";
+  "0x60566050600b82828239805160001a6073146043577f4e487b7100000000000000000000000000000000000000000000000000000000600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea2646970667358221220d0dd869c59f0cd887bb5598ac7e4a2d446684692e7458c89b1b37085c80bf03764736f6c63430008180033";
 
-type DepositTreeLibConstructorParams =
+type WithdrawalQueueLibConstructorParams =
   | [signer?: Signer]
   | ConstructorParameters<typeof ContractFactory>;
 
 const isSuperArgs = (
-  xs: DepositTreeLibConstructorParams
+  xs: WithdrawalQueueLibConstructorParams
 ): xs is ConstructorParameters<typeof ContractFactory> => xs.length > 1;
 
-export class DepositTreeLib__factory extends ContractFactory {
-  constructor(...args: DepositTreeLibConstructorParams) {
+export class WithdrawalQueueLib__factory extends ContractFactory {
+  constructor(...args: WithdrawalQueueLibConstructorParams) {
     if (isSuperArgs(args)) {
       super(...args);
     } else {
@@ -49,24 +49,24 @@ export class DepositTreeLib__factory extends ContractFactory {
   }
   override deploy(overrides?: NonPayableOverrides & { from?: string }) {
     return super.deploy(overrides || {}) as Promise<
-      DepositTreeLib & {
+      WithdrawalQueueLib & {
         deploymentTransaction(): ContractTransactionResponse;
       }
     >;
   }
-  override connect(runner: ContractRunner | null): DepositTreeLib__factory {
-    return super.connect(runner) as DepositTreeLib__factory;
+  override connect(runner: ContractRunner | null): WithdrawalQueueLib__factory {
+    return super.connect(runner) as WithdrawalQueueLib__factory;
   }
 
   static readonly bytecode = _bytecode;
   static readonly abi = _abi;
-  static createInterface(): DepositTreeLibInterface {
-    return new Interface(_abi) as DepositTreeLibInterface;
+  static createInterface(): WithdrawalQueueLibInterface {
+    return new Interface(_abi) as WithdrawalQueueLibInterface;
   }
   static connect(
     address: string,
     runner?: ContractRunner | null
-  ): DepositTreeLib {
-    return new Contract(address, _abi, runner) as unknown as DepositTreeLib;
+  ): WithdrawalQueueLib {
+    return new Contract(address, _abi, runner) as unknown as WithdrawalQueueLib;
   }
 }

@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
+import {BlockLib} from "./lib/BlockLib.sol";
 
 interface IRollup {
 	error InvalidBlockBuilder();
-
-	error FraudProofAlreadySubmitted();
-
-	error FraudProofVerificationFailed();
 
 	error OnlyScrollMessenger();
 
@@ -25,10 +21,6 @@ interface IRollup {
 	error SenderAccountIdsInvalidLength();
 
 	error BlockHashAlreadyPosted();
-
-	error BlockHashMismatch(bytes32 given, bytes32 expected);
-
-	error ChallengerMismatch();
 
 	error PairingCheckFailed();
 
@@ -48,12 +40,6 @@ interface IRollup {
 	);
 
 	event AccountIdsPosted(uint256 indexed blockNumber, bytes accountIds);
-
-	event BlockFraudProofSubmitted(
-		uint32 indexed blockNumber,
-		address indexed blockBuilder,
-		address indexed challenger
-	);
 
 	/**
 	 * @notice Post a new block for senders who have not been assigned an account ID.
@@ -82,11 +68,6 @@ interface IRollup {
 		bytes calldata senderAccountIds
 	) external;
 
-	function submitBlockFraudProof(
-		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
-		bytes calldata proof
-	) external;
-
 	/**
 	 * @notice Update the deposit tree branch and root.
 	 * @dev Only Liquidity contract can call this function via Scroll Messenger.
@@ -95,4 +76,8 @@ interface IRollup {
 		uint256 lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external;
+
+	function getBlockHashAndBuilder(
+		uint256 blockNumber
+	) external view returns (bytes32, address);
 }

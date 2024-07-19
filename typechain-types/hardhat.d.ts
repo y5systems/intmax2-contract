@@ -118,6 +118,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBlockBuilderRegistry__factory>;
     getContractFactory(
+      name: "IPlonkVerifier",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IPlonkVerifier__factory>;
+    getContractFactory(
       name: "Bytes32QueueLib",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Bytes32QueueLib__factory>;
@@ -141,10 +145,6 @@ declare module "hardhat/types/runtime" {
       name: "TokenData",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TokenData__factory>;
-    getContractFactory(
-      name: "IPlonkVerifier",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IPlonkVerifier__factory>;
     getContractFactory(
       name: "IRollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -329,6 +329,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IBlockBuilderRegistry>;
     getContractAt(
+      name: "IPlonkVerifier",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IPlonkVerifier>;
+    getContractAt(
       name: "Bytes32QueueLib",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -358,11 +363,6 @@ declare module "hardhat/types/runtime" {
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.TokenData>;
-    getContractAt(
-      name: "IPlonkVerifier",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IPlonkVerifier>;
     getContractAt(
       name: "IRollup",
       address: string | ethers.Addressable,
@@ -534,6 +534,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
     deployContract(
+      name: "IPlonkVerifier",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPlonkVerifier>;
+    deployContract(
       name: "Bytes32QueueLib",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Bytes32QueueLib>;
@@ -557,10 +561,6 @@ declare module "hardhat/types/runtime" {
       name: "TokenData",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TokenData>;
-    deployContract(
-      name: "IPlonkVerifier",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IPlonkVerifier>;
     deployContract(
       name: "IRollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -745,6 +745,11 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
     deployContract(
+      name: "IPlonkVerifier",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IPlonkVerifier>;
+    deployContract(
       name: "Bytes32QueueLib",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -774,11 +779,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.TokenData>;
-    deployContract(
-      name: "IPlonkVerifier",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IPlonkVerifier>;
     deployContract(
       name: "IRollup",
       args: any[],

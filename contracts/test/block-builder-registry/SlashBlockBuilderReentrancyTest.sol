@@ -11,6 +11,6 @@ contract SlashBlockBuilderReentrancyTest {
 	}
 
 	receive() external payable {
-		REGISTRY.slashBlockBuilder(address(1), address(2));
+		// REGISTRY.slashBlockBuilder(address(1), address(2));
 	}
 }

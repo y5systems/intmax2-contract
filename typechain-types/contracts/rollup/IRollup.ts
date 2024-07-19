@@ -23,38 +23,27 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace FraudProofPublicInputsLib {
-  export type FraudProofPublicInputsStruct = {
-    blockHash: BytesLike;
-    blockNumber: BigNumberish;
-    challenger: AddressLike;
-  };
-
-  export type FraudProofPublicInputsStructOutput = [
-    blockHash: string,
-    blockNumber: bigint,
-    challenger: string
-  ] & { blockHash: string; blockNumber: bigint; challenger: string };
-}
-
 export interface IRollupInterface extends Interface {
   getFunction(
     nameOrSignature:
+      | "getBlockHashAndBuilder"
       | "postNonRegistrationBlock"
       | "postRegistrationBlock"
       | "processDeposits"
-      | "submitBlockFraudProof"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
       | "AccountIdsPosted"
-      | "BlockFraudProofSubmitted"
       | "BlockPosted"
       | "DepositsProcessed"
       | "PubKeysPosted"
   ): EventFragment;
 
+  encodeFunctionData(
+    functionFragment: "getBlockHashAndBuilder",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "postNonRegistrationBlock",
     values: [
@@ -82,11 +71,11 @@ export interface IRollupInterface extends Interface {
     functionFragment: "processDeposits",
     values: [BigNumberish, BytesLike[]]
   ): string;
-  encodeFunctionData(
-    functionFragment: "submitBlockFraudProof",
-    values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
-  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "getBlockHashAndBuilder",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "postNonRegistrationBlock",
     data: BytesLike
@@ -99,10 +88,6 @@ export interface IRollupInterface extends Interface {
     functionFragment: "processDeposits",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "submitBlockFraudProof",
-    data: BytesLike
-  ): Result;
 }
 
 export namespace AccountIdsPostedEvent {
@@ -111,28 +96,6 @@ export namespace AccountIdsPostedEvent {
   export interface OutputObject {
     blockNumber: bigint;
     accountIds: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace BlockFraudProofSubmittedEvent {
-  export type InputTuple = [
-    blockNumber: BigNumberish,
-    blockBuilder: AddressLike,
-    challenger: AddressLike
-  ];
-  export type OutputTuple = [
-    blockNumber: bigint,
-    blockBuilder: string,
-    challenger: string
-  ];
-  export interface OutputObject {
-    blockNumber: bigint;
-    blockBuilder: string;
-    challenger: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -239,6 +202,12 @@ export interface IRollup extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
+  getBlockHashAndBuilder: TypedContractMethod<
+    [blockNumber: BigNumberish],
+    [[string, string]],
+    "view"
+  >;
+
   postNonRegistrationBlock: TypedContractMethod<
     [
       txTreeRoot: BytesLike,
@@ -272,19 +241,17 @@ export interface IRollup extends BaseContract {
     "nonpayable"
   >;
 
-  submitBlockFraudProof: TypedContractMethod<
-    [
-      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
+  getFunction(
+    nameOrSignature: "getBlockHashAndBuilder"
+  ): TypedContractMethod<
+    [blockNumber: BigNumberish],
+    [[string, string]],
+    "view"
+  >;
   getFunction(
     nameOrSignature: "postNonRegistrationBlock"
   ): TypedContractMethod<
@@ -321,16 +288,6 @@ export interface IRollup extends BaseContract {
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "submitBlockFraudProof"
-  ): TypedContractMethod<
-    [
-      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
 
   getEvent(
     key: "AccountIdsPosted"
@@ -338,13 +295,6 @@ export interface IRollup extends BaseContract {
     AccountIdsPostedEvent.InputTuple,
     AccountIdsPostedEvent.OutputTuple,
     AccountIdsPostedEvent.OutputObject
-  >;
-  getEvent(
-    key: "BlockFraudProofSubmitted"
-  ): TypedContractEvent<
-    BlockFraudProofSubmittedEvent.InputTuple,
-    BlockFraudProofSubmittedEvent.OutputTuple,
-    BlockFraudProofSubmittedEvent.OutputObject
   >;
   getEvent(
     key: "BlockPosted"
@@ -378,17 +328,6 @@ export interface IRollup extends BaseContract {
       AccountIdsPostedEvent.InputTuple,
       AccountIdsPostedEvent.OutputTuple,
       AccountIdsPostedEvent.OutputObject
-    >;
-
-    "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
-      BlockFraudProofSubmittedEvent.InputTuple,
-      BlockFraudProofSubmittedEvent.OutputTuple,
-      BlockFraudProofSubmittedEvent.OutputObject
-    >;
-    BlockFraudProofSubmitted: TypedContractEvent<
-      BlockFraudProofSubmittedEvent.InputTuple,
-      BlockFraudProofSubmittedEvent.OutputTuple,
-      BlockFraudProofSubmittedEvent.OutputObject
     >;
 
     "BlockPosted(bytes32,address,uint256,bytes32,bytes32)": TypedContractEvent<

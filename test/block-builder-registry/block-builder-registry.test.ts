@@ -105,7 +105,7 @@ describe('BlockBuilderRegistry', () => {
 		it('should revert when initializing for the second time', async () => {
 			const blockBuilderRegistry = await loadFixture(setup)
 			await expect(
-				blockBuilderRegistry.initialize(ethers.ZeroAddress),
+				blockBuilderRegistry.initialize(ethers.ZeroAddress, ethers.ZeroAddress),
 			).to.be.revertedWithCustomError(
 				blockBuilderRegistry,
 				'InvalidInitialization',

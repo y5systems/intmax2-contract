@@ -3,7 +3,6 @@
 /* eslint-disable */
 import type * as lib from "./lib";
 export type { lib };
-export type { IPlonkVerifier } from "./IPlonkVerifier";
 export type { IRollup } from "./IRollup";
 export type { IWithdrawal } from "./IWithdrawal";
 export type { Rollup } from "./Rollup";

@@ -135,26 +135,43 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "blockBuilder",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "challenger",
-        type: "address",
-      },
-    ],
-    name: "slashBlockBuilder",
+    inputs: [],
+    name: "stopBlockBuilder",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
-    inputs: [],
-    name: "stopBlockBuilder",
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "bytes32",
+            name: "blockHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "uint32",
+            name: "blockNumber",
+            type: "uint32",
+          },
+          {
+            internalType: "address",
+            name: "challenger",
+            type: "address",
+          },
+        ],
+        internalType: "struct FraudProofPublicInputsLib.FraudProofPublicInputs",
+        name: "publicInputs",
+        type: "tuple",
+      },
+      {
+        internalType: "bytes",
+        name: "proof",
+        type: "bytes",
+      },
+    ],
+    name: "submitBlockFraudProof",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

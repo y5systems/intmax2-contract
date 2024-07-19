@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IPlonkVerifier} from "../rollup/IPlonkVerifier.sol";
+import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 
 contract MockPlonkVerifier is IPlonkVerifier {
 	/**

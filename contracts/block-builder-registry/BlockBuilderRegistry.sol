@@ -1,31 +1,49 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+// interface
 import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
-import {BlockBuilderInfoLib} from "./BlockBuilderInfoLib.sol";
-import {MIN_STAKE_AMOUNT} from "./BlockBuilderRegistryConst.sol";
+import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
+import {IRollup} from "../rollup/IRollup.sol";
+
+// contracts
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {MIN_STAKE_AMOUNT} from "./BlockBuilderRegistryConst.sol";
+
+// libs
+import {BlockBuilderInfoLib} from "./BlockBuilderInfoLib.sol";
+import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
+import {Byte32Lib} from "../common/Byte32Lib.sol";
 
 contract BlockBuilderRegistry is
 	OwnableUpgradeable,
 	UUPSUpgradeable,
 	IBlockBuilderRegistry
 {
-	address private rollup;
+	IRollup private rollup;
+	IPlonkVerifier private fraudVerifier;
 	address private burnAddress;
 	mapping(address => BlockBuilderInfo) public blockBuilders;
-	using BlockBuilderInfoLib for BlockBuilderInfo;
+	mapping(uint32 => bool) private slashedBlockNumbers;
 
-	/**
-	 * @notice Modifier that allows only the rollup contract to call the function.
-	 */
-	modifier onlyRollupContract() {
-		if (_msgSender() != rollup) {
-			revert OnlyRollupContract();
-		}
-		_;
-	}
+	using BlockBuilderInfoLib for BlockBuilderInfo;
+	using FraudProofPublicInputsLib for FraudProofPublicInputsLib.FraudProofPublicInputs;
+	using Byte32Lib for bytes32;
+
+	error FraudProofAlreadySubmitted();
+
+	error FraudProofVerificationFailed();
+
+	error BlockHashMismatch(bytes32 given, bytes32 expected);
+
+	error ChallengerMismatch();
+
+	event BlockFraudProofSubmitted(
+		uint32 indexed blockNumber,
+		address indexed blockBuilder,
+		address indexed challenger
+	);
 
 	modifier isStaking() {
 		if (blockBuilders[_msgSender()].isStaking() == false) {
@@ -38,10 +56,14 @@ contract BlockBuilderRegistry is
 	 * @notice Initialize the contract.
 	 * @param _rollup The address of the rollup contract.
 	 */
-	function initialize(address _rollup) public initializer {
+	function initialize(
+		address _rollup,
+		address _fraudVerifier
+	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
-		rollup = _rollup;
+		rollup = IRollup(_rollup);
+		fraudVerifier = IPlonkVerifier(_fraudVerifier);
 		burnAddress = 0x000000000000000000000000000000000000dEaD;
 	}
 
@@ -87,10 +109,43 @@ contract BlockBuilderRegistry is
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
 
-	function slashBlockBuilder(
+	function submitBlockFraudProof(
+		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
+		bytes calldata proof
+	) external {
+		(bytes32 blockHash, address builder) = rollup.getBlockHashAndBuilder(
+			publicInputs.blockNumber
+		);
+		if (publicInputs.blockHash != blockHash) {
+			revert BlockHashMismatch({
+				given: publicInputs.blockHash,
+				expected: blockHash
+			});
+		}
+		if (publicInputs.challenger != _msgSender()) {
+			revert ChallengerMismatch();
+		}
+		if (slashedBlockNumbers[publicInputs.blockNumber]) {
+			revert FraudProofAlreadySubmitted();
+		}
+		if (!fraudVerifier.Verify(proof, publicInputs.getHash().split())) {
+			revert FraudProofVerificationFailed();
+		}
+		slashedBlockNumbers[publicInputs.blockNumber] = true;
+		address blockBuilder = builder;
+		_slashBlockBuilder(blockBuilder, _msgSender());
+
+		emit BlockFraudProofSubmitted(
+			publicInputs.blockNumber,
+			blockBuilder,
+			_msgSender()
+		);
+	}
+
+	function _slashBlockBuilder(
 		address blockBuilder,
 		address challenger
-	) external onlyRollupContract {
+	) internal {
 		BlockBuilderInfo memory info = blockBuilders[blockBuilder];
 		if (info.isStaking() == false) {
 			revert BlockBuilderNotFound();
@@ -143,5 +198,6 @@ contract BlockBuilderRegistry is
 			revert FailedTransfer(to, _value);
 		}
 	}
+
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

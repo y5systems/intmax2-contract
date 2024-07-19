@@ -44,20 +44,6 @@ export declare namespace WithdrawalLib {
   };
 }
 
-export declare namespace FraudProofPublicInputsLib {
-  export type FraudProofPublicInputsStruct = {
-    blockHash: BytesLike;
-    blockNumber: BigNumberish;
-    challenger: AddressLike;
-  };
-
-  export type FraudProofPublicInputsStructOutput = [
-    blockHash: string,
-    blockNumber: bigint,
-    challenger: string
-  ] & { blockHash: string; blockNumber: bigint; challenger: string };
-}
-
 export declare namespace ChainedWithdrawalLib {
   export type ChainedWithdrawalStruct = {
     recipient: AddressLike;
@@ -99,6 +85,7 @@ export interface RollupInterface extends Interface {
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
       | "blocks"
+      | "getBlockHashAndBuilder"
       | "getClaimableWithdrawalsQueueSize"
       | "getDirectWithdrawalsQueueSize"
       | "initialize"
@@ -113,7 +100,6 @@ export interface RollupInterface extends Interface {
       | "relayClaimableWithdrawals"
       | "relayDirectWithdrawals"
       | "renounceOwnership"
-      | "submitBlockFraudProof"
       | "submitWithdrawalProof"
       | "transferOwnership"
       | "upgradeToAndCall"
@@ -122,7 +108,6 @@ export interface RollupInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "AccountIdsPosted"
-      | "BlockFraudProofSubmitted"
       | "BlockPosted"
       | "ClaimableWithdrawalQueued"
       | "DepositsProcessed"
@@ -142,6 +127,10 @@ export interface RollupInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "getBlockHashAndBuilder",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "getClaimableWithdrawalsQueueSize",
     values?: undefined
   ): string;
@@ -151,14 +140,7 @@ export interface RollupInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [
-      AddressLike,
-      AddressLike,
-      AddressLike,
-      AddressLike,
-      AddressLike,
-      BigNumberish[]
-    ]
+    values: [AddressLike, AddressLike, AddressLike, AddressLike, BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "lastProcessedDepositId",
@@ -217,10 +199,6 @@ export interface RollupInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "submitBlockFraudProof",
-    values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "submitWithdrawalProof",
     values: [
       ChainedWithdrawalLib.ChainedWithdrawalStruct[],
@@ -242,6 +220,10 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "blocks", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getBlockHashAndBuilder",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getClaimableWithdrawalsQueueSize",
     data: BytesLike
@@ -293,10 +275,6 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "submitBlockFraudProof",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "submitWithdrawalProof",
     data: BytesLike
   ): Result;
@@ -316,28 +294,6 @@ export namespace AccountIdsPostedEvent {
   export interface OutputObject {
     blockNumber: bigint;
     accountIds: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace BlockFraudProofSubmittedEvent {
-  export type InputTuple = [
-    blockNumber: BigNumberish,
-    blockBuilder: AddressLike,
-    challenger: AddressLike
-  ];
-  export type OutputTuple = [
-    blockNumber: bigint,
-    blockBuilder: string,
-    challenger: string
-  ];
-  export interface OutputObject {
-    blockNumber: bigint;
-    blockBuilder: string;
-    challenger: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -527,6 +483,12 @@ export interface Rollup extends BaseContract {
     "view"
   >;
 
+  getBlockHashAndBuilder: TypedContractMethod<
+    [blockNumber: BigNumberish],
+    [[string, string]],
+    "view"
+  >;
+
   getClaimableWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
 
   getDirectWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
@@ -534,7 +496,6 @@ export interface Rollup extends BaseContract {
   initialize: TypedContractMethod<
     [
       _scrollMessenger: AddressLike,
-      _fraudVerifier: AddressLike,
       _withdrawalVerifier: AddressLike,
       _liquidity: AddressLike,
       _blockBuilderRegistry: AddressLike,
@@ -601,15 +562,6 @@ export interface Rollup extends BaseContract {
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
-  submitBlockFraudProof: TypedContractMethod<
-    [
-      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
-
   submitWithdrawalProof: TypedContractMethod<
     [
       withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
@@ -647,6 +599,13 @@ export interface Rollup extends BaseContract {
     "view"
   >;
   getFunction(
+    nameOrSignature: "getBlockHashAndBuilder"
+  ): TypedContractMethod<
+    [blockNumber: BigNumberish],
+    [[string, string]],
+    "view"
+  >;
+  getFunction(
     nameOrSignature: "getClaimableWithdrawalsQueueSize"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -657,7 +616,6 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<
     [
       _scrollMessenger: AddressLike,
-      _fraudVerifier: AddressLike,
       _withdrawalVerifier: AddressLike,
       _liquidity: AddressLike,
       _blockBuilderRegistry: AddressLike,
@@ -727,16 +685,6 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "submitBlockFraudProof"
-  ): TypedContractMethod<
-    [
-      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
-  getFunction(
     nameOrSignature: "submitWithdrawalProof"
   ): TypedContractMethod<
     [
@@ -764,13 +712,6 @@ export interface Rollup extends BaseContract {
     AccountIdsPostedEvent.InputTuple,
     AccountIdsPostedEvent.OutputTuple,
     AccountIdsPostedEvent.OutputObject
-  >;
-  getEvent(
-    key: "BlockFraudProofSubmitted"
-  ): TypedContractEvent<
-    BlockFraudProofSubmittedEvent.InputTuple,
-    BlockFraudProofSubmittedEvent.OutputTuple,
-    BlockFraudProofSubmittedEvent.OutputObject
   >;
   getEvent(
     key: "BlockPosted"
@@ -839,17 +780,6 @@ export interface Rollup extends BaseContract {
       AccountIdsPostedEvent.InputTuple,
       AccountIdsPostedEvent.OutputTuple,
       AccountIdsPostedEvent.OutputObject
-    >;
-
-    "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
-      BlockFraudProofSubmittedEvent.InputTuple,
-      BlockFraudProofSubmittedEvent.OutputTuple,
-      BlockFraudProofSubmittedEvent.OutputObject
-    >;
-    BlockFraudProofSubmitted: TypedContractEvent<
-      BlockFraudProofSubmittedEvent.InputTuple,
-      BlockFraudProofSubmittedEvent.OutputTuple,
-      BlockFraudProofSubmittedEvent.OutputObject
     >;
 
     "BlockPosted(bytes32,address,uint256,bytes32,bytes32)": TypedContractEvent<

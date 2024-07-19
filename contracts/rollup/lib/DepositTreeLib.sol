@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0
 pragma solidity 0.8.24;
 
-import {DepositLib} from "../../lib/DepositLib.sol";
+import {DepositLib} from "../../common/DepositLib.sol";
 
 /**
  * This contract will be used as a helper for all the sparse merkle tree related functions
