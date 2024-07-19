@@ -53,6 +53,7 @@ export interface IBlockBuilderRegistryInterface extends Interface {
       | "BlockBuilderSlashed"
       | "BlockBuilderStopped"
       | "BlockBuilderUpdated"
+      | "BlockFraudProofSubmitted"
   ): EventFragment;
 
   encodeFunctionData(
@@ -140,6 +141,28 @@ export namespace BlockBuilderUpdatedEvent {
     blockBuilder: string;
     url: string;
     stakeAmount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace BlockFraudProofSubmittedEvent {
+  export type InputTuple = [
+    blockNumber: BigNumberish,
+    blockBuilder: AddressLike,
+    challenger: AddressLike
+  ];
+  export type OutputTuple = [
+    blockNumber: bigint,
+    blockBuilder: string,
+    challenger: string
+  ];
+  export interface OutputObject {
+    blockNumber: bigint;
+    blockBuilder: string;
+    challenger: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -268,6 +291,13 @@ export interface IBlockBuilderRegistry extends BaseContract {
     BlockBuilderUpdatedEvent.OutputTuple,
     BlockBuilderUpdatedEvent.OutputObject
   >;
+  getEvent(
+    key: "BlockFraudProofSubmitted"
+  ): TypedContractEvent<
+    BlockFraudProofSubmittedEvent.InputTuple,
+    BlockFraudProofSubmittedEvent.OutputTuple,
+    BlockFraudProofSubmittedEvent.OutputObject
+  >;
 
   filters: {
     "BlockBuilderSlashed(address,address)": TypedContractEvent<
@@ -301,6 +331,17 @@ export interface IBlockBuilderRegistry extends BaseContract {
       BlockBuilderUpdatedEvent.InputTuple,
       BlockBuilderUpdatedEvent.OutputTuple,
       BlockBuilderUpdatedEvent.OutputObject
+    >;
+
+    "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
+      BlockFraudProofSubmittedEvent.InputTuple,
+      BlockFraudProofSubmittedEvent.OutputTuple,
+      BlockFraudProofSubmittedEvent.OutputObject
+    >;
+    BlockFraudProofSubmitted: TypedContractEvent<
+      BlockFraudProofSubmittedEvent.InputTuple,
+      BlockFraudProofSubmittedEvent.OutputTuple,
+      BlockFraudProofSubmittedEvent.OutputObject
     >;
   };
 }

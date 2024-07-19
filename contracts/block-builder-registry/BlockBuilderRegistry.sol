@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-// interface
 import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
 import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 import {IRollup} from "../rollup/IRollup.sol";
-
-// contracts
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {MIN_STAKE_AMOUNT} from "./BlockBuilderRegistryConst.sol";
-
-// libs
 import {BlockBuilderInfoLib} from "./BlockBuilderInfoLib.sol";
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
@@ -30,20 +25,6 @@ contract BlockBuilderRegistry is
 	using BlockBuilderInfoLib for BlockBuilderInfo;
 	using FraudProofPublicInputsLib for FraudProofPublicInputsLib.FraudProofPublicInputs;
 	using Byte32Lib for bytes32;
-
-	error FraudProofAlreadySubmitted();
-
-	error FraudProofVerificationFailed();
-
-	error BlockHashMismatch(bytes32 given, bytes32 expected);
-
-	error ChallengerMismatch();
-
-	event BlockFraudProofSubmitted(
-		uint32 indexed blockNumber,
-		address indexed blockBuilder,
-		address indexed challenger
-	);
 
 	modifier isStaking() {
 		if (blockBuilders[_msgSender()].isStaking() == false) {
@@ -117,13 +98,13 @@ contract BlockBuilderRegistry is
 			publicInputs.blockNumber
 		);
 		if (publicInputs.blockHash != blockHash) {
-			revert BlockHashMismatch({
+			revert FraudProofBlockHashMismatch({
 				given: publicInputs.blockHash,
 				expected: blockHash
 			});
 		}
 		if (publicInputs.challenger != _msgSender()) {
-			revert ChallengerMismatch();
+			revert FraudProofChallengerMismatch();
 		}
 		if (slashedBlockNumbers[publicInputs.blockNumber]) {
 			revert FraudProofAlreadySubmitted();

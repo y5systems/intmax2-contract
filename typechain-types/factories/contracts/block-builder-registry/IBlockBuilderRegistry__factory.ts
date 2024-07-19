@@ -37,6 +37,37 @@ const _abi = [
   },
   {
     inputs: [],
+    name: "FraudProofAlreadySubmitted",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "given",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes32",
+        name: "expected",
+        type: "bytes32",
+      },
+    ],
+    name: "FraudProofBlockHashMismatch",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "FraudProofChallengerMismatch",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "FraudProofVerificationFailed",
+    type: "error",
+  },
+  {
+    inputs: [],
     name: "InsufficientStakeAmount",
     type: "error",
   },
@@ -100,6 +131,31 @@ const _abi = [
       },
     ],
     name: "BlockBuilderUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint32",
+        name: "blockNumber",
+        type: "uint32",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "blockBuilder",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "challenger",
+        type: "address",
+      },
+    ],
+    name: "BlockFraudProofSubmitted",
     type: "event",
   },
   {

@@ -9,6 +9,16 @@ interface IBlockBuilderRegistry {
 	error BlockBuilderNotFound();
 	error CannotUnstakeWithinChallengeDuration();
 	error FailedTransfer(address to, uint256 amount);
+	error FraudProofAlreadySubmitted();
+	error FraudProofVerificationFailed();
+	error FraudProofBlockHashMismatch(bytes32 given, bytes32 expected);
+	error FraudProofChallengerMismatch();
+
+	event BlockFraudProofSubmitted(
+		uint32 indexed blockNumber,
+		address indexed blockBuilder,
+		address indexed challenger
+	);
 
 	event BlockBuilderUpdated(
 		address indexed blockBuilder,
