@@ -6,24 +6,54 @@ import {
 	time,
 } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
-import { BlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/BlockBuilderRegistry'
-import { UnstakeReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/UnstakeReentrancyTest'
-import { SlashBlockBuilderReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/SlashBlockBuilderReentrancyTest'
-import { IBlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/BlockBuilderInfoLib'
 import { ONE_DAY_SECONDS } from './const.test'
+import {
+	BlockBuilderRegistry,
+	FraudProofPublicInputsLib,
+} from '../../typechain-types/contracts/block-builder-registry/BlockBuilderRegistry'
+import { UnstakeReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/UnstakeReentrancyTest'
+import { SubmitBlockFraudProofReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/SubmitBlockFraudProofReentrancyTest'
+import { IBlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/BlockBuilderInfoLib'
+import { RollupTestForBlockBuilderRegistory } from '../../typechain-types/contracts/test/block-builder-registry/RollupTestForBlockBuilderRegistory'
+import { MockPlonkVerifier } from '../../typechain-types/contracts/test/MockPlonkVerifier'
 
 describe('BlockBuilderRegistry', () => {
-	async function setup(): Promise<BlockBuilderRegistry> {
-		const signers = await getSigners()
+	const DUMMY_URL = 'https://dummy.com'
+	const DEFAULT_BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD'
+	const MIN_STAKE_AMOUNT = ethers.parseEther('0.1')
+	////////////////////////////////////////////////////////////////////////
+	// see SubmitBlockFraudProofReentrancyTest contarct
+	const DUMMY_BLOCK_HASH =
+		'0x8c835aff939ed6e3ef18dc601bc14623bae8527486ad0539e41a9083e25329be'
+	const DUMMY_BLOCK_NUMBER = 5n
+	const DUMMY_PROOF = new Uint8Array([1, 2, 3, 4, 5])
+	////////////////////////////////////////////////////////////////////////
+	const setup = async (): Promise<
+		[
+			BlockBuilderRegistry,
+			RollupTestForBlockBuilderRegistory,
+			MockPlonkVerifier,
+		]
+	> => {
+		const rollupFactory = await ethers.getContractFactory(
+			'RollupTestForBlockBuilderRegistory',
+		)
+		const rollup =
+			(await rollupFactory.deploy()) as unknown as RollupTestForBlockBuilderRegistory
+
+		const verifierFactory = await ethers.getContractFactory('MockPlonkVerifier')
+		const verifier =
+			(await verifierFactory.deploy()) as unknown as MockPlonkVerifier
+
 		const blockBuilderRegistryFactory = await ethers.getContractFactory(
 			'BlockBuilderRegistry',
 		)
-		const blockBuilderRegistry = await upgrades.deployProxy(
+		const blockBuilderRegistry = (await upgrades.deployProxy(
 			blockBuilderRegistryFactory,
-			[signers.rollup.address],
+			[await rollup.getAddress(), await verifier.getAddress()],
 			{ kind: 'uups' },
-		)
-		return blockBuilderRegistry as unknown as BlockBuilderRegistry
+		)) as unknown as BlockBuilderRegistry
+		return [blockBuilderRegistry, rollup, verifier]
 	}
 
 	const getGasCost = async (
@@ -42,31 +72,21 @@ describe('BlockBuilderRegistry', () => {
 				isValid: false,
 			}
 		}
-	const DUMMY_URL = 'https://dummy.com'
-	const DEFAULT_BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD'
-	const MIN_STAKE_AMOUNT = ethers.parseEther('0.1')
+
 	type signers = {
 		deployer: HardhatEthersSigner
 		blockBuilder: HardhatEthersSigner
 		notStakedBlockBuilder: HardhatEthersSigner
-		rollup: HardhatEthersSigner
 		challenger: HardhatEthersSigner
 		user: HardhatEthersSigner
 	}
 	const getSigners = async (): Promise<signers> => {
-		const [
-			deployer,
-			blockBuilder,
-			notStakedBlockBuilder,
-			rollup,
-			challenger,
-			user,
-		] = await ethers.getSigners()
+		const [deployer, blockBuilder, notStakedBlockBuilder, challenger, user] =
+			await ethers.getSigners()
 		return {
 			deployer,
 			blockBuilder,
 			notStakedBlockBuilder,
-			rollup,
 			challenger,
 			user,
 		}
@@ -89,21 +109,46 @@ describe('BlockBuilderRegistry', () => {
 		expect(blockBuilderInfo.numSlashes).to.equal(blockBuilderInfo2.numSlashes)
 		expect(blockBuilderInfo.isValid).to.equal(blockBuilderInfo2.isValid)
 	}
+	const getTestFraudProofPublicInputs = async (
+		hash: string,
+		blockNumber: bigint,
+	): Promise<FraudProofPublicInputsLib.FraudProofPublicInputsStruct> => {
+		const signers = await getSigners()
+		return {
+			blockHash: hash,
+			blockNumber: blockNumber,
+			challenger: signers.challenger.address,
+		}
+	}
 	const slashBlockBuilderSetup = async (): Promise<
-		[BlockBuilderRegistry, bigint]
+		[
+			BlockBuilderRegistry,
+			RollupTestForBlockBuilderRegistory,
+			MockPlonkVerifier,
+			bigint,
+			FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+		]
 	> => {
-		const blockBuilderRegistry = await loadFixture(setup)
+		const [blockBuilderRegistry, rollup, verifier] = await loadFixture(setup)
 		const signers = await getSigners()
 		const stakeAmount = ethers.parseEther('0.11')
 		await blockBuilderRegistry
 			.connect(signers.blockBuilder)
 			.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
-
-		return [blockBuilderRegistry, stakeAmount]
+		const fraudProof = await getTestFraudProofPublicInputs(
+			DUMMY_BLOCK_HASH,
+			DUMMY_BLOCK_NUMBER,
+		)
+		await rollup.setTestData(
+			fraudProof.blockNumber,
+			fraudProof.blockHash,
+			signers.blockBuilder.address,
+		)
+		return [blockBuilderRegistry, rollup, verifier, stakeAmount, fraudProof]
 	}
 	describe('initialize', () => {
 		it('should revert when initializing for the second time', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			await expect(
 				blockBuilderRegistry.initialize(ethers.ZeroAddress, ethers.ZeroAddress),
 			).to.be.revertedWithCustomError(
@@ -112,7 +157,7 @@ describe('BlockBuilderRegistry', () => {
 			)
 		})
 		it('should set the deployer as the owner', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			const signers = await getSigners()
 			expect(await blockBuilderRegistry.owner()).to.equal(
 				signers.deployer.address,
@@ -122,7 +167,7 @@ describe('BlockBuilderRegistry', () => {
 	describe('updateBlockBuilder', () => {
 		describe('success', () => {
 			it('should update blockBuilders', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const blockBuilderInfoBefore = await blockBuilderRegistry.blockBuilders(
 					signers.blockBuilder.address,
@@ -148,7 +193,7 @@ describe('BlockBuilderRegistry', () => {
 				})
 			})
 			it('should stake the base currency', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const balanceBefore = await ethers.provider.getBalance(
 					signers.blockBuilder.address,
@@ -164,7 +209,7 @@ describe('BlockBuilderRegistry', () => {
 				expect(balanceBefore - stakeAmount - gasCost).to.equal(balanceAfter)
 			})
 			it('should update stakeAmount when the same sender executes updateBlockBuilder', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const balanceBefore = await ethers.provider.getBalance(
 					signers.blockBuilder.address,
@@ -208,7 +253,7 @@ describe('BlockBuilderRegistry', () => {
 				).to.equal(balanceAfter)
 			})
 			it('should emit BlockBuilderUpdated event when updateBlockBuilder is executed', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const stakeAmount = ethers.parseEther('0.3')
 				await expect(
@@ -222,7 +267,7 @@ describe('BlockBuilderRegistry', () => {
 		})
 		describe('fail', () => {
 			it('should revert with InsufficientStakeAmount when total stake amount is less than MIN_STAKE_AMOUNT', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				await expect(
 					blockBuilderRegistry
@@ -238,7 +283,7 @@ describe('BlockBuilderRegistry', () => {
 	describe('stopBlockBuilder', () => {
 		describe('success', () => {
 			it('should update block builder information', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const stakeAmount = ethers.parseEther('0.3')
 				await blockBuilderRegistry
@@ -271,7 +316,7 @@ describe('BlockBuilderRegistry', () => {
 				})
 			})
 			it('should emit BlockBuilderStopped event', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const stakeAmount = ethers.parseEther('0.3')
 				await blockBuilderRegistry
@@ -287,7 +332,7 @@ describe('BlockBuilderRegistry', () => {
 		})
 		describe('fail', () => {
 			it('should revert with BlockBuilderNotFound error when not staked', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const blockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.notStakedBlockBuilder.address,
@@ -307,7 +352,7 @@ describe('BlockBuilderRegistry', () => {
 	})
 	describe('unstake', () => {
 		const unstakeSetup = async (): Promise<[BlockBuilderRegistry, bigint]> => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			const signers = await getSigners()
 			const stakeAmount = ethers.parseEther('0.3')
 			await blockBuilderRegistry
@@ -380,7 +425,7 @@ describe('BlockBuilderRegistry', () => {
 		})
 		describe('fail', () => {
 			it('should revert with BlockBuilderNotFound error when not staked', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const blockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.notStakedBlockBuilder.address,
@@ -406,52 +451,70 @@ describe('BlockBuilderRegistry', () => {
 			})
 		})
 	})
-	describe('slashBlockBuilder', () => {
+	describe('submitBlockFraudProof', () => {
+		const NEXT_BLOCK_NUMBER = 10
+		const NEXT_BLOCK_HASH =
+			'0x24929df465c4ddb31d708d5d556904ed0f8db9bb70be37d22213ea4e22028fcd'
 		describe('success', () => {
+			it('should create BlockFraudProofSubmitted event', async () => {
+				const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+					slashBlockBuilderSetup,
+				)
+				const signers = await getSigners()
+				await expect(
+					blockBuilderRegistry
+						.connect(signers.challenger)
+						.submitBlockFraudProof(fraudProof, DUMMY_PROOF),
+				)
+					.to.emit(blockBuilderRegistry, 'BlockFraudProofSubmitted')
+					.withArgs(
+						fraudProof.blockNumber,
+						signers.blockBuilder.address,
+						signers.challenger.address,
+					)
+			})
 			it('should slash builders who have done something wrong', async () => {
-				const [blockBuilderRegistry] = await loadFixture(slashBlockBuilderSetup)
+				const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+					slashBlockBuilderSetup,
+				)
 				const signers = await getSigners()
 				const beforeChallengerBalance = await ethers.provider.getBalance(
 					signers.challenger.address,
 				)
 				const beforeBurnBalance =
 					await ethers.provider.getBalance(DEFAULT_BURN_ADDRESS)
-				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+				const res = await blockBuilderRegistry
+					.connect(signers.challenger)
+					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
+				const gasCost = await getGasCost(res)
 				const afterChallengerBalance = await ethers.provider.getBalance(
 					signers.challenger.address,
 				)
 				const afterBurnBalance =
 					await ethers.provider.getBalance(DEFAULT_BURN_ADDRESS)
-				expect(afterChallengerBalance - beforeChallengerBalance).to.equal(
-					MIN_STAKE_AMOUNT / 2n,
-				)
+				expect(
+					afterChallengerBalance - beforeChallengerBalance + gasCost,
+				).to.equal(MIN_STAKE_AMOUNT / 2n)
 				expect(afterBurnBalance - beforeBurnBalance).to.equal(
 					MIN_STAKE_AMOUNT / 2n,
 				)
 			})
 			it('should create BlockBuilderSlashed event', async () => {
-				const [blockBuilderRegistry] = await loadFixture(slashBlockBuilderSetup)
+				const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+					slashBlockBuilderSetup,
+				)
 				const signers = await getSigners()
 				await expect(
 					blockBuilderRegistry
-						.connect(signers.rollup)
-						.slashBlockBuilder(
-							signers.blockBuilder.address,
-							signers.challenger.address,
-						),
+						.connect(signers.challenger)
+						.submitBlockFraudProof(fraudProof, DUMMY_PROOF),
 				)
 					.to.emit(blockBuilderRegistry, 'BlockBuilderSlashed')
 					.withArgs(signers.blockBuilder.address, signers.challenger.address)
 			})
 			it('should update blockBuilders (case 1)', async () => {
-				const [blockBuilderRegistry, stakeAmount] = await loadFixture(
-					slashBlockBuilderSetup,
-				)
+				const [blockBuilderRegistry, , , stakeAmount, fraudProof] =
+					await loadFixture(slashBlockBuilderSetup)
 				const signers = await getSigners()
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.blockBuilder.address,
@@ -463,11 +526,8 @@ describe('BlockBuilderRegistry', () => {
 				expect(beforeBlockBuilderInfo.isValid).to.be.true
 
 				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+					.connect(signers.challenger)
+					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 				const afterBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.blockBuilder.address,
 				)
@@ -480,16 +540,12 @@ describe('BlockBuilderRegistry', () => {
 				expect(afterBlockBuilderInfo.isValid).to.be.true
 			})
 			it('should update blockBuilders (case 2)', async () => {
-				const [blockBuilderRegistry, stakeAmount] = await loadFixture(
-					slashBlockBuilderSetup,
-				)
+				const [blockBuilderRegistry, rollup, , stakeAmount, fraudProof] =
+					await loadFixture(slashBlockBuilderSetup)
 				const signers = await getSigners()
 				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+					.connect(signers.challenger)
+					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.blockBuilder.address,
@@ -502,12 +558,19 @@ describe('BlockBuilderRegistry', () => {
 				expect(beforeBlockBuilderInfo.numSlashes).to.equal(1)
 				expect(beforeBlockBuilderInfo.isValid).to.be.true
 
+				const nextFraudProof = await getTestFraudProofPublicInputs(
+					NEXT_BLOCK_HASH,
+					ethers.toBigInt(NEXT_BLOCK_NUMBER),
+				)
+				await rollup.setTestData(
+					nextFraudProof.blockNumber,
+					nextFraudProof.blockHash,
+					signers.blockBuilder.address,
+				)
+
 				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+					.connect(signers.challenger)
+					.submitBlockFraudProof(nextFraudProof, DUMMY_PROOF)
 				const afterBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.blockBuilder.address,
 				)
@@ -518,14 +581,12 @@ describe('BlockBuilderRegistry', () => {
 				expect(afterBlockBuilderInfo.isValid).to.be.false
 			})
 			it('should only reward the challenger when stake amount is less than half of the minimum stake amount', async () => {
-				const [blockBuilderRegistry] = await loadFixture(slashBlockBuilderSetup)
+				const [blockBuilderRegistry, rollup, , , fraudProof] =
+					await loadFixture(slashBlockBuilderSetup)
 				const signers = await getSigners()
 				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+					.connect(signers.challenger)
+					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.blockBuilder.address,
@@ -538,34 +599,41 @@ describe('BlockBuilderRegistry', () => {
 				)
 				const beforeBurnBalance =
 					await ethers.provider.getBalance(DEFAULT_BURN_ADDRESS)
-				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+
+				const nextFraudProof = await getTestFraudProofPublicInputs(
+					NEXT_BLOCK_HASH,
+					ethers.toBigInt(NEXT_BLOCK_NUMBER),
+				)
+				await rollup.setTestData(
+					nextFraudProof.blockNumber,
+					nextFraudProof.blockHash,
+					signers.blockBuilder.address,
+				)
+
+				const res = await blockBuilderRegistry
+					.connect(signers.challenger)
+					.submitBlockFraudProof(nextFraudProof, DUMMY_PROOF)
+				const gasCost = await getGasCost(res)
 				const afterChallengerBalance = await ethers.provider.getBalance(
 					signers.challenger.address,
 				)
 				const afterBurnBalance =
 					await ethers.provider.getBalance(DEFAULT_BURN_ADDRESS)
-				expect(afterChallengerBalance - beforeChallengerBalance).to.be.equal(
-					stakeAmount,
-				)
+				expect(
+					afterChallengerBalance - beforeChallengerBalance + gasCost,
+				).to.be.equal(stakeAmount)
 				expect(afterBurnBalance - beforeBurnBalance).to.be.equal(0)
 			})
 			it('should reward both challenger and burn address when stake amount is at least half of the minimum stake amount', async () => {
-				const [blockBuilderRegistry] = await loadFixture(slashBlockBuilderSetup)
+				const [blockBuilderRegistry, rollup, , , fraudProof] =
+					await loadFixture(slashBlockBuilderSetup)
 				const signers = await getSigners()
 				await blockBuilderRegistry
 					.connect(signers.blockBuilder)
 					.updateBlockBuilder(DUMMY_URL, { value: ethers.parseEther('0.05') })
 				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+					.connect(signers.challenger)
+					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.blockBuilder.address,
@@ -579,60 +647,127 @@ describe('BlockBuilderRegistry', () => {
 				)
 				const beforeBurnBalance =
 					await ethers.provider.getBalance(DEFAULT_BURN_ADDRESS)
-				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+
+				const nextFraudProof = await getTestFraudProofPublicInputs(
+					NEXT_BLOCK_HASH,
+					ethers.toBigInt(NEXT_BLOCK_NUMBER),
+				)
+				await rollup.setTestData(
+					nextFraudProof.blockNumber,
+					nextFraudProof.blockHash,
+					signers.blockBuilder.address,
+				)
+
+				const res = await blockBuilderRegistry
+					.connect(signers.challenger)
+					.submitBlockFraudProof(nextFraudProof, DUMMY_PROOF)
+				const gasCost = await getGasCost(res)
 				const afterChallengerBalance = await ethers.provider.getBalance(
 					signers.challenger.address,
 				)
 				const afterBurnBalance =
 					await ethers.provider.getBalance(DEFAULT_BURN_ADDRESS)
-				expect(afterChallengerBalance - beforeChallengerBalance).to.be.equal(
-					MIN_STAKE_AMOUNT / 2n,
-				)
+				expect(
+					afterChallengerBalance - beforeChallengerBalance + gasCost,
+				).to.be.equal(MIN_STAKE_AMOUNT / 2n)
 				expect(afterBurnBalance - beforeBurnBalance).to.be.equal(
 					stakeAmount - MIN_STAKE_AMOUNT / 2n,
 				)
 			})
 		})
 		describe('fail', () => {
+			it('should revert with FraudProofBlockHashMismatch error when mismatch hash', async () => {
+				const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+					slashBlockBuilderSetup,
+				)
+				const signers = await getSigners()
+				const copy = Object.assign({}, fraudProof)
+				const beforeBlockHash = copy.blockHash
+				copy.blockHash = ethers.ZeroHash
+				await expect(
+					blockBuilderRegistry
+						.connect(signers.challenger)
+						.submitBlockFraudProof(copy, DUMMY_PROOF),
+				)
+					.to.be.revertedWithCustomError(
+						blockBuilderRegistry,
+						'FraudProofBlockHashMismatch',
+					)
+					.withArgs(copy.blockHash, beforeBlockHash)
+			})
+			it('should revert with FraudProofChallengerMismatch error when mismatch sender', async () => {
+				const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+					slashBlockBuilderSetup,
+				)
+				const signers = await getSigners()
+
+				await expect(
+					blockBuilderRegistry
+						.connect(signers.user)
+						.submitBlockFraudProof(fraudProof, DUMMY_PROOF),
+				).to.be.revertedWithCustomError(
+					blockBuilderRegistry,
+					'FraudProofChallengerMismatch',
+				)
+			})
+
+			it('should revert with FraudProofAlreadySubmitted error when Already slash block', async () => {
+				const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+					slashBlockBuilderSetup,
+				)
+				const signers = await getSigners()
+				await blockBuilderRegistry
+					.connect(signers.challenger)
+					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
+				await expect(
+					blockBuilderRegistry
+						.connect(signers.challenger)
+						.submitBlockFraudProof(fraudProof, DUMMY_PROOF),
+				).to.be.revertedWithCustomError(
+					blockBuilderRegistry,
+					'FraudProofAlreadySubmitted',
+				)
+			})
+			it('should revert with FraudProofVerificationFailed error when return false by verify', async () => {
+				const [blockBuilderRegistry, , verifier, , fraudProof] =
+					await loadFixture(slashBlockBuilderSetup)
+				const signers = await getSigners()
+				await verifier.setResult(false)
+				await expect(
+					blockBuilderRegistry
+						.connect(signers.challenger)
+						.submitBlockFraudProof(fraudProof, DUMMY_PROOF),
+				).to.be.revertedWithCustomError(
+					blockBuilderRegistry,
+					'FraudProofVerificationFailed',
+				)
+			})
+
 			it('should revert with BlockBuilderNotFound error when not staked', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
+				const [blockBuilderRegistry, rollup] = await loadFixture(setup)
 				const signers = await getSigners()
 				const blockBuilderInfo = await blockBuilderRegistry.blockBuilders(
 					signers.notStakedBlockBuilder.address,
 				)
 				expect(blockBuilderInfo.stakeAmount).to.equal(0)
 
-				await expect(
-					blockBuilderRegistry
-						.connect(signers.rollup)
-						.slashBlockBuilder(
-							signers.notStakedBlockBuilder.address,
-							signers.challenger.address,
-						),
-				).to.be.revertedWithCustomError(
-					blockBuilderRegistry,
-					'BlockBuilderNotFound',
+				const fraudProof = await getTestFraudProofPublicInputs(
+					DUMMY_BLOCK_HASH,
+					DUMMY_BLOCK_NUMBER,
 				)
-			})
-			it('should not be executable from contracts other than Rollup', async () => {
-				const blockBuilderRegistry = await loadFixture(setup)
-				const signers = await getSigners()
+				await rollup.setTestData(
+					fraudProof.blockNumber,
+					fraudProof.blockHash,
+					signers.blockBuilder.address,
+				)
 
 				await expect(
 					blockBuilderRegistry
-						.connect(signers.user)
-						.slashBlockBuilder(
-							signers.blockBuilder.address,
-							signers.challenger.address,
-						),
+						.connect(signers.challenger)
+						.submitBlockFraudProof(fraudProof, DUMMY_PROOF),
 				).to.be.revertedWithCustomError(
 					blockBuilderRegistry,
-					'OnlyRollupContract',
+					'BlockBuilderNotFound',
 				)
 			})
 		})
@@ -640,7 +775,9 @@ describe('BlockBuilderRegistry', () => {
 	describe('setBurnAddress', () => {
 		describe('success', () => {
 			it('should be able to change the burn address', async () => {
-				const [blockBuilderRegistry] = await loadFixture(slashBlockBuilderSetup)
+				const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+					slashBlockBuilderSetup,
+				)
 				const signers = await getSigners()
 				const nextBurnAddress = ethers.Wallet.createRandom().address
 
@@ -654,12 +791,10 @@ describe('BlockBuilderRegistry', () => {
 				const beforeNextBurnBalance =
 					await ethers.provider.getBalance(nextBurnAddress)
 
-				await blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						signers.challenger.address,
-					)
+				const res = await blockBuilderRegistry
+					.connect(signers.challenger)
+					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
+				const gasCost = await getGasCost(res)
 				const afterChallengerBalance = await ethers.provider.getBalance(
 					signers.challenger.address,
 				)
@@ -667,9 +802,9 @@ describe('BlockBuilderRegistry', () => {
 					await ethers.provider.getBalance(DEFAULT_BURN_ADDRESS)
 				const afterNextBurnBalance =
 					await ethers.provider.getBalance(nextBurnAddress)
-				expect(afterChallengerBalance - beforeChallengerBalance).to.equal(
-					MIN_STAKE_AMOUNT / 2n,
-				)
+				expect(
+					afterChallengerBalance - beforeChallengerBalance + gasCost,
+				).to.equal(MIN_STAKE_AMOUNT / 2n)
 				expect(afterNextBurnBalance - beforeNextBurnBalance).to.equal(
 					MIN_STAKE_AMOUNT / 2n,
 				)
@@ -696,7 +831,7 @@ describe('BlockBuilderRegistry', () => {
 	})
 	describe('isValidBlockBuilder', () => {
 		it('should return false when not valid', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			const signers = await getSigners()
 			const result = await blockBuilderRegistry.isValidBlockBuilder(
 				signers.notStakedBlockBuilder.address,
@@ -704,7 +839,7 @@ describe('BlockBuilderRegistry', () => {
 			expect(result).to.be.false
 		})
 		it('should return true when valid', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			const signers = await getSigners()
 			const stakeAmount = ethers.parseEther('0.3')
 			await blockBuilderRegistry
@@ -718,7 +853,7 @@ describe('BlockBuilderRegistry', () => {
 	})
 	describe('upgrade', () => {
 		it('channel contract is upgradable', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			const signers = await getSigners()
 
 			const stakeAmount = ethers.parseEther('0.3')
@@ -741,7 +876,7 @@ describe('BlockBuilderRegistry', () => {
 			expect(val).to.equal(1)
 		})
 		it('Cannot upgrade except for a deployer.', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			const signers = await getSigners()
 			const registryFactory = await ethers.getContractFactory(
 				'BlockBuilderRegistry2Test',
@@ -762,7 +897,7 @@ describe('BlockBuilderRegistry', () => {
 	})
 	describe('reentrancy', () => {
 		it('unstake', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry] = await loadFixture(setup)
 			const reentrancyFactory = await ethers.getContractFactory(
 				'UnstakeReentrancyTest',
 			)
@@ -779,26 +914,18 @@ describe('BlockBuilderRegistry', () => {
 				.withArgs(await reentrancy.getAddress(), stakeAmount)
 		})
 		it('slashBlockBuilder', async () => {
-			const blockBuilderRegistry = await loadFixture(setup)
+			const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
+				slashBlockBuilderSetup,
+			)
 			const signers = await getSigners()
-			const reentrancyFactory = await ethers.getContractFactory(
-				'SlashBlockBuilderReentrancyTest',
+			const reentrancyTestFactory = await ethers.getContractFactory(
+				'SubmitBlockFraudProofReentrancyTest',
 			)
-			const reentrancy = (await reentrancyFactory.deploy(
+			const reentrancy = (await reentrancyTestFactory.deploy(
 				await blockBuilderRegistry.getAddress(),
-			)) as unknown as SlashBlockBuilderReentrancyTest
-			const stakeAmount = ethers.parseEther('0.3')
-			await blockBuilderRegistry
-				.connect(signers.blockBuilder)
-				.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
-			await expect(
-				blockBuilderRegistry
-					.connect(signers.rollup)
-					.slashBlockBuilder(
-						signers.blockBuilder.address,
-						reentrancy.getAddress(),
-					),
-			)
+			)) as unknown as SubmitBlockFraudProofReentrancyTest
+			fraudProof.challenger = await reentrancy.getAddress()
+			await expect(reentrancy.submitBlockFraudProof(fraudProof, DUMMY_PROOF))
 				.to.be.revertedWithCustomError(blockBuilderRegistry, 'FailedTransfer')
 				.withArgs(await reentrancy.getAddress(), MIN_STAKE_AMOUNT / 2n)
 		})

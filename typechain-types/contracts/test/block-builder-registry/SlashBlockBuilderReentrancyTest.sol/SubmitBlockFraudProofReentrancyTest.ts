@@ -8,6 +8,7 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -18,26 +19,42 @@ import type {
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../../common";
+} from "../../../../common";
 
-export interface MockPlonkVerifierInterface extends Interface {
-  getFunction(nameOrSignature: "Verify" | "setResult"): FunctionFragment;
+export declare namespace FraudProofPublicInputsLib {
+  export type FraudProofPublicInputsStruct = {
+    blockHash: BytesLike;
+    blockNumber: BigNumberish;
+    challenger: AddressLike;
+  };
 
-  encodeFunctionData(
-    functionFragment: "Verify",
-    values: [BytesLike, BigNumberish[]]
-  ): string;
-  encodeFunctionData(functionFragment: "setResult", values: [boolean]): string;
-
-  decodeFunctionResult(functionFragment: "Verify", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setResult", data: BytesLike): Result;
+  export type FraudProofPublicInputsStructOutput = [
+    blockHash: string,
+    blockNumber: bigint,
+    challenger: string
+  ] & { blockHash: string; blockNumber: bigint; challenger: string };
 }
 
-export interface MockPlonkVerifier extends BaseContract {
-  connect(runner?: ContractRunner | null): MockPlonkVerifier;
+export interface SubmitBlockFraudProofReentrancyTestInterface
+  extends Interface {
+  getFunction(nameOrSignature: "submitBlockFraudProof"): FunctionFragment;
+
+  encodeFunctionData(
+    functionFragment: "submitBlockFraudProof",
+    values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
+  ): string;
+
+  decodeFunctionResult(
+    functionFragment: "submitBlockFraudProof",
+    data: BytesLike
+  ): Result;
+}
+
+export interface SubmitBlockFraudProofReentrancyTest extends BaseContract {
+  connect(runner?: ContractRunner | null): SubmitBlockFraudProofReentrancyTest;
   waitForDeployment(): Promise<this>;
 
-  interface: MockPlonkVerifierInterface;
+  interface: SubmitBlockFraudProofReentrancyTestInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -76,28 +93,29 @@ export interface MockPlonkVerifier extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  Verify: TypedContractMethod<
-    [arg0: BytesLike, arg1: BigNumberish[]],
-    [boolean],
-    "view"
+  submitBlockFraudProof: TypedContractMethod<
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
   >;
-
-  setResult: TypedContractMethod<[_result: boolean], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "Verify"
+    nameOrSignature: "submitBlockFraudProof"
   ): TypedContractMethod<
-    [arg0: BytesLike, arg1: BigNumberish[]],
-    [boolean],
-    "view"
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "setResult"
-  ): TypedContractMethod<[_result: boolean], [void], "nonpayable">;
 
   filters: {};
 }
