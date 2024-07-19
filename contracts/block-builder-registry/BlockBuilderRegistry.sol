@@ -85,7 +85,7 @@ contract BlockBuilderRegistry is
 		// Remove the block builder information.
 		delete blockBuilders[_msgSender()];
 		// Return the stake amount to the block builder.
-		transfer(_msgSender(), stakeAmount);
+		_transfer(_msgSender(), stakeAmount);
 
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
@@ -97,6 +97,7 @@ contract BlockBuilderRegistry is
 		(bytes32 blockHash, address builder) = rollup.getBlockHashAndBuilder(
 			publicInputs.blockNumber
 		);
+
 		if (publicInputs.blockHash != blockHash) {
 			revert FraudProofBlockHashMismatch({
 				given: publicInputs.blockHash,
@@ -113,12 +114,11 @@ contract BlockBuilderRegistry is
 			revert FraudProofVerificationFailed();
 		}
 		slashedBlockNumbers[publicInputs.blockNumber] = true;
-		address blockBuilder = builder;
-		_slashBlockBuilder(blockBuilder, _msgSender());
+		_slashBlockBuilder(builder, _msgSender());
 
 		emit BlockFraudProofSubmitted(
 			publicInputs.blockNumber,
-			blockBuilder,
+			builder,
 			_msgSender()
 		);
 	}
@@ -126,7 +126,7 @@ contract BlockBuilderRegistry is
 	function _slashBlockBuilder(
 		address blockBuilder,
 		address challenger
-	) internal {
+	) private {
 		BlockBuilderInfo memory info = blockBuilders[blockBuilder];
 		if (info.isStaking() == false) {
 			revert BlockBuilderNotFound();
@@ -143,15 +143,14 @@ contract BlockBuilderRegistry is
 			info.stakeAmount = 0;
 			blockBuilders[blockBuilder] = info;
 			if (slashAmount < MIN_STAKE_AMOUNT / 2) {
-				transfer(challenger, slashAmount);
+				_transfer(challenger, slashAmount);
 			} else {
-				transfer(challenger, MIN_STAKE_AMOUNT / 2);
-				transfer(burnAddress, slashAmount - (MIN_STAKE_AMOUNT / 2));
+				_transfer(challenger, MIN_STAKE_AMOUNT / 2);
+				_transfer(burnAddress, slashAmount - (MIN_STAKE_AMOUNT / 2));
 			}
 			return;
 		}
 		info.stakeAmount -= MIN_STAKE_AMOUNT;
-		// solhint-disable-next-line reentrancy
 		blockBuilders[blockBuilder] = info;
 
 		// NOTE: A half of the stake lost by the Block Builder will be burned.
@@ -159,8 +158,8 @@ contract BlockBuilderRegistry is
 		// submitting fraud proofs by oneself, which would place a burden on
 		// the generation of block validity proofs. An invalid block must prove
 		// in the block validity proof that it has been invalidated.
-		transfer(challenger, MIN_STAKE_AMOUNT / 2);
-		transfer(burnAddress, MIN_STAKE_AMOUNT / 2);
+		_transfer(challenger, MIN_STAKE_AMOUNT / 2);
+		_transfer(burnAddress, MIN_STAKE_AMOUNT / 2);
 	}
 
 	function isValidBlockBuilder(
@@ -173,7 +172,7 @@ contract BlockBuilderRegistry is
 		burnAddress = _burnAddress;
 	}
 
-	function transfer(address to, uint256 _value) private {
+	function _transfer(address to, uint256 _value) private {
 		(bool sent, ) = to.call{value: _value}("");
 		if (sent == false) {
 			revert FailedTransfer(to, _value);

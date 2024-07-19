@@ -8,6 +8,7 @@ import type {
   FunctionFragment,
   Result,
   Interface,
+  AddressLike,
   ContractRunner,
   ContractMethod,
   Listener,
@@ -18,26 +19,37 @@ import type {
   TypedEventLog,
   TypedListener,
   TypedContractMethod,
-} from "../../common";
+} from "../../../../common";
 
-export interface MockPlonkVerifierInterface extends Interface {
-  getFunction(nameOrSignature: "Verify" | "setResult"): FunctionFragment;
+export interface RollupTestForBlockBuilderRegistoryInterface extends Interface {
+  getFunction(
+    nameOrSignature: "getBlockHashAndBuilder" | "setTestData"
+  ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "Verify",
-    values: [BytesLike, BigNumberish[]]
+    functionFragment: "getBlockHashAndBuilder",
+    values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "setResult", values: [boolean]): string;
+  encodeFunctionData(
+    functionFragment: "setTestData",
+    values: [BytesLike, AddressLike]
+  ): string;
 
-  decodeFunctionResult(functionFragment: "Verify", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setResult", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getBlockHashAndBuilder",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setTestData",
+    data: BytesLike
+  ): Result;
 }
 
-export interface MockPlonkVerifier extends BaseContract {
-  connect(runner?: ContractRunner | null): MockPlonkVerifier;
+export interface RollupTestForBlockBuilderRegistory extends BaseContract {
+  connect(runner?: ContractRunner | null): RollupTestForBlockBuilderRegistory;
   waitForDeployment(): Promise<this>;
 
-  interface: MockPlonkVerifierInterface;
+  interface: RollupTestForBlockBuilderRegistoryInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -76,28 +88,32 @@ export interface MockPlonkVerifier extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  Verify: TypedContractMethod<
-    [arg0: BytesLike, arg1: BigNumberish[]],
-    [boolean],
+  getBlockHashAndBuilder: TypedContractMethod<
+    [arg0: BigNumberish],
+    [[string, string]],
     "view"
   >;
 
-  setResult: TypedContractMethod<[_result: boolean], [void], "nonpayable">;
+  setTestData: TypedContractMethod<
+    [_hash: BytesLike, _address: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
 
   getFunction(
-    nameOrSignature: "Verify"
-  ): TypedContractMethod<
-    [arg0: BytesLike, arg1: BigNumberish[]],
-    [boolean],
-    "view"
-  >;
+    nameOrSignature: "getBlockHashAndBuilder"
+  ): TypedContractMethod<[arg0: BigNumberish], [[string, string]], "view">;
   getFunction(
-    nameOrSignature: "setResult"
-  ): TypedContractMethod<[_result: boolean], [void], "nonpayable">;
+    nameOrSignature: "setTestData"
+  ): TypedContractMethod<
+    [_hash: BytesLike, _address: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   filters: {};
 }

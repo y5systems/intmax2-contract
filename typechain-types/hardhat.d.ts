@@ -178,9 +178,13 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.BlockBuilderRegistry2Test__factory>;
     getContractFactory(
-      name: "SlashBlockBuilderReentrancyTest",
+      name: "RollupTestForBlockBuilderRegistory",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.SlashBlockBuilderReentrancyTest__factory>;
+    ): Promise<Contracts.RollupTestForBlockBuilderRegistory__factory>;
+    getContractFactory(
+      name: "SubmitBlockFraudProofReentrancyTest",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.SubmitBlockFraudProofReentrancyTest__factory>;
     getContractFactory(
       name: "UnstakeReentrancyTest",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -404,10 +408,15 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.BlockBuilderRegistry2Test>;
     getContractAt(
-      name: "SlashBlockBuilderReentrancyTest",
+      name: "RollupTestForBlockBuilderRegistory",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.SlashBlockBuilderReentrancyTest>;
+    ): Promise<Contracts.RollupTestForBlockBuilderRegistory>;
+    getContractAt(
+      name: "SubmitBlockFraudProofReentrancyTest",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.SubmitBlockFraudProofReentrancyTest>;
     getContractAt(
       name: "UnstakeReentrancyTest",
       address: string | ethers.Addressable,
@@ -594,9 +603,13 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderRegistry2Test>;
     deployContract(
-      name: "SlashBlockBuilderReentrancyTest",
+      name: "RollupTestForBlockBuilderRegistory",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SlashBlockBuilderReentrancyTest>;
+    ): Promise<Contracts.RollupTestForBlockBuilderRegistory>;
+    deployContract(
+      name: "SubmitBlockFraudProofReentrancyTest",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SubmitBlockFraudProofReentrancyTest>;
     deployContract(
       name: "UnstakeReentrancyTest",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -820,10 +833,15 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.BlockBuilderRegistry2Test>;
     deployContract(
-      name: "SlashBlockBuilderReentrancyTest",
+      name: "RollupTestForBlockBuilderRegistory",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.SlashBlockBuilderReentrancyTest>;
+    ): Promise<Contracts.RollupTestForBlockBuilderRegistory>;
+    deployContract(
+      name: "SubmitBlockFraudProofReentrancyTest",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.SubmitBlockFraudProofReentrancyTest>;
     deployContract(
       name: "UnstakeReentrancyTest",
       args: any[],
