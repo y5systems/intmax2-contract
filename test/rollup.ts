@@ -20,7 +20,6 @@ describe('Rollup', function () {
 		await rollup.initialize(
 			ethers.ZeroAddress,
 			mockPlonkVerifierAddress,
-			mockPlonkVerifierAddress,
 			ethers.ZeroAddress,
 			ethers.ZeroAddress,
 			[],

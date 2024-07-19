@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
-import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
+import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 
 interface IWithdrawal {
 	error WithdrawalChainVerificationFailed();

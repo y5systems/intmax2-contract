@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-library Bytes32QueueLib {
+import {WithdrawalLib} from "../WithdrawalLib.sol";
+
+library WithdrawalQueueLib {
 	error QueueIsEmpty();
 
 	struct Queue {
-		bytes32[] data;
+		WithdrawalLib.Withdrawal[] data;
 		uint256 front;
 		uint256 rear;
 	}
@@ -17,18 +19,20 @@ library Bytes32QueueLib {
 
 	function enqueue(
 		Queue storage queue,
-		bytes32 value
+		WithdrawalLib.Withdrawal memory value
 	) internal returns (uint256 index) {
 		queue.data.push(value);
 		index = queue.rear;
 		queue.rear++;
 	}
 
-	function dequeue(Queue storage queue) internal returns (bytes32) {
+	function dequeue(
+		Queue storage queue
+	) internal returns (WithdrawalLib.Withdrawal memory) {
 		if (isEmpty(queue)) {
 			revert QueueIsEmpty();
 		}
-		bytes32 value = queue.data[queue.front];
+		WithdrawalLib.Withdrawal memory value = queue.data[queue.front];
 		queue.front++;
 		return value;
 	}
@@ -37,11 +41,13 @@ library Bytes32QueueLib {
 		return queue.front == queue.rear;
 	}
 
-	function size(Queue storage queue) internal view returns (uint) {
+	function size(Queue storage queue) internal view returns (uint256) {
 		return queue.rear - queue.front;
 	}
 
-	function peek(Queue storage queue) internal view returns (bytes32) {
+	function peek(
+		Queue storage queue
+	) internal view returns (WithdrawalLib.Withdrawal memory) {
 		if (isEmpty(queue)) {
 			revert QueueIsEmpty();
 		}

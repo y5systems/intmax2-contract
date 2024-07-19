@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IPlonkVerifier} from "../rollup/IPlonkVerifier.sol";
+import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 
 contract MockPlonkVerifier is IPlonkVerifier {
+	bool private result = true;
+
+	function setResult(bool _result) external {
+		result = _result;
+	}
+
 	/**
 	 * @dev This is a mock implementation of the PlonkVerifier contract.
 	 */
@@ -11,7 +17,7 @@ contract MockPlonkVerifier is IPlonkVerifier {
 	function Verify(
 		bytes calldata,
 		uint256[] calldata
-	) external pure returns (bool success) {
-		return true;
+	) external view returns (bool success) {
+		return result;
 	}
 }

@@ -4,7 +4,6 @@ pragma solidity 0.8.24;
 // interfaces
 import {IRollup} from "./IRollup.sol";
 import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
-import {IPlonkVerifier} from "./IPlonkVerifier.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
 // contracts
@@ -15,27 +14,23 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 // libs
 import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
 import {BlockLib} from "./lib/BlockLib.sol";
-import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
+
 import {Withdrawal} from "./Withdrawal.sol";
-import {Byte32Lib} from "./lib/Byte32Lib.sol";
 import {PairingLib} from "./lib/PairingLib.sol";
 
 contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 	using BlockLib for BlockLib.Block[];
-	using FraudProofPublicInputsLib for FraudProofPublicInputsLib.FraudProofPublicInputs;
-	using Byte32Lib for bytes32;
 	using DepositTreeLib for DepositTreeLib.DepositTree;
 
-	uint256 constant NUM_SENDERS_IN_BLOCK = 128;
-	uint256 constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
+	uint256 private constant NUM_SENDERS_IN_BLOCK = 128;
+	uint256 private constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
 
-	IPlonkVerifier private fraudVerifier;
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
 	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
 	BlockLib.Block[] public blocks;
-	mapping(uint32 => bool) private slashedBlockNumbers;
+
 	IL2ScrollMessenger private l2ScrollMessenger;
 	DepositTreeLib.DepositTree private depositTree;
 
@@ -58,7 +53,6 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 
 	function initialize(
 		address _scrollMessenger,
-		address _fraudVerifier,
 		address _withdrawalVerifier,
 		address _liquidity,
 		address _blockBuilderRegistry,
@@ -74,7 +68,6 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		);
 		depositTree.initialize();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
-		fraudVerifier = IPlonkVerifier(_fraudVerifier);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
 
@@ -90,7 +83,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint,
 		uint256[] calldata senderPublicKeys
-	) public {
+	) external {
 		uint256 length = senderPublicKeys.length;
 		if (length == 0) {
 			revert SenderPublicKeysEmpty();
@@ -130,7 +123,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		bytes32[4] calldata messagePoint,
 		bytes32 publicKeysHash,
 		bytes calldata senderAccountIds
-	) public {
+	) external {
 		uint256 length = senderAccountIds.length;
 		if (length == 0) {
 			revert SenderAccountIdsEmpty();
@@ -165,36 +158,6 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		);
 	}
 
-	function submitBlockFraudProof(
-		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
-		bytes calldata proof
-	) external {
-		if (publicInputs.blockHash != blocks[publicInputs.blockNumber].hash) {
-			revert BlockHashMismatch({
-				given: publicInputs.blockHash,
-				expected: blocks[publicInputs.blockNumber].hash
-			});
-		}
-		if (publicInputs.challenger != _msgSender()) {
-			revert ChallengerMismatch();
-		}
-		if (slashedBlockNumbers[publicInputs.blockNumber]) {
-			revert FraudProofAlreadySubmitted();
-		}
-		if (!fraudVerifier.Verify(proof, publicInputs.getHash().split())) {
-			revert FraudProofVerificationFailed();
-		}
-		slashedBlockNumbers[publicInputs.blockNumber] = true;
-		address blockBuilder = blocks[publicInputs.blockNumber].builder;
-		blockBuilderRegistry.slashBlockBuilder(blockBuilder, _msgSender());
-
-		emit BlockFraudProofSubmitted(
-			publicInputs.blockNumber,
-			blockBuilder,
-			_msgSender()
-		);
-	}
-
 	function processDeposits(
 		uint256 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
@@ -216,12 +179,6 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint
 	) internal returns (uint256 blockNumber) {
-		// Check if the block builder is valid.
-		// disable for testing
-		// if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
-		// 	revert InvalidBlockBuilder();
-		// }
-
 		bool success = PairingLib.pairing(
 			aggregatedPublicKey,
 			aggregatedSignature,
@@ -270,6 +227,13 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		);
 
 		return blockNumber;
+	}
+
+	function getBlockHashAndBuilder(
+		uint256 blockNumber
+	) external view returns (bytes32, address) {
+		BlockLib.Block memory block_ = blocks[blockNumber];
+		return (block_.hash, block_.builder);
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

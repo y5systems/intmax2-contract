@@ -23,13 +23,27 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
+export declare namespace FraudProofPublicInputsLib {
+  export type FraudProofPublicInputsStruct = {
+    blockHash: BytesLike;
+    blockNumber: BigNumberish;
+    challenger: AddressLike;
+  };
+
+  export type FraudProofPublicInputsStructOutput = [
+    blockHash: string,
+    blockNumber: bigint,
+    challenger: string
+  ] & { blockHash: string; blockNumber: bigint; challenger: string };
+}
+
 export interface IBlockBuilderRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "isValidBlockBuilder"
       | "setBurnAddress"
-      | "slashBlockBuilder"
       | "stopBlockBuilder"
+      | "submitBlockFraudProof"
       | "unstake"
       | "updateBlockBuilder"
   ): FunctionFragment;
@@ -39,6 +53,7 @@ export interface IBlockBuilderRegistryInterface extends Interface {
       | "BlockBuilderSlashed"
       | "BlockBuilderStopped"
       | "BlockBuilderUpdated"
+      | "BlockFraudProofSubmitted"
   ): EventFragment;
 
   encodeFunctionData(
@@ -50,12 +65,12 @@ export interface IBlockBuilderRegistryInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "slashBlockBuilder",
-    values: [AddressLike, AddressLike]
-  ): string;
-  encodeFunctionData(
     functionFragment: "stopBlockBuilder",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "submitBlockFraudProof",
+    values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "unstake", values?: undefined): string;
   encodeFunctionData(
@@ -72,11 +87,11 @@ export interface IBlockBuilderRegistryInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "slashBlockBuilder",
+    functionFragment: "stopBlockBuilder",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "stopBlockBuilder",
+    functionFragment: "submitBlockFraudProof",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "unstake", data: BytesLike): Result;
@@ -126,6 +141,28 @@ export namespace BlockBuilderUpdatedEvent {
     blockBuilder: string;
     url: string;
     stakeAmount: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace BlockFraudProofSubmittedEvent {
+  export type InputTuple = [
+    blockNumber: BigNumberish,
+    blockBuilder: AddressLike,
+    challenger: AddressLike
+  ];
+  export type OutputTuple = [
+    blockNumber: bigint,
+    blockBuilder: string,
+    challenger: string
+  ];
+  export interface OutputObject {
+    blockNumber: bigint;
+    blockBuilder: string;
+    challenger: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -188,13 +225,16 @@ export interface IBlockBuilderRegistry extends BaseContract {
     "nonpayable"
   >;
 
-  slashBlockBuilder: TypedContractMethod<
-    [blockBuilder: AddressLike, challenger: AddressLike],
+  stopBlockBuilder: TypedContractMethod<[], [void], "nonpayable">;
+
+  submitBlockFraudProof: TypedContractMethod<
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
-
-  stopBlockBuilder: TypedContractMethod<[], [void], "nonpayable">;
 
   unstake: TypedContractMethod<[], [void], "nonpayable">;
 
@@ -211,15 +251,18 @@ export interface IBlockBuilderRegistry extends BaseContract {
     nameOrSignature: "setBurnAddress"
   ): TypedContractMethod<[_burnAddress: AddressLike], [void], "nonpayable">;
   getFunction(
-    nameOrSignature: "slashBlockBuilder"
+    nameOrSignature: "stopBlockBuilder"
+  ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "submitBlockFraudProof"
   ): TypedContractMethod<
-    [blockBuilder: AddressLike, challenger: AddressLike],
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "stopBlockBuilder"
-  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "unstake"
   ): TypedContractMethod<[], [void], "nonpayable">;
@@ -247,6 +290,13 @@ export interface IBlockBuilderRegistry extends BaseContract {
     BlockBuilderUpdatedEvent.InputTuple,
     BlockBuilderUpdatedEvent.OutputTuple,
     BlockBuilderUpdatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "BlockFraudProofSubmitted"
+  ): TypedContractEvent<
+    BlockFraudProofSubmittedEvent.InputTuple,
+    BlockFraudProofSubmittedEvent.OutputTuple,
+    BlockFraudProofSubmittedEvent.OutputObject
   >;
 
   filters: {
@@ -281,6 +331,17 @@ export interface IBlockBuilderRegistry extends BaseContract {
       BlockBuilderUpdatedEvent.InputTuple,
       BlockBuilderUpdatedEvent.OutputTuple,
       BlockBuilderUpdatedEvent.OutputObject
+    >;
+
+    "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
+      BlockFraudProofSubmittedEvent.InputTuple,
+      BlockFraudProofSubmittedEvent.OutputTuple,
+      BlockFraudProofSubmittedEvent.OutputObject
+    >;
+    BlockFraudProofSubmitted: TypedContractEvent<
+      BlockFraudProofSubmittedEvent.InputTuple,
+      BlockFraudProofSubmittedEvent.OutputTuple,
+      BlockFraudProofSubmittedEvent.OutputObject
     >;
   };
 }

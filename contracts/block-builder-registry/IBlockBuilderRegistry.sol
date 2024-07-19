@@ -1,12 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
+
 interface IBlockBuilderRegistry {
-	error OnlyRollupContract();
 	error InsufficientStakeAmount();
 	error BlockBuilderNotFound();
 	error CannotUnstakeWithinChallengeDuration();
 	error FailedTransfer(address to, uint256 amount);
+	error FraudProofAlreadySubmitted();
+	error FraudProofVerificationFailed();
+	error FraudProofBlockHashMismatch(bytes32 given, bytes32 expected);
+	error FraudProofChallengerMismatch();
+
+	event BlockFraudProofSubmitted(
+		uint32 indexed blockNumber,
+		address indexed blockBuilder,
+		address indexed challenger
+	);
 
 	event BlockBuilderUpdated(
 		address indexed blockBuilder,
@@ -58,14 +69,9 @@ interface IBlockBuilderRegistry {
 	 */
 	function unstake() external;
 
-	/**
-	 * @notice Prove that Block Builder has submitted an incorrect block using ZKP.
-	 * @param blockBuilder The address of the block builder.
-	 * @param challenger The address of the challenger.
-	 */
-	function slashBlockBuilder(
-		address blockBuilder,
-		address challenger
+	function submitBlockFraudProof(
+		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
+		bytes calldata proof
 	) external;
 
 	/**

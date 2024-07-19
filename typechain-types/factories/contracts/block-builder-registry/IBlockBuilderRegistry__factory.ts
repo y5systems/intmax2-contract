@@ -37,12 +37,38 @@ const _abi = [
   },
   {
     inputs: [],
-    name: "InsufficientStakeAmount",
+    name: "FraudProofAlreadySubmitted",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes32",
+        name: "given",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes32",
+        name: "expected",
+        type: "bytes32",
+      },
+    ],
+    name: "FraudProofBlockHashMismatch",
     type: "error",
   },
   {
     inputs: [],
-    name: "OnlyRollupContract",
+    name: "FraudProofChallengerMismatch",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "FraudProofVerificationFailed",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "InsufficientStakeAmount",
     type: "error",
   },
   {
@@ -103,6 +129,31 @@ const _abi = [
     type: "event",
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint32",
+        name: "blockNumber",
+        type: "uint32",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "blockBuilder",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "challenger",
+        type: "address",
+      },
+    ],
+    name: "BlockFraudProofSubmitted",
+    type: "event",
+  },
+  {
     inputs: [
       {
         internalType: "address",
@@ -135,26 +186,43 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "blockBuilder",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "challenger",
-        type: "address",
-      },
-    ],
-    name: "slashBlockBuilder",
+    inputs: [],
+    name: "stopBlockBuilder",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
-    inputs: [],
-    name: "stopBlockBuilder",
+    inputs: [
+      {
+        components: [
+          {
+            internalType: "bytes32",
+            name: "blockHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "uint32",
+            name: "blockNumber",
+            type: "uint32",
+          },
+          {
+            internalType: "address",
+            name: "challenger",
+            type: "address",
+          },
+        ],
+        internalType: "struct FraudProofPublicInputsLib.FraudProofPublicInputs",
+        name: "publicInputs",
+        type: "tuple",
+      },
+      {
+        internalType: "bytes",
+        name: "proof",
+        type: "bytes",
+      },
+    ],
+    name: "submitBlockFraudProof",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",

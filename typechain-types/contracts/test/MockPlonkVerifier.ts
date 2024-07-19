@@ -21,14 +21,16 @@ import type {
 } from "../../common";
 
 export interface MockPlonkVerifierInterface extends Interface {
-  getFunction(nameOrSignature: "Verify"): FunctionFragment;
+  getFunction(nameOrSignature: "Verify" | "setResult"): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "Verify",
     values: [BytesLike, BigNumberish[]]
   ): string;
+  encodeFunctionData(functionFragment: "setResult", values: [boolean]): string;
 
   decodeFunctionResult(functionFragment: "Verify", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setResult", data: BytesLike): Result;
 }
 
 export interface MockPlonkVerifier extends BaseContract {
@@ -80,6 +82,8 @@ export interface MockPlonkVerifier extends BaseContract {
     "view"
   >;
 
+  setResult: TypedContractMethod<[_result: boolean], [void], "nonpayable">;
+
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -91,6 +95,9 @@ export interface MockPlonkVerifier extends BaseContract {
     [boolean],
     "view"
   >;
+  getFunction(
+    nameOrSignature: "setResult"
+  ): TypedContractMethod<[_result: boolean], [void], "nonpayable">;
 
   filters: {};
 }
