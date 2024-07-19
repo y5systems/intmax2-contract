@@ -6,8 +6,6 @@ import {IRollup} from "./IRollup.sol";
 import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
-// contracts
-
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
@@ -27,7 +25,6 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
-	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
 	BlockLib.Block[] public blocks;
 
