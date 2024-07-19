@@ -11,7 +11,6 @@ import {TokenData} from "./TokenData.sol";
 import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 
-
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -217,14 +216,6 @@ contract Liquidity is
 		if (depositData.sender != _msgSender()) {
 			revert OnlyRecipientCanCancelDeposit();
 		}
-		_cancelDeposit(depositData, deposit);
-		emit DepositCanceled(depositId);
-	}
-
-	function _cancelDeposit(
-		DepositQueueLib.DepositData memory depositData,
-		DepositLib.Deposit memory deposit
-	) private {
 		if (depositData.depositHash == bytes32(0)) {
 			revert InvalidDepositHash();
 		}
@@ -239,6 +230,7 @@ contract Liquidity is
 			deposit.amount,
 			tokenInfo.tokenId
 		);
+		emit DepositCanceled(depositId);
 	}
 
 	function _deposit(
