@@ -28,7 +28,7 @@ library BlockBuilderInfoLib {
 	/**
 	 * @notice Check if the minimum stake amount is held.
 	 */
-	function isValidBlockBuilder(
+	function isStakeAmountSufficient(
 		IBlockBuilderRegistry.BlockBuilderInfo memory info
 	) internal pure returns (bool) {
 		return info.stakeAmount >= MIN_STAKE_AMOUNT;

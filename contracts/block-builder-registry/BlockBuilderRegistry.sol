@@ -14,7 +14,7 @@ contract BlockBuilderRegistry is
 {
 	address private rollup;
 	address private burnAddress;
-	mapping(address => BlockBuilderInfo) private blockBuilders;
+	mapping(address => BlockBuilderInfo) public blockBuilders;
 	using BlockBuilderInfoLib for BlockBuilderInfo;
 
 	/**
@@ -41,7 +41,7 @@ contract BlockBuilderRegistry is
 	function initialize(address _rollup) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
-		_rollup = _rollup;
+		rollup = _rollup;
 		burnAddress = 0x000000000000000000000000000000000000dEaD;
 	}
 
@@ -51,14 +51,11 @@ contract BlockBuilderRegistry is
 		if (stakeAmount < MIN_STAKE_AMOUNT) {
 			revert InsufficientStakeAmount();
 		}
-
-		// Update the block builder information.
 		info.blockBuilderUrl = url;
 		info.stakeAmount = stakeAmount;
 		info.stopTime = 0;
-		if (info.isValidBlockBuilder()) {
-			info.isValid = true;
-		}
+		info.isValid = true;
+		blockBuilders[_msgSender()] = info;
 
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
@@ -68,8 +65,9 @@ contract BlockBuilderRegistry is
 		BlockBuilderInfo memory info = blockBuilders[_msgSender()];
 		info.stopTime = block.timestamp;
 		info.isValid = false;
+		blockBuilders[_msgSender()] = info;
 
-		emit BlockBuilderStoped(_msgSender());
+		emit BlockBuilderStopped(_msgSender());
 	}
 
 	function unstake() public isStaking {
@@ -82,10 +80,9 @@ contract BlockBuilderRegistry is
 		uint256 stakeAmount = info.stakeAmount;
 
 		// Remove the block builder information.
-		delete info;
-
+		delete blockBuilders[_msgSender()];
 		// Return the stake amount to the block builder.
-		payable(_msgSender()).transfer(stakeAmount);
+		transfer(_msgSender(), stakeAmount);
 
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
@@ -95,8 +92,11 @@ contract BlockBuilderRegistry is
 		address challenger
 	) external onlyRollupContract {
 		BlockBuilderInfo memory info = blockBuilders[blockBuilder];
+		if (info.isStaking() == false) {
+			revert BlockBuilderNotFound();
+		}
 		info.numSlashes += 1;
-		if (!info.isValidBlockBuilder() && info.isValid) {
+		if (!info.isStakeAmountSufficient() && info.isValid) {
 			info.isValid = false;
 		}
 		emit BlockBuilderSlashed(blockBuilder, challenger);
@@ -105,26 +105,26 @@ contract BlockBuilderRegistry is
 			// so it does not normally enter into this process.
 			uint256 slashAmount = info.stakeAmount;
 			info.stakeAmount = 0;
+			blockBuilders[blockBuilder] = info;
 			if (slashAmount < MIN_STAKE_AMOUNT / 2) {
-				payable(challenger).transfer(slashAmount);
+				transfer(challenger, slashAmount);
 			} else {
-				payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-				payable(burnAddress).transfer(
-					slashAmount - (MIN_STAKE_AMOUNT / 2)
-				);
+				transfer(challenger, MIN_STAKE_AMOUNT / 2);
+				transfer(burnAddress, slashAmount - (MIN_STAKE_AMOUNT / 2));
 			}
 			return;
 		}
-		// solhint-disable-next-line reentrancy
 		info.stakeAmount -= MIN_STAKE_AMOUNT;
+		// solhint-disable-next-line reentrancy
+		blockBuilders[blockBuilder] = info;
 
 		// NOTE: A half of the stake lost by the Block Builder will be burned.
 		// This is to prevent the Block Builder from generating invalid blocks and
 		// submitting fraud proofs by oneself, which would place a burden on
 		// the generation of block validity proofs. An invalid block must prove
 		// in the block validity proof that it has been invalidated.
-		payable(challenger).transfer(MIN_STAKE_AMOUNT / 2);
-		payable(burnAddress).transfer(MIN_STAKE_AMOUNT / 2);
+		transfer(challenger, MIN_STAKE_AMOUNT / 2);
+		transfer(burnAddress, MIN_STAKE_AMOUNT / 2);
 	}
 
 	function isValidBlockBuilder(
@@ -133,15 +133,15 @@ contract BlockBuilderRegistry is
 		return blockBuilders[blockBuilder].isValid;
 	}
 
-	function getBlockBuilder(
-		address blockBuilder
-	) external view returns (BlockBuilderInfo memory) {
-		return blockBuilders[blockBuilder];
-	}
-
 	function setBurnAddress(address _burnAddress) external onlyOwner {
 		burnAddress = _burnAddress;
 	}
 
+	function transfer(address to, uint256 _value) private {
+		(bool sent, ) = to.call{value: _value}("");
+		if (sent == false) {
+			revert FailedTransfer(to, _value);
+		}
+	}
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }

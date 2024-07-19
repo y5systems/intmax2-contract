@@ -6,13 +6,15 @@ interface IBlockBuilderRegistry {
 	error InsufficientStakeAmount();
 	error BlockBuilderNotFound();
 	error CannotUnstakeWithinChallengeDuration();
+	error FailedTransfer(address to, uint256 amount);
+
 	event BlockBuilderUpdated(
 		address indexed blockBuilder,
 		string url,
 		uint256 stakeAmount
 	);
 
-	event BlockBuilderStoped(address indexed blockBuilder);
+	event BlockBuilderStopped(address indexed blockBuilder);
 
 	event BlockBuilderSlashed(
 		address indexed blockBuilder,
@@ -75,16 +77,6 @@ interface IBlockBuilderRegistry {
 	function isValidBlockBuilder(
 		address blockBuilder
 	) external view returns (bool);
-
-	/**
-	 * @notice Get the block builder information.
-	 * @param blockBuilder The address of the block builder.
-	 * @return The block builder information.
-	 * @dev If the block builder is not found, it will return an empty struct.
-	 */
-	function getBlockBuilder(
-		address blockBuilder
-	) external view returns (BlockBuilderInfo memory);
 
 	/**
 	 * @notice Set the burn address.

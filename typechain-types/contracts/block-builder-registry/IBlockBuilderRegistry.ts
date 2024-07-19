@@ -23,34 +23,9 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace IBlockBuilderRegistry {
-  export type BlockBuilderInfoStruct = {
-    blockBuilderUrl: string;
-    stakeAmount: BigNumberish;
-    stopTime: BigNumberish;
-    numSlashes: BigNumberish;
-    isValid: boolean;
-  };
-
-  export type BlockBuilderInfoStructOutput = [
-    blockBuilderUrl: string,
-    stakeAmount: bigint,
-    stopTime: bigint,
-    numSlashes: bigint,
-    isValid: boolean
-  ] & {
-    blockBuilderUrl: string;
-    stakeAmount: bigint;
-    stopTime: bigint;
-    numSlashes: bigint;
-    isValid: boolean;
-  };
-}
-
 export interface IBlockBuilderRegistryInterface extends Interface {
   getFunction(
     nameOrSignature:
-      | "getBlockBuilder"
       | "isValidBlockBuilder"
       | "setBurnAddress"
       | "slashBlockBuilder"
@@ -62,14 +37,10 @@ export interface IBlockBuilderRegistryInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "BlockBuilderSlashed"
-      | "BlockBuilderStoped"
+      | "BlockBuilderStopped"
       | "BlockBuilderUpdated"
   ): EventFragment;
 
-  encodeFunctionData(
-    functionFragment: "getBlockBuilder",
-    values: [AddressLike]
-  ): string;
   encodeFunctionData(
     functionFragment: "isValidBlockBuilder",
     values: [AddressLike]
@@ -92,10 +63,6 @@ export interface IBlockBuilderRegistryInterface extends Interface {
     values: [string]
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "getBlockBuilder",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "isValidBlockBuilder",
     data: BytesLike
@@ -132,7 +99,7 @@ export namespace BlockBuilderSlashedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export namespace BlockBuilderStopedEvent {
+export namespace BlockBuilderStoppedEvent {
   export type InputTuple = [blockBuilder: AddressLike];
   export type OutputTuple = [blockBuilder: string];
   export interface OutputObject {
@@ -209,12 +176,6 @@ export interface IBlockBuilderRegistry extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  getBlockBuilder: TypedContractMethod<
-    [blockBuilder: AddressLike],
-    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
-    "view"
-  >;
-
   isValidBlockBuilder: TypedContractMethod<
     [blockBuilder: AddressLike],
     [boolean],
@@ -243,13 +204,6 @@ export interface IBlockBuilderRegistry extends BaseContract {
     key: string | FunctionFragment
   ): T;
 
-  getFunction(
-    nameOrSignature: "getBlockBuilder"
-  ): TypedContractMethod<
-    [blockBuilder: AddressLike],
-    [IBlockBuilderRegistry.BlockBuilderInfoStructOutput],
-    "view"
-  >;
   getFunction(
     nameOrSignature: "isValidBlockBuilder"
   ): TypedContractMethod<[blockBuilder: AddressLike], [boolean], "view">;
@@ -281,11 +235,11 @@ export interface IBlockBuilderRegistry extends BaseContract {
     BlockBuilderSlashedEvent.OutputObject
   >;
   getEvent(
-    key: "BlockBuilderStoped"
+    key: "BlockBuilderStopped"
   ): TypedContractEvent<
-    BlockBuilderStopedEvent.InputTuple,
-    BlockBuilderStopedEvent.OutputTuple,
-    BlockBuilderStopedEvent.OutputObject
+    BlockBuilderStoppedEvent.InputTuple,
+    BlockBuilderStoppedEvent.OutputTuple,
+    BlockBuilderStoppedEvent.OutputObject
   >;
   getEvent(
     key: "BlockBuilderUpdated"
@@ -307,15 +261,15 @@ export interface IBlockBuilderRegistry extends BaseContract {
       BlockBuilderSlashedEvent.OutputObject
     >;
 
-    "BlockBuilderStoped(address)": TypedContractEvent<
-      BlockBuilderStopedEvent.InputTuple,
-      BlockBuilderStopedEvent.OutputTuple,
-      BlockBuilderStopedEvent.OutputObject
+    "BlockBuilderStopped(address)": TypedContractEvent<
+      BlockBuilderStoppedEvent.InputTuple,
+      BlockBuilderStoppedEvent.OutputTuple,
+      BlockBuilderStoppedEvent.OutputObject
     >;
-    BlockBuilderStoped: TypedContractEvent<
-      BlockBuilderStopedEvent.InputTuple,
-      BlockBuilderStopedEvent.OutputTuple,
-      BlockBuilderStopedEvent.OutputObject
+    BlockBuilderStopped: TypedContractEvent<
+      BlockBuilderStoppedEvent.InputTuple,
+      BlockBuilderStoppedEvent.OutputTuple,
+      BlockBuilderStoppedEvent.OutputObject
     >;
 
     "BlockBuilderUpdated(address,string,uint256)": TypedContractEvent<

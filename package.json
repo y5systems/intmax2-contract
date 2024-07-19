@@ -15,7 +15,7 @@
 		"compile": "hardhat compile",
 		"test": "hardhat test",
 		"lint": "npm run format && npm run solhint",
-		"solhint": "solhint --fix --max-warnings 0 \"contracts/**/*.sol\"",
+		"solhint": "solhint --fix --noPrompt --max-warnings 0 \"contracts/**/*.sol\"",
 		"format": "prettier --write '**/*.{sol,ts,json,md,yml}'",
 		"deploy": "echo '{}' > ./scripts/contractAddresses.json && npm run deploy-plonk-verifier && npm run deploy-step1 && npm run deploy-step2 && npm run deploy-step3",
 		"deploy-plonk-verifier": "npx hardhat run ./scripts/deployPlonkVerifier.ts --network scrollsepolia",

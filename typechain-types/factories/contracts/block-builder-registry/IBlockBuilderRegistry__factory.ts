@@ -20,6 +20,22 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "to",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "FailedTransfer",
+    type: "error",
+  },
+  {
     inputs: [],
     name: "InsufficientStakeAmount",
     type: "error",
@@ -58,7 +74,7 @@ const _abi = [
         type: "address",
       },
     ],
-    name: "BlockBuilderStoped",
+    name: "BlockBuilderStopped",
     type: "event",
   },
   {
@@ -85,52 +101,6 @@ const _abi = [
     ],
     name: "BlockBuilderUpdated",
     type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "blockBuilder",
-        type: "address",
-      },
-    ],
-    name: "getBlockBuilder",
-    outputs: [
-      {
-        components: [
-          {
-            internalType: "string",
-            name: "blockBuilderUrl",
-            type: "string",
-          },
-          {
-            internalType: "uint256",
-            name: "stakeAmount",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "stopTime",
-            type: "uint256",
-          },
-          {
-            internalType: "uint256",
-            name: "numSlashes",
-            type: "uint256",
-          },
-          {
-            internalType: "bool",
-            name: "isValid",
-            type: "bool",
-          },
-        ],
-        internalType: "struct IBlockBuilderRegistry.BlockBuilderInfo",
-        name: "",
-        type: "tuple",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
   },
   {
     inputs: [

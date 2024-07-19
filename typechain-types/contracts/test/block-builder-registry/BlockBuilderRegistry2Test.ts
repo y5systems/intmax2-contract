@@ -21,13 +21,14 @@ import type {
   TypedLogDescription,
   TypedListener,
   TypedContractMethod,
-} from "../../common";
+} from "../../../common";
 
-export interface BlockBuilderRegistryInterface extends Interface {
+export interface BlockBuilderRegistry2TestInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
       | "blockBuilders"
+      | "getVal"
       | "initialize"
       | "isValidBlockBuilder"
       | "owner"
@@ -60,6 +61,7 @@ export interface BlockBuilderRegistryInterface extends Interface {
     functionFragment: "blockBuilders",
     values: [AddressLike]
   ): string;
+  encodeFunctionData(functionFragment: "getVal", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "initialize",
     values: [AddressLike]
@@ -111,6 +113,7 @@ export interface BlockBuilderRegistryInterface extends Interface {
     functionFragment: "blockBuilders",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "getVal", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isValidBlockBuilder",
@@ -236,11 +239,11 @@ export namespace UpgradedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
-export interface BlockBuilderRegistry extends BaseContract {
-  connect(runner?: ContractRunner | null): BlockBuilderRegistry;
+export interface BlockBuilderRegistry2Test extends BaseContract {
+  connect(runner?: ContractRunner | null): BlockBuilderRegistry2Test;
   waitForDeployment(): Promise<this>;
 
-  interface: BlockBuilderRegistryInterface;
+  interface: BlockBuilderRegistry2TestInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -294,6 +297,8 @@ export interface BlockBuilderRegistry extends BaseContract {
     ],
     "view"
   >;
+
+  getVal: TypedContractMethod<[], [bigint], "view">;
 
   initialize: TypedContractMethod<[_rollup: AddressLike], [void], "nonpayable">;
 
@@ -361,6 +366,9 @@ export interface BlockBuilderRegistry extends BaseContract {
     ],
     "view"
   >;
+  getFunction(
+    nameOrSignature: "getVal"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<[_rollup: AddressLike], [void], "nonpayable">;
