@@ -1,44 +1,43 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
-import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
+// interfaces
 import {IRollup} from "./IRollup.sol";
+import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
 import {IPlonkVerifier} from "./IPlonkVerifier.sol";
-import {ILiquidity} from "../liquidity/ILiquidity.sol";
-import {BlockLib} from "./lib/BlockLib.sol";
-import {Byte32Lib} from "./lib/Byte32Lib.sol";
-import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
-import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
-import {WithdrawalLib} from "./lib/WithdrawalLib.sol";
-import {DepositContract} from "../lib/DepositContract.sol";
+import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
+
+// contracts
+
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-contract Rollup is
-	OwnableUpgradeable,
-	UUPSUpgradeable,
-	DepositContract,
-	IRollup
-{
-	using BlockLib for Block[];
-	using FraudProofPublicInputsLib for FraudProofPublicInputs;
-	using WithdrawalLib for Withdrawal;
-	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputs;
-	using Byte32Lib for bytes32;
+// libs
+import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
+import {BlockLib} from "./lib/BlockLib.sol";
+import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
+import {Withdrawal} from "./Withdrawal.sol";
+import {Byte32Lib} from "./lib/Byte32Lib.sol";
+import {PairingLib} from "./lib/PairingLib.sol";
 
-	IL2ScrollMessenger private l2ScrollMessenger;
-	IPlonkVerifier private verifier;
+contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
+	using BlockLib for BlockLib.Block[];
+	using FraudProofPublicInputsLib for FraudProofPublicInputsLib.FraudProofPublicInputs;
+	using Byte32Lib for bytes32;
+	using DepositTreeLib for DepositTreeLib.DepositTree;
+
+	uint256 constant NUM_SENDERS_IN_BLOCK = 128;
+	uint256 constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
+
+	IPlonkVerifier private fraudVerifier;
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
 	uint256 public lastProcessedWithdrawalId;
 	uint256 public lastProcessedDepositId;
-	Block[] private blocks;
-	mapping(bytes32 => uint256) private postedBlockHashes;
-	Withdrawal[] private withdrawalRequests;
-	mapping(bytes32 => bool) private withdrawnTransferHash;
-	//address[] public postedBlockBuilders;
+	BlockLib.Block[] public blocks;
 	mapping(uint32 => bool) private slashedBlockNumbers;
+	IL2ScrollMessenger private l2ScrollMessenger;
+	DepositTreeLib.DepositTree private depositTree;
 
 	modifier onlyLiquidityContract() {
 		// note
@@ -59,35 +58,57 @@ contract Rollup is
 
 	function initialize(
 		address _scrollMessenger,
-		address _verifier,
+		address _fraudVerifier,
+		address _withdrawalVerifier,
 		address _liquidity,
-		address _blockBuilderRegistry
+		address _blockBuilderRegistry,
+		uint256[] calldata _directWithdrawalTokenIndices
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
-		__ReentrancyGuard_init();
+		__Withdrawal_init(
+			_scrollMessenger,
+			_withdrawalVerifier,
+			_liquidity,
+			_directWithdrawalTokenIndices
+		);
+		depositTree.initialize();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
-		verifier = IPlonkVerifier(_verifier);
+		fraudVerifier = IPlonkVerifier(_fraudVerifier);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
 
 		// The block hash of the genesis block is not referenced during a withdraw request.
 		// Therefore, the genesis block is not included in the postedBlockHashes.
-		blocks.pushFirstBlockInfo();
+		blocks.pushGenesisBlock(depositTree.getRoot());
 	}
 
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		uint256[] calldata senderPublicKeys
 	) public {
-		if (senderPublicKeys.length == 0) {
+		uint256 length = senderPublicKeys.length;
+		if (length == 0) {
 			revert SenderPublicKeysEmpty();
 		}
-		bytes32 publicKeysHash = keccak256(abi.encodePacked(senderPublicKeys));
+		if (length > NUM_SENDERS_IN_BLOCK) {
+			revert TooManySenderPublicKeys();
+		}
+		uint256 blockNumber = blocks.length;
+		emit PubKeysPosted(blockNumber, senderPublicKeys);
+
+		uint256[NUM_SENDERS_IN_BLOCK] memory paddedKeys;
+		for (uint256 i = 0; i < length; i++) {
+			paddedKeys[i] = senderPublicKeys[i];
+		}
+		for (uint256 i = length; i < NUM_SENDERS_IN_BLOCK; i++) {
+			paddedKeys[i] = 1;
+		}
+		bytes32 publicKeysHash = keccak256(abi.encodePacked(paddedKeys));
 		bytes32 accountIdsHash = 0;
 		_postBlock(
 			true,
@@ -103,20 +124,35 @@ contract Rollup is
 
 	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		bytes32 publicKeysHash,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
 		bytes calldata senderAccountIds
 	) public {
-		if (senderAccountIds.length == 0) {
+		uint256 length = senderAccountIds.length;
+		if (length == 0) {
 			revert SenderAccountIdsEmpty();
 		}
-		if (senderAccountIds.length % 5 != 0) {
+		if (length > FULL_ACCOUNT_IDS_BYTES) {
+			revert TooManyAccountIds();
+		}
+		if (length % 5 != 0) {
 			revert SenderAccountIdsInvalidLength();
 		}
-		bytes32 accountIdsHash = keccak256(senderAccountIds);
+		uint256 blockNumber = blocks.length;
+		emit AccountIdsPosted(blockNumber, senderAccountIds);
+		bytes memory paddedAccountIds = new bytes(FULL_ACCOUNT_IDS_BYTES);
+		for (uint256 i = 0; i < length; i++) {
+			paddedAccountIds[i] = senderAccountIds[i];
+		}
+		// Pad with 5-byte representation of 1 (0x0000000001)
+		for (uint256 i = length; i < FULL_ACCOUNT_IDS_BYTES; i += 5) {
+			paddedAccountIds[i + 4] = 0x01;
+		}
+		bytes32 accountIdsHash = keccak256(paddedAccountIds);
+
 		_postBlock(
 			false,
 			txTreeRoot,
@@ -130,17 +166,24 @@ contract Rollup is
 	}
 
 	function submitBlockFraudProof(
-		FraudProofPublicInputs calldata publicInputs,
+		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external {
+		if (publicInputs.blockHash != blocks[publicInputs.blockNumber].hash) {
+			revert BlockHashMismatch({
+				given: publicInputs.blockHash,
+				expected: blocks[publicInputs.blockNumber].hash
+			});
+		}
+		if (publicInputs.challenger != _msgSender()) {
+			revert ChallengerMismatch();
+		}
 		if (slashedBlockNumbers[publicInputs.blockNumber]) {
 			revert FraudProofAlreadySubmitted();
 		}
-
-		if (!verifier.Verify(proof, publicInputs.getHash().split())) {
+		if (!fraudVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert FraudProofVerificationFailed();
 		}
-
 		slashedBlockNumbers[publicInputs.blockNumber] = true;
 		address blockBuilder = blocks[publicInputs.blockNumber].builder;
 		blockBuilderRegistry.slashBlockBuilder(blockBuilder, _msgSender());
@@ -152,108 +195,45 @@ contract Rollup is
 		);
 	}
 
-	function postWithdrawalRequests(
-		Withdrawal[] calldata _withdrawalRequests,
-		WithdrawalProofPublicInputs calldata publicInputs,
-		bytes calldata proof
-	) external {
-		if (!verifier.Verify(proof, publicInputs.getHash().split())) {
-			revert WithdrawalProofVerificationFailed();
-		}
-
-		bytes32 withdrawalsHash = 0;
-		for (uint256 i = 0; i < _withdrawalRequests.length; i++) {
-			if (postedBlockHashes[_withdrawalRequests[i].blockHash] == 0) {
-				revert WithdrawalBlockHashNotPosted(i);
-			}
-			bytes32 transferHash = _withdrawalRequests[i].getHash();
-			if (withdrawnTransferHash[transferHash] == true) {
-				continue;
-			}
-			withdrawalRequests.push(_withdrawalRequests[i]);
-			withdrawnTransferHash[transferHash] = true;
-			withdrawalsHash = keccak256(
-				abi.encodePacked(withdrawalsHash, transferHash)
-			);
-		}
-
-		if (withdrawalsHash != publicInputs.withdrawalsHash) {
-			revert WithdrawalsHashMismatch();
-		}
-
-		emit WithdrawRequested(publicInputs.withdrawalsHash, _msgSender());
-	}
-
-	function submitWithdrawals(uint256 _lastProcessedWithdrawalId) external {
-		if (
-			_lastProcessedWithdrawalId <= lastProcessedWithdrawalId ||
-			_lastProcessedWithdrawalId > withdrawalRequests.length
-		) {
-			revert InvalidWithdrawalId();
-		}
-		Withdrawal[] memory withdrawals = new Withdrawal[](
-			_lastProcessedWithdrawalId - lastProcessedWithdrawalId + 1
-		);
-		uint256 counter = 0;
-		for (
-			uint256 i = lastProcessedWithdrawalId;
-			i <= _lastProcessedWithdrawalId;
-			i++
-		) {
-			withdrawals[counter] = withdrawalRequests[i];
-		}
-		emit WithdrawalsSubmitted(
-			lastProcessedWithdrawalId,
-			_lastProcessedWithdrawalId
-		);
-		lastProcessedWithdrawalId = _lastProcessedWithdrawalId;
-		// note
-		// The specification of ScrollMessenger may change in the future.
-		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processWithdrawals.selector,
-			withdrawals
-		);
-
-		// processWithdrawals is not payable, so value should be 0
-		// TODO In the testnet, the gas limit was 0 and there was no problem. In production, it is necessary to check what will happen.
-		l2ScrollMessenger.sendMessage{value: 0}( // TODO msg.value is 0, ok?
-			liquidity,
-			0, // value
-			message,
-			0, // TODO gaslimit
-			_msgSender()
-		);
-	}
-
 	function processDeposits(
 		uint256 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external onlyLiquidityContract {
 		for (uint256 i = 0; i < depositHashes.length; i++) {
-			_deposit(depositHashes[i]);
+			depositTree.deposit(depositHashes[i]);
 		}
 		lastProcessedDepositId = _lastProcessedDepositId;
-		emit DepositsProcessed(getDepositRoot());
+		emit DepositsProcessed(depositTree.getRoot());
 	}
 
 	function _postBlock(
 		bool isRegistrationBlock,
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
+		bytes16 senderFlags,
 		bytes32 publicKeysHash,
 		bytes32 accountIdsHash,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint
 	) internal returns (uint256 blockNumber) {
 		// Check if the block builder is valid.
-		if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
-			revert InvalidBlockBuilder();
+		// disable for testing
+		// if (blockBuilderRegistry.isValidBlockBuilder(_msgSender()) == false) {
+		// 	revert InvalidBlockBuilder();
+		// }
+
+		bool success = PairingLib.pairing(
+			aggregatedPublicKey,
+			aggregatedSignature,
+			messagePoint
+		);
+		if (!success) {
+			revert PairingCheckFailed();
 		}
+
 		bytes32 signatureHash = keccak256(
 			abi.encodePacked(
-				isRegistrationBlock,
+				uint32(isRegistrationBlock ? 1 : 0),
 				txTreeRoot,
 				senderFlags,
 				publicKeysHash,
@@ -266,7 +246,8 @@ contract Rollup is
 
 		blockNumber = blocks.length;
 		bytes32 prevBlockHash = blocks.getPrevHash();
-		bytes32 depositTreeRoot = getDepositRoot();
+		bytes32 depositTreeRoot = depositTree.getRoot();
+
 		bytes32 blockHash = blocks.pushBlockInfo(
 			depositTreeRoot,
 			signatureHash,

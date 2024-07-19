@@ -3,10 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BigNumberish,
-  BytesLike,
   FunctionFragment,
-  Result,
   Interface,
   ContractRunner,
   ContractMethod,
@@ -17,49 +14,15 @@ import type {
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
-  TypedContractMethod,
-} from "../../common";
+} from "../../../common";
 
-export declare namespace IBlockBuilderRegistry {
-  export type BlockBuilderInfoStruct = {
-    blockBuilderUrl: string;
-    stakeAmount: BigNumberish;
-    stopTime: BigNumberish;
-    numSlashes: BigNumberish;
-    isValid: boolean;
-  };
+export interface DepositTreeLibInterface extends Interface {}
 
-  export type BlockBuilderInfoStructOutput = [
-    blockBuilderUrl: string,
-    stakeAmount: bigint,
-    stopTime: bigint,
-    numSlashes: bigint,
-    isValid: boolean
-  ] & {
-    blockBuilderUrl: string;
-    stakeAmount: bigint;
-    stopTime: bigint;
-    numSlashes: bigint;
-    isValid: boolean;
-  };
-}
-
-export interface BlockBuilderInfoLibInterface extends Interface {
-  getFunction(nameOrSignature: "isStaking"): FunctionFragment;
-
-  encodeFunctionData(
-    functionFragment: "isStaking",
-    values: [IBlockBuilderRegistry.BlockBuilderInfoStruct]
-  ): string;
-
-  decodeFunctionResult(functionFragment: "isStaking", data: BytesLike): Result;
-}
-
-export interface BlockBuilderInfoLib extends BaseContract {
-  connect(runner?: ContractRunner | null): BlockBuilderInfoLib;
+export interface DepositTreeLib extends BaseContract {
+  connect(runner?: ContractRunner | null): DepositTreeLib;
   waitForDeployment(): Promise<this>;
 
-  interface: BlockBuilderInfoLibInterface;
+  interface: DepositTreeLibInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -98,23 +61,9 @@ export interface BlockBuilderInfoLib extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  isStaking: TypedContractMethod<
-    [info: IBlockBuilderRegistry.BlockBuilderInfoStruct],
-    [boolean],
-    "view"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
-
-  getFunction(
-    nameOrSignature: "isStaking"
-  ): TypedContractMethod<
-    [info: IBlockBuilderRegistry.BlockBuilderInfoStruct],
-    [boolean],
-    "view"
-  >;
 
   filters: {};
 }

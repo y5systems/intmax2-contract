@@ -23,31 +23,7 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace IRollup {
-  export type WithdrawalStruct = {
-    recipient: AddressLike;
-    tokenIndex: BigNumberish;
-    amount: BigNumberish;
-    salt: BytesLike;
-    blockHash: BytesLike;
-  };
-
-  export type WithdrawalStructOutput = [
-    recipient: string,
-    tokenIndex: bigint,
-    amount: bigint,
-    salt: string,
-    blockHash: string
-  ] & {
-    recipient: string;
-    tokenIndex: bigint;
-    amount: bigint;
-    salt: string;
-    blockHash: string;
-  };
-}
-
-export declare namespace ILiquidity {
+export declare namespace DepositLib {
   export type DepositStruct = {
     recipientSaltHash: BytesLike;
     tokenIndex: BigNumberish;
@@ -61,11 +37,32 @@ export declare namespace ILiquidity {
   ] & { recipientSaltHash: string; tokenIndex: bigint; amount: bigint };
 }
 
+export declare namespace WithdrawalLib {
+  export type WithdrawalStruct = {
+    recipient: AddressLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
+    nullifier: BytesLike;
+  };
+
+  export type WithdrawalStructOutput = [
+    recipient: string,
+    tokenIndex: bigint,
+    amount: bigint,
+    nullifier: string
+  ] & {
+    recipient: string;
+    tokenIndex: bigint;
+    amount: bigint;
+    nullifier: string;
+  };
+}
+
 export interface LiquidityInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "__TokenInfo_init"
+      | "__TokenData_init"
       | "cancelPendingDeposit"
       | "claimRejectedDeposit"
       | "claimWithdrawals"
@@ -78,7 +75,8 @@ export interface LiquidityInterface extends Interface {
       | "lastProcessedDepositId"
       | "owner"
       | "pendingDepositData"
-      | "processWithdrawals"
+      | "processClaimableWithdrawals"
+      | "processDirectWithdrawals"
       | "proxiableUUID"
       | "rejectDeposits"
       | "renounceOwnership"
@@ -104,20 +102,20 @@ export interface LiquidityInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "__TokenInfo_init",
-    values: [AddressLike, AddressLike]
+    functionFragment: "__TokenData_init",
+    values: [AddressLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "cancelPendingDeposit",
-    values: [BigNumberish, ILiquidity.DepositStruct]
+    values: [BigNumberish, DepositLib.DepositStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "claimRejectedDeposit",
-    values: [BigNumberish, ILiquidity.DepositStruct]
+    values: [BigNumberish, DepositLib.DepositStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "claimWithdrawals",
-    values: [BigNumberish[]]
+    values: [WithdrawalLib.WithdrawalStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "depositERC1155",
@@ -137,7 +135,7 @@ export interface LiquidityInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [AddressLike, AddressLike, AddressLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "lastAnalyzedDepositId",
@@ -153,8 +151,12 @@ export interface LiquidityInterface extends Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "processWithdrawals",
-    values: [IRollup.WithdrawalStruct[]]
+    functionFragment: "processClaimableWithdrawals",
+    values: [BytesLike[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "processDirectWithdrawals",
+    values: [WithdrawalLib.WithdrawalStruct[]]
   ): string;
   encodeFunctionData(
     functionFragment: "proxiableUUID",
@@ -186,7 +188,7 @@ export interface LiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "__TokenInfo_init",
+    functionFragment: "__TokenData_init",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -229,7 +231,11 @@ export interface LiquidityInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "processWithdrawals",
+    functionFragment: "processClaimableWithdrawals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "processDirectWithdrawals",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -363,17 +369,10 @@ export namespace UpgradedEvent {
 }
 
 export namespace WithdrawalClaimableEvent {
-  export type InputTuple = [
-    withdrawalId: BigNumberish,
-    withdrawal: IRollup.WithdrawalStruct
-  ];
-  export type OutputTuple = [
-    withdrawalId: bigint,
-    withdrawal: IRollup.WithdrawalStructOutput
-  ];
+  export type InputTuple = [withdrawalHash: BytesLike];
+  export type OutputTuple = [withdrawalHash: string];
   export interface OutputObject {
-    withdrawalId: bigint;
-    withdrawal: IRollup.WithdrawalStructOutput;
+    withdrawalHash: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -426,26 +425,26 @@ export interface Liquidity extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  __TokenInfo_init: TypedContractMethod<
-    [_usdc: AddressLike, _wbtc: AddressLike],
+  __TokenData_init: TypedContractMethod<
+    [initialERC20Tokens: AddressLike[]],
     [void],
     "nonpayable"
   >;
 
   cancelPendingDeposit: TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;
 
   claimRejectedDeposit: TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;
 
   claimWithdrawals: TypedContractMethod<
-    [withdrawalIds: BigNumberish[]],
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
     [void],
     "nonpayable"
   >;
@@ -491,8 +490,7 @@ export interface Liquidity extends BaseContract {
     [
       _l1ScrollMessenger: AddressLike,
       _rollup: AddressLike,
-      _usdc: AddressLike,
-      _wbtc: AddressLike
+      inititialERC20Tokens: AddressLike[]
     ],
     [void],
     "nonpayable"
@@ -510,8 +508,14 @@ export interface Liquidity extends BaseContract {
     "view"
   >;
 
-  processWithdrawals: TypedContractMethod<
-    [withdrawals: IRollup.WithdrawalStruct[]],
+  processClaimableWithdrawals: TypedContractMethod<
+    [withdrawalHahes: BytesLike[]],
+    [void],
+    "nonpayable"
+  >;
+
+  processDirectWithdrawals: TypedContractMethod<
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
     [void],
     "nonpayable"
   >;
@@ -552,29 +556,33 @@ export interface Liquidity extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "__TokenInfo_init"
+    nameOrSignature: "__TokenData_init"
   ): TypedContractMethod<
-    [_usdc: AddressLike, _wbtc: AddressLike],
+    [initialERC20Tokens: AddressLike[]],
     [void],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "cancelPendingDeposit"
   ): TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "claimRejectedDeposit"
   ): TypedContractMethod<
-    [depositId: BigNumberish, deposit: ILiquidity.DepositStruct],
+    [depositId: BigNumberish, deposit: DepositLib.DepositStruct],
     [void],
     "nonpayable"
   >;
   getFunction(
     nameOrSignature: "claimWithdrawals"
-  ): TypedContractMethod<[withdrawalIds: BigNumberish[]], [void], "nonpayable">;
+  ): TypedContractMethod<
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "depositERC1155"
   ): TypedContractMethod<
@@ -618,8 +626,7 @@ export interface Liquidity extends BaseContract {
     [
       _l1ScrollMessenger: AddressLike,
       _rollup: AddressLike,
-      _usdc: AddressLike,
-      _wbtc: AddressLike
+      inititialERC20Tokens: AddressLike[]
     ],
     [void],
     "nonpayable"
@@ -641,9 +648,12 @@ export interface Liquidity extends BaseContract {
     "view"
   >;
   getFunction(
-    nameOrSignature: "processWithdrawals"
+    nameOrSignature: "processClaimableWithdrawals"
+  ): TypedContractMethod<[withdrawalHahes: BytesLike[]], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "processDirectWithdrawals"
   ): TypedContractMethod<
-    [withdrawals: IRollup.WithdrawalStruct[]],
+    [withdrawals: WithdrawalLib.WithdrawalStruct[]],
     [void],
     "nonpayable"
   >;
@@ -813,7 +823,7 @@ export interface Liquidity extends BaseContract {
       UpgradedEvent.OutputObject
     >;
 
-    "WithdrawalClaimable(uint256,tuple)": TypedContractEvent<
+    "WithdrawalClaimable(bytes32)": TypedContractEvent<
       WithdrawalClaimableEvent.InputTuple,
       WithdrawalClaimableEvent.OutputTuple,
       WithdrawalClaimableEvent.OutputObject

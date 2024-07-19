@@ -3,9 +3,7 @@
 /* eslint-disable */
 import type {
   BaseContract,
-  BytesLike,
   FunctionFragment,
-  Result,
   Interface,
   ContractRunner,
   ContractMethod,
@@ -16,40 +14,15 @@ import type {
   TypedDeferredTopicFilter,
   TypedEventLog,
   TypedListener,
-  TypedContractMethod,
 } from "../../../common";
 
-export interface BlockBuilderRegistryReentrancyTestInterface extends Interface {
-  getFunction(
-    nameOrSignature: "stopBlockBuilder" | "unstake" | "updateBlockBuilder"
-  ): FunctionFragment;
+export interface PairingLibInterface extends Interface {}
 
-  encodeFunctionData(
-    functionFragment: "stopBlockBuilder",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "unstake", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "updateBlockBuilder",
-    values?: undefined
-  ): string;
-
-  decodeFunctionResult(
-    functionFragment: "stopBlockBuilder",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "unstake", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "updateBlockBuilder",
-    data: BytesLike
-  ): Result;
-}
-
-export interface BlockBuilderRegistryReentrancyTest extends BaseContract {
-  connect(runner?: ContractRunner | null): BlockBuilderRegistryReentrancyTest;
+export interface PairingLib extends BaseContract {
+  connect(runner?: ContractRunner | null): PairingLib;
   waitForDeployment(): Promise<this>;
 
-  interface: BlockBuilderRegistryReentrancyTestInterface;
+  interface: PairingLibInterface;
 
   queryFilter<TCEvent extends TypedContractEvent>(
     event: TCEvent,
@@ -88,25 +61,9 @@ export interface BlockBuilderRegistryReentrancyTest extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  stopBlockBuilder: TypedContractMethod<[], [void], "nonpayable">;
-
-  unstake: TypedContractMethod<[], [void], "nonpayable">;
-
-  updateBlockBuilder: TypedContractMethod<[], [void], "payable">;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
-
-  getFunction(
-    nameOrSignature: "stopBlockBuilder"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "unstake"
-  ): TypedContractMethod<[], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "updateBlockBuilder"
-  ): TypedContractMethod<[], [void], "payable">;
 
   filters: {};
 }

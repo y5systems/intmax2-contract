@@ -94,10 +94,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165__factory>;
     getContractFactory(
-      name: "ReentrancyGuard",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ReentrancyGuard__factory>;
-    getContractFactory(
       name: "IL1ScrollMessenger",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IL1ScrollMessenger__factory>;
@@ -122,9 +118,13 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IBlockBuilderRegistry__factory>;
     getContractFactory(
-      name: "DepositContract",
+      name: "Bytes32QueueLib",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.DepositContract__factory>;
+    ): Promise<Contracts.Bytes32QueueLib__factory>;
+    getContractFactory(
+      name: "WithdrawalQueueLib",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.WithdrawalQueueLib__factory>;
     getContractFactory(
       name: "ILiquidity",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -150,9 +150,25 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IRollup__factory>;
     getContractFactory(
+      name: "IWithdrawal",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IWithdrawal__factory>;
+    getContractFactory(
+      name: "DepositTreeLib",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.DepositTreeLib__factory>;
+    getContractFactory(
+      name: "PairingLib",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.PairingLib__factory>;
+    getContractFactory(
       name: "Rollup",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Rollup__factory>;
+    getContractFactory(
+      name: "Withdrawal",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Withdrawal__factory>;
     getContractFactory(
       name: "BlockBuilderInfoLibTest",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -283,11 +299,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165>;
     getContractAt(
-      name: "ReentrancyGuard",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.ReentrancyGuard>;
-    getContractAt(
       name: "IL1ScrollMessenger",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -318,10 +329,15 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IBlockBuilderRegistry>;
     getContractAt(
-      name: "DepositContract",
+      name: "Bytes32QueueLib",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
-    ): Promise<Contracts.DepositContract>;
+    ): Promise<Contracts.Bytes32QueueLib>;
+    getContractAt(
+      name: "WithdrawalQueueLib",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.WithdrawalQueueLib>;
     getContractAt(
       name: "ILiquidity",
       address: string | ethers.Addressable,
@@ -353,10 +369,30 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IRollup>;
     getContractAt(
+      name: "IWithdrawal",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IWithdrawal>;
+    getContractAt(
+      name: "DepositTreeLib",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.DepositTreeLib>;
+    getContractAt(
+      name: "PairingLib",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.PairingLib>;
+    getContractAt(
       name: "Rollup",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
     ): Promise<Contracts.Rollup>;
+    getContractAt(
+      name: "Withdrawal",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.Withdrawal>;
     getContractAt(
       name: "BlockBuilderInfoLibTest",
       address: string | ethers.Addressable,
@@ -474,10 +510,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165>;
     deployContract(
-      name: "ReentrancyGuard",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ReentrancyGuard>;
-    deployContract(
       name: "IL1ScrollMessenger",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IL1ScrollMessenger>;
@@ -502,9 +534,13 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
     deployContract(
-      name: "DepositContract",
+      name: "Bytes32QueueLib",
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.DepositContract>;
+    ): Promise<Contracts.Bytes32QueueLib>;
+    deployContract(
+      name: "WithdrawalQueueLib",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.WithdrawalQueueLib>;
     deployContract(
       name: "ILiquidity",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -530,9 +566,25 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
     deployContract(
+      name: "IWithdrawal",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IWithdrawal>;
+    deployContract(
+      name: "DepositTreeLib",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DepositTreeLib>;
+    deployContract(
+      name: "PairingLib",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PairingLib>;
+    deployContract(
       name: "Rollup",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
+    deployContract(
+      name: "Withdrawal",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Withdrawal>;
     deployContract(
       name: "BlockBuilderInfoLibTest",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -663,11 +715,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IERC165>;
     deployContract(
-      name: "ReentrancyGuard",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.ReentrancyGuard>;
-    deployContract(
       name: "IL1ScrollMessenger",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -698,10 +745,15 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IBlockBuilderRegistry>;
     deployContract(
-      name: "DepositContract",
+      name: "Bytes32QueueLib",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.DepositContract>;
+    ): Promise<Contracts.Bytes32QueueLib>;
+    deployContract(
+      name: "WithdrawalQueueLib",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.WithdrawalQueueLib>;
     deployContract(
       name: "ILiquidity",
       args: any[],
@@ -733,10 +785,30 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IRollup>;
     deployContract(
+      name: "IWithdrawal",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IWithdrawal>;
+    deployContract(
+      name: "DepositTreeLib",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.DepositTreeLib>;
+    deployContract(
+      name: "PairingLib",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.PairingLib>;
+    deployContract(
       name: "Rollup",
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.Rollup>;
+    deployContract(
+      name: "Withdrawal",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.Withdrawal>;
     deployContract(
       name: "BlockBuilderInfoLibTest",
       args: any[],
