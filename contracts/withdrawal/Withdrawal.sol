@@ -18,8 +18,8 @@ import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsL
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
-import {WithdrawalQueueLib} from "../common/queue/WithdrawalQueueLib.sol";
-import {Bytes32QueueLib} from "../common/queue/Bytes32QueueLib.sol";
+import {WithdrawalQueueLib} from "./lib/WithdrawalQueueLib.sol";
+import {Bytes32QueueLib} from "./lib/Bytes32QueueLib.sol";
 
 contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;
