@@ -216,9 +216,6 @@ contract Liquidity is
 		if (depositData.sender != _msgSender()) {
 			revert OnlyRecipientCanCancelDeposit();
 		}
-		if (depositData.depositHash == bytes32(0)) {
-			revert InvalidDepositHash();
-		}
 		if (depositData.depositHash != deposit.getHash()) {
 			revert InvalidDepositHash();
 		}
