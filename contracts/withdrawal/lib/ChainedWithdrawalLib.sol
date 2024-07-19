@@ -8,6 +8,7 @@ library ChainedWithdrawalLib {
 		uint256 amount;
 		bytes32 nullifier;
 		bytes32 blockHash;
+		uint32 blockNumber;
 	}
 
 	function hashWithPrevHash(
@@ -22,7 +23,8 @@ library ChainedWithdrawalLib {
 					withdrawal.tokenIndex,
 					withdrawal.amount,
 					withdrawal.nullifier,
-					withdrawal.blockHash
+					withdrawal.blockHash,
+					withdrawal.blockNumber
 				)
 			);
 	}

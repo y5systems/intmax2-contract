@@ -5,10 +5,12 @@ pragma solidity 0.8.24;
 import {IWithdrawal} from "./IWithdrawal.sol";
 import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
+import {IRollup} from "../rollup/IRollup.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
 // contracts
-import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 // libs
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -19,7 +21,7 @@ import {Byte32Lib} from "../common/Byte32Lib.sol";
 import {WithdrawalQueueLib} from "../common/queue/WithdrawalQueueLib.sol";
 import {Bytes32QueueLib} from "../common/queue/Bytes32QueueLib.sol";
 
-contract Withdrawal is IWithdrawal, ContextUpgradeable {
+contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
 	using ChainedWithdrawalLib for ChainedWithdrawalLib.ChainedWithdrawal[];
@@ -33,23 +35,26 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 
 	IPlonkVerifier private withdrawalVerifier;
 	IL2ScrollMessenger private l2ScrollMessenger;
+	IRollup private rollup;
 	address private liquidity;
-
 	WithdrawalQueueLib.Queue private directWithdrawalsQueue;
 	Bytes32QueueLib.Queue private claimableWithdrawalsQueue;
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
-	mapping(bytes32 => uint256) public postedBlockHashes;
 
 	// solhint-disable-next-line func-name-mixedcase
-	function __Withdrawal_init(
+	function initialize(
 		address _scrollMessenger,
 		address _withdrawalVerifier,
 		address _liquidity,
+		address _rollup,
 		uint256[] memory _directWithdrawalTokenIndices
-	) internal onlyInitializing {
+	) internal initializer {
+		__Ownable_init(_msgSender());
+		__UUPSUpgradeable_init();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
+		rollup = IRollup(_rollup);
 		liquidity = _liquidity;
 		for (uint256 i = 0; i < _directWithdrawalTokenIndices.length; i++) {
 			directWithdrawalTokenIndices.add(_directWithdrawalTokenIndices[i]);
@@ -90,8 +95,8 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
-			if (postedBlockHashes[chainedWithdrawal.blockHash] == 0) {
-				// disable this check for testing
+			if (rollup.getBlockHash(chainedWithdrawal.blockNumber) == 0) {
+				// thisable revert for testing
 				// revert BlockHashNotExists(chainedWithdrawal.blockHash);
 			}
 			if (nullifiers[chainedWithdrawal.nullifier] == true) {
@@ -142,7 +147,7 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 			processUpToId = claimableWithdrawalsQueue.rear;
 		}
 		uint256 relayNum = processUpToId - claimableWithdrawalsQueue.front;
-		if (relayNum > MAX_RELAY_DIRECT_WITHDRAWALS) {
+		if (relayNum > MAX_RELAY_CLAIMABLE_WITHDRAWALS) {
 			revert TooManyRelayClaimableWithdrawals(relayNum);
 		}
 		bytes32[] memory withdrawalHashes = new bytes32[](relayNum);
@@ -178,4 +183,6 @@ contract Withdrawal is IWithdrawal, ContextUpgradeable {
 	) internal view returns (bool) {
 		return directWithdrawalTokenIndices.contains(tokenIndex);
 	}
+
+	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
