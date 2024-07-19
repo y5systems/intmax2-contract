@@ -9,7 +9,11 @@ library DepositQueueLib {
 
 	error TriedAnalyzeNotExists(uint256 upToDepositId, uint256 lastDepositId);
 
-	error TriedToRejectOutOfRange(uint256 rejectIndex, uint256 upToDepositId);
+	error TriedToRejectOutOfRange(
+		uint256 rejectIndex,
+		uint256 lastAnalyzedDepositId,
+		uint256 upToDepositId
+	);
 
 	error UpToDepositIdIsTooOld(
 		uint256 upToDepositId,
@@ -83,10 +87,19 @@ library DepositQueueLib {
 			revert TriedAnalyzeNotExists(upToDepositId, depositQueue.rear);
 		}
 
+		uint256 lastAnalyzedDepositId = depositQueue.lastAnalyzedDepositId;
 		for (uint i = 0; i < rejectIndices.length; i++) {
 			uint256 rejectIndex = rejectIndices[i];
-			if (rejectIndex > upToDepositId) {
-				revert TriedToRejectOutOfRange(rejectIndex, upToDepositId);
+			// assert that lastAnalyzedDepositId < rejectIndex <= upToDepositId
+			if (
+				rejectIndex > upToDepositId ||
+				rejectIndex <= lastAnalyzedDepositId
+			) {
+				revert TriedToRejectOutOfRange(
+					rejectIndex,
+					lastAnalyzedDepositId,
+					upToDepositId
+				);
 			}
 			depositQueue.depositData[rejectIndex].isRejected = true;
 		}
