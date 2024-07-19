@@ -23,39 +23,28 @@ import type {
   TypedContractMethod,
 } from "../../common";
 
-export declare namespace IRollup {
+export declare namespace WithdrawalLib {
   export type WithdrawalStruct = {
     recipient: AddressLike;
     tokenIndex: BigNumberish;
     amount: BigNumberish;
-    salt: BytesLike;
-    blockHash: BytesLike;
+    nullifier: BytesLike;
   };
 
   export type WithdrawalStructOutput = [
     recipient: string,
     tokenIndex: bigint,
     amount: bigint,
-    salt: string,
-    blockHash: string
+    nullifier: string
   ] & {
     recipient: string;
     tokenIndex: bigint;
     amount: bigint;
-    salt: string;
-    blockHash: string;
+    nullifier: string;
   };
+}
 
-  export type WithdrawalProofPublicInputsStruct = {
-    withdrawalsHash: BytesLike;
-    withdrawalAggregator: AddressLike;
-  };
-
-  export type WithdrawalProofPublicInputsStructOutput = [
-    withdrawalsHash: string,
-    withdrawalAggregator: string
-  ] & { withdrawalsHash: string; withdrawalAggregator: string };
-
+export declare namespace FraudProofPublicInputsLib {
   export type FraudProofPublicInputsStruct = {
     blockHash: BytesLike;
     blockNumber: BigNumberish;
@@ -69,40 +58,79 @@ export declare namespace IRollup {
   ] & { blockHash: string; blockNumber: bigint; challenger: string };
 }
 
+export declare namespace ChainedWithdrawalLib {
+  export type ChainedWithdrawalStruct = {
+    recipient: AddressLike;
+    tokenIndex: BigNumberish;
+    amount: BigNumberish;
+    nullifier: BytesLike;
+    blockHash: BytesLike;
+  };
+
+  export type ChainedWithdrawalStructOutput = [
+    recipient: string,
+    tokenIndex: bigint,
+    amount: bigint,
+    nullifier: string,
+    blockHash: string
+  ] & {
+    recipient: string;
+    tokenIndex: bigint;
+    amount: bigint;
+    nullifier: string;
+    blockHash: string;
+  };
+}
+
+export declare namespace WithdrawalProofPublicInputsLib {
+  export type WithdrawalProofPublicInputsStruct = {
+    lastWithdrawalHash: BytesLike;
+    withdrawalAggregator: AddressLike;
+  };
+
+  export type WithdrawalProofPublicInputsStructOutput = [
+    lastWithdrawalHash: string,
+    withdrawalAggregator: string
+  ] & { lastWithdrawalHash: string; withdrawalAggregator: string };
+}
+
 export interface RollupInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "UPGRADE_INTERFACE_VERSION"
-      | "depositCount"
-      | "getDepositRoot"
-      | "getLeafValue"
+      | "blocks"
+      | "getClaimableWithdrawalsQueueSize"
+      | "getDirectWithdrawalsQueueSize"
       | "initialize"
       | "lastProcessedDepositId"
       | "lastProcessedWithdrawalId"
       | "owner"
       | "postNonRegistrationBlock"
       | "postRegistrationBlock"
-      | "postWithdrawalRequests"
+      | "postedBlockHashes"
       | "processDeposits"
       | "proxiableUUID"
+      | "relayClaimableWithdrawals"
+      | "relayDirectWithdrawals"
       | "renounceOwnership"
       | "submitBlockFraudProof"
-      | "submitWithdrawals"
+      | "submitWithdrawalProof"
       | "transferOwnership"
       | "upgradeToAndCall"
-      | "verifyMerkleProof"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "AccountIdsPosted"
       | "BlockFraudProofSubmitted"
       | "BlockPosted"
+      | "ClaimableWithdrawalQueued"
       | "DepositsProcessed"
+      | "DirectWithdrawalQueued"
       | "Initialized"
       | "OwnershipTransferred"
+      | "PubKeysPosted"
       | "Upgraded"
-      | "WithdrawRequested"
-      | "WithdrawalsSubmitted"
   ): EventFragment;
 
   encodeFunctionData(
@@ -110,28 +138,27 @@ export interface RollupInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "depositCount",
+    functionFragment: "blocks",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getClaimableWithdrawalsQueueSize",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "getDepositRoot",
+    functionFragment: "getDirectWithdrawalsQueueSize",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getLeafValue",
-    values: [
-      BigNumberish,
-      BigNumberish,
-      AddressLike,
-      BigNumberish,
-      AddressLike,
-      BigNumberish,
-      BytesLike
-    ]
   ): string;
   encodeFunctionData(
     functionFragment: "initialize",
-    values: [AddressLike, AddressLike, AddressLike, AddressLike]
+    values: [
+      AddressLike,
+      AddressLike,
+      AddressLike,
+      AddressLike,
+      AddressLike,
+      BigNumberish[]
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "lastProcessedDepositId",
@@ -146,11 +173,11 @@ export interface RollupInterface extends Interface {
     functionFragment: "postNonRegistrationBlock",
     values: [
       BytesLike,
-      BigNumberish,
       BytesLike,
-      [BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      [BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
+      BytesLike,
       BytesLike
     ]
   ): string;
@@ -158,20 +185,16 @@ export interface RollupInterface extends Interface {
     functionFragment: "postRegistrationBlock",
     values: [
       BytesLike,
-      BigNumberish,
-      [BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
-      [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      BytesLike,
+      [BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
+      [BytesLike, BytesLike, BytesLike, BytesLike],
       BigNumberish[]
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "postWithdrawalRequests",
-    values: [
-      IRollup.WithdrawalStruct[],
-      IRollup.WithdrawalProofPublicInputsStruct,
-      BytesLike
-    ]
+    functionFragment: "postedBlockHashes",
+    values: [BytesLike]
   ): string;
   encodeFunctionData(
     functionFragment: "processDeposits",
@@ -182,16 +205,28 @@ export interface RollupInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "relayClaimableWithdrawals",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "relayDirectWithdrawals",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "submitBlockFraudProof",
-    values: [IRollup.FraudProofPublicInputsStruct, BytesLike]
+    values: [FraudProofPublicInputsLib.FraudProofPublicInputsStruct, BytesLike]
   ): string;
   encodeFunctionData(
-    functionFragment: "submitWithdrawals",
-    values: [BigNumberish]
+    functionFragment: "submitWithdrawalProof",
+    values: [
+      ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -201,25 +236,18 @@ export interface RollupInterface extends Interface {
     functionFragment: "upgradeToAndCall",
     values: [AddressLike, BytesLike]
   ): string;
-  encodeFunctionData(
-    functionFragment: "verifyMerkleProof",
-    values: [BytesLike, BytesLike[], BigNumberish, BytesLike]
-  ): string;
 
   decodeFunctionResult(
     functionFragment: "UPGRADE_INTERFACE_VERSION",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "blocks", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "depositCount",
+    functionFragment: "getClaimableWithdrawalsQueueSize",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getDepositRoot",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getLeafValue",
+    functionFragment: "getDirectWithdrawalsQueueSize",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
@@ -241,7 +269,7 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "postWithdrawalRequests",
+    functionFragment: "postedBlockHashes",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -253,6 +281,14 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "relayClaimableWithdrawals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "relayDirectWithdrawals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
@@ -261,7 +297,7 @@ export interface RollupInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "submitWithdrawals",
+    functionFragment: "submitWithdrawalProof",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -272,10 +308,19 @@ export interface RollupInterface extends Interface {
     functionFragment: "upgradeToAndCall",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "verifyMerkleProof",
-    data: BytesLike
-  ): Result;
+}
+
+export namespace AccountIdsPostedEvent {
+  export type InputTuple = [blockNumber: BigNumberish, accountIds: BytesLike];
+  export type OutputTuple = [blockNumber: bigint, accountIds: string];
+  export interface OutputObject {
+    blockNumber: bigint;
+    accountIds: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace BlockFraudProofSubmittedEvent {
@@ -328,11 +373,49 @@ export namespace BlockPostedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace ClaimableWithdrawalQueuedEvent {
+  export type InputTuple = [
+    id: BigNumberish,
+    withdrawal: WithdrawalLib.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    id: bigint,
+    withdrawal: WithdrawalLib.WithdrawalStructOutput
+  ];
+  export interface OutputObject {
+    id: bigint;
+    withdrawal: WithdrawalLib.WithdrawalStructOutput;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace DepositsProcessedEvent {
   export type InputTuple = [depositTreeRoot: BytesLike];
   export type OutputTuple = [depositTreeRoot: string];
   export interface OutputObject {
     depositTreeRoot: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace DirectWithdrawalQueuedEvent {
+  export type InputTuple = [
+    id: BigNumberish,
+    withdrawal: WithdrawalLib.WithdrawalStruct
+  ];
+  export type OutputTuple = [
+    id: bigint,
+    withdrawal: WithdrawalLib.WithdrawalStructOutput
+  ];
+  export interface OutputObject {
+    id: bigint;
+    withdrawal: WithdrawalLib.WithdrawalStructOutput;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -365,49 +448,27 @@ export namespace OwnershipTransferredEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace PubKeysPostedEvent {
+  export type InputTuple = [
+    blockNumber: BigNumberish,
+    senderPublicKeys: BigNumberish[]
+  ];
+  export type OutputTuple = [blockNumber: bigint, senderPublicKeys: bigint[]];
+  export interface OutputObject {
+    blockNumber: bigint;
+    senderPublicKeys: bigint[];
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace UpgradedEvent {
   export type InputTuple = [implementation: AddressLike];
   export type OutputTuple = [implementation: string];
   export interface OutputObject {
     implementation: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace WithdrawRequestedEvent {
-  export type InputTuple = [
-    withdrawalRequest: BytesLike,
-    withdrawalAggregator: AddressLike
-  ];
-  export type OutputTuple = [
-    withdrawalRequest: string,
-    withdrawalAggregator: string
-  ];
-  export interface OutputObject {
-    withdrawalRequest: string;
-    withdrawalAggregator: string;
-  }
-  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
-  export type Log = TypedEventLog<Event>;
-  export type LogDescription = TypedLogDescription<Event>;
-}
-
-export namespace WithdrawalsSubmittedEvent {
-  export type InputTuple = [
-    startProcessedWithdrawalId: BigNumberish,
-    lastProcessedWithdrawalId: BigNumberish
-  ];
-  export type OutputTuple = [
-    startProcessedWithdrawalId: bigint,
-    lastProcessedWithdrawalId: bigint
-  ];
-  export interface OutputObject {
-    startProcessedWithdrawalId: bigint;
-    lastProcessedWithdrawalId: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -460,30 +521,24 @@ export interface Rollup extends BaseContract {
 
   UPGRADE_INTERFACE_VERSION: TypedContractMethod<[], [string], "view">;
 
-  depositCount: TypedContractMethod<[], [bigint], "view">;
-
-  getDepositRoot: TypedContractMethod<[], [string], "view">;
-
-  getLeafValue: TypedContractMethod<
-    [
-      leafType: BigNumberish,
-      originNetwork: BigNumberish,
-      originAddress: AddressLike,
-      destinationNetwork: BigNumberish,
-      destinationAddress: AddressLike,
-      amount: BigNumberish,
-      metadataHash: BytesLike
-    ],
-    [string],
+  blocks: TypedContractMethod<
+    [arg0: BigNumberish],
+    [[string, string] & { hash: string; builder: string }],
     "view"
   >;
+
+  getClaimableWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
+
+  getDirectWithdrawalsQueueSize: TypedContractMethod<[], [bigint], "view">;
 
   initialize: TypedContractMethod<
     [
       _scrollMessenger: AddressLike,
-      _verifier: AddressLike,
+      _fraudVerifier: AddressLike,
+      _withdrawalVerifier: AddressLike,
       _liquidity: AddressLike,
-      _blockBuilderRegistry: AddressLike
+      _blockBuilderRegistry: AddressLike,
+      _directWithdrawalTokenIndices: BigNumberish[]
     ],
     [void],
     "nonpayable"
@@ -498,16 +553,11 @@ export interface Rollup extends BaseContract {
   postNonRegistrationBlock: TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       publicKeysHash: BytesLike,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
       senderAccountIds: BytesLike
     ],
     [void],
@@ -517,30 +567,17 @@ export interface Rollup extends BaseContract {
   postRegistrationBlock: TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       senderPublicKeys: BigNumberish[]
     ],
     [void],
     "nonpayable"
   >;
 
-  postWithdrawalRequests: TypedContractMethod<
-    [
-      _withdrawalRequests: IRollup.WithdrawalStruct[],
-      publicInputs: IRollup.WithdrawalProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
+  postedBlockHashes: TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
 
   processDeposits: TypedContractMethod<
     [_lastProcessedDepositId: BigNumberish, depositHashes: BytesLike[]],
@@ -550,16 +587,35 @@ export interface Rollup extends BaseContract {
 
   proxiableUUID: TypedContractMethod<[], [string], "view">;
 
-  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
-
-  submitBlockFraudProof: TypedContractMethod<
-    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
+  relayClaimableWithdrawals: TypedContractMethod<
+    [processUpToId: BigNumberish],
     [void],
     "nonpayable"
   >;
 
-  submitWithdrawals: TypedContractMethod<
-    [_lastProcessedWithdrawalId: BigNumberish],
+  relayDirectWithdrawals: TypedContractMethod<
+    [processUpToId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  submitBlockFraudProof: TypedContractMethod<
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  submitWithdrawalProof: TypedContractMethod<
+    [
+      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
@@ -576,17 +632,6 @@ export interface Rollup extends BaseContract {
     "payable"
   >;
 
-  verifyMerkleProof: TypedContractMethod<
-    [
-      leafHash: BytesLike,
-      smtProof: BytesLike[],
-      index: BigNumberish,
-      root: BytesLike
-    ],
-    [boolean],
-    "view"
-  >;
-
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
   ): T;
@@ -595,34 +640,28 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "UPGRADE_INTERFACE_VERSION"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "depositCount"
-  ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "getDepositRoot"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
-    nameOrSignature: "getLeafValue"
+    nameOrSignature: "blocks"
   ): TypedContractMethod<
-    [
-      leafType: BigNumberish,
-      originNetwork: BigNumberish,
-      originAddress: AddressLike,
-      destinationNetwork: BigNumberish,
-      destinationAddress: AddressLike,
-      amount: BigNumberish,
-      metadataHash: BytesLike
-    ],
-    [string],
+    [arg0: BigNumberish],
+    [[string, string] & { hash: string; builder: string }],
     "view"
   >;
+  getFunction(
+    nameOrSignature: "getClaimableWithdrawalsQueueSize"
+  ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "getDirectWithdrawalsQueueSize"
+  ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
     nameOrSignature: "initialize"
   ): TypedContractMethod<
     [
       _scrollMessenger: AddressLike,
-      _verifier: AddressLike,
+      _fraudVerifier: AddressLike,
+      _withdrawalVerifier: AddressLike,
       _liquidity: AddressLike,
-      _blockBuilderRegistry: AddressLike
+      _blockBuilderRegistry: AddressLike,
+      _directWithdrawalTokenIndices: BigNumberish[]
     ],
     [void],
     "nonpayable"
@@ -641,16 +680,11 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       publicKeysHash: BytesLike,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
       senderAccountIds: BytesLike
     ],
     [void],
@@ -661,31 +695,18 @@ export interface Rollup extends BaseContract {
   ): TypedContractMethod<
     [
       txTreeRoot: BytesLike,
-      senderFlags: BigNumberish,
-      aggregatedPublicKey: [BigNumberish, BigNumberish],
-      aggregatedSignature: [
-        BigNumberish,
-        BigNumberish,
-        BigNumberish,
-        BigNumberish
-      ],
-      messagePoint: [BigNumberish, BigNumberish, BigNumberish, BigNumberish],
+      senderFlags: BytesLike,
+      aggregatedPublicKey: [BytesLike, BytesLike],
+      aggregatedSignature: [BytesLike, BytesLike, BytesLike, BytesLike],
+      messagePoint: [BytesLike, BytesLike, BytesLike, BytesLike],
       senderPublicKeys: BigNumberish[]
     ],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "postWithdrawalRequests"
-  ): TypedContractMethod<
-    [
-      _withdrawalRequests: IRollup.WithdrawalStruct[],
-      publicInputs: IRollup.WithdrawalProofPublicInputsStruct,
-      proof: BytesLike
-    ],
-    [void],
-    "nonpayable"
-  >;
+    nameOrSignature: "postedBlockHashes"
+  ): TypedContractMethod<[arg0: BytesLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "processDeposits"
   ): TypedContractMethod<
@@ -697,19 +718,32 @@ export interface Rollup extends BaseContract {
     nameOrSignature: "proxiableUUID"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "relayClaimableWithdrawals"
+  ): TypedContractMethod<[processUpToId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "relayDirectWithdrawals"
+  ): TypedContractMethod<[processUpToId: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "submitBlockFraudProof"
   ): TypedContractMethod<
-    [publicInputs: IRollup.FraudProofPublicInputsStruct, proof: BytesLike],
+    [
+      publicInputs: FraudProofPublicInputsLib.FraudProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
   getFunction(
-    nameOrSignature: "submitWithdrawals"
+    nameOrSignature: "submitWithdrawalProof"
   ): TypedContractMethod<
-    [_lastProcessedWithdrawalId: BigNumberish],
+    [
+      withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+      publicInputs: WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputsStruct,
+      proof: BytesLike
+    ],
     [void],
     "nonpayable"
   >;
@@ -723,19 +757,14 @@ export interface Rollup extends BaseContract {
     [void],
     "payable"
   >;
-  getFunction(
-    nameOrSignature: "verifyMerkleProof"
-  ): TypedContractMethod<
-    [
-      leafHash: BytesLike,
-      smtProof: BytesLike[],
-      index: BigNumberish,
-      root: BytesLike
-    ],
-    [boolean],
-    "view"
-  >;
 
+  getEvent(
+    key: "AccountIdsPosted"
+  ): TypedContractEvent<
+    AccountIdsPostedEvent.InputTuple,
+    AccountIdsPostedEvent.OutputTuple,
+    AccountIdsPostedEvent.OutputObject
+  >;
   getEvent(
     key: "BlockFraudProofSubmitted"
   ): TypedContractEvent<
@@ -751,11 +780,25 @@ export interface Rollup extends BaseContract {
     BlockPostedEvent.OutputObject
   >;
   getEvent(
+    key: "ClaimableWithdrawalQueued"
+  ): TypedContractEvent<
+    ClaimableWithdrawalQueuedEvent.InputTuple,
+    ClaimableWithdrawalQueuedEvent.OutputTuple,
+    ClaimableWithdrawalQueuedEvent.OutputObject
+  >;
+  getEvent(
     key: "DepositsProcessed"
   ): TypedContractEvent<
     DepositsProcessedEvent.InputTuple,
     DepositsProcessedEvent.OutputTuple,
     DepositsProcessedEvent.OutputObject
+  >;
+  getEvent(
+    key: "DirectWithdrawalQueued"
+  ): TypedContractEvent<
+    DirectWithdrawalQueuedEvent.InputTuple,
+    DirectWithdrawalQueuedEvent.OutputTuple,
+    DirectWithdrawalQueuedEvent.OutputObject
   >;
   getEvent(
     key: "Initialized"
@@ -772,28 +815,32 @@ export interface Rollup extends BaseContract {
     OwnershipTransferredEvent.OutputObject
   >;
   getEvent(
+    key: "PubKeysPosted"
+  ): TypedContractEvent<
+    PubKeysPostedEvent.InputTuple,
+    PubKeysPostedEvent.OutputTuple,
+    PubKeysPostedEvent.OutputObject
+  >;
+  getEvent(
     key: "Upgraded"
   ): TypedContractEvent<
     UpgradedEvent.InputTuple,
     UpgradedEvent.OutputTuple,
     UpgradedEvent.OutputObject
   >;
-  getEvent(
-    key: "WithdrawRequested"
-  ): TypedContractEvent<
-    WithdrawRequestedEvent.InputTuple,
-    WithdrawRequestedEvent.OutputTuple,
-    WithdrawRequestedEvent.OutputObject
-  >;
-  getEvent(
-    key: "WithdrawalsSubmitted"
-  ): TypedContractEvent<
-    WithdrawalsSubmittedEvent.InputTuple,
-    WithdrawalsSubmittedEvent.OutputTuple,
-    WithdrawalsSubmittedEvent.OutputObject
-  >;
 
   filters: {
+    "AccountIdsPosted(uint256,bytes)": TypedContractEvent<
+      AccountIdsPostedEvent.InputTuple,
+      AccountIdsPostedEvent.OutputTuple,
+      AccountIdsPostedEvent.OutputObject
+    >;
+    AccountIdsPosted: TypedContractEvent<
+      AccountIdsPostedEvent.InputTuple,
+      AccountIdsPostedEvent.OutputTuple,
+      AccountIdsPostedEvent.OutputObject
+    >;
+
     "BlockFraudProofSubmitted(uint32,address,address)": TypedContractEvent<
       BlockFraudProofSubmittedEvent.InputTuple,
       BlockFraudProofSubmittedEvent.OutputTuple,
@@ -816,6 +863,17 @@ export interface Rollup extends BaseContract {
       BlockPostedEvent.OutputObject
     >;
 
+    "ClaimableWithdrawalQueued(uint256,tuple)": TypedContractEvent<
+      ClaimableWithdrawalQueuedEvent.InputTuple,
+      ClaimableWithdrawalQueuedEvent.OutputTuple,
+      ClaimableWithdrawalQueuedEvent.OutputObject
+    >;
+    ClaimableWithdrawalQueued: TypedContractEvent<
+      ClaimableWithdrawalQueuedEvent.InputTuple,
+      ClaimableWithdrawalQueuedEvent.OutputTuple,
+      ClaimableWithdrawalQueuedEvent.OutputObject
+    >;
+
     "DepositsProcessed(bytes32)": TypedContractEvent<
       DepositsProcessedEvent.InputTuple,
       DepositsProcessedEvent.OutputTuple,
@@ -825,6 +883,17 @@ export interface Rollup extends BaseContract {
       DepositsProcessedEvent.InputTuple,
       DepositsProcessedEvent.OutputTuple,
       DepositsProcessedEvent.OutputObject
+    >;
+
+    "DirectWithdrawalQueued(uint256,tuple)": TypedContractEvent<
+      DirectWithdrawalQueuedEvent.InputTuple,
+      DirectWithdrawalQueuedEvent.OutputTuple,
+      DirectWithdrawalQueuedEvent.OutputObject
+    >;
+    DirectWithdrawalQueued: TypedContractEvent<
+      DirectWithdrawalQueuedEvent.InputTuple,
+      DirectWithdrawalQueuedEvent.OutputTuple,
+      DirectWithdrawalQueuedEvent.OutputObject
     >;
 
     "Initialized(uint64)": TypedContractEvent<
@@ -849,6 +918,17 @@ export interface Rollup extends BaseContract {
       OwnershipTransferredEvent.OutputObject
     >;
 
+    "PubKeysPosted(uint256,uint256[])": TypedContractEvent<
+      PubKeysPostedEvent.InputTuple,
+      PubKeysPostedEvent.OutputTuple,
+      PubKeysPostedEvent.OutputObject
+    >;
+    PubKeysPosted: TypedContractEvent<
+      PubKeysPostedEvent.InputTuple,
+      PubKeysPostedEvent.OutputTuple,
+      PubKeysPostedEvent.OutputObject
+    >;
+
     "Upgraded(address)": TypedContractEvent<
       UpgradedEvent.InputTuple,
       UpgradedEvent.OutputTuple,
@@ -858,28 +938,6 @@ export interface Rollup extends BaseContract {
       UpgradedEvent.InputTuple,
       UpgradedEvent.OutputTuple,
       UpgradedEvent.OutputObject
-    >;
-
-    "WithdrawRequested(bytes32,address)": TypedContractEvent<
-      WithdrawRequestedEvent.InputTuple,
-      WithdrawRequestedEvent.OutputTuple,
-      WithdrawRequestedEvent.OutputObject
-    >;
-    WithdrawRequested: TypedContractEvent<
-      WithdrawRequestedEvent.InputTuple,
-      WithdrawRequestedEvent.OutputTuple,
-      WithdrawRequestedEvent.OutputObject
-    >;
-
-    "WithdrawalsSubmitted(uint256,uint256)": TypedContractEvent<
-      WithdrawalsSubmittedEvent.InputTuple,
-      WithdrawalsSubmittedEvent.OutputTuple,
-      WithdrawalsSubmittedEvent.OutputObject
-    >;
-    WithdrawalsSubmitted: TypedContractEvent<
-      WithdrawalsSubmittedEvent.InputTuple,
-      WithdrawalsSubmittedEvent.OutputTuple,
-      WithdrawalsSubmittedEvent.OutputObject
     >;
   };
 }

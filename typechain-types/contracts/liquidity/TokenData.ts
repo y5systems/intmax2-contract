@@ -24,17 +24,17 @@ import type {
 } from "../../common";
 
 export interface TokenDataInterface extends Interface {
-  getFunction(nameOrSignature: "__TokenInfo_init"): FunctionFragment;
+  getFunction(nameOrSignature: "__TokenData_init"): FunctionFragment;
 
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
 
   encodeFunctionData(
-    functionFragment: "__TokenInfo_init",
-    values: [AddressLike, AddressLike]
+    functionFragment: "__TokenData_init",
+    values: [AddressLike[]]
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "__TokenInfo_init",
+    functionFragment: "__TokenData_init",
     data: BytesLike
   ): Result;
 }
@@ -94,8 +94,8 @@ export interface TokenData extends BaseContract {
     event?: TCEvent
   ): Promise<this>;
 
-  __TokenInfo_init: TypedContractMethod<
-    [_usdc: AddressLike, _wbtc: AddressLike],
+  __TokenData_init: TypedContractMethod<
+    [initialERC20Tokens: AddressLike[]],
     [void],
     "nonpayable"
   >;
@@ -105,9 +105,9 @@ export interface TokenData extends BaseContract {
   ): T;
 
   getFunction(
-    nameOrSignature: "__TokenInfo_init"
+    nameOrSignature: "__TokenData_init"
   ): TypedContractMethod<
-    [_usdc: AddressLike, _wbtc: AddressLike],
+    [initialERC20Tokens: AddressLike[]],
     [void],
     "nonpayable"
   >;

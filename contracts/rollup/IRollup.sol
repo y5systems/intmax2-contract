@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
+
 interface IRollup {
 	error InvalidBlockBuilder();
 
@@ -8,49 +10,27 @@ interface IRollup {
 
 	error FraudProofVerificationFailed();
 
-	error WithdrawalProofVerificationFailed();
-
-	error InvalidWithdrawalId();
-
 	error OnlyScrollMessenger();
 
 	error OnlyLiquidity();
 
 	error SenderPublicKeysEmpty();
 
+	error TooManySenderPublicKeys();
+
 	error SenderAccountIdsEmpty();
+
+	error TooManyAccountIds();
 
 	error SenderAccountIdsInvalidLength();
 
-	error WithdrawalBlockHashNotPosted(uint256 requestIndex);
-
-	error WithdrawalsHashMismatch();
-
 	error BlockHashAlreadyPosted();
 
-	struct Block {
-		bytes32 hash;
-		address builder;
-	}
+	error BlockHashMismatch(bytes32 given, bytes32 expected);
 
-	struct Withdrawal {
-		address recipient;
-		uint32 tokenIndex;
-		uint256 amount;
-		bytes32 salt;
-		bytes32 blockHash;
-	}
+	error ChallengerMismatch();
 
-	struct FraudProofPublicInputs {
-		bytes32 blockHash;
-		uint32 blockNumber;
-		address challenger;
-	}
-
-	struct WithdrawalProofPublicInputs {
-		bytes32 withdrawalsHash;
-		address withdrawalAggregator;
-	}
+	error PairingCheckFailed();
 
 	event DepositsProcessed(bytes32 depositTreeRoot);
 
@@ -62,20 +42,17 @@ interface IRollup {
 		bytes32 signatureHash
 	);
 
+	event PubKeysPosted(
+		uint256 indexed blockNumber,
+		uint256[] senderPublicKeys
+	);
+
+	event AccountIdsPosted(uint256 indexed blockNumber, bytes accountIds);
+
 	event BlockFraudProofSubmitted(
 		uint32 indexed blockNumber,
 		address indexed blockBuilder,
 		address indexed challenger
-	);
-
-	event WithdrawRequested(
-		bytes32 indexed withdrawalRequest,
-		address withdrawalAggregator
-	);
-
-	event WithdrawalsSubmitted(
-		uint256 startProcessedWithdrawalId,
-		uint256 lastProcessedWithdrawalId
 	);
 
 	/**
@@ -84,10 +61,10 @@ interface IRollup {
 	 */
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		uint256[] calldata senderPublicKeys
 	) external;
 
@@ -97,35 +74,18 @@ interface IRollup {
 	 */
 	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
-		uint128 senderFlags,
+		bytes16 senderFlags,
+		bytes32[2] calldata aggregatedPublicKey,
+		bytes32[4] calldata aggregatedSignature,
+		bytes32[4] calldata messagePoint,
 		bytes32 publicKeysHash,
-		uint256[2] calldata aggregatedPublicKey,
-		uint256[4] calldata aggregatedSignature,
-		uint256[4] calldata messagePoint,
 		bytes calldata senderAccountIds
 	) external;
 
 	function submitBlockFraudProof(
-		FraudProofPublicInputs calldata publicInputs,
+		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external;
-
-	/**
-	 * @notice Post the withdrawal requests.
-	 * @dev This method is called by the Withdraw Aggregator.
-	 * @param withdrawals The list of withdrawals.
-	 */
-	function postWithdrawalRequests(
-		Withdrawal[] calldata withdrawals,
-		WithdrawalProofPublicInputs calldata publicInputs,
-		bytes calldata proof
-	) external;
-
-	/**
-	 * @notice Submit the withdrawals.
-	 * @dev This method is called by the Withdraw Aggregator.
-	 */
-	function submitWithdrawals(uint256 lastProcessedWithdrawalId) external;
 
 	/**
 	 * @notice Update the deposit tree branch and root.

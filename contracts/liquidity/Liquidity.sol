@@ -4,8 +4,8 @@ pragma solidity 0.8.24;
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/Rollup.sol";
 import {TokenData} from "./TokenData.sol";
-import {DepositLib} from "./DepositLib.sol";
-import {WithdrawalLib} from "../rollup/lib/WithdrawalLib.sol";
+import {DepositLib} from "../lib/DepositLib.sol";
+import {WithdrawalLib} from "../lib/WithdrawalLib.sol";
 import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
@@ -23,13 +23,12 @@ contract Liquidity is
 	ILiquidity
 {
 	using SafeERC20 for IERC20;
-	using DepositLib for Deposit;
-	using WithdrawalLib for IRollup.Withdrawal;
+	using DepositLib for DepositLib.Deposit;
+	using WithdrawalLib for WithdrawalLib.Withdrawal;
 
 	IL1ScrollMessenger private l1ScrollMessenger;
 	address private rollup;
-	uint256 private withdrawalIdCounter;
-	mapping(uint256 => IRollup.Withdrawal) private claimableWithdrawals;
+	mapping(bytes32 => uint256) private claimableWithdrawals;
 
 	/**
 	 * @dev List of pending deposit requests. They are added when there is a request from a user
@@ -65,21 +64,17 @@ contract Liquidity is
 	function initialize(
 		address _l1ScrollMessenger,
 		address _rollup,
-		address _usdc,
-		address _wbtc
+		address[] memory inititialERC20Tokens
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
-		__TokenInfo_init(_usdc, _wbtc);
+		__TokenData_init(inititialERC20Tokens);
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
 		rollup = _rollup;
 	}
 
 	function depositETH(bytes32 recipientSaltHash) external payable {
-		if (recipientSaltHash == bytes32(0)) {
-			revert InvalidRecipientSaltHash();
-		}
 		uint32 tokenIndex = _getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
 	}
@@ -89,9 +84,6 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 amount
 	) public {
-		if (recipientSaltHash == bytes32(0)) {
-			revert InvalidRecipientSaltHash();
-		}
 		if (amount == 0) {
 			revert InvalidAmount();
 		}
@@ -113,9 +105,6 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId
 	) public {
-		if (recipientSaltHash == bytes32(0)) {
-			revert InvalidRecipientSaltHash();
-		}
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -161,7 +150,7 @@ contract Liquidity is
 	 */
 	function cancelPendingDeposit(
 		uint256 depositId,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) public {
 		if (depositId >= pendingDepositData.length) {
 			revert InvalidDepositId();
@@ -198,7 +187,7 @@ contract Liquidity is
 	 */
 	function claimRejectedDeposit(
 		uint256 depositId,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) public {
 		DepositData memory depositData = rejectedDepositData[depositId];
 		if (depositData.sender != _msgSender()) {
@@ -232,7 +221,7 @@ contract Liquidity is
 		}
 		bytes32[] memory depositHashes = new bytes32[](counter);
 		for (
-			uint256 i = lastProcessedDepositId;
+			uint256 i = lastProcessedDepositId + 1;
 			i <= _lastProcessedDepositId;
 			i++
 		) {
@@ -264,38 +253,43 @@ contract Liquidity is
 		emit DepositsSubmitted(lastProcessedDepositId);
 	}
 
-	function processWithdrawals(
-		IRollup.Withdrawal[] calldata withdrawals
+	function processDirectWithdrawals(
+		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external onlyRollup {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
-			IRollup.Withdrawal memory withdrawal = withdrawals[i];
-			TokenInfo memory tokenInfo = getTokenInfo(withdrawal.tokenIndex);
-			if (_isDirectWithdrawalToken(withdrawal.tokenIndex)) {
-				sendToken(
-					tokenInfo.tokenType,
-					tokenInfo.tokenAddress,
-					withdrawal.recipient,
-					withdrawal.amount,
-					tokenInfo.tokenId
-				);
-				continue;
-			}
-			claimableWithdrawals[withdrawalIdCounter] = withdrawal;
-			emit WithdrawalClaimable(withdrawalIdCounter, withdrawal);
-			withdrawalIdCounter++;
+			TokenInfo memory tokenInfo = getTokenInfo(
+				withdrawals[i].tokenIndex
+			);
+			sendToken(
+				tokenInfo.tokenType,
+				tokenInfo.tokenAddress,
+				withdrawals[i].recipient,
+				withdrawals[i].amount,
+				tokenInfo.tokenId
+			);
 		}
 	}
 
-	function claimWithdrawals(uint256[] calldata withdrawalIds) external {
-		for (uint256 i = 0; i < withdrawalIds.length; i++) {
-			IRollup.Withdrawal memory withdrawal = claimableWithdrawals[
-				withdrawalIds[i]
-			];
-			if (withdrawal.isEmpty()) {
+	function processClaimableWithdrawals(
+		bytes32[] calldata withdrawalHahes
+	) external onlyRollup {
+		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
+			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
+			emit WithdrawalClaimable(withdrawalHahes[i]);
+		}
+	}
+
+	function claimWithdrawals(
+		WithdrawalLib.Withdrawal[] calldata withdrawals
+	) external {
+		for (uint256 i = 0; i < withdrawals.length; i++) {
+			WithdrawalLib.Withdrawal memory withdrawal = withdrawals[i];
+			bytes32 withdrawalHash = withdrawal.getHash();
+			if (claimableWithdrawals[withdrawalHash] == 0) {
 				revert WithdrawalNotFound();
 			}
 			TokenInfo memory tokenInfo = getTokenInfo(withdrawal.tokenIndex);
-			delete claimableWithdrawals[withdrawalIds[i]];
+			delete claimableWithdrawals[withdrawalHash];
 			sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,
@@ -308,7 +302,7 @@ contract Liquidity is
 
 	function _cancelDeposit(
 		DepositData memory depositData,
-		Deposit memory deposit
+		DepositLib.Deposit memory deposit
 	) private {
 		if (depositData.depositHash == bytes32(0)) {
 			revert InvalidDepositHash();
@@ -333,7 +327,8 @@ contract Liquidity is
 		uint256 amount
 	) internal {
 		uint256 depositId = pendingDepositData.length;
-		bytes32 depositHash = Deposit(recipientSaltHash, tokenIndex, amount)
+		bytes32 depositHash = DepositLib
+			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
 		pendingDepositData.push(DepositData(depositHash, sender));
 
@@ -350,20 +345,20 @@ contract Liquidity is
 	function sendToken(
 		TokenType tokenType,
 		address token,
-		address sender,
+		address recipient,
 		uint256 amount,
 		uint256 tokenId
 	) private {
 		if (tokenType == TokenType.NATIVE) {
-			payable(sender).transfer(amount);
+			payable(recipient).transfer(amount);
 		} else if (tokenType == TokenType.ERC20) {
-			IERC20(token).safeTransfer(sender, amount);
+			IERC20(token).safeTransfer(recipient, amount);
 		} else if (tokenType == TokenType.ERC721) {
-			IERC721(token).transferFrom(address(this), sender, tokenId);
+			IERC721(token).transferFrom(address(this), recipient, tokenId);
 		} else {
 			IERC1155(token).safeTransferFrom(
 				address(this),
-				sender,
+				recipient,
 				tokenId,
 				amount,
 				bytes("")
