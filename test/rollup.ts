@@ -7,11 +7,6 @@ describe('Rollup', function () {
 	let rollup: Rollup
 
 	this.beforeEach(async function () {
-		const mockPlonkVerifierFactory =
-			await ethers.getContractFactory('MockPlonkVerifier')
-		const mockPlonkVerifier = await mockPlonkVerifierFactory.deploy()
-		const mockPlonkVerifierAddress = await mockPlonkVerifier.getAddress()
-
 		const rollupFactory = await ethers.getContractFactory('Rollup')
 		rollup = (await upgrades.deployProxy(rollupFactory, [], {
 			initializer: false,
@@ -19,10 +14,8 @@ describe('Rollup', function () {
 		})) as unknown as Rollup
 		await rollup.initialize(
 			ethers.ZeroAddress,
-			mockPlonkVerifierAddress,
 			ethers.ZeroAddress,
 			ethers.ZeroAddress,
-			[],
 		)
 	})
 
@@ -40,15 +33,6 @@ describe('Rollup', function () {
 		expect(blocks[1].hash).to.equal(fullBlocks[1].blockHash)
 		expect(blocks[2].hash).to.equal(fullBlocks[2].blockHash)
 	})
-
-	it('should be able to withdraw', async function () {
-		const withdrawalInfo = loadWithdrawalInfo()
-		await rollup.submitWithdrawalProof(
-			withdrawalInfo.withdrawals,
-			withdrawalInfo.withdrawalProofPublicInputs,
-			'0x',
-		)
-	})
 })
 
 function loadFullBlocks(): FullBlock[] {
@@ -59,12 +43,6 @@ function loadFullBlocks(): FullBlock[] {
 		fullBlocks.push(jsonData)
 	}
 	return fullBlocks
-}
-
-function loadWithdrawalInfo(): WithdrawalInfo {
-	const data = fs.readFileSync(`test_data/withdrawal_info.json`, 'utf8')
-	const jsonData = JSON.parse(data) as WithdrawalInfo
-	return jsonData
 }
 
 async function postBlock(fullBlock: FullBlock, rollup: Rollup): Promise<void> {

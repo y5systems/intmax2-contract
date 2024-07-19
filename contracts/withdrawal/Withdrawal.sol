@@ -49,7 +49,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _liquidity,
 		address _rollup,
 		uint256[] memory _directWithdrawalTokenIndices
-	) internal initializer {
+	) external initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
@@ -95,10 +95,14 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
-			if (rollup.getBlockHash(chainedWithdrawal.blockNumber) == 0) {
-				// thisable revert for testing
-				// revert BlockHashNotExists(chainedWithdrawal.blockHash);
-			}
+
+			// thisable revert for testing
+			// bytes32 expectedBlockHash = rollup.getBlockHash(
+			// 	chainedWithdrawal.blockNumber
+			// );
+			// if (expectedBlockHash != chainedWithdrawal.blockHash) {
+			// 	revert BlockHashNotExists(chainedWithdrawal.blockHash);
+			// }
 			if (nullifiers[chainedWithdrawal.nullifier] == true) {
 				continue; // already withdrawn
 			}

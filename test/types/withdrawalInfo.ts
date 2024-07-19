@@ -10,6 +10,7 @@ interface Withdrawal {
 	amount: string
 	nullifier: string
 	blockHash: string
+	blockNumber: number
 }
 
 interface WithdrawalProofPublicInputs {

@@ -202,14 +202,19 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		return blockNumber;
 	}
 
-	function getBlockHashAndBuilder(
+	function getBlockBuilder(
 		uint256 blockNumber
-	) external view returns (bytes32, address) {
-		BlockLib.Block memory block_ = blocks[blockNumber];
-		return (block_.hash, block_.builder);
+	) external view returns (address) {
+		if (blockNumber >= blocks.length) {
+			revert BlockNumberOutOfRange();
+		}
+		return blocks[blockNumber].builder;
 	}
 
-	function getBlockHash(uint256 blockNumber) external view returns (bytes32) {
+	function getBlockHash(uint32 blockNumber) external view returns (bytes32) {
+		if (blockNumber >= blocks.length) {
+			revert BlockNumberOutOfRange();
+		}
 		return blocks[blockNumber].hash;
 	}
 
