@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-// interfaces
 import {IWithdrawal} from "./IWithdrawal.sol";
 import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
 import {IRollup} from "../rollup/IRollup.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
-// contracts
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-// libs
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
@@ -61,18 +58,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		}
 	}
 
-	function getDirectWithdrawalsQueueSize() external view returns (uint256) {
-		return directWithdrawalsQueue.size();
-	}
-
-	function getClaimableWithdrawalsQueueSize()
-		external
-		view
-		returns (uint256)
-	{
-		return claimableWithdrawalsQueue.size();
-	}
-
 	function submitWithdrawalProof(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
@@ -112,15 +97,17 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 					chainedWithdrawal.recipient,
 					chainedWithdrawal.tokenIndex,
 					chainedWithdrawal.amount,
-					chainedWithdrawal.nullifier
+					0 // set later
 				);
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
-				uint256 id = directWithdrawalsQueue.enqueue(withdrawal);
+				uint256 id = directWithdrawalsQueue.nextIndex();
+				withdrawal.id = id;
+				directWithdrawalsQueue.enqueue(withdrawal);
 				emit DirectWithdrawalQueued(id, withdrawal);
 			} else {
-				uint256 id = claimableWithdrawalsQueue.enqueue(
-					withdrawal.getHash()
-				);
+				uint256 id = claimableWithdrawalsQueue.nextIndex();
+				withdrawal.id = id;
+				claimableWithdrawalsQueue.enqueue(withdrawal.getHash());
 				emit ClaimableWithdrawalQueued(id, withdrawal);
 			}
 		}
@@ -163,6 +150,18 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			withdrawalHashes
 		);
 		_relayMessage(message);
+	}
+
+	function getDirectWithdrawalsQueueSize() external view returns (uint256) {
+		return directWithdrawalsQueue.size();
+	}
+
+	function getClaimableWithdrawalsQueueSize()
+		external
+		view
+		returns (uint256)
+	{
+		return claimableWithdrawalsQueue.size();
 	}
 
 	// The specification of ScrollMessenger may change in the future.

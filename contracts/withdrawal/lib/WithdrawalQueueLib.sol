@@ -17,6 +17,10 @@ library WithdrawalQueueLib {
 		queue.rear = 0;
 	}
 
+	function nextIndex(Queue storage queue) internal view returns (uint256) {
+		return queue.front;
+	}
+
 	function enqueue(
 		Queue storage queue,
 		WithdrawalLib.Withdrawal memory value

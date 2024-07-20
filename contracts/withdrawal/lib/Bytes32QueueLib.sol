@@ -15,6 +15,10 @@ library Bytes32QueueLib {
 		queue.rear = 0;
 	}
 
+	function nextIndex(Queue storage queue) internal view returns (uint256) {
+		return queue.front;
+	}
+
 	function enqueue(
 		Queue storage queue,
 		bytes32 value
