@@ -70,6 +70,7 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger, IMockCommunication {
 			_encodeXDomainCalldata(msg.sender, _to, _value, _nonce, _message)
 		);
 		sendCalldataHash(_xDomainCalldataHash);
+		emit SentMessage(msg.sender, _to, _value, _nonce, _gasLimit, _message);
 		nonce++;
 	}
 

@@ -22,6 +22,13 @@ interface IWithdrawal {
 
 	error TooManyRelayClaimableWithdrawals(uint256 count);
 
+	error DirectWithdrawalIsTooLarge(uint256 directWithdrawalId, uint256 rear);
+
+	error ClaimableWithdrawalIsTooLarge(
+		uint256 claimableWithdrawalId,
+		uint256 rear
+	);
+
 	event ClaimableWithdrawalQueued(
 		uint256 claimableWithdrawalId,
 		WithdrawalLib.Withdrawal withdrawal
@@ -44,7 +51,14 @@ interface IWithdrawal {
 		bytes calldata proof
 	) external;
 
-	function relayDirectWithdrawals(uint256 processUpToId) external;
+	function relayWithdrawals(
+		uint256 upToDirectWithdrawalId,
+		uint256 upToClamableWithdrawalId
+	) external;
 
-	function relayClaimableWithdrawals(uint256 processUpToId) external;
+	function relayDirectWithdrawals(uint256 upToDirectWithdrawalId) external;
+
+	function relayClaimableWithdrawals(
+		uint256 upToClamableWithdrawalId
+	) external;
 }

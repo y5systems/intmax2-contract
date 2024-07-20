@@ -157,12 +157,12 @@ describe('Integration', function () {
 		// but for testing, we need to call relayMessage manually.
 		{
 			// get message nonce
-			const sendEvent = (
+			const sentEvent = (
 				await l1ScrollMessenger.queryFilter(
 					l1ScrollMessenger.filters.SentMessage(),
 				)
 			)[0]
-			const { messageNonce, gasLimit } = sendEvent.args
+			const { messageNonce, gasLimit } = sentEvent.args
 			const from = await liquidity.getAddress()
 			const to = await rollup.getAddress()
 			const value = 0
@@ -186,10 +186,18 @@ describe('Integration', function () {
 	})
 
 	it('withdrawal', async function () {
+		// setup: post blocks
 		const fullBlocks = loadFullBlocks()
 		for (let i = 1; i < 3; i++) {
 			await postBlock(fullBlocks[i], rollup)
 		}
+		// setup: fund liquidity contract for withdrawal liquidity
+		const liquidityAddress = await liquidity.getAddress()
+		await liquidity.depositETH(ethers.ZeroHash, {
+			value: ethers.parseEther('100'),
+		})
+		await testToken.transfer(liquidityAddress, ethers.parseEther('100'))
+
 		// withdrawal on L2
 		const withdrawalInfo = loadWithdrawalInfo()
 		await withdrawal.submitWithdrawalProof(
@@ -197,10 +205,46 @@ describe('Integration', function () {
 			withdrawalInfo.withdrawalProofPublicInputs,
 			'0x',
 		)
-		const directWithdrawalEvent = (
-			await withdrawal.queryFilter(withdrawal.filters.DirectWithdrawalQueued())
-		)[0]
+		const directWithdrawalEvents = await withdrawal.queryFilter(
+			withdrawal.filters.DirectWithdrawalQueued(),
+		)
+		const lastDirectWithdrawalEvent =
+			directWithdrawalEvents[directWithdrawalEvents.length - 1]
+		const lastDirectWithdrawalId =
+			lastDirectWithdrawalEvent.args.directWithdrawalId
 
-		// const { directWithdrawalId } = directWithdrawalEvent.args
+		// relay withdrawal
+		await withdrawal.relayWithdrawals(lastDirectWithdrawalId, 0)
+
+		const sentEvent = (
+			await l2ScrollMessenger.queryFilter(
+				l2ScrollMessenger.filters.SentMessage(),
+			)
+		)[0]
+		const { message, messageNonce } = sentEvent.args
+		// relay by l1 scroll messenger
+		const from = await withdrawal.getAddress()
+		const to = await liquidity.getAddress()
+		const value = 0
+		const proof = {
+			batchIndex: 0,
+			merkleProof: '0x',
+		}
+		await l1ScrollMessenger.relayMessageWithProof(
+			from,
+			to,
+			value,
+			messageNonce,
+			message,
+			proof,
+		)
+		// check event
+		const directProcessEvent = (
+			await liquidity.queryFilter(
+				liquidity.filters.DirectWithdrawalsProcessed(),
+			)
+		)[0]
+		const { lastProcessedDirectWithdrawalId } = directProcessEvent.args
+		expect(lastProcessedDirectWithdrawalId).to.be.eq(lastDirectWithdrawalId)
 	})
 })
