@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
 import {IMockCommunication} from "./IMockCommunication.sol";
 
-contract L1ScrollMessenger is IL1ScrollMessenger, IMockCommunication {
+contract MockL1ScrollMessenger is IL1ScrollMessenger, IMockCommunication {
 	address public xDomainMessageSender;
 	mapping(bytes32 => bool) public isL2MessageExecuted;
 	uint256 nonce;

@@ -45,7 +45,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _liquidity,
 		address _rollup,
 		uint256[] memory _directWithdrawalTokenIndices
-	) external initializer {
+	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
