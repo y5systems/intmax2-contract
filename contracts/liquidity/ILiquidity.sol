@@ -7,9 +7,9 @@ import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 interface ILiquidity {
 	error OnlyRecipientCanCancelDeposit();
 	error InvalidDepositHash(bytes32 depositDataHash, bytes32 calculatedHash);
-	error RollupContractNotSet();
 	error SenderIsNotScrollMessenger();
-	error InvalidRollup();
+	error WithdrawalAddressNotSet();
+	error InvalidWithdrawalAddress();
 	error WithdrawalNotFound(bytes32 withdrawalHash);
 	error InvalidAmount();
 	error InvalidValue();
@@ -112,6 +112,13 @@ interface ILiquidity {
 		uint32 newGasLimit,
 		uint256 messageNonce
 	) external payable;
+
+	function processWithdrawals(
+		uint256 lastProcessedDirectWithdrawalId,
+		WithdrawalLib.Withdrawal[] calldata withdrawals,
+		uint256 lastProcessedClaimableWithdrawalId,
+		bytes32[] calldata withdrawalHahes
+	) external;
 
 	function processDirectWithdrawals(
 		uint256 lastProcessedDirectWithdrawalId,
