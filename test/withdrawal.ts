@@ -58,11 +58,11 @@ describe('Withdawal', function () {
 		for (let i = 1; i < 3; i++) {
 			await postBlock(fullBlocks[i], rollup)
 		}
-		// const withdrawalInfo = loadWithdrawalInfo()
-		// await withdrawal.submitWithdrawalProof(
-		// 	withdrawalInfo.withdrawals,
-		// 	withdrawalInfo.withdrawalProofPublicInputs,
-		// 	'0x',
-		// )
+		const withdrawalInfo = loadWithdrawalInfo()
+		await withdrawal.submitWithdrawalProof(
+			withdrawalInfo.withdrawals,
+			withdrawalInfo.withdrawalProofPublicInputs,
+			'0x',
+		)
 	})
 })
