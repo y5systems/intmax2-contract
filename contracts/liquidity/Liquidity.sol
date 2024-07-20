@@ -280,10 +280,46 @@ contract Liquidity is
 		}
 	}
 
+	function processWithdrawals(
+		uint256 _lastProcessedDirectWithdrawalId,
+		WithdrawalLib.Withdrawal[] calldata withdrawals,
+		uint256 _lastProcessedClaimableWithdrawalId,
+		bytes32[] calldata withdrawalHahes
+	) external onlyWithdrawal {
+		_processDirectWithdrawals(
+			_lastProcessedDirectWithdrawalId,
+			withdrawals
+		);
+		_processClaimableWithdrawals(
+			_lastProcessedClaimableWithdrawalId,
+			withdrawalHahes
+		);
+	}
+
 	function processDirectWithdrawals(
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external onlyWithdrawal {
+		_processDirectWithdrawals(
+			_lastProcessedDirectWithdrawalId,
+			withdrawals
+		);
+	}
+
+	function processClaimableWithdrawals(
+		uint256 _lastProcessedClaimableWithdrawalId,
+		bytes32[] calldata withdrawalHahes
+	) external onlyWithdrawal {
+		_processClaimableWithdrawals(
+			_lastProcessedClaimableWithdrawalId,
+			withdrawalHahes
+		);
+	}
+
+	function _processDirectWithdrawals(
+		uint256 _lastProcessedDirectWithdrawalId,
+		WithdrawalLib.Withdrawal[] calldata withdrawals
+	) internal {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			TokenInfo memory tokenInfo = getTokenInfo(
 				withdrawals[i].tokenIndex
@@ -300,10 +336,10 @@ contract Liquidity is
 		emit DirectWithdrawalsProcessed(lastProcessedDirectWithdrawalId);
 	}
 
-	function processClaimableWithdrawals(
+	function _processClaimableWithdrawals(
 		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
-	) external onlyWithdrawal {
+	) internal {
 		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
 			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
 			emit WithdrawalClaimable(withdrawalHahes[i]);
