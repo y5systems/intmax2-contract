@@ -166,6 +166,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint
 	) internal returns (uint32 blockNumber) {
+		if (!blockBuilderRegistry.isValidBlockBuilder(_msgSender())) {
+			revert InvalidBlockBuilder();
+		}
 		bool success = PairingLib.pairing(
 			aggregatedPublicKey,
 			aggregatedSignature,

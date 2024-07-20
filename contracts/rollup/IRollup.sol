@@ -22,6 +22,8 @@ interface IRollup {
 
 	error BlockNumberOutOfRange();
 
+	error InvalidBlockBuilder();
+
 	event DepositsProcessed(
 		uint256 indexed lastProcessedDepositId,
 		bytes32 depositTreeRoot
