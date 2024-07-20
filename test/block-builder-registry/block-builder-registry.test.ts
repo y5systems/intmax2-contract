@@ -7,15 +7,16 @@ import {
 } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 import { ONE_DAY_SECONDS } from './const.test'
+
 import {
 	BlockBuilderRegistry,
 	FraudProofPublicInputsLib,
-} from '../../typechain-types/contracts/block-builder-registry/BlockBuilderRegistry'
-import { UnstakeReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/UnstakeReentrancyTest'
-import { SubmitBlockFraudProofReentrancyTest } from '../../typechain-types/contracts/test/block-builder-registry/SubmitBlockFraudProofReentrancyTest'
-import { IBlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/BlockBuilderInfoLib'
-import { RollupTestForBlockBuilderRegistory } from '../../typechain-types/contracts/test/block-builder-registry/RollupTestForBlockBuilderRegistory'
-import { MockPlonkVerifier } from '../../typechain-types/contracts/test/MockPlonkVerifier'
+	UnstakeReentrancyTest,
+	MockPlonkVerifier,
+	RollupTestForBlockBuilderRegistory,
+	IBlockBuilderRegistry,
+	SubmitBlockFraudProofReentrancyTest,
+} from '../../typechain-types'
 
 describe('BlockBuilderRegistry', () => {
 	const DUMMY_URL = 'https://dummy.com'

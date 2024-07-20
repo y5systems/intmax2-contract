@@ -91,7 +91,7 @@ library DepositQueueLib {
 		}
 
 		uint256 lastAnalyzedDepositId = depositQueue.lastAnalyzedDepositId;
-		for (uint i = 0; i < rejectIndices.length; i++) {
+		for (uint256 i = 0; i < rejectIndices.length; i++) {
 			uint256 rejectIndex = rejectIndices[i];
 			// assert that lastAnalyzedDepositId < rejectIndex <= upToDepositId
 			if (

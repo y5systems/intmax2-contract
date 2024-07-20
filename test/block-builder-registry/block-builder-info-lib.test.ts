@@ -4,8 +4,10 @@ import {
 	loadFixture,
 	time,
 } from '@nomicfoundation/hardhat-toolbox/network-helpers'
-import { type BlockBuilderInfoLibTest } from '../../typechain-types/contracts/test/block-builder-registry/BlockBuilderInfoLibTest'
-import { IBlockBuilderRegistry } from '../../typechain-types/contracts/block-builder-registry/IBlockBuilderRegistry'
+import {
+	IBlockBuilderRegistry,
+	type BlockBuilderInfoLibTest,
+} from '../../typechain-types'
 import { ONE_DAY_SECONDS } from './const.test'
 
 describe('BlockBuilderInfoLib', () => {
