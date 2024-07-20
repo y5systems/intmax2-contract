@@ -79,7 +79,7 @@ interface IRollup {
 	) external;
 
 	function getBlockBuilder(
-		uint256 blockNumber
+		uint32 blockNumber
 	) external view returns (address);
 
 	function getBlockHash(uint32 blockNumber) external view returns (bytes32);

@@ -24,14 +24,14 @@ describe('Rollup', function () {
 		for (let i = 1; i < 3; i++) {
 			await postBlock(fullBlocks[i], rollup)
 		}
-		let blocks = []
+		let blockHashes = []
 		for (let i = 0; i < 3; i++) {
-			const block = await rollup.blocks(i)
-			blocks.push(block)
+			const blockHash = await rollup.blockHashes(i)
+			blockHashes.push(blockHash)
 		}
-		expect(blocks[0].hash).to.equal(fullBlocks[0].blockHash)
-		expect(blocks[1].hash).to.equal(fullBlocks[1].blockHash)
-		expect(blocks[2].hash).to.equal(fullBlocks[2].blockHash)
+		expect(blockHashes[0]).to.equal(fullBlocks[0].blockHash)
+		expect(blockHashes[1]).to.equal(fullBlocks[1].blockHash)
+		expect(blockHashes[2]).to.equal(fullBlocks[2].blockHash)
 	})
 })
 

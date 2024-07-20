@@ -39,7 +39,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 
-	// solhint-disable-next-line func-name-mixedcase
 	function initialize(
 		address _scrollMessenger,
 		address _withdrawalVerifier,

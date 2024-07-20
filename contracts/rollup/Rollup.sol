@@ -11,11 +11,11 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 // libs
 import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
-import {BlockLib} from "./lib/BlockLib.sol";
+import {BlockHashLib} from "./lib/BlockHashLib.sol";
 import {PairingLib} from "./lib/PairingLib.sol";
 
 contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
-	using BlockLib for BlockLib.Block[];
+	using BlockHashLib for bytes32[];
 	using DepositTreeLib for DepositTreeLib.DepositTree;
 
 	uint256 private constant NUM_SENDERS_IN_BLOCK = 128;
@@ -24,7 +24,8 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
 	uint256 public lastProcessedDepositId;
-	BlockLib.Block[] public blocks;
+	bytes32[] public blockHashes;
+	address[] public blockBuilders;
 
 	IL2ScrollMessenger private l2ScrollMessenger;
 	DepositTreeLib.DepositTree private depositTree;
@@ -57,9 +58,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
-		// The block hash of the genesis block is not referenced during a withdraw request.
-		// Therefore, the genesis block is not included in the postedBlockHashes.
-		blocks.pushGenesisBlock(depositTree.getRoot());
+
+		blockHashes.pushGenesisBlockHash(depositTree.getRoot());
+		blockBuilders.push(address(0));
 	}
 
 	function postRegistrationBlock(
@@ -77,7 +78,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		if (length > NUM_SENDERS_IN_BLOCK) {
 			revert TooManySenderPublicKeys();
 		}
-		uint256 blockNumber = blocks.length;
+		uint32 blockNumber = blockHashes.getBlockNumber();
 		emit PubKeysPosted(blockNumber, senderPublicKeys);
 
 		uint256[NUM_SENDERS_IN_BLOCK] memory paddedKeys;
@@ -120,7 +121,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		if (length % 5 != 0) {
 			revert SenderAccountIdsInvalidLength();
 		}
-		uint256 blockNumber = blocks.length;
+		uint32 blockNumber = blockHashes.getBlockNumber();
 		emit AccountIdsPosted(blockNumber, senderAccountIds);
 		bytes memory paddedAccountIds = new bytes(FULL_ACCOUNT_IDS_BYTES);
 		for (uint256 i = 0; i < length; i++) {
@@ -164,7 +165,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint
-	) internal returns (uint256 blockNumber) {
+	) internal returns (uint32 blockNumber) {
 		bool success = PairingLib.pairing(
 			aggregatedPublicKey,
 			aggregatedSignature,
@@ -187,10 +188,11 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			)
 		);
 
-		blockNumber = blocks.length;
-		bytes32 prevBlockHash = blocks.getPrevHash();
+		blockNumber = blockHashes.getBlockNumber();
+		bytes32 prevBlockHash = blockHashes.getPrevHash();
 		bytes32 depositTreeRoot = depositTree.getRoot();
-		blocks.pushBlockInfo(depositTreeRoot, signatureHash, _msgSender());
+		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
+		blockBuilders.push(_msgSender());
 		emit BlockPosted(
 			prevBlockHash,
 			_msgSender(),
@@ -203,19 +205,19 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	}
 
 	function getBlockBuilder(
-		uint256 blockNumber
+		uint32 blockNumber
 	) external view returns (address) {
-		if (blockNumber >= blocks.length) {
+		if (blockNumber >= blockHashes.getBlockNumber()) {
 			revert BlockNumberOutOfRange();
 		}
-		return blocks[blockNumber].builder;
+		return blockBuilders[blockNumber];
 	}
 
 	function getBlockHash(uint32 blockNumber) external view returns (bytes32) {
-		if (blockNumber >= blocks.length) {
+		if (blockNumber >= blockHashes.getBlockNumber()) {
 			revert BlockNumberOutOfRange();
 		}
-		return blocks[blockNumber].hash;
+		return blockHashes[blockNumber];
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
