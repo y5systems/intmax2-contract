@@ -1,33 +1,33 @@
 {
   "withdrawals": [
     {
-      "recipient": "0x1dc19378d7b73438275c8a3fb6a1cc8e90de73e9",
-      "tokenIndex": 2635877893,
-      "amount": "4580554348214330829878399540878077514496737203518403056803",
-      "nullifier": "0x0e8bd53b128ed9e8617e1ed7453b4248cb54e1c9d3b5e27c2e47868891875bbe",
-      "blockHash": "0xa07007eaffdf9258775a7163c0cc0b58b42bf6554f6c98e8a8326027bde3f55a",
-      "blockNumber": 2896050943
+      "recipient": "0x8a53b1a53d20fe0b519857b0eeba4c763beb4e2a",
+      "tokenIndex": 3522753981,
+      "amount": "5438031270860040737014637203983615792613876769335890319094",
+      "nullifier": "0xf5892e0054d646503367f8fd1dde814e020e7acad60d9aff42899126e2afdb6f",
+      "blockHash": "0xd6776b02bbf78756839db018ff2f2cf1d3d7130b8b56423fd5116bdd22f39de9",
+      "blockNumber": 2
     },
     {
-      "recipient": "0xb0ba08902674477aab83b24bd704cceefcdc0714",
-      "tokenIndex": 3133467943,
-      "amount": "1195385588372428184904530650454495802304150809422505605518",
-      "nullifier": "0x71ffb0e588cc349a7f8156a10672539a9c9a04ab502b866e89fe53c009c73375",
-      "blockHash": "0xe5283be130ccf09d0022c8630b8a364a597e5659dbc5f62640347f5bcc91e3a2",
-      "blockNumber": 3930987298
+      "recipient": "0xcf1941517bc0b8001fce51890595ca1a87c270dc",
+      "tokenIndex": 1659350997,
+      "amount": "3422492471661703001470137240811838020607438575473689408417",
+      "nullifier": "0xb93f0a2804740c7d53c2cbec584b8b687ab63e2db924a891faf06b0c281c3952",
+      "blockHash": "0xd6776b02bbf78756839db018ff2f2cf1d3d7130b8b56423fd5116bdd22f39de9",
+      "blockNumber": 2
     },
     {
-      "recipient": "0xdb46e258f199210e6f60b1d3ab573803de4ba1dc",
-      "tokenIndex": 265651095,
-      "amount": "2650084514390350702576638254322222885087246988791746479659",
-      "nullifier": "0x0b04c024336f86bf1f50f511d1955104e3af43ee8d5eabd6e1eac7143203b5d9",
-      "blockHash": "0x50163b9eed3996d064f6f3bc4f171e049d35505bf6cc8d305f437b1fc43cd396",
-      "blockNumber": 1265914319
+      "recipient": "0x8df47ba85995100ffdfaeb64483fdcde88a1c917",
+      "tokenIndex": 3302999241,
+      "amount": "5301547401964811542664208683470371027867003924825236845031",
+      "nullifier": "0xab73e0429d955f396a519f81dd6214301a9bfbef6a5a6882659b12f881089071",
+      "blockHash": "0xd6776b02bbf78756839db018ff2f2cf1d3d7130b8b56423fd5116bdd22f39de9",
+      "blockNumber": 2
     }
   ],
   "withdrawalProofPublicInputs": {
-    "lastWithdrawalHash": "0xe658bc0e025cceba44f8ec371041c215f9cf9bdf7781e64c7bfd24d7cf77de83",
-    "withdrawalAggregator": "0x78e133e36c5df1317904154aac7cd16eb6e1148b"
+    "lastWithdrawalHash": "0x4b6da88e6e93ba86b234c9245e43c2bce4ef8f429fbe1f63972d25bf86e62e1b",
+    "withdrawalAggregator": "0xd8464f3abf16b6ebd23e57d15f4b32ff74b5b98c"
   },
-  "pisHash": "0x609eac21f03e611dbd2bffa6b265be161efb3e9bbc53069e3d10b36995c189ba"
+  "pisHash": "0x3925d156bf4282411e407ea2cdb7d080dd2210f2a0da0764684654bc08e1334a"
 }
