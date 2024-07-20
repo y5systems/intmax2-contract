@@ -1,33 +1,33 @@
 {
 	"withdrawals": [
 		{
-			"recipient": "0x1dc19378d7b73438275c8a3fb6a1cc8e90de73e9",
-			"tokenIndex": 2635877893,
-			"amount": "4580554348214330829878399540878077514496737203518403056803",
-			"nullifier": "0x0e8bd53b128ed9e8617e1ed7453b4248cb54e1c9d3b5e27c2e47868891875bbe",
-			"blockHash": "0xa07007eaffdf9258775a7163c0cc0b58b42bf6554f6c98e8a8326027bde3f55a",
-			"blockNumber": 2896050943
+			"recipient": "0x6f8f98e0d5fdd7df0a0a9bd2937a49e799517ad3",
+			"tokenIndex": 0,
+			"amount": "3185851255",
+			"nullifier": "0xc7d3c80067a776d45ec72e0fc8af79beffeab6668922eda0c80d884f892aaa79",
+			"blockHash": "0xa6d6585f4ad32c12a8190027f05cdb9b27a46f095c8d6c212ba5575a7edee57e",
+			"blockNumber": 2
 		},
 		{
-			"recipient": "0xb0ba08902674477aab83b24bd704cceefcdc0714",
-			"tokenIndex": 3133467943,
-			"amount": "1195385588372428184904530650454495802304150809422505605518",
-			"nullifier": "0x71ffb0e588cc349a7f8156a10672539a9c9a04ab502b866e89fe53c009c73375",
-			"blockHash": "0xe5283be130ccf09d0022c8630b8a364a597e5659dbc5f62640347f5bcc91e3a2",
-			"blockNumber": 3930987298
+			"recipient": "0x87cc202d304109f00e39ee233e2d85834f552541",
+			"tokenIndex": 0,
+			"amount": "2889219999",
+			"nullifier": "0x796aaf9434cc0ef501dc3c52dec005ec50903fa262e44ffdee4861059bf52949",
+			"blockHash": "0xa6d6585f4ad32c12a8190027f05cdb9b27a46f095c8d6c212ba5575a7edee57e",
+			"blockNumber": 2
 		},
 		{
-			"recipient": "0xdb46e258f199210e6f60b1d3ab573803de4ba1dc",
-			"tokenIndex": 265651095,
-			"amount": "2650084514390350702576638254322222885087246988791746479659",
-			"nullifier": "0x0b04c024336f86bf1f50f511d1955104e3af43ee8d5eabd6e1eac7143203b5d9",
-			"blockHash": "0x50163b9eed3996d064f6f3bc4f171e049d35505bf6cc8d305f437b1fc43cd396",
-			"blockNumber": 1265914319
+			"recipient": "0x9bd78888d7f6417f9697b672de3e460b54737b8c",
+			"tokenIndex": 1,
+			"amount": "1154757630",
+			"nullifier": "0xbfe46f3e604b7407769153bc31cbc3a26845cff667608d1d20438bbfba5cad73",
+			"blockHash": "0xa6d6585f4ad32c12a8190027f05cdb9b27a46f095c8d6c212ba5575a7edee57e",
+			"blockNumber": 2
 		}
 	],
 	"withdrawalProofPublicInputs": {
-		"lastWithdrawalHash": "0xe658bc0e025cceba44f8ec371041c215f9cf9bdf7781e64c7bfd24d7cf77de83",
-		"withdrawalAggregator": "0x78e133e36c5df1317904154aac7cd16eb6e1148b"
+		"lastWithdrawalHash": "0xf8ff0b09c0f051a2198ebd98011b9de89156ab5d473bf28510dcb4498891445f",
+		"withdrawalAggregator": "0x9d88f2e9da98eeb7b38cb387bb3e999b7998b992"
 	},
-	"pisHash": "0x609eac21f03e611dbd2bffa6b265be161efb3e9bbc53069e3d10b36995c189ba"
+	"pisHash": "0x9c3dcd652ff1bbdf2953b9cf4a58b1d0c291d75890f712ac0c62eb76ae1a8d24"
 }

@@ -45,7 +45,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _liquidity,
 		address _rollup,
 		uint256[] memory _directWithdrawalTokenIndices
-	) external initializer {
+	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
@@ -55,6 +55,8 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < _directWithdrawalTokenIndices.length; i++) {
 			directWithdrawalTokenIndices.add(_directWithdrawalTokenIndices[i]);
 		}
+		directWithdrawalsQueue.initialize();
+		claimableWithdrawalsQueue.initialize();
 	}
 
 	function submitWithdrawalProof(
@@ -79,14 +81,12 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
-
-			// thisable revert for testing
-			// bytes32 expectedBlockHash = rollup.getBlockHash(
-			// 	chainedWithdrawal.blockNumber
-			// );
-			// if (expectedBlockHash != chainedWithdrawal.blockHash) {
-			// 	revert BlockHashNotExists(chainedWithdrawal.blockHash);
-			// }
+			bytes32 expectedBlockHash = rollup.getBlockHash(
+				chainedWithdrawal.blockNumber
+			);
+			if (expectedBlockHash != chainedWithdrawal.blockHash) {
+				revert BlockHashNotExists(chainedWithdrawal.blockHash);
+			}
 			if (nullifiers[chainedWithdrawal.nullifier] == true) {
 				continue; // already withdrawn
 			}
@@ -113,42 +113,60 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	function relayWithdrawals(
-		uint256 directUpToId,
-		uint256 claimableUpToId
+		uint256 upToDirectWithdrawalId,
+		uint256 upToClamableWithdrawalId
 	) external {
+		WithdrawalLib.Withdrawal[] memory directWithdrawals;
+		if (upToDirectWithdrawalId != 0) {
+			directWithdrawals = _collectDirectWithdrawals(
+				upToDirectWithdrawalId
+			);
+		}
+		bytes32[] memory claimableWithdrawals;
+		if (upToClamableWithdrawalId != 0) {
+			claimableWithdrawals = _collectClaimableWithdrawals(
+				upToClamableWithdrawalId
+			);
+		}
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
-			directUpToId,
-			_collectDirectWithdrawals(directUpToId),
-			claimableUpToId,
-			_collectClaimableWithdrawals(claimableUpToId)
+			upToDirectWithdrawalId,
+			directWithdrawals,
+			upToClamableWithdrawalId,
+			claimableWithdrawals
 		);
 		_relayMessage(message);
 	}
 
-	function relayDirectWithdrawals(uint256 processUpToId) external {
+	function relayDirectWithdrawals(uint256 upToDirectWithdrawalId) external {
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processClaimableWithdrawals.selector,
-			_collectDirectWithdrawals(processUpToId)
+			_collectDirectWithdrawals(upToDirectWithdrawalId)
 		);
 		_relayMessage(message);
 	}
 
-	function relayClaimableWithdrawals(uint256 processUpToId) external {
+	function relayClaimableWithdrawals(
+		uint256 upToClamableWithdrawalId
+	) external {
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processClaimableWithdrawals.selector,
-			_collectClaimableWithdrawals(processUpToId)
+			_collectClaimableWithdrawals(upToClamableWithdrawalId)
 		);
 		_relayMessage(message);
 	}
 
 	function _collectDirectWithdrawals(
-		uint256 processUpToId
+		uint256 upToDirectWithdrawalId
 	) internal returns (WithdrawalLib.Withdrawal[] memory) {
-		if (processUpToId > directWithdrawalsQueue.rear) {
-			processUpToId = directWithdrawalsQueue.rear;
+		if (upToDirectWithdrawalId >= directWithdrawalsQueue.rear) {
+			revert DirectWithdrawalIsTooLarge(
+				upToDirectWithdrawalId,
+				directWithdrawalsQueue.rear
+			);
 		}
-		uint256 relayNum = processUpToId - directWithdrawalsQueue.front;
+		uint256 relayNum = upToDirectWithdrawalId -
+			directWithdrawalsQueue.front;
 		if (relayNum > MAX_RELAY_DIRECT_WITHDRAWALS) {
 			revert TooManyRelayDirectWithdrawals(relayNum);
 		}
@@ -161,12 +179,16 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	function _collectClaimableWithdrawals(
-		uint256 processUpToId
+		uint256 upToClamableWithdrawalId
 	) internal returns (bytes32[] memory) {
-		if (processUpToId > claimableWithdrawalsQueue.rear) {
-			processUpToId = claimableWithdrawalsQueue.rear;
+		if (upToClamableWithdrawalId >= claimableWithdrawalsQueue.rear) {
+			revert ClaimableWithdrawalIsTooLarge(
+				upToClamableWithdrawalId,
+				claimableWithdrawalsQueue.rear
+			);
 		}
-		uint256 relayNum = processUpToId - claimableWithdrawalsQueue.front;
+		uint256 relayNum = upToClamableWithdrawalId -
+			claimableWithdrawalsQueue.front;
 		if (relayNum > MAX_RELAY_CLAIMABLE_WITHDRAWALS) {
 			revert TooManyRelayClaimableWithdrawals(relayNum);
 		}

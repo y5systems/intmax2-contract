@@ -13,12 +13,14 @@ library WithdrawalQueueLib {
 	}
 
 	function initialize(Queue storage queue) internal {
-		queue.front = 0;
-		queue.rear = 0;
+		// make the queue 1-indexed
+		queue.data.push(WithdrawalLib.Withdrawal(address(0), 0, 0, 0));
+		queue.front = 1;
+		queue.rear = 1;
 	}
 
 	function nextIndex(Queue storage queue) internal view returns (uint256) {
-		return queue.front;
+		return queue.rear;
 	}
 
 	function enqueue(

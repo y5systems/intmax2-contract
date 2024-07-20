@@ -286,14 +286,18 @@ contract Liquidity is
 		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
 	) external onlyWithdrawal {
-		_processDirectWithdrawals(
-			_lastProcessedDirectWithdrawalId,
-			withdrawals
-		);
-		_processClaimableWithdrawals(
-			_lastProcessedClaimableWithdrawalId,
-			withdrawalHahes
-		);
+		if (_lastProcessedDirectWithdrawalId != 0) {
+			_processDirectWithdrawals(
+				_lastProcessedDirectWithdrawalId,
+				withdrawals
+			);
+		}
+		if (_lastProcessedClaimableWithdrawalId != 0) {
+			_processClaimableWithdrawals(
+				_lastProcessedClaimableWithdrawalId,
+				withdrawalHahes
+			);
+		}
 	}
 
 	function processDirectWithdrawals(
