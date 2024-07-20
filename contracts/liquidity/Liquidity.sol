@@ -56,12 +56,12 @@ contract Liquidity is
 		address _l1ScrollMessenger,
 		address _rollup,
 		address _withdrawal,
-		address[] memory inititialERC20Tokens
+		address[] memory initialERC20Tokens
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
-		__TokenData_init(inititialERC20Tokens);
+		__TokenData_init(initialERC20Tokens);
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
 		rollup = _rollup;

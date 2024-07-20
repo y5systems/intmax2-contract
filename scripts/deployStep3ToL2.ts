@@ -1,53 +1,47 @@
-import { ethers, network } from 'hardhat'
-import 'dotenv/config'
-import contractAddresses from './contractAddresses.json'
-
-const getL2MessengerAddress = () => {
-	if (network.name === 'scrollsepolia') {
-		return '0xBa50f5340FB9F3Bd074bD638c9BE13eCB36E603d'
-	}
-	if (network.name === 'localhost') {
-		// provisional measures
-		return ethers.ZeroAddress
-	}
-
-	//TODO scroll messenger address
-	throw new Error('Unsupported network')
-}
+import { ethers } from 'hardhat'
+import { readDeployedContracts } from './utils/io'
+import { getL2MessengerAddress } from './constants'
 
 async function main() {
-	const liquidityContractAddress = contractAddresses.liquidity
-	if (!liquidityContractAddress) {
-		throw new Error('liquidityContractAddress is not set')
+	const deployedContracts = await readDeployedContracts()
+	if (
+		!deployedContracts.rollup ||
+		!deployedContracts.withdrawal ||
+		!deployedContracts.blockBuilderRegistry ||
+		!deployedContracts.withdrawalPlonkVerifier ||
+		!deployedContracts.fraudPlonkVerifier ||
+		!deployedContracts.liquidity
+	) {
+		throw new Error('all contracts should be deployed')
 	}
 
-	const blockBuilderRegistryContractAddress =
-		contractAddresses.blockBuilderRegistry
-	if (!blockBuilderRegistryContractAddress) {
-		throw new Error('blockBuilderRegistryContractAddress is not set')
-	}
-
-	const rollupContractAddress = contractAddresses.rollup
-	if (!rollupContractAddress) {
-		throw new Error('rollupContractAddress is not set')
-	}
-	const plonkVerifierAddress = contractAddresses.plonkVerifier
-	if (!plonkVerifierAddress) {
-		throw new Error('plonkVerifierAddress is not set')
-	}
-	const owner = (await ethers.getSigners())[0].address
-	console.log('owner address', owner)
-
-	const rollup = await ethers.getContractAt('Rollup', rollupContractAddress)
-	const tx = await rollup.initialize(
-		getL2MessengerAddress(),
-		plonkVerifierAddress,
-		liquidityContractAddress,
-		blockBuilderRegistryContractAddress,
+	// setup rollup
+	const rollup = await ethers.getContractAt('Rollup', deployedContracts.rollup)
+	const withdrawal = await ethers.getContractAt(
+		'Withdrawal',
+		deployedContracts.withdrawal,
 	)
-	console.log('tx hash:', tx.hash)
-	await tx.wait()
-	console.log('Updated rollup address')
+	const registry = await ethers.getContractAt(
+		'BlockBuilderRegistry',
+		deployedContracts.blockBuilderRegistry,
+	)
+
+	await rollup.initialize(
+		getL2MessengerAddress(),
+		deployedContracts.liquidity,
+		deployedContracts.blockBuilderRegistry,
+	)
+	await withdrawal.initialize(
+		getL2MessengerAddress(),
+		deployedContracts.withdrawalPlonkVerifier,
+		deployedContracts.liquidity,
+		deployedContracts.rollup,
+		[0, 1, 2], // 0: eth, 1: usdc, 2: wbtc
+	)
+	await registry.initialize(
+		deployedContracts.rollup,
+		deployedContracts.fraudPlonkVerifier,
+	)
 }
 
 // We recommend this pattern to be able to use async/await everywhere
