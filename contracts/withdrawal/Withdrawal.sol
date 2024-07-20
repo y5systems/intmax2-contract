@@ -112,7 +112,39 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		}
 	}
 
+	function relayWithdrawals(
+		uint256 directUpToId,
+		uint256 claimableUpToId
+	) external {
+		bytes memory message = abi.encodeWithSelector(
+			ILiquidity.processWithdrawals.selector,
+			directUpToId,
+			_collectDirectWithdrawals(directUpToId),
+			claimableUpToId,
+			_collectClaimableWithdrawals(claimableUpToId)
+		);
+		_relayMessage(message);
+	}
+
 	function relayDirectWithdrawals(uint256 processUpToId) external {
+		bytes memory message = abi.encodeWithSelector(
+			ILiquidity.processClaimableWithdrawals.selector,
+			_collectDirectWithdrawals(processUpToId)
+		);
+		_relayMessage(message);
+	}
+
+	function relayClaimableWithdrawals(uint256 processUpToId) external {
+		bytes memory message = abi.encodeWithSelector(
+			ILiquidity.processClaimableWithdrawals.selector,
+			_collectClaimableWithdrawals(processUpToId)
+		);
+		_relayMessage(message);
+	}
+
+	function _collectDirectWithdrawals(
+		uint256 processUpToId
+	) internal returns (WithdrawalLib.Withdrawal[] memory) {
 		if (processUpToId > directWithdrawalsQueue.rear) {
 			processUpToId = directWithdrawalsQueue.rear;
 		}
@@ -125,14 +157,12 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < relayNum; i++) {
 			withdrawals[i] = directWithdrawalsQueue.dequeue();
 		}
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processClaimableWithdrawals.selector,
-			withdrawals
-		);
-		_relayMessage(message);
+		return withdrawals;
 	}
 
-	function relayClaimableWithdrawals(uint256 processUpToId) external {
+	function _collectClaimableWithdrawals(
+		uint256 processUpToId
+	) internal returns (bytes32[] memory) {
 		if (processUpToId > claimableWithdrawalsQueue.rear) {
 			processUpToId = claimableWithdrawalsQueue.rear;
 		}
@@ -144,11 +174,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < relayNum; i++) {
 			withdrawalHashes[i] = claimableWithdrawalsQueue.dequeue();
 		}
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processClaimableWithdrawals.selector,
-			withdrawalHashes
-		);
-		_relayMessage(message);
+		return withdrawalHashes;
 	}
 
 	function getDirectWithdrawalsQueueSize() external view returns (uint256) {

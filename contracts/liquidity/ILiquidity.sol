@@ -113,6 +113,13 @@ interface ILiquidity {
 		uint256 messageNonce
 	) external payable;
 
+	function processWithdrawals(
+		uint256 lastProcessedDirectWithdrawalId,
+		WithdrawalLib.Withdrawal[] calldata withdrawals,
+		uint256 lastProcessedClaimableWithdrawalId,
+		bytes32[] calldata withdrawalHahes
+	) external;
+
 	function processDirectWithdrawals(
 		uint256 lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
