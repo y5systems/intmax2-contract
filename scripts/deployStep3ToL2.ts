@@ -15,7 +15,6 @@ async function main() {
 		throw new Error('all contracts should be deployed')
 	}
 
-	// setup rollup
 	const rollup = await ethers.getContractAt('Rollup', deployedContracts.rollup)
 	const withdrawal = await ethers.getContractAt(
 		'Withdrawal',
@@ -26,22 +25,37 @@ async function main() {
 		deployedContracts.blockBuilderRegistry,
 	)
 
-	await rollup.initialize(
-		getL2MessengerAddress(),
-		deployedContracts.liquidity,
-		deployedContracts.blockBuilderRegistry,
-	)
-	await withdrawal.initialize(
-		getL2MessengerAddress(),
-		deployedContracts.withdrawalPlonkVerifier,
-		deployedContracts.liquidity,
-		deployedContracts.rollup,
-		[0, 1, 2], // 0: eth, 1: usdc, 2: wbtc
-	)
-	await registry.initialize(
-		deployedContracts.rollup,
-		deployedContracts.fraudPlonkVerifier,
-	)
+	// Initialize contracts
+	if ((await rollup.owner()) === ethers.ZeroAddress) {
+		console.log('Initializing Rollup')
+		const tx = await rollup.initialize(
+			getL2MessengerAddress(),
+			deployedContracts.liquidity,
+			deployedContracts.blockBuilderRegistry,
+		)
+		await tx.wait()
+	}
+	if ((await withdrawal.owner()) === ethers.ZeroAddress) {
+		console.log('Initializing Withdrawal')
+		const tx = await withdrawal.initialize(
+			getL2MessengerAddress(),
+			deployedContracts.withdrawalPlonkVerifier,
+			deployedContracts.liquidity,
+			deployedContracts.rollup,
+			[0, 1, 2], // 0: eth, 1: usdc, 2: wbtc
+		)
+		await tx.wait()
+		console.log('Withdrawal initialized')
+	}
+	if ((await registry.owner()) === ethers.ZeroAddress) {
+		console.log('Initializing BlockBuilderRegistry')
+		const tx = await registry.initialize(
+			deployedContracts.rollup,
+			deployedContracts.fraudPlonkVerifier,
+		)
+		await tx.wait()
+		console.log('BlockBuilderRegistry initialized')
+	}
 }
 
 // We recommend this pattern to be able to use async/await everywhere

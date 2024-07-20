@@ -27,7 +27,6 @@ export async function writeDeployedContracts(
 	try {
 		const validatedUsers = DeployedContractsSchema.parse(data)
 		await fs.writeJson(filePath, validatedUsers, { spaces: 2 })
-		console.log('Users written to file successfully')
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			console.error('Validation error:', error.errors)
