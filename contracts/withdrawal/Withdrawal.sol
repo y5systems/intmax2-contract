@@ -72,8 +72,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			revert WithdrawalChainVerificationFailed();
 		}
 		if (publicInputs.withdrawalAggregator != _msgSender()) {
-			// disable this check for testing
-			// revert WithdrawalAggregatorMismatch();
+			revert WithdrawalAggregatorMismatch();
 		}
 		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert WithdrawalProofVerificationFailed();
