@@ -30,7 +30,7 @@ library BlockHashLib {
 			getPrevHash(blockHashes),
 			depositTreeRoot,
 			signatureHash,
-			uint32(blockHashes.length)
+			getBlockNumber(blockHashes)
 		);
 		blockHashes.push(blockHash);
 		return blockHash;
