@@ -7,13 +7,25 @@ contract RollupTestForBlockBuilderRegistory {
 		address testAddress;
 	}
 	mapping(uint256 => Result) private results;
+
 	function setTestData(
-		uint256 key,
+		uint256 blockNumber,
 		bytes32 _hash,
 		address _address
 	) external {
-		results[key] = Result(_hash, _address);
+		results[blockNumber] = Result(_hash, _address);
 	}
+
+	function getBlockBuilder(
+		uint32 blockNumber
+	) external view returns (address) {
+		return results[blockNumber].testAddress;
+	}
+
+	function getBlockHash(uint32 blockNumber) external view returns (bytes32) {
+		return results[blockNumber].testHash;
+	}
+
 	function getBlockHashAndBuilder(
 		uint256 _key
 	) external view returns (bytes32, address) {

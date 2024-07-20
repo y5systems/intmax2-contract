@@ -1,44 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-library BlockLib {
-	struct Block {
-		bytes32 hash;
-		address builder;
-	}
-
-	function pushGenesisBlock(
-		Block[] storage blocks,
+library BlockHashLib {
+	function pushGenesisBlockHash(
+		bytes32[] storage blockHashes,
 		bytes32 initialDepositTreeRoot
 	) internal {
-		blocks.push(
-			Block({
-				hash: _calcBlockHash(0, initialDepositTreeRoot, 0, 0),
-				builder: address(0)
-			})
-		);
+		blockHashes.push(_calcBlockHash(0, initialDepositTreeRoot, 0, 0));
+	}
+
+	function getBlockNumber(
+		bytes32[] memory blockHashes
+	) internal pure returns (uint32) {
+		return uint32(blockHashes.length);
 	}
 
 	function getPrevHash(
-		Block[] memory blocks
+		bytes32[] memory blockHashes
 	) internal pure returns (bytes32) {
-		return blocks[blocks.length - 1].hash;
+		return blockHashes[blockHashes.length - 1];
 	}
 
-	function pushBlockInfo(
-		Block[] storage blocks,
+	function pushBlockHash(
+		bytes32[] storage blockHashes,
 		bytes32 depositTreeRoot,
-		bytes32 signatureHash,
-		address _builder
+		bytes32 signatureHash
 	) internal returns (bytes32 blockHash) {
 		blockHash = _calcBlockHash(
-			getPrevHash(blocks),
+			getPrevHash(blockHashes),
 			depositTreeRoot,
 			signatureHash,
-			uint32(blocks.length)
+			getBlockNumber(blockHashes)
 		);
-		blocks.push(Block({hash: blockHash, builder: _builder}));
-
+		blockHashes.push(blockHash);
 		return blockHash;
 	}
 

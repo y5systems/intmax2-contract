@@ -20,6 +20,8 @@ interface IRollup {
 
 	error PairingCheckFailed();
 
+	error BlockNumberOutOfRange();
+
 	event DepositsProcessed(
 		uint256 indexed lastProcessedDepositId,
 		bytes32 depositTreeRoot
@@ -76,7 +78,9 @@ interface IRollup {
 		bytes32[] calldata depositHashes
 	) external;
 
-	function getBlockHashAndBuilder(
-		uint256 blockNumber
-	) external view returns (bytes32, address);
+	function getBlockBuilder(
+		uint32 blockNumber
+	) external view returns (address);
+
+	function getBlockHash(uint32 blockNumber) external view returns (bytes32);
 }

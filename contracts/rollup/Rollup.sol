@@ -11,13 +11,11 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 // libs
 import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
-import {BlockLib} from "./lib/BlockLib.sol";
-
-import {Withdrawal} from "./Withdrawal.sol";
+import {BlockHashLib} from "./lib/BlockHashLib.sol";
 import {PairingLib} from "./lib/PairingLib.sol";
 
-contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
-	using BlockLib for BlockLib.Block[];
+contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
+	using BlockHashLib for bytes32[];
 	using DepositTreeLib for DepositTreeLib.DepositTree;
 
 	uint256 private constant NUM_SENDERS_IN_BLOCK = 128;
@@ -26,7 +24,8 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
 	uint256 public lastProcessedDepositId;
-	BlockLib.Block[] public blocks;
+	bytes32[] public blockHashes;
+	address[] public blockBuilders;
 
 	IL2ScrollMessenger private l2ScrollMessenger;
 	DepositTreeLib.DepositTree private depositTree;
@@ -50,27 +49,18 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 
 	function initialize(
 		address _scrollMessenger,
-		address _withdrawalVerifier,
 		address _liquidity,
-		address _blockBuilderRegistry,
-		uint256[] calldata _directWithdrawalTokenIndices
+		address _blockBuilderRegistry
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
-		__Withdrawal_init(
-			_scrollMessenger,
-			_withdrawalVerifier,
-			_liquidity,
-			_directWithdrawalTokenIndices
-		);
 		depositTree.initialize();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
 
-		// The block hash of the genesis block is not referenced during a withdraw request.
-		// Therefore, the genesis block is not included in the postedBlockHashes.
-		blocks.pushGenesisBlock(depositTree.getRoot());
+		blockHashes.pushGenesisBlockHash(depositTree.getRoot());
+		blockBuilders.push(address(0));
 	}
 
 	function postRegistrationBlock(
@@ -88,7 +78,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		if (length > NUM_SENDERS_IN_BLOCK) {
 			revert TooManySenderPublicKeys();
 		}
-		uint256 blockNumber = blocks.length;
+		uint32 blockNumber = blockHashes.getBlockNumber();
 		emit PubKeysPosted(blockNumber, senderPublicKeys);
 
 		uint256[NUM_SENDERS_IN_BLOCK] memory paddedKeys;
@@ -131,7 +121,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		if (length % 5 != 0) {
 			revert SenderAccountIdsInvalidLength();
 		}
-		uint256 blockNumber = blocks.length;
+		uint32 blockNumber = blockHashes.getBlockNumber();
 		emit AccountIdsPosted(blockNumber, senderAccountIds);
 		bytes memory paddedAccountIds = new bytes(FULL_ACCOUNT_IDS_BYTES);
 		for (uint256 i = 0; i < length; i++) {
@@ -175,7 +165,7 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint
-	) internal returns (uint256 blockNumber) {
+	) internal returns (uint32 blockNumber) {
 		bool success = PairingLib.pairing(
 			aggregatedPublicKey,
 			aggregatedSignature,
@@ -198,23 +188,11 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 			)
 		);
 
-		blockNumber = blocks.length;
-		bytes32 prevBlockHash = blocks.getPrevHash();
+		blockNumber = blockHashes.getBlockNumber();
+		bytes32 prevBlockHash = blockHashes.getPrevHash();
 		bytes32 depositTreeRoot = depositTree.getRoot();
-
-		bytes32 blockHash = blocks.pushBlockInfo(
-			depositTreeRoot,
-			signatureHash,
-			_msgSender()
-		);
-
-		// NOTE: Although hash collisions are rare, if a collision does occur, some users may be
-		// unable to withdraw. Therefore, we ensure that the block hash does not already exist.
-		if (postedBlockHashes[blockHash] != 0) {
-			revert BlockHashAlreadyPosted();
-		}
-		postedBlockHashes[blockHash] = blockNumber;
-
+		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
+		blockBuilders.push(_msgSender());
 		emit BlockPosted(
 			prevBlockHash,
 			_msgSender(),
@@ -226,11 +204,20 @@ contract Rollup is OwnableUpgradeable, UUPSUpgradeable, Withdrawal, IRollup {
 		return blockNumber;
 	}
 
-	function getBlockHashAndBuilder(
-		uint256 blockNumber
-	) external view returns (bytes32, address) {
-		BlockLib.Block memory block_ = blocks[blockNumber];
-		return (block_.hash, block_.builder);
+	function getBlockBuilder(
+		uint32 blockNumber
+	) external view returns (address) {
+		if (blockNumber >= blockHashes.getBlockNumber()) {
+			revert BlockNumberOutOfRange();
+		}
+		return blockBuilders[blockNumber];
+	}
+
+	function getBlockHash(uint32 blockNumber) external view returns (bytes32) {
+		if (blockNumber >= blockHashes.getBlockNumber()) {
+			revert BlockNumberOutOfRange();
+		}
+		return blockHashes[blockNumber];
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

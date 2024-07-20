@@ -6,7 +6,7 @@ library WithdrawalLib {
 		address recipient;
 		uint32 tokenIndex;
 		uint256 amount;
-		bytes32 nullifier; // make sure that the withdrawal is unique
+		uint256 id; // to make withdawal hash unique
 	}
 
 	function getHash(
@@ -18,7 +18,7 @@ library WithdrawalLib {
 					withdrawal.recipient,
 					withdrawal.tokenIndex,
 					withdrawal.amount,
-					withdrawal.nullifier
+					withdrawal.id
 				)
 			);
 	}

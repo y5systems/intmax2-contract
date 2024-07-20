@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {WithdrawalLib} from "../WithdrawalLib.sol";
+import {WithdrawalLib} from "../../common/WithdrawalLib.sol";
 
 library WithdrawalQueueLib {
 	error QueueIsEmpty();
@@ -15,6 +15,10 @@ library WithdrawalQueueLib {
 	function initialize(Queue storage queue) internal {
 		queue.front = 0;
 		queue.rear = 0;
+	}
+
+	function nextIndex(Queue storage queue) internal view returns (uint256) {
+		return queue.front;
 	}
 
 	function enqueue(

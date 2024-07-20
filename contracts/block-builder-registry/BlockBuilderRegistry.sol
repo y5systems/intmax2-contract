@@ -94,9 +94,8 @@ contract BlockBuilderRegistry is
 		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external {
-		(bytes32 blockHash, address builder) = rollup.getBlockHashAndBuilder(
-			publicInputs.blockNumber
-		);
+		bytes32 blockHash = rollup.getBlockHash(publicInputs.blockNumber);
+		address builder = rollup.getBlockBuilder(publicInputs.blockNumber);
 
 		if (publicInputs.blockHash != blockHash) {
 			revert FraudProofBlockHashMismatch({
