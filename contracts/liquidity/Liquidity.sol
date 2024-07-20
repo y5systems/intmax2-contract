@@ -7,15 +7,15 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.sol";
-import {TokenData} from "./TokenData.sol";
-import {DepositLib} from "../common/DepositLib.sol";
-import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 
+import {TokenData} from "./TokenData.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
+import {DepositLib} from "../common/DepositLib.sol";
+import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
 
 contract Liquidity is
@@ -32,24 +32,22 @@ contract Liquidity is
 
 	IL1ScrollMessenger private l1ScrollMessenger;
 	address private rollup;
+	address private withdrawal;
 	mapping(bytes32 => uint256) private claimableWithdrawals;
 	DepositQueueLib.DepositQueue private depositQueue;
 
 	uint256 public lastProcessedDirectWithdrawalId;
 	uint256 public lastProcessedClaimableWithdrawalId;
 
-	modifier onlyRollup() {
-		// note
-		// The specification of ScrollMessenger may change in the future.
-		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
-		if (rollup == address(0)) {
-			revert RollupContractNotSet();
+	modifier onlyWithdrawal() {
+		if (withdrawal == address(0)) {
+			revert WithdrawalAddressNotSet();
 		}
 		if (_msgSender() != address(l1ScrollMessenger)) {
 			revert SenderIsNotScrollMessenger();
 		}
-		if (rollup != l1ScrollMessenger.xDomainMessageSender()) {
-			revert InvalidRollup();
+		if (withdrawal != l1ScrollMessenger.xDomainMessageSender()) {
+			revert InvalidWithdrawalAddress();
 		}
 		_;
 	}
@@ -57,6 +55,7 @@ contract Liquidity is
 	function initialize(
 		address _l1ScrollMessenger,
 		address _rollup,
+		address _withdrawal,
 		address[] memory inititialERC20Tokens
 	) public initializer {
 		__Ownable_init(_msgSender());
@@ -66,6 +65,7 @@ contract Liquidity is
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
 		rollup = _rollup;
+		withdrawal = _withdrawal;
 	}
 
 	function depositETH(bytes32 recipientSaltHash) external payable {
@@ -193,18 +193,18 @@ contract Liquidity is
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
-			WithdrawalLib.Withdrawal memory withdrawal = withdrawals[i];
-			bytes32 withdrawalHash = withdrawal.getHash();
+			WithdrawalLib.Withdrawal memory w = withdrawals[i];
+			bytes32 withdrawalHash = w.getHash();
 			if (claimableWithdrawals[withdrawalHash] == 0) {
 				revert WithdrawalNotFound(withdrawalHash);
 			}
-			TokenInfo memory tokenInfo = getTokenInfo(withdrawal.tokenIndex);
+			TokenInfo memory tokenInfo = getTokenInfo(w.tokenIndex);
 			delete claimableWithdrawals[withdrawalHash];
 			sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,
-				withdrawal.recipient,
-				withdrawal.amount,
+				w.recipient,
+				w.amount,
 				tokenInfo.tokenId
 			);
 		}
@@ -283,7 +283,7 @@ contract Liquidity is
 	function processDirectWithdrawals(
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) external onlyRollup {
+	) external onlyWithdrawal {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			TokenInfo memory tokenInfo = getTokenInfo(
 				withdrawals[i].tokenIndex
@@ -303,7 +303,7 @@ contract Liquidity is
 	function processClaimableWithdrawals(
 		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
-	) external onlyRollup {
+	) external onlyWithdrawal {
 		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
 			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
 			emit WithdrawalClaimable(withdrawalHahes[i]);

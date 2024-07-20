@@ -7,9 +7,9 @@ import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 interface ILiquidity {
 	error OnlyRecipientCanCancelDeposit();
 	error InvalidDepositHash(bytes32 depositDataHash, bytes32 calculatedHash);
-	error RollupContractNotSet();
 	error SenderIsNotScrollMessenger();
-	error InvalidRollup();
+	error WithdrawalAddressNotSet();
+	error InvalidWithdrawalAddress();
 	error WithdrawalNotFound(bytes32 withdrawalHash);
 	error InvalidAmount();
 	error InvalidValue();
