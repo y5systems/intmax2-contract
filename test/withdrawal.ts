@@ -3,13 +3,16 @@ import type { Withdrawal } from '../typechain-types/contracts/withdrawal'
 import * as fs from 'fs'
 import { expect } from 'chai'
 import { Rollup } from '../typechain-types'
+import { loadWithdrawalInfo } from './utils/withdrawal'
+import { loadFullBlocks, postBlock } from './utils/rollup'
 
 describe('Withdawal', function () {
+	let rollup: Rollup
 	let withdrawal: Withdrawal
 
 	this.beforeEach(async function () {
 		const rollupFactory = await ethers.getContractFactory('Rollup')
-		const rollup = (await upgrades.deployProxy(rollupFactory, [], {
+		rollup = (await upgrades.deployProxy(rollupFactory, [], {
 			initializer: false,
 			kind: 'uups',
 		})) as unknown as Rollup
@@ -40,6 +43,12 @@ describe('Withdawal', function () {
 	})
 
 	it('should be able to withdraw', async function () {
+		// post blocks corresponding to the withdrawal
+		// notice this data has to be consistent with the withdrawal data
+		const fullBlocks = loadFullBlocks()
+		for (let i = 1; i < 3; i++) {
+			await postBlock(fullBlocks[i], rollup)
+		}
 		const withdrawalInfo = loadWithdrawalInfo()
 		await withdrawal.submitWithdrawalProof(
 			withdrawalInfo.withdrawals,
@@ -48,9 +57,3 @@ describe('Withdawal', function () {
 		)
 	})
 })
-
-function loadWithdrawalInfo(): WithdrawalInfo {
-	const data = fs.readFileSync(`test_data/withdrawal_info.json`, 'utf8')
-	const jsonData = JSON.parse(data) as WithdrawalInfo
-	return jsonData
-}

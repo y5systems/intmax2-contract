@@ -23,12 +23,12 @@ interface IWithdrawal {
 	error TooManyRelayClaimableWithdrawals(uint256 count);
 
 	event ClaimableWithdrawalQueued(
-		uint256 id,
+		uint256 claimableWithdrawalId,
 		WithdrawalLib.Withdrawal withdrawal
 	);
 
 	event DirectWithdrawalQueued(
-		uint256 id,
+		uint256 directWithdrawalId,
 		WithdrawalLib.Withdrawal withdrawal
 	);
 

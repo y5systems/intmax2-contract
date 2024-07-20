@@ -10,6 +10,7 @@ contract MockL1ScrollMessenger is IL1ScrollMessenger, IMockCommunication {
 	uint256 nonce;
 	mapping(bytes32 => bool) public receivedCalldataHash;
 	address counterpart;
+	uint256 public constant FEE = 0.01 ether;
 
 	function initialize(address counterpart_) external {
 		counterpart = counterpart_;
@@ -22,6 +23,18 @@ contract MockL1ScrollMessenger is IL1ScrollMessenger, IMockCommunication {
 		uint256 _gasLimit
 	) external payable {
 		_sendMessage(_to, _value, _message, _gasLimit, msg.sender);
+		payable(msg.sender).transfer(msg.value - FEE - _value);
+	}
+
+	function sendMessage(
+		address _to,
+		uint256 _value,
+		bytes calldata _message,
+		uint256 _gasLimit,
+		address refundAddress
+	) external payable {
+		_sendMessage(_to, _value, _message, _gasLimit, msg.sender);
+		payable(refundAddress).transfer(msg.value - FEE - _value);
 	}
 
 	/// @inheritdoc IL1ScrollMessenger
@@ -89,16 +102,9 @@ contract MockL1ScrollMessenger is IL1ScrollMessenger, IMockCommunication {
 			_encodeXDomainCalldata(msg.sender, _to, _value, nonce, _message)
 		);
 		sendCalldataHash(_xDomainCalldataHash);
+		emit SentMessage(msg.sender, _to, _value, nonce, _gasLimit, _message);
 		nonce++;
 	}
-
-	function sendMessage(
-		address target,
-		uint256 value,
-		bytes calldata message,
-		uint256 gasLimit,
-		address refundAddress
-	) external payable override {}
 
 	function dropMessage(
 		address from,

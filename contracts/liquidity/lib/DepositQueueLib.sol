@@ -40,8 +40,11 @@ library DepositQueueLib {
 	}
 
 	function initialize(DepositQueue storage depositQueue) internal {
-		depositQueue.front = 0;
-		depositQueue.rear = 0;
+		// push a dummy element to make the queue 1-indexed
+		// this way, we can safely use 0 as the initial value for lastAnalyzedDepositId
+		depositQueue.depositData.push(DepositData(0, address(0), false));
+		depositQueue.front = 1;
+		depositQueue.rear = 1;
 		depositQueue.lastAnalyzedDepositId = 0;
 	}
 
@@ -128,10 +131,12 @@ library DepositQueueLib {
 			}
 		}
 		bytes32[] memory depositHashes = new bytes32[](acceptedDepositsCount);
+		uint256 depisitHashesIndex = 0;
 		for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
 			if (!depositQueue.depositData[i].isRejected) {
 				DepositData storage depositData = depositQueue.depositData[i];
-				depositHashes[i] = depositData.depositHash;
+				depositHashes[depisitHashesIndex] = depositData.depositHash;
+				depisitHashesIndex++;
 				// delete depositData to save gas
 				delete depositData.sender;
 				delete depositData.depositHash;
@@ -140,5 +145,11 @@ library DepositQueueLib {
 		// because front <= upToDepositId < rear, we can safely update front
 		depositQueue.front = upToDepositId + 1;
 		return depositHashes;
+	}
+
+	function size(
+		DepositQueue memory depositQueue
+	) internal pure returns (uint256) {
+		return depositQueue.rear - depositQueue.front;
 	}
 }

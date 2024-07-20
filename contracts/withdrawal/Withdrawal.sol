@@ -79,14 +79,12 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
-
-			// thisable revert for testing
-			// bytes32 expectedBlockHash = rollup.getBlockHash(
-			// 	chainedWithdrawal.blockNumber
-			// );
-			// if (expectedBlockHash != chainedWithdrawal.blockHash) {
-			// 	revert BlockHashNotExists(chainedWithdrawal.blockHash);
-			// }
+			bytes32 expectedBlockHash = rollup.getBlockHash(
+				chainedWithdrawal.blockNumber
+			);
+			if (expectedBlockHash != chainedWithdrawal.blockHash) {
+				revert BlockHashNotExists(chainedWithdrawal.blockHash);
+			}
 			if (nullifiers[chainedWithdrawal.nullifier] == true) {
 				continue; // already withdrawn
 			}

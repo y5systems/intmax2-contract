@@ -90,7 +90,7 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger, IMockCommunication {
 			isL1MessageExecuted[_xDomainCalldataHash] = true;
 			emit RelayedMessage(_xDomainCalldataHash);
 		} else {
-			emit FailedRelayedMessage(_xDomainCalldataHash);
+			revert("Failed to execute message");
 		}
 	}
 

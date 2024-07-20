@@ -13,6 +13,7 @@ import { expect } from 'chai'
 import { loadFullBlocks, postBlock } from './utils/rollup'
 import { getRandomPubkey, getRandomSalt } from '../scripts/utils/rand'
 import { getPubkeySaltHash } from '../scripts/utils/hash'
+import { loadWithdrawalInfo } from './utils/withdrawal'
 
 describe('Integration', function () {
 	let l1ScrollMessenger: MockL1ScrollMessenger
@@ -115,13 +116,8 @@ describe('Integration', function () {
 		await registry.initialize(rollupAddress, fraudVerifierAddress)
 	})
 
-	it('e2e', async function () {
-		const fullBlocks = loadFullBlocks()
-		for (let i = 1; i < 3; i++) {
-			await postBlock(fullBlocks[i], rollup)
-		}
-
-		// deposit
+	it('deposit', async function () {
+		// deposit on L1
 		const owner = (await ethers.getSigners())[0]
 		const user = (await ethers.getSigners())[1]
 		const depositAmount = ethers.parseEther('100') // deposit 100 testToken
@@ -139,9 +135,72 @@ describe('Integration', function () {
 		await liquidity
 			.connect(user)
 			.depositERC20(await testToken.getAddress(), pubkeySaltHash, depositAmount)
+		const depositEvent = (
+			await liquidity.queryFilter(liquidity.filters.Deposited())
+		)[0]
+		const depositId = depositEvent.args.depositId
+		await liquidity.connect(owner).analyzeDeposits(depositId, [])
+		const analyzedEvent = (
+			await liquidity.queryFilter(liquidity.filters.DepositsAnalyzed())
+		)[0]
+		const analyzedDepositId = analyzedEvent.args.lastAnalyzedDepositId
+		expect(analyzedDepositId).to.be.eq(depositId)
+		await liquidity.relayDeposits(analyzedDepositId, 400_000, {
+			value: ethers.parseEther('0.1'), // will be refunded automatically
+		})
+		const relayedEvent = (
+			await liquidity.queryFilter(liquidity.filters.DepositsRelayed())
+		)[0]
+		const { message } = relayedEvent.args
+		// this is not required in the production environment,
+		// because scroll messenger will relay the message to L2 automatically.
+		// but for testing, we need to call relayMessage manually.
+		{
+			// get message nonce
+			const sendEvent = (
+				await l1ScrollMessenger.queryFilter(
+					l1ScrollMessenger.filters.SentMessage(),
+				)
+			)[0]
+			const { messageNonce, gasLimit } = sendEvent.args
+			const from = await liquidity.getAddress()
+			const to = await rollup.getAddress()
+			const value = 0
+			// notice: this may fail silently if the gasLimit is not enough.
+			await l2ScrollMessenger.relayMessage(
+				from,
+				to,
+				value,
+				messageNonce,
+				message,
+				{ gasLimit },
+			)
+		}
 
-		// relay deposits to L2
-		// analyze
-		await liquidity.connect(owner).analyzeDeposits(1, [])
+		// check deposit
+		const depositProcessedEvent = (
+			await rollup.queryFilter(rollup.filters.DepositsProcessed())
+		)[0]
+		const { lastProcessedDepositId } = depositProcessedEvent.args
+		expect(lastProcessedDepositId).to.be.eq(depositId)
+	})
+
+	it('withdrawal', async function () {
+		const fullBlocks = loadFullBlocks()
+		for (let i = 1; i < 3; i++) {
+			await postBlock(fullBlocks[i], rollup)
+		}
+		// withdrawal on L2
+		const withdrawalInfo = loadWithdrawalInfo()
+		await withdrawal.submitWithdrawalProof(
+			withdrawalInfo.withdrawals,
+			withdrawalInfo.withdrawalProofPublicInputs,
+			'0x',
+		)
+		const directWithdrawalEvent = (
+			await withdrawal.queryFilter(withdrawal.filters.DirectWithdrawalQueued())
+		)[0]
+
+		// const { directWithdrawalId } = directWithdrawalEvent.args
 	})
 })
