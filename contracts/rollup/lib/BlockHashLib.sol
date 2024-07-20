@@ -12,7 +12,7 @@ library BlockHashLib {
 	function getBlockNumber(
 		bytes32[] memory blockHashes
 	) internal pure returns (uint32) {
-		return uint32(blockHashes.length - 1);
+		return uint32(blockHashes.length);
 	}
 
 	function getPrevHash(
