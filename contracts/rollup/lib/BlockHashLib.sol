@@ -2,22 +2,32 @@
 pragma solidity 0.8.24;
 
 library BlockHashLib {
+	error NoBlocksYet();
+
 	function pushGenesisBlockHash(
 		bytes32[] storage blockHashes,
 		bytes32 initialDepositTreeRoot
 	) internal {
-		blockHashes.push(_calcBlockHash(0, initialDepositTreeRoot, 0, 0));
+		blockHashes.push(
+			_calcBlockHash(bytes32(0), initialDepositTreeRoot, bytes32(0), 0)
+		);
 	}
 
 	function getBlockNumber(
 		bytes32[] memory blockHashes
 	) internal pure returns (uint32) {
-		return uint32(blockHashes.length);
+		if (blockHashes.length == 0) {
+			revert NoBlocksYet();
+		}
+		return uint32(blockHashes.length - 1);
 	}
 
 	function getPrevHash(
 		bytes32[] memory blockHashes
 	) internal pure returns (bytes32) {
+		if (blockHashes.length <= 0) {
+			revert NoBlocksYet();
+		}
 		return blockHashes[blockHashes.length - 1];
 	}
 
@@ -26,11 +36,13 @@ library BlockHashLib {
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash
 	) internal returns (bytes32 blockHash) {
+		uint32 blockNumber = getBlockNumber(blockHashes) + 1;
+		bytes32 prevHash = getPrevHash(blockHashes);
 		blockHash = _calcBlockHash(
-			getPrevHash(blockHashes),
+			prevHash,
 			depositTreeRoot,
 			signatureHash,
-			getBlockNumber(blockHashes)
+			blockNumber
 		);
 		blockHashes.push(blockHash);
 		return blockHash;
