@@ -3,6 +3,7 @@ import { readDeployedContracts } from '../utils/io'
 import { getRandomPubkey, getRandomSalt } from '../../utils/rand'
 import { getPubkeySaltHash } from '../../utils/hash'
 import { sleep } from '../../utils/sleep'
+import type { ContractTransactionResponse } from 'ethers'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')
@@ -18,11 +19,13 @@ async function main() {
 		deployedContracts.liquidity,
 	)
 
+	let tx: ContractTransactionResponse
+
 	// deposit
 	const pubkey = getRandomPubkey() // intmax address of user
 	const salt = getRandomSalt() // random salt
 	const pubkeySaltHash = getPubkeySaltHash(pubkey, salt)
-	const tx = await liquidity.depositETH(pubkeySaltHash, {
+	tx = await liquidity.depositETH(pubkeySaltHash, {
 		value: ethers.parseEther('0.0001'),
 	})
 	console.log('deposit tx hash:', tx.hash)
@@ -31,18 +34,18 @@ async function main() {
 	await sleep(60)
 
 	// analyze
-	const tx1 = await liquidity.analyzeDeposits(1, [])
-	console.log('analyze tx hash:', tx1.hash)
-	await tx1.wait()
+	tx = await liquidity.analyzeDeposits(1, [])
+	console.log('analyze tx hash:', tx.hash)
+	await tx.wait()
 
 	await sleep(60)
 
 	// relay
-	const tx2 = await liquidity.relayDeposits(1, 400_000, {
+	tx = await liquidity.relayDeposits(1, 400_000, {
 		value: ethers.parseEther('0.1'), // will be refunded automatically
 	})
-	console.log('relay tx hash:', tx2.hash)
-	await tx2.wait()
+	console.log('relay tx hash:', tx.hash)
+	await tx.wait()
 }
 
 main().catch((error) => {
