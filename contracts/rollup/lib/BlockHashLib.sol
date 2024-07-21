@@ -33,7 +33,6 @@ library BlockHashLib {
 			getBlockNumber(blockHashes)
 		);
 		blockHashes.push(blockHash);
-		return blockHash;
 	}
 
 	function _calcBlockHash(
