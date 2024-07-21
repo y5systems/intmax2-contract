@@ -1,6 +1,6 @@
 import { ethers, network } from 'hardhat'
 import type { ContractTransactionResponse } from 'ethers'
-import { readDeployedContracts } from '../utils/io'
+import { readDeployedContracts, readL1ToL2Data } from '../utils/io'
 import { getL1MessengerAddress } from '../utils/addressBook'
 import { IL1ScrollMessenger__factory } from '../../typechain-types'
 
@@ -25,11 +25,6 @@ async function main() {
 
 	let tx: ContractTransactionResponse
 
-	// load contracts
-	const liquidity = await ethers.getContractAt(
-		'Liquidity',
-		deployedContracts.liquidity,
-	)
 	const l1ScrollMessenger = new ethers.Contract(
 		getL1MessengerAddress(),
 		scrollMessengerAbi,
@@ -42,24 +37,17 @@ async function main() {
 	const value = 0
 
 	// previous result by getLastSentEvent
-	const messageNonce = 363923
-	const message =
-		'0x088f0bdd00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
-
-	// you can get the proof from
-	// https://sepolia-api-bridge-v2.scroll.io/api/l2/unclaimed/withdrawals?page_size=10&page=1&address={from}
-	const proof = {
-		batchIndex: 0,
-		merkleProof: '0x',
-	}
-	// tx = await l1ScrollMessenger.relayMessageWithProof(
-	// 	from,
-	// 	to,
-	// 	value,
-	// 	messageNonce,
-	// 	message,
-	// 	proof,
-	// )
+	const l1ToL2Data = await readL1ToL2Data()
+	tx = await l1ScrollMessenger.relayMessageWithProof(
+		from,
+		to,
+		value,
+		l1ToL2Data.messageNonce,
+		l1ToL2Data.message,
+		l1ToL2Data.proof,
+	)
+	console.log('l1 messenger tx:', tx.hash)
+	await tx.wait()
 }
 
 main().catch((error) => {

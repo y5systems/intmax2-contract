@@ -9,6 +9,7 @@ cache
 artifacts
 
 scripts/deployedContracts.json
+scripts/data/*
 /.openzeppelin
 
 typechain-types/

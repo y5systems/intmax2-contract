@@ -18,7 +18,7 @@ npx hardhat node
 Open a new terminal and run the following commands:
 
 ```sh
-echo "{}" > ./scripts/deployedContracts.json # initialize contract addresses
+echo "{}" > ./scripts/data/deployedContracts.json # initialize contract addresses
 npx hardhat run ./scripts/deployStep1ToL2.ts --network scrollSepolia
 npx hardhat run ./scripts/deployStep2ToL1.ts --network sepolia
 npx hardhat run ./scripts/deployStep3ToL2.ts --network scrollSepolia
