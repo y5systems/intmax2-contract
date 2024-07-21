@@ -3,6 +3,7 @@ import type { ContractTransactionResponse } from 'ethers'
 import { readDeployedContracts, readL2ToL1Message } from '../utils/io'
 import { getL1MessengerAddress } from '../utils/addressBook'
 import { IL1ScrollMessenger__factory } from '../../typechain-types'
+import { fetchUnclaimedWithdrawals } from '../utils/api'
 
 const scrollMessengerAbi = IL1ScrollMessenger__factory.abi
 
@@ -22,29 +23,37 @@ async function main() {
 	) {
 		throw new Error('all contracts should be deployed')
 	}
-
-	let tx: ContractTransactionResponse
-
 	const l1ScrollMessenger = new ethers.Contract(
 		getL1MessengerAddress(),
 		scrollMessengerAbi,
 		(await ethers.getSigners())[0],
 	)
-
-	// get event
-	const from = deployedContracts.withdrawal
-	const to = deployedContracts.liquidity
-	const value = 0
-
-	// previous result by getLastSentEvent
-	const l2ToL1Message = await readL2ToL1Message()
-	tx = await l1ScrollMessenger.relayMessageWithProof(
-		from,
-		to,
-		value,
-		l2ToL1Message.messageNonce,
-		l2ToL1Message.message,
-		l2ToL1Message.proof,
+	const data = await fetchUnclaimedWithdrawals(deployedContracts.withdrawal)
+	const results = data.data.results
+	console.log('unclaimed withdrawals:', results)
+	if (results.length === 0) {
+		throw new Error('no unclaimed withdrawals')
+	}
+	const latestResult = results[results.length - 1]
+	const claimInfo = latestResult.claim_info
+	if (!claimInfo) {
+		throw new Error('no claim info')
+	}
+	if (!claimInfo.claimable) {
+		throw new Error('claimable is false')
+	}
+	console.log(claimInfo)
+	const proof = {
+		batchIndex: claimInfo.proof.batch_index,
+		merkleProof: claimInfo.proof.merkle_proof,
+	}
+	const tx = await l1ScrollMessenger.relayMessageWithProof(
+		claimInfo.from,
+		claimInfo.to,
+		claimInfo.value,
+		claimInfo.nonce,
+		claimInfo.message,
+		proof,
 	)
 	console.log('l1 messenger tx:', tx.hash)
 	await tx.wait()
