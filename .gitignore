@@ -12,6 +12,6 @@ scripts/deployedContracts.json
 scripts/data/*
 /.openzeppelin
 
-./vscode/
+.vscode/
 
 typechain-types/
