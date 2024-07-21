@@ -6,7 +6,7 @@ import { getRandomSalt } from '../../utils/rand'
 import { makeWithdrawalInfo } from '../../utils/withdrawal'
 import { sleep } from '../../utils/sleep'
 import { getL2MessengerAddress } from '../utils/addressBook'
-import { getLastSentEvent } from '../../utils/events'
+import { getLastSentEvent, getWithdrawalsQueuedEvent } from '../../utils/events'
 
 if (network.name !== 'scrollSepolia') {
 	throw new Error('This script should be run on scrollSepolia network')
@@ -80,11 +80,25 @@ async function main() {
 		throw new Error('blockNumber not found')
 	}
 	const submittedBlockNumber = res.blockNumber
+	const withdrawalsQueuedEvent = await getWithdrawalsQueuedEvent(
+		withdrawal,
+		submittedBlockNumber,
+	)
+	const { lastDirectWithdrawalId, lastClaimableWithdrawalId } =
+		withdrawalsQueuedEvent.args
+	console.log('lastDirectWithdrawalId:', lastDirectWithdrawalId.toString())
+	console.log(
+		'lastClaimableWithdrawalId:',
+		lastClaimableWithdrawalId.toString(),
+	)
 
 	await sleep(60)
 
 	// relay
-	tx = await withdrawal.relayWithdrawals(1, 0)
+	tx = await withdrawal.relayWithdrawals(
+		lastDirectWithdrawalId,
+		lastClaimableWithdrawalId,
+	)
 	console.log('relayWithdrawals tx hash:', tx.hash)
 	const receipt = await tx.wait()
 	if (!receipt?.blockNumber) {
