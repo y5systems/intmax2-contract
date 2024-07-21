@@ -10,10 +10,10 @@ import type {
 	TestERC20,
 } from '../typechain-types'
 import { expect } from 'chai'
-import { loadFullBlocks, postBlock } from './utils/rollup'
-import { getRandomPubkey, getRandomSalt } from '../scripts/utils/rand'
-import { getPubkeySaltHash } from '../scripts/utils/hash'
-import { loadWithdrawalInfo } from './utils/withdrawal'
+import { loadFullBlocks, postBlock } from '../utils/rollup'
+import { getRandomPubkey, getRandomSalt } from '../utils/rand'
+import { getPubkeySaltHash } from '../utils/hash'
+import { loadWithdrawalInfo } from '../utils/withdrawal'
 
 describe('Integration', function () {
 	let l1ScrollMessenger: MockL1ScrollMessenger

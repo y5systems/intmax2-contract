@@ -1,4 +1,4 @@
-import { Rollup } from '../../typechain-types'
+import { Rollup } from '../typechain-types'
 import * as fs from 'fs'
 
 export function loadFullBlocks(): FullBlock[] {

@@ -1,7 +1,7 @@
 import { ethers, upgrades } from 'hardhat'
 import type { BlockBuilderRegistry, Rollup } from '../typechain-types'
 import { expect } from 'chai'
-import { loadFullBlocks, postBlock } from './utils/rollup'
+import { loadFullBlocks, postBlock } from '../utils/rollup'
 
 describe('Rollup', function () {
 	let registry: BlockBuilderRegistry

@@ -1,8 +1,8 @@
 import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
-import { getRandomPubkey, getRandomSalt } from '../utils/rand'
-import { getPubkeySaltHash } from '../utils/hash'
-import { sleep } from '../utils/sleep'
+import { getRandomPubkey, getRandomSalt } from '../../utils/rand'
+import { getPubkeySaltHash } from '../../utils/hash'
+import { sleep } from '../../utils/sleep'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')
@@ -28,14 +28,14 @@ async function main() {
 	console.log('deposit tx hash:', tx.hash)
 	await tx.wait()
 
-	await sleep(60000)
+	await sleep(60)
 
 	// analyze
 	const tx1 = await liquidity.analyzeDeposits(1, [])
 	console.log('analyze tx hash:', tx1.hash)
 	await tx1.wait()
 
-	await sleep(60000)
+	await sleep(60)
 
 	// relay
 	const tx2 = await liquidity.relayDeposits(1, 400_000, {
