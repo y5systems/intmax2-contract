@@ -6,11 +6,11 @@ import {IMockCommunication} from "./IMockCommunication.sol";
 
 contract MockL1ScrollMessenger is IL1ScrollMessenger, IMockCommunication {
 	address public xDomainMessageSender;
-	mapping(bytes32 => bool) public isL2MessageExecuted;
-	uint256 nonce;
+	mapping(bytes32 => bool) private isL2MessageExecuted;
+	uint256 private nonce;
 	mapping(bytes32 => bool) public receivedCalldataHash;
-	address counterpart;
-	uint256 public constant FEE = 0.01 ether;
+	address private counterpart;
+	uint256 private constant FEE = 0.01 ether;
 
 	function initialize(address counterpart_) external {
 		counterpart = counterpart_;
