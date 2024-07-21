@@ -5,6 +5,12 @@ import { loadFullBlocks, postBlock } from '../../utils/rollup'
 import { getRandomSalt } from '../../utils/rand'
 import { makeWithdrawalInfo } from '../../utils/withdrawal'
 import { sleep } from '../../utils/sleep'
+import { IL2ScrollMessenger__factory } from '../../typechain-types'
+import { getL2MessengerAddress } from '../utils/addressBook'
+import type { SentMessageEvent } from '../../typechain-types/@scroll-tech/contracts/libraries/IScrollMessenger'
+import { getLastSentEvent } from '../../utils/events'
+
+const scrollMessengerAbi = IL2ScrollMessenger__factory.abi
 
 if (network.name !== 'scrollsepolia') {
 	throw new Error('This script should be run on scrollsepolia network')
@@ -80,7 +86,22 @@ async function main() {
 	// relay
 	tx = await withdrawal.relayWithdrawals(1, 0)
 	console.log('relayWithdrawals tx hash:', tx.hash)
-	await tx.wait()
+	const receipt = await tx.wait()
+	if (!receipt?.blockNumber) {
+		throw new Error('blockNumber not found')
+	}
+	const relayedBlockNumber = receipt.blockNumber
+	console.log('relayedBlockNumber:', relayedBlockNumber)
+
+	const { messageNonce, message } = (
+		await getLastSentEvent(
+			getL2MessengerAddress(),
+			deployedContracts.withdrawal,
+			relayedBlockNumber,
+		)
+	).args
+	console.log('messageNonce:', messageNonce.toString())
+	console.log('message:', message)
 }
 
 main().catch((error) => {

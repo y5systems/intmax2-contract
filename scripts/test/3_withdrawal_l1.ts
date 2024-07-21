@@ -36,25 +36,30 @@ async function main() {
 		(await ethers.getSigners())[0],
 	)
 
+	// get event
 	const from = deployedContracts.withdrawal
 	const to = deployedContracts.liquidity
 	const value = 0
-	const message = '0x' // todo: get the message from the contract
-	const messageNonce = 0 // todo: get the nonce from the contract
+
+	// previous result by getLastSentEvent
+	const messageNonce = 363923
+	const message =
+		'0x088f0bdd00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+
 	// you can get the proof from
 	// https://sepolia-api-bridge-v2.scroll.io/api/l2/unclaimed/withdrawals?page_size=10&page=1&address={from}
 	const proof = {
 		batchIndex: 0,
 		merkleProof: '0x',
 	}
-	tx = await l1ScrollMessenger.relayMessageWithProof(
-		from,
-		to,
-		value,
-		messageNonce,
-		message,
-		proof,
-	)
+	// tx = await l1ScrollMessenger.relayMessageWithProof(
+	// 	from,
+	// 	to,
+	// 	value,
+	// 	messageNonce,
+	// 	message,
+	// 	proof,
+	// )
 }
 
 main().catch((error) => {
