@@ -92,18 +92,6 @@ describe('BlockHashLib', function () {
 	})
 
 	describe('Error handling', function () {
-		it('should revert with NoBlocksYet when trying to get block number or previous hash with no blocks', async function () {
-			const blockHashLibTest = await loadFixture(deployContractFixture)
-
-			await expect(
-				blockHashLibTest.getBlockNumber(),
-			).to.be.revertedWithCustomError(blockHashLibTest, 'NoBlocksYet')
-
-			await expect(
-				blockHashLibTest.getPrevHash(),
-			).to.be.revertedWithCustomError(blockHashLibTest, 'NoBlocksYet')
-		})
-
 		it('should correctly handle the state after adding the genesis block', async function () {
 			const blockHashLibTest = await loadFixture(deployContractFixture)
 
