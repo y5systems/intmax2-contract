@@ -2,7 +2,8 @@
 
 ## Environment Variables
 
-- `PRIVATE_KEY`: User's private key
+- `DEPLOYER_PRIVATE_KEY`: Deployer's private key
+- `ANALYZER_PRIVATE_KEY`: Analyzer's private key
 - `ALCHEMY_KEY`: Alchemy key
 
 ## How to run
@@ -27,23 +28,31 @@ npx hardhat run ./scripts/deployStep3ToL2.ts --network scrollSepolia
 
 ### test locally
 
-`npm run test test/integration.ts`
+```sh
+npm run test test/integration.ts
+```
 
 ### test on Sepolia & Scroll Sepolia
 
 #### Deposit on L1 & Relay to L2
 
-`npx hardhat run scripts/test/1_deposit.ts --network sepolia`
+```sh
+npx hardhat run scripts/test/1_deposit.ts --network sepolia
+```
 
 #### Withdraw on L2
 
-`npx hardhat run scripts/test/2_withdrawal_l2.ts --network scrollSepolia`
+```sh
+npx hardhat run scripts/test/2_withdrawal_l2.ts --network scrollSepolia
+```
 
 #### Withdraw on L1
 
 You need to hardcode the relay merkle proof in `scripts/test/3_withdrawal_l1.ts` before running the following command.
 
-`npx hardhat run scripts/test/3_withdrawal_l1.ts --network sepolia`
+```sh
+npx hardhat run scripts/test/3_withdrawal_l1.ts --network sepolia
+```
 
 ### lint
 

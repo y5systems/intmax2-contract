@@ -18,6 +18,7 @@ import {
 	getLastDepositedEvent,
 	getLastDepositsRelayedEvent,
 	getLastSentEvent,
+	getWithdrawalsQueuedEvent,
 } from '../utils/events'
 
 describe('Integration', function () {
@@ -211,17 +212,17 @@ describe('Integration', function () {
 			withdrawalInfo.withdrawalProofPublicInputs,
 			'0x',
 		)
-		const directWithdrawalEvents = await withdrawal.queryFilter(
-			withdrawal.filters.DirectWithdrawalQueued(),
+		const withdrawalsQueuedEvent = await getWithdrawalsQueuedEvent(
+			withdrawal,
+			0,
 		)
-		const lastDirectWithdrawalEvent =
-			directWithdrawalEvents[directWithdrawalEvents.length - 1]
-		const lastDirectWithdrawalId =
-			lastDirectWithdrawalEvent.args.directWithdrawalId
-
+		const { lastDirectWithdrawalId, lastClaimableWithdrawalId } =
+			withdrawalsQueuedEvent.args
 		// relay withdrawal
-		await withdrawal.relayWithdrawals(lastDirectWithdrawalId, 0)
-
+		await withdrawal.relayWithdrawals(
+			lastDirectWithdrawalId,
+			lastClaimableWithdrawalId,
+		)
 		const sentEvent = await getLastSentEvent(
 			await l2ScrollMessenger.getAddress(),
 			await withdrawal.getAddress(),
