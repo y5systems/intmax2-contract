@@ -1,6 +1,10 @@
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from './utils/io'
 import { getL2MessengerAddress } from './constants'
+
+if (network.name !== 'scrollsepolia') {
+	throw new Error('This script should be run on scrollsepolia network')
+}
 
 async function main() {
 	const deployedContracts = await readDeployedContracts()
@@ -34,6 +38,7 @@ async function main() {
 			deployedContracts.blockBuilderRegistry,
 		)
 		await tx.wait()
+		console.log('Rollup initialized')
 	}
 	if ((await withdrawal.owner()) === ethers.ZeroAddress) {
 		console.log('Initializing Withdrawal')

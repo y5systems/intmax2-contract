@@ -1,6 +1,9 @@
-import { ethers, upgrades } from 'hardhat'
-import 'dotenv/config'
+import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from './utils/io'
+
+if (network.name !== 'scrollsepolia') {
+	throw new Error('This script should be run on scrollsepolia network')
+}
 
 async function main() {
 	const deployedContracts = await readDeployedContracts()

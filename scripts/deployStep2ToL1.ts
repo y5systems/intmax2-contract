@@ -1,10 +1,14 @@
-import { ethers, upgrades } from 'hardhat'
+import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from './utils/io'
 import {
 	getL1MessengerAddress,
 	getUSDCAddress,
 	getWBTCAddress,
 } from './constants'
+
+if (network.name !== 'sepolia') {
+	throw new Error('This script should be run on sepolia network')
+}
 
 async function main() {
 	const deployedContracts = await readDeployedContracts()
