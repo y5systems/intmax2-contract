@@ -17,4 +17,8 @@ interface ITokenData {
 
 	error InvalidTokenAddress();
 	error InvalidTokenInfo();
+
+	function getTokenInfo(
+		uint32 tokenIndex
+	) external view returns (TokenInfo memory);
 }
