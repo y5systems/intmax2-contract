@@ -45,7 +45,7 @@ async function main() {
 	)
 	const { depositId } = depositEvent.args
 	console.log('depositId:', depositId)
-	await sleep(60)
+	await sleep(30)
 
 	// analyze till depositId
 	const analyzer = (await ethers.getSigners())[1]
@@ -53,7 +53,7 @@ async function main() {
 	console.log('analyze tx hash:', tx.hash)
 	await tx.wait()
 
-	await sleep(60)
+	await sleep(30)
 
 	// relay till depositId
 	tx = await liquidity.relayDeposits(depositId, 400_000, {

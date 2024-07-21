@@ -45,7 +45,7 @@ async function main() {
 	console.log('updateBlockBuilder tx hash:', tx.hash)
 	await tx.wait()
 
-	await sleep(60)
+	await sleep(30)
 
 	// post block
 	const fullBlocks = loadFullBlocks()
@@ -53,7 +53,7 @@ async function main() {
 	console.log('postBlock tx hash:', tx.hash)
 	await tx.wait()
 
-	await sleep(60)
+	await sleep(30)
 
 	// make withdrawal
 	const blockNumber = 1
