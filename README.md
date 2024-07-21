@@ -48,7 +48,7 @@ npx hardhat run scripts/test/2_withdrawal_l2.ts --network scrollSepolia
 
 #### Withdraw on L1
 
-You need to hardcode the relay merkle proof in `scripts/test/3_withdrawal_l1.ts` before running the following command.
+You need to fill `scripts/data/l1ToL2Message.json` to run the following command.
 
 ```sh
 npx hardhat run scripts/test/3_withdrawal_l1.ts --network sepolia

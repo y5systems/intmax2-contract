@@ -4,10 +4,10 @@ import {
 	DeployedContractsSchema,
 } from '../schema/deployedContractsSchema'
 import fs from 'fs-extra'
-import { L1toL2Data } from '../schema/l2tol1Data'
+import { L2ToL1Message } from '../schema/l2tol1Message'
 
 const deployedContractPath = 'scripts/data/deployedContracts.json'
-const l1ToL2DataPath = 'scripts/data/l1ToL2Data.json'
+const l2ToL1MessagePath = 'scripts/data/l2ToL1Message.json'
 
 export async function readDeployedContracts(): Promise<DeployedContracts> {
 	try {
@@ -38,10 +38,10 @@ export async function writeDeployedContracts(
 	}
 }
 
-export async function readL1ToL2Data(): Promise<L1toL2Data> {
+export async function readL2ToL1Message(): Promise<L2ToL1Message> {
 	try {
-		const data = await fs.readJson(l1ToL2DataPath)
-		return L1toL2Data.parse(data)
+		const data = await fs.readJson(l2ToL1MessagePath)
+		return L2ToL1Message.parse(data)
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			console.error('Validation error:', error.errors)

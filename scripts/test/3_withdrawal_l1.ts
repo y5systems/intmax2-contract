@@ -1,6 +1,6 @@
 import { ethers, network } from 'hardhat'
 import type { ContractTransactionResponse } from 'ethers'
-import { readDeployedContracts, readL1ToL2Data } from '../utils/io'
+import { readDeployedContracts, readL2ToL1Message } from '../utils/io'
 import { getL1MessengerAddress } from '../utils/addressBook'
 import { IL1ScrollMessenger__factory } from '../../typechain-types'
 
@@ -37,14 +37,14 @@ async function main() {
 	const value = 0
 
 	// previous result by getLastSentEvent
-	const l1ToL2Data = await readL1ToL2Data()
+	const l2ToL1Message = await readL2ToL1Message()
 	tx = await l1ScrollMessenger.relayMessageWithProof(
 		from,
 		to,
 		value,
-		l1ToL2Data.messageNonce,
-		l1ToL2Data.message,
-		l1ToL2Data.proof,
+		l2ToL1Message.messageNonce,
+		l2ToL1Message.message,
+		l2ToL1Message.proof,
 	)
 	console.log('l1 messenger tx:', tx.hash)
 	await tx.wait()

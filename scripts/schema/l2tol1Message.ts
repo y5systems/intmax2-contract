@@ -5,10 +5,10 @@ const merkleProof = z.object({
 	merkleProof: z.string().describe('Merkle proof'),
 })
 
-export const L1toL2Data = z.object({
+export const L2ToL1Message = z.object({
 	messageNonce: z.number().describe('Message nonce'),
 	message: z.string().describe('Message'),
 	proof: merkleProof.describe('Proof'),
 })
 
-export type L1toL2Data = z.infer<typeof L1toL2Data>
+export type L2ToL1Message = z.infer<typeof L2ToL1Message>
