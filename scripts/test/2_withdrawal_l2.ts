@@ -39,17 +39,23 @@ async function main() {
 
 	// post dummy block to use as withdrawal public input
 	// first register block builder to post block
-	tx = await registry.updateBlockBuilder('', {
-		value: ethers.parseEther('0.1'),
-	})
-	console.log('updateBlockBuilder tx hash:', tx.hash)
-	await tx.wait()
-
-	await sleep(30)
+	const blockBuilder = (await ethers.getSigners())[0]
+	const isValidBlockBuilder = await registry.isValidBlockBuilder(
+		blockBuilder.address,
+	)
+	if (!isValidBlockBuilder) {
+		console.log('registering block builder...')
+		tx = await registry.connect(blockBuilder).updateBlockBuilder('', {
+			value: ethers.parseEther('0.1'),
+		})
+		console.log('updateBlockBuilder tx hash:', tx.hash)
+		await tx.wait()
+		await sleep(30)
+	}
 
 	// post block
 	const fullBlocks = loadFullBlocks()
-	tx = await postBlock(fullBlocks[1], rollup)
+	tx = await postBlock(fullBlocks[1], rollup.connect(blockBuilder))
 	console.log('postBlock tx hash:', tx.hash)
 	await tx.wait()
 
