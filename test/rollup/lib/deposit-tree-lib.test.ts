@@ -1,15 +1,13 @@
 import { expect } from 'chai'
 import { ethers } from 'hardhat'
+import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { DepositTreeLibTest } from '../../../typechain-types'
 
 describe('DepositTreeLibTest', function () {
-	let depositTreeLibTest: DepositTreeLibTest
-
-	beforeEach(async function () {
-		const DepositTreeLibTest =
-			await ethers.getContractFactory('DepositTreeLibTest')
-		depositTreeLibTest = await DepositTreeLibTest.deploy()
-	})
+	const setup = async (): Promise<DepositTreeLibTest> => {
+		const factory = await ethers.getContractFactory('DepositTreeLibTest')
+		return await factory.deploy()
+	}
 
 	// Helper function to mimic DepositLib.getHash
 	function getDepositHash(
@@ -26,9 +24,10 @@ describe('DepositTreeLibTest', function () {
 	}
 
 	it('should initialize with correct values', async function () {
-		const count = await depositTreeLibTest.getDepositCount()
-		const defaultHash = await depositTreeLibTest.getDefaultHash()
-		const treeDepth = await depositTreeLibTest.getTreeDepth()
+		const lib = await loadFixture(setup)
+		const count = await lib.getDepositCount()
+		const defaultHash = await lib.getDefaultHash()
+		const treeDepth = await lib.getTreeDepth()
 
 		// Calculate default hash with all zero values
 		const zeroBytes32 = ethers.zeroPadValue('0x', 32)
@@ -40,6 +39,7 @@ describe('DepositTreeLibTest', function () {
 	})
 
 	it('should add deposits and update root', async function () {
+		const lib = await loadFixture(setup)
 		// Generate 32-byte values for recipientSaltHash
 		const recipientSaltHash1 = ethers.keccak256(
 			ethers.toUtf8Bytes('recipient1'),
@@ -59,19 +59,20 @@ describe('DepositTreeLibTest', function () {
 			ethers.parseEther('2'),
 		)
 
-		await depositTreeLibTest.deposit(deposit1)
-		let root = await depositTreeLibTest.getRoot()
-		let count = await depositTreeLibTest.getDepositCount()
+		await lib.deposit(deposit1)
+		let root = await lib.getRoot()
+		let count = await lib.getDepositCount()
 		expect(count).to.equal(1)
 
-		await depositTreeLibTest.deposit(deposit2)
-		let newRoot = await depositTreeLibTest.getRoot()
-		count = await depositTreeLibTest.getDepositCount()
+		await lib.deposit(deposit2)
+		let newRoot = await lib.getRoot()
+		count = await lib.getDepositCount()
 		expect(count).to.equal(2)
 		expect(newRoot).to.not.equal(root)
 	})
 
 	it('should return correct branch', async function () {
+		const lib = await loadFixture(setup)
 		// Generate a 32-byte value for recipientSaltHash
 		const recipientSaltHash = ethers.keccak256(
 			ethers.toUtf8Bytes('testRecipient'),
@@ -81,11 +82,11 @@ describe('DepositTreeLibTest', function () {
 		const amount = ethers.parseEther('1')
 		const deposit1 = getDepositHash(recipientSaltHash, tokenIndex, amount)
 
-		await depositTreeLibTest.deposit(deposit1)
+		await lib.deposit(deposit1)
 
-		const branch = await depositTreeLibTest.getBranch()
+		const branch = await lib.getBranch()
 
-		const treeDepth = await depositTreeLibTest.getTreeDepth()
+		const treeDepth = await lib.getTreeDepth()
 
 		expect(branch.length).to.equal(treeDepth)
 		expect(branch[0]).to.equal(deposit1)
@@ -106,6 +107,7 @@ describe('DepositTreeLibTest', function () {
 	})
 
 	it('should revert when tree is full', async function () {
+		const lib = await loadFixture(setup)
 		const baseRecipientSaltHash = ethers.keccak256(
 			ethers.toUtf8Bytes('baseRecipient'),
 		)
@@ -122,10 +124,10 @@ describe('DepositTreeLibTest', function () {
 			)
 			const deposit = getDepositHash(recipientSaltHash, tokenIndex, amount)
 
-			await depositTreeLibTest.deposit(deposit)
+			await lib.deposit(deposit)
 		}
 
-		const finalCount = await depositTreeLibTest.getDepositCount()
+		const finalCount = await lib.getDepositCount()
 
 		// Try one more deposit to ensure it still works
 		const finalRecipientSaltHash = ethers.keccak256(
@@ -137,13 +139,70 @@ describe('DepositTreeLibTest', function () {
 			amount,
 		)
 
-		await expect(depositTreeLibTest.deposit(finalDeposit)).to.not.be.reverted
+		await expect(lib.deposit(finalDeposit)).to.not.be.reverted
 
-		const updatedCount = await depositTreeLibTest.getDepositCount()
+		const updatedCount = await lib.getDepositCount()
 
 		expect(updatedCount).to.equal(
 			finalCount + 1n,
 			'Deposit count should increase by 1',
+		)
+	})
+
+	// // This test is skipped by default as it would take an extremely long time to run.
+	it.skip('should theoretically revert with MerkleTreeFull when tree is completely full', async function () {
+		const lib = await loadFixture(setup)
+		const TREE_DEPTH = 32
+		const MAX_DEPOSIT_COUNT = BigInt(2) ** BigInt(TREE_DEPTH) - BigInt(1) // 2^32 - 1
+		const baseRecipientSaltHash = ethers.keccak256(
+			ethers.toUtf8Bytes('baseRecipient'),
+		)
+		const tokenIndex = 1
+		const amount = ethers.parseEther('1')
+
+		// Fill the tree to its maximum capacity
+		for (let i = BigInt(0); i < MAX_DEPOSIT_COUNT; i++) {
+			if (i % BigInt(1000000) === BigInt(0)) {
+				console.log(`Processed ${i} deposits...`)
+			}
+			const recipientSaltHash = ethers.keccak256(
+				ethers.concat([baseRecipientSaltHash, ethers.toBeHex(i, 32)]),
+			)
+			const deposit = getDepositHash(
+				recipientSaltHash,
+				Number(tokenIndex),
+				amount,
+			)
+			await lib.deposit(deposit)
+		}
+
+		// Verify the final deposit count
+		const finalCount = await lib.getDepositCount()
+		expect(finalCount).to.equal(
+			MAX_DEPOSIT_COUNT,
+			'Deposit count should equal MAX_DEPOSIT_COUNT',
+		)
+
+		// Try to add one more deposit, which should revert with MerkleTreeFull
+		const extraRecipientSaltHash = ethers.keccak256(
+			ethers.toUtf8Bytes('extraRecipient'),
+		)
+		const extraDeposit = getDepositHash(
+			extraRecipientSaltHash,
+			Number(tokenIndex),
+			amount,
+		)
+
+		await expect(lib.deposit(extraDeposit)).to.be.revertedWithCustomError(
+			lib,
+			'MerkleTreeFull',
+		)
+
+		// Verify the deposit count hasn't changed
+		const unchangedCount = await lib.getDepositCount()
+		expect(unchangedCount).to.equal(
+			MAX_DEPOSIT_COUNT,
+			'Deposit count should remain unchanged',
 		)
 	})
 })
