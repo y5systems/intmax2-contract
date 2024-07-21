@@ -5,12 +5,8 @@ import { loadFullBlocks, postBlock } from '../../utils/rollup'
 import { getRandomSalt } from '../../utils/rand'
 import { makeWithdrawalInfo } from '../../utils/withdrawal'
 import { sleep } from '../../utils/sleep'
-import { IL2ScrollMessenger__factory } from '../../typechain-types'
 import { getL2MessengerAddress } from '../utils/addressBook'
-import type { SentMessageEvent } from '../../typechain-types/@scroll-tech/contracts/libraries/IScrollMessenger'
 import { getLastSentEvent } from '../../utils/events'
-
-const scrollMessengerAbi = IL2ScrollMessenger__factory.abi
 
 if (network.name !== 'scrollSepolia') {
 	throw new Error('This script should be run on scrollSepolia network')

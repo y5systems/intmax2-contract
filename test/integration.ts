@@ -35,8 +35,9 @@ describe('Integration', function () {
 	let testToken: TestERC20
 
 	this.beforeEach(async function () {
-		// test token
 		const deployer = (await ethers.getSigners())[0]
+		const analyzer = (await ethers.getSigners())[1]
+		// test token
 		const TestERC20_ = await ethers.getContractFactory('TestERC20')
 		testToken = (await TestERC20_.deploy(deployer)) as TestERC20
 
@@ -103,6 +104,7 @@ describe('Integration', function () {
 			l1ScrollMessengerAddress,
 			rollupAddress,
 			withdrawalAddress,
+			analyzer.address,
 			[testTokenAddress], // testToken
 		)
 
@@ -125,7 +127,8 @@ describe('Integration', function () {
 	it('deposit', async function () {
 		// deposit on L1
 		const owner = (await ethers.getSigners())[0]
-		const user = (await ethers.getSigners())[1]
+		const analyzer = (await ethers.getSigners())[1]
+		const user = (await ethers.getSigners())[2]
 		const depositAmount = ethers.parseEther('100') // deposit 100 testToken
 		// fund token to user
 		await testToken
@@ -147,7 +150,7 @@ describe('Integration', function () {
 			0,
 		)
 		const depositId = lastDepositedEvent.args.depositId
-		await liquidity.connect(owner).analyzeDeposits(depositId, [])
+		await liquidity.connect(analyzer).analyzeDeposits(depositId, [])
 		const analyzedEvent = (
 			await liquidity.queryFilter(liquidity.filters.DepositsAnalyzed())
 		)[0]

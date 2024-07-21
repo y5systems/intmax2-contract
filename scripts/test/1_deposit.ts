@@ -48,7 +48,8 @@ async function main() {
 	await sleep(60)
 
 	// analyze till depositId
-	tx = await liquidity.analyzeDeposits(depositId, [])
+	const analyzer = (await ethers.getSigners())[1]
+	tx = await liquidity.connect(analyzer).analyzeDeposits(depositId, [])
 	console.log('analyze tx hash:', tx.hash)
 	await tx.wait()
 

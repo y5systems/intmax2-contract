@@ -19,6 +19,7 @@ async function main() {
 		if (!deployedContracts.withdrawal) {
 			throw new Error('withdrawal address is not set')
 		}
+		const analyzer = (await ethers.getSigners())[1]
 		const liquidityFactory = await ethers.getContractFactory('Liquidity')
 		const initialERC20Tokens = [getUSDCAddress(), getWBTCAddress()]
 		const liquidity = await upgrades.deployProxy(
@@ -27,6 +28,7 @@ async function main() {
 				getL1MessengerAddress(),
 				deployedContracts.rollup,
 				deployedContracts.withdrawal,
+				analyzer.address,
 				initialERC20Tokens,
 			],
 			{
