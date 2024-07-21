@@ -1,5 +1,6 @@
 import { Rollup } from '../typechain-types'
 import * as fs from 'fs'
+import type { ContractTransactionResponse } from 'ethers'
 
 export function loadFullBlocks(): FullBlock[] {
 	let fullBlocks = []
@@ -14,12 +15,12 @@ export function loadFullBlocks(): FullBlock[] {
 export async function postBlock(
 	fullBlock: FullBlock,
 	rollup: Rollup,
-): Promise<void> {
+): Promise<ContractTransactionResponse> {
 	if (fullBlock.signature.isRegistorationBlock) {
 		if (!fullBlock.pubkeys) {
 			throw new Error('pubkeys are required')
 		}
-		await rollup.postRegistrationBlock(
+		const tx = await rollup.postRegistrationBlock(
 			fullBlock.signature.txTreeRoot,
 			fullBlock.signature.senderFlag,
 			fullBlock.signature.aggPubkey,
@@ -27,11 +28,12 @@ export async function postBlock(
 			fullBlock.signature.messagePoint,
 			fullBlock.pubkeys,
 		)
+		return tx
 	} else {
 		if (!fullBlock.accountIds) {
 			throw new Error('accountIds are required')
 		}
-		await rollup.postNonRegistrationBlock(
+		const tx = await rollup.postNonRegistrationBlock(
 			fullBlock.signature.txTreeRoot,
 			fullBlock.signature.senderFlag,
 			fullBlock.signature.aggPubkey,
@@ -40,5 +42,6 @@ export async function postBlock(
 			fullBlock.signature.pubkeyHash,
 			fullBlock.accountIds,
 		)
+		return tx
 	}
 }

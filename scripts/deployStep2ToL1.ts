@@ -4,7 +4,7 @@ import {
 	getL1MessengerAddress,
 	getUSDCAddress,
 	getWBTCAddress,
-} from './constants'
+} from './utils/addressBook'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')
