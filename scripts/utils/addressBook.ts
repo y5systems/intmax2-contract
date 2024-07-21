@@ -37,7 +37,7 @@ export const getWBTCAddress = () => {
 }
 
 export const getL2MessengerAddress = () => {
-	if (network.name === 'scrollsepolia') {
+	if (network.name === 'scrollSepolia') {
 		return '0xBa50f5340FB9F3Bd074bD638c9BE13eCB36E603d'
 	}
 	if (network.name === 'localhost') {

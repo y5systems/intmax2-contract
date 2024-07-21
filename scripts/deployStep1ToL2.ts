@@ -1,8 +1,8 @@
 import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from './utils/io'
 
-if (network.name !== 'scrollsepolia') {
-	throw new Error('This script should be run on scrollsepolia network')
+if (network.name !== 'scrollSepolia') {
+	throw new Error('This script should be run on scrollSepolia network')
 }
 
 async function main() {

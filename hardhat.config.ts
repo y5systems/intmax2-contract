@@ -24,7 +24,7 @@ const config: HardhatUserConfig = {
 			url: `https://arb-mainnet.g.alchemy.com/v2/${env.ALCHEMY_KEY}`,
 			accounts,
 		},
-		scrollsepolia: {
+		scrollSepolia: {
 			url: 'https://scroll-testnet.rpc.grove.city/v1/a7a7c8e2',
 			accounts,
 		},

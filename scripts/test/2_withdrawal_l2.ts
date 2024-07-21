@@ -12,8 +12,8 @@ import { getLastSentEvent } from '../../utils/events'
 
 const scrollMessengerAbi = IL2ScrollMessenger__factory.abi
 
-if (network.name !== 'scrollsepolia') {
-	throw new Error('This script should be run on scrollsepolia network')
+if (network.name !== 'scrollSepolia') {
+	throw new Error('This script should be run on scrollSepolia network')
 }
 
 async function main() {
@@ -84,7 +84,6 @@ async function main() {
 		throw new Error('blockNumber not found')
 	}
 	const submittedBlockNumber = res.blockNumber
-	
 
 	await sleep(60)
 

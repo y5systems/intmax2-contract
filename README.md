@@ -7,7 +7,7 @@
 
 ## How to run
 
-### Deploy Locally
+### Deploy to Sepolia & Scroll Sepolia
 
 ```sh
 npm i
@@ -17,47 +17,33 @@ npx hardhat node
 Open a new terminal and run the following commands:
 
 ```sh
-echo "{}" > ./scripts/contractAddresses.json # initialize contract addresses
-npx hardhat run ./scripts/deployTestErc20.ts --network localhost
-npx hardhat run ./scripts/deployPlonkVerifier.ts --network localhost
-npx hardhat run ./scripts/deployStep1ToL2.ts --network localhost
-npx hardhat run ./scripts/deployStep2ToL1.ts --network localhost
-npx hardhat run ./scripts/deployStep3ToL2.ts --network localhost
+echo "{}" > ./scripts/deployedContracts.json # initialize contract addresses
+npx hardhat run ./scripts/deployStep1ToL2.ts --network scrollSepolia
+npx hardhat run ./scripts/deployStep2ToL1.ts --network sepolia
+npx hardhat run ./scripts/deployStep3ToL2.ts --network scrollSepolia
 ```
 
-### Deposit ETH
+## How to test
 
-```sh
-npx hardhat run ./scripts/depositETH.ts --network localhost
-```
+### test locally
 
-### Deposit ERC20
+`npm run test test/integration.ts`
 
-```sh
-npx hardhat run ./scripts/depositERC20.ts --network localhost
-```
+### test on Sepolia & Scroll Sepolia
 
-## Deploy to Scroll & Scroll Sepolia (TODO)
+#### Deposit on L1 & Relay to L2
 
-You must own ETH in the Sepolia and Scroll Sepolia networks respectively.
+`npx hardhat run scripts/test/1_deposit.ts --network sepolia`
 
-```sh
-npm i
-npm run deploy
-```
+#### Withdraw on L2
 
-### Send message from L1 to L2
+`npx hardhat run scripts/test/2_withdrawal_l2.ts --network scrollSepolia`
 
-```sh
-npm run send-message-from-l1
-```
+#### Withdraw on L1
 
-### Send message from L2 to L1
+You need to hardcode the relay merkle proof in `scripts/test/3_withdrawal_l1.ts` before running the following command.
 
-```sh
-npm run send-message-from-l2
-npm run relay-message-from-l2
-```
+`npx hardhat run scripts/test/3_withdrawal_l1.ts --network sepolia`
 
 ### lint
 

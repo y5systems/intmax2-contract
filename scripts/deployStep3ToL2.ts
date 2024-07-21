@@ -2,8 +2,8 @@ import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from './utils/io'
 import { getL2MessengerAddress } from './utils/addressBook'
 
-if (network.name !== 'scrollsepolia') {
-	throw new Error('This script should be run on scrollsepolia network')
+if (network.name !== 'scrollSepolia') {
+	throw new Error('This script should be run on scrollSepolia network')
 }
 
 async function main() {
