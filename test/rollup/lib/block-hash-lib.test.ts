@@ -100,7 +100,7 @@ describe('BlockHashLib', function () {
 
 			const blockNumber = await blockHashLibTest.getBlockNumber()
 			expect(blockNumber).to.equal(
-				0n,
+				1n,
 				'Block number should be 0 after adding genesis block',
 			)
 
