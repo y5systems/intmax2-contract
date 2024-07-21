@@ -6,16 +6,17 @@
 - `ANALYZER_PRIVATE_KEY`: Analyzer's private key
 - `ALCHEMY_KEY`: Alchemy key
 
-## How to run
+## How to test
 
-### Deploy to Sepolia & Scroll Sepolia
+### Test locally
 
 ```sh
-npm i
-npx hardhat node
+npm run test test/integration.ts
 ```
 
-Open a new terminal and run the following commands:
+### Test on Sepolia & Scroll Sepolia
+
+#### 0. Deploy to Sepolia & Scroll Sepolia
 
 ```sh
 echo "{}" > ./scripts/data/deployedContracts.json # initialize contract addresses
@@ -24,29 +25,19 @@ npx hardhat run ./scripts/deployStep2ToL1.ts --network sepolia
 npx hardhat run ./scripts/deployStep3ToL2.ts --network scrollSepolia
 ```
 
-## How to test
-
-### test locally
-
-```sh
-npm run test test/integration.ts
-```
-
-### test on Sepolia & Scroll Sepolia
-
-#### Deposit on L1 & Relay to L2
+#### 1. Deposit on L1 & Relay to L2
 
 ```sh
 npx hardhat run scripts/test/1_deposit.ts --network sepolia
 ```
 
-#### Withdraw on L2
+#### 2. Withdraw on L2
 
 ```sh
 npx hardhat run scripts/test/2_withdrawal_l2.ts --network scrollSepolia
 ```
 
-#### Withdraw on L1
+#### 3. Withdraw on L1
 
 This script should be executed after the messaging bridge of scroll is completed. This usually takes a few hours.
 
