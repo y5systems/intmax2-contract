@@ -4,6 +4,7 @@ import { getRandomPubkey, getRandomSalt } from '../../utils/rand'
 import { getPubkeySaltHash } from '../../utils/hash'
 import { sleep } from '../../utils/sleep'
 import type { ContractTransactionResponse } from 'ethers'
+import { getLastDepositedEvent } from '../../utils/events'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')
@@ -22,26 +23,39 @@ async function main() {
 	let tx: ContractTransactionResponse
 
 	// deposit
+	const user = (await ethers.getSigners())[0]
 	const pubkey = getRandomPubkey() // intmax address of user
 	const salt = getRandomSalt() // random salt
 	const pubkeySaltHash = getPubkeySaltHash(pubkey, salt)
-	tx = await liquidity.depositETH(pubkeySaltHash, {
+	tx = await liquidity.connect(user).depositETH(pubkeySaltHash, {
 		value: ethers.parseEther('0.0001'),
 	})
 	console.log('deposit tx hash:', tx.hash)
-	await tx.wait()
+	const res = await tx.wait()
+	if (!res?.blockNumber) {
+		throw new Error('No block number found')
+	}
+	const depositedBlockNumber = res.blockNumber
 
+	// get deposit id
+	const depositEvent = await getLastDepositedEvent(
+		liquidity,
+		user.address,
+		depositedBlockNumber,
+	)
+	const { depositId } = depositEvent.args
+	console.log('depositId:', depositId)
 	await sleep(60)
 
-	// analyze
-	tx = await liquidity.analyzeDeposits(1, [])
+	// analyze till depositId
+	tx = await liquidity.analyzeDeposits(depositId, [])
 	console.log('analyze tx hash:', tx.hash)
 	await tx.wait()
 
 	await sleep(60)
 
-	// relay
-	tx = await liquidity.relayDeposits(1, 400_000, {
+	// relay till depositId
+	tx = await liquidity.relayDeposits(depositId, 400_000, {
 		value: ethers.parseEther('0.1'), // will be refunded automatically
 	})
 	console.log('relay tx hash:', tx.hash)

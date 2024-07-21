@@ -79,7 +79,12 @@ async function main() {
 		'0x',
 	)
 	console.log('submitWithdrawalProof tx hash:', tx.hash)
-	await tx.wait()
+	const res = await tx.wait()
+	if (!res?.blockNumber) {
+		throw new Error('blockNumber not found')
+	}
+	const submittedBlockNumber = res.blockNumber
+	
 
 	await sleep(60)
 

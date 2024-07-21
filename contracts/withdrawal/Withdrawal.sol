@@ -77,6 +77,9 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert WithdrawalProofVerificationFailed();
 		}
+		uint256 lastDirectWithdrawalId = 0;
+		uint256 lastClaimableWithdrawalId = 0;
+
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
@@ -100,15 +103,21 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
 				uint256 id = directWithdrawalsQueue.nextIndex();
 				withdrawal.id = id;
+				lastDirectWithdrawalId = id;
 				directWithdrawalsQueue.enqueue(withdrawal);
 				emit DirectWithdrawalQueued(id, withdrawal);
 			} else {
 				uint256 id = claimableWithdrawalsQueue.nextIndex();
 				withdrawal.id = id;
+				lastClaimableWithdrawalId = id;
 				claimableWithdrawalsQueue.enqueue(withdrawal.getHash());
 				emit ClaimableWithdrawalQueued(id, withdrawal);
 			}
 		}
+		emit WithdrawalsQueued(
+			lastDirectWithdrawalId,
+			lastClaimableWithdrawalId
+		);
 	}
 
 	function relayWithdrawals(

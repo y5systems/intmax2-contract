@@ -39,6 +39,11 @@ interface IWithdrawal {
 		WithdrawalLib.Withdrawal withdrawal
 	);
 
+	event WithdrawalsQueued(
+		uint256 lastDirectWithdrawalId,
+		uint256 lastClaimableWithdrawalId
+	);
+
 	/**
 	 * @notice Submit withdrawal proof
 	 * @dev This method is called by the Withdraw Aggregator.

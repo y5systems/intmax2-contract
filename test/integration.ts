@@ -14,6 +14,11 @@ import { loadFullBlocks, postBlock } from '../utils/rollup'
 import { getRandomPubkey, getRandomSalt } from '../utils/rand'
 import { getPubkeySaltHash } from '../utils/hash'
 import { loadWithdrawalInfo } from '../utils/withdrawal'
+import {
+	getLastDepositedEvent,
+	getLastDepositsRelayedEvent,
+	getLastSentEvent,
+} from '../utils/events'
 
 describe('Integration', function () {
 	let l1ScrollMessenger: MockL1ScrollMessenger
@@ -135,10 +140,12 @@ describe('Integration', function () {
 		await liquidity
 			.connect(user)
 			.depositERC20(await testToken.getAddress(), pubkeySaltHash, depositAmount)
-		const depositEvent = (
-			await liquidity.queryFilter(liquidity.filters.Deposited())
-		)[0]
-		const depositId = depositEvent.args.depositId
+		const lastDepositedEvent = await getLastDepositedEvent(
+			liquidity,
+			user.address,
+			0,
+		)
+		const depositId = lastDepositedEvent.args.depositId
 		await liquidity.connect(owner).analyzeDeposits(depositId, [])
 		const analyzedEvent = (
 			await liquidity.queryFilter(liquidity.filters.DepositsAnalyzed())
@@ -148,20 +155,18 @@ describe('Integration', function () {
 		await liquidity.relayDeposits(analyzedDepositId, 400_000, {
 			value: ethers.parseEther('0.1'), // will be refunded automatically
 		})
-		const relayedEvent = (
-			await liquidity.queryFilter(liquidity.filters.DepositsRelayed())
-		)[0]
+		const relayedEvent = await getLastDepositsRelayedEvent(liquidity, 0)
 		const { message } = relayedEvent.args
 		// this is not required in the production environment,
 		// because scroll messenger will relay the message to L2 automatically.
 		// but for testing, we need to call relayMessage manually.
 		{
 			// get message nonce
-			const sentEvent = (
-				await l1ScrollMessenger.queryFilter(
-					l1ScrollMessenger.filters.SentMessage(),
-				)
-			)[0]
+			const sentEvent = await getLastSentEvent(
+				await l1ScrollMessenger.getAddress(),
+				await liquidity.getAddress(),
+				0,
+			)
 			const { messageNonce, gasLimit } = sentEvent.args
 			const from = await liquidity.getAddress()
 			const to = await rollup.getAddress()
@@ -217,11 +222,11 @@ describe('Integration', function () {
 		// relay withdrawal
 		await withdrawal.relayWithdrawals(lastDirectWithdrawalId, 0)
 
-		const sentEvent = (
-			await l2ScrollMessenger.queryFilter(
-				l2ScrollMessenger.filters.SentMessage(),
-			)
-		)[0]
+		const sentEvent = await getLastSentEvent(
+			await l2ScrollMessenger.getAddress(),
+			await withdrawal.getAddress(),
+			0,
+		)
 		const { message, messageNonce } = sentEvent.args
 		// relay by l1 scroll messenger
 		const from = await withdrawal.getAddress()
