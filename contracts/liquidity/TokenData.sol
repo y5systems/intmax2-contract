@@ -95,7 +95,7 @@ contract TokenData is Initializable, ITokenData {
 
 	function getTokenInfo(
 		uint32 tokenIndex
-	) internal view returns (TokenInfo memory) {
+	) public view returns (TokenInfo memory) {
 		return tokenInfoList[tokenIndex];
 	}
 }

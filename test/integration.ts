@@ -10,10 +10,16 @@ import type {
 	TestERC20,
 } from '../typechain-types'
 import { expect } from 'chai'
-import { loadFullBlocks, postBlock } from './utils/rollup'
-import { getRandomPubkey, getRandomSalt } from '../scripts/utils/rand'
-import { getPubkeySaltHash } from '../scripts/utils/hash'
-import { loadWithdrawalInfo } from './utils/withdrawal'
+import { loadFullBlocks, postBlock } from '../utils/rollup'
+import { getRandomPubkey, getRandomSalt } from '../utils/rand'
+import { getPubkeySaltHash } from '../utils/hash'
+import { loadWithdrawalInfo } from '../utils/withdrawal'
+import {
+	getLastDepositedEvent,
+	getLastDepositsRelayedEvent,
+	getLastSentEvent,
+	getWithdrawalsQueuedEvent,
+} from '../utils/events'
 
 describe('Integration', function () {
 	let l1ScrollMessenger: MockL1ScrollMessenger
@@ -29,8 +35,9 @@ describe('Integration', function () {
 	let testToken: TestERC20
 
 	this.beforeEach(async function () {
-		// test token
 		const deployer = (await ethers.getSigners())[0]
+		const analyzer = (await ethers.getSigners())[1]
+		// test token
 		const TestERC20_ = await ethers.getContractFactory('TestERC20')
 		testToken = (await TestERC20_.deploy(deployer)) as TestERC20
 
@@ -97,6 +104,7 @@ describe('Integration', function () {
 			l1ScrollMessengerAddress,
 			rollupAddress,
 			withdrawalAddress,
+			analyzer.address,
 			[testTokenAddress], // testToken
 		)
 
@@ -119,7 +127,8 @@ describe('Integration', function () {
 	it('deposit', async function () {
 		// deposit on L1
 		const owner = (await ethers.getSigners())[0]
-		const user = (await ethers.getSigners())[1]
+		const analyzer = (await ethers.getSigners())[1]
+		const user = (await ethers.getSigners())[2]
 		const depositAmount = ethers.parseEther('100') // deposit 100 testToken
 		// fund token to user
 		await testToken
@@ -135,11 +144,13 @@ describe('Integration', function () {
 		await liquidity
 			.connect(user)
 			.depositERC20(await testToken.getAddress(), pubkeySaltHash, depositAmount)
-		const depositEvent = (
-			await liquidity.queryFilter(liquidity.filters.Deposited())
-		)[0]
-		const depositId = depositEvent.args.depositId
-		await liquidity.connect(owner).analyzeDeposits(depositId, [])
+		const lastDepositedEvent = await getLastDepositedEvent(
+			liquidity,
+			user.address,
+			0,
+		)
+		const depositId = lastDepositedEvent.args.depositId
+		await liquidity.connect(analyzer).analyzeDeposits(depositId, [])
 		const analyzedEvent = (
 			await liquidity.queryFilter(liquidity.filters.DepositsAnalyzed())
 		)[0]
@@ -148,20 +159,18 @@ describe('Integration', function () {
 		await liquidity.relayDeposits(analyzedDepositId, 400_000, {
 			value: ethers.parseEther('0.1'), // will be refunded automatically
 		})
-		const relayedEvent = (
-			await liquidity.queryFilter(liquidity.filters.DepositsRelayed())
-		)[0]
+		const relayedEvent = await getLastDepositsRelayedEvent(liquidity, 0)
 		const { message } = relayedEvent.args
 		// this is not required in the production environment,
 		// because scroll messenger will relay the message to L2 automatically.
 		// but for testing, we need to call relayMessage manually.
 		{
 			// get message nonce
-			const sentEvent = (
-				await l1ScrollMessenger.queryFilter(
-					l1ScrollMessenger.filters.SentMessage(),
-				)
-			)[0]
+			const sentEvent = await getLastSentEvent(
+				await l1ScrollMessenger.getAddress(),
+				await liquidity.getAddress(),
+				0,
+			)
 			const { messageNonce, gasLimit } = sentEvent.args
 			const from = await liquidity.getAddress()
 			const to = await rollup.getAddress()
@@ -206,22 +215,22 @@ describe('Integration', function () {
 			withdrawalInfo.withdrawalProofPublicInputs,
 			'0x',
 		)
-		const directWithdrawalEvents = await withdrawal.queryFilter(
-			withdrawal.filters.DirectWithdrawalQueued(),
+		const withdrawalsQueuedEvent = await getWithdrawalsQueuedEvent(
+			withdrawal,
+			0,
 		)
-		const lastDirectWithdrawalEvent =
-			directWithdrawalEvents[directWithdrawalEvents.length - 1]
-		const lastDirectWithdrawalId =
-			lastDirectWithdrawalEvent.args.directWithdrawalId
-
+		const { lastDirectWithdrawalId, lastClaimableWithdrawalId } =
+			withdrawalsQueuedEvent.args
 		// relay withdrawal
-		await withdrawal.relayWithdrawals(lastDirectWithdrawalId, 0)
-
-		const sentEvent = (
-			await l2ScrollMessenger.queryFilter(
-				l2ScrollMessenger.filters.SentMessage(),
-			)
-		)[0]
+		await withdrawal.relayWithdrawals(
+			lastDirectWithdrawalId,
+			lastClaimableWithdrawalId,
+		)
+		const sentEvent = await getLastSentEvent(
+			await l2ScrollMessenger.getAddress(),
+			await withdrawal.getAddress(),
+			0,
+		)
 		const { message, messageNonce } = sentEvent.args
 		// relay by l1 scroll messenger
 		const from = await withdrawal.getAddress()

@@ -2,61 +2,47 @@
 
 ## Environment Variables
 
-- `PRIVATE_KEY`: User's private key
+- `DEPLOYER_PRIVATE_KEY`: Deployer's private key
+- `ANALYZER_PRIVATE_KEY`: Analyzer's private key
 - `ALCHEMY_KEY`: Alchemy key
 
-## How to run
+## How to test
 
-### Deploy Locally
+### Test locally
 
 ```sh
-npm i
-npx hardhat node
+npm run test test/integration.ts
 ```
 
-Open a new terminal and run the following commands:
+### Test on Sepolia & Scroll Sepolia
+
+#### 0. Deploy to Sepolia & Scroll Sepolia
 
 ```sh
-echo "{}" > ./scripts/contractAddresses.json # initialize contract addresses
-npx hardhat run ./scripts/deployTestErc20.ts --network localhost
-npx hardhat run ./scripts/deployPlonkVerifier.ts --network localhost
-npx hardhat run ./scripts/deployStep1ToL2.ts --network localhost
-npx hardhat run ./scripts/deployStep2ToL1.ts --network localhost
-npx hardhat run ./scripts/deployStep3ToL2.ts --network localhost
+echo "{}" > ./scripts/data/deployedContracts.json # initialize contract addresses
+npx hardhat run ./scripts/deployStep1ToL2.ts --network scrollSepolia
+npx hardhat run ./scripts/deployStep2ToL1.ts --network sepolia
+npx hardhat run ./scripts/deployStep3ToL2.ts --network scrollSepolia
 ```
 
-### Deposit ETH
+#### 1. Deposit on L1 & Relay to L2
 
 ```sh
-npx hardhat run ./scripts/depositETH.ts --network localhost
+npx hardhat run scripts/test/1_deposit.ts --network sepolia
 ```
 
-### Deposit ERC20
+#### 2. Withdraw on L2
 
 ```sh
-npx hardhat run ./scripts/depositERC20.ts --network localhost
+npx hardhat run scripts/test/2_withdrawal_l2.ts --network scrollSepolia
 ```
 
-## Deploy to Scroll & Scroll Sepolia (TODO)
+#### 3. Withdraw on L1
 
-You must own ETH in the Sepolia and Scroll Sepolia networks respectively.
-
-```sh
-npm i
-npm run deploy
-```
-
-### Send message from L1 to L2
+This script should be executed after the messaging bridge of scroll is completed. This usually takes a few hours.
 
 ```sh
-npm run send-message-from-l1
-```
-
-### Send message from L2 to L1
-
-```sh
-npm run send-message-from-l2
-npm run relay-message-from-l2
+npx hardhat run scripts/test/3_withdrawal_l1.ts --network sepolia
 ```
 
 ### lint

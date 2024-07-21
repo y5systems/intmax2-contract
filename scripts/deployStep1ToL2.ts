@@ -1,58 +1,88 @@
-import { ethers, upgrades, network } from 'hardhat'
-import 'dotenv/config'
-import contractAddresses from './contractAddresses.json'
-import { saveJsonToFile } from './utils/saveJsonToFile'
+import { ethers, network, upgrades } from 'hardhat'
+import { readDeployedContracts, writeDeployedContracts } from './utils/io'
+
+if (network.name !== 'scrollSepolia') {
+	throw new Error('This script should be run on scrollSepolia network')
+}
 
 async function main() {
-	let newContractAddresses: { [contractName: string]: string } =
-		contractAddresses
+	const deployedContracts = await readDeployedContracts()
 
-	let rollupContractAddress = (newContractAddresses as any).rollup
-	if (!rollupContractAddress) {
+	if (!deployedContracts.rollup) {
+		console.log('deploying rollup')
 		const rollupFactory = await ethers.getContractFactory('Rollup')
-		// The execution of initialize will be done later.
 		const rollup = await upgrades.deployProxy(rollupFactory, [], {
 			initializer: false,
 			kind: 'uups',
 		})
-		rollupContractAddress = await rollup.getAddress()
-		console.log('Rollup deployed to:', rollupContractAddress)
-
-		newContractAddresses = {
-			...newContractAddresses,
-			rollup: rollupContractAddress,
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			rollup: await rollup.getAddress(),
+			...deployedContracts,
 		}
+		await writeDeployedContracts(newContractAddresses)
+	}
 
-		saveJsonToFile(
-			'./scripts/contractAddresses.json',
-			JSON.stringify(newContractAddresses, null, 2),
+	if (!deployedContracts.blockBuilderRegistry) {
+		console.log('deploying blockBuilderRegistry')
+		const blockBuilderRegistryFactory = await ethers.getContractFactory(
+			'BlockBuilderRegistry',
 		)
+		const blockBuilderRegistry = await upgrades.deployProxy(
+			blockBuilderRegistryFactory,
+			[],
+			{
+				initializer: false,
+				kind: 'uups',
+			},
+		)
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			blockBuilderRegistry: await blockBuilderRegistry.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
 	}
 
-	const blockBuilderRegistryFactory = await ethers.getContractFactory(
-		'BlockBuilderRegistry',
-	)
-	const blockBuilderRegistry = await upgrades.deployProxy(
-		blockBuilderRegistryFactory,
-		[rollupContractAddress],
-		{ kind: 'uups' },
-	)
-	const blockBuilderRegistryContractAddress =
-		await blockBuilderRegistry.getAddress()
-	console.log(
-		'Block Builder Registry deployed to:',
-		blockBuilderRegistryContractAddress,
-	)
-
-	newContractAddresses = {
-		...newContractAddresses,
-		blockBuilderRegistry: blockBuilderRegistryContractAddress,
+	if (!deployedContracts.withdrawal) {
+		console.log('deploying withdrawal')
+		const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
+		const withdrawal = await upgrades.deployProxy(withdrawalFactory, [], {
+			initializer: false,
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			withdrawal: await withdrawal.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
 	}
 
-	saveJsonToFile(
-		'./scripts/contractAddresses.json',
-		JSON.stringify(newContractAddresses, null, 2),
-	)
+	const MockPlonkVerifier_ =
+		await ethers.getContractFactory('MockPlonkVerifier')
+
+	if (!deployedContracts.withdrawalPlonkVerifier) {
+		console.log('deploying withdrawalPlonkVerifier')
+		const withdrawalVerifier = await MockPlonkVerifier_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			withdrawalPlonkVerifier: await withdrawalVerifier.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+	}
+
+	if (!deployedContracts.fraudPlonkVerifier) {
+		console.log('deploying fraudPlonkVerifier')
+		const fraudVerifier = await MockPlonkVerifier_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			fraudPlonkVerifier: await fraudVerifier.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+	}
 }
 
 // We recommend this pattern to be able to use async/await everywhere

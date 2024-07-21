@@ -2,27 +2,31 @@ import { HardhatUserConfig } from 'hardhat/config'
 import '@nomicfoundation/hardhat-toolbox'
 import '@openzeppelin/hardhat-upgrades'
 import 'dotenv/config'
+import { cleanEnv, str } from 'envalid'
 
-const privateKey =
-	process.env.PRIVATE_KEY ||
-	'0000000000000000000000000000000000000000000000000000000000000000'
-const alchemyKey = process.env.ALCHEMY_KEY || ''
+const env = cleanEnv(process.env, {
+	DEPLOYER_PRIVATE_KEY: str(),
+	ANALYZER_PRIVATE_KEY: str(),
+	ALCHEMY_KEY: str(),
+})
+
+const accounts = [env.DEPLOYER_PRIVATE_KEY, env.ANALYZER_PRIVATE_KEY]
 
 const config: HardhatUserConfig = {
 	solidity: '0.8.24',
 	networks: {
 		sepolia: {
 			// url: "https://1rpc.io/sepolia",
-			url: `https://eth-sepolia.g.alchemy.com/v2/${alchemyKey}`,
-			accounts: [privateKey],
+			url: `https://eth-sepolia.g.alchemy.com/v2/${env.ALCHEMY_KEY}`,
+			accounts,
 		},
 		arbitrum: {
-			url: `https://arb-mainnet.g.alchemy.com/v2/${alchemyKey}`,
-			accounts: [privateKey],
+			url: `https://arb-mainnet.g.alchemy.com/v2/${env.ALCHEMY_KEY}`,
+			accounts,
 		},
-		scrollsepolia: {
+		scrollSepolia: {
 			url: 'https://scroll-testnet.rpc.grove.city/v1/a7a7c8e2',
-			accounts: [privateKey],
+			accounts,
 		},
 	},
 }

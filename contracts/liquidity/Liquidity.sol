@@ -12,7 +12,7 @@ import {TokenData} from "./TokenData.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
 import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
@@ -21,7 +21,7 @@ import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
 contract Liquidity is
 	TokenData,
 	UUPSUpgradeable,
-	OwnableUpgradeable,
+	AccessControlUpgradeable,
 	ReentrancyGuardUpgradeable,
 	ILiquidity
 {
@@ -29,6 +29,9 @@ contract Liquidity is
 	using DepositLib for DepositLib.Deposit;
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
 	using DepositQueueLib for DepositQueueLib.DepositQueue;
+
+	/// @notice Analyzer role constant
+	bytes32 public constant ANALYZER = keccak256("ANALYZER");
 
 	IL1ScrollMessenger private l1ScrollMessenger;
 	address private rollup;
@@ -56,12 +59,14 @@ contract Liquidity is
 		address _l1ScrollMessenger,
 		address _rollup,
 		address _withdrawal,
-		address[] memory inititialERC20Tokens
+		address _analyzer,
+		address[] memory initialERC20Tokens
 	) public initializer {
-		__Ownable_init(_msgSender());
+		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+		_grantRole(ANALYZER, _analyzer);
 		__UUPSUpgradeable_init();
 		__ReentrancyGuard_init();
-		__TokenData_init(inititialERC20Tokens);
+		__TokenData_init(initialERC20Tokens);
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
 		rollup = _rollup;
@@ -142,7 +147,7 @@ contract Liquidity is
 	function analyzeDeposits(
 		uint256 upToDepositId,
 		uint256[] memory rejectDepositIndices
-	) external onlyOwner {
+	) external onlyRole(ANALYZER) {
 		depositQueue.analyze(upToDepositId, rejectDepositIndices);
 		emit DepositsAnalyzed(upToDepositId, rejectDepositIndices);
 	}
@@ -352,5 +357,7 @@ contract Liquidity is
 		emit ClaimableWithdrawalsProcessed(lastProcessedClaimableWithdrawalId);
 	}
 
-	function _authorizeUpgrade(address) internal override onlyOwner {}
+	function _authorizeUpgrade(
+		address
+	) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 }

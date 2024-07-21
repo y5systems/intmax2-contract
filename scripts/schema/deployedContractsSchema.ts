@@ -8,9 +8,8 @@ const ethereumAddressSchema = z
 	})
 	.describe('Ethereum address')
 
-const deployedContractsSchema = z
+export const DeployedContractsSchema = z
 	.object({
-		testErc20: ethereumAddressSchema.describe('Test ERC20 contract address'),
 		withdrawalPlonkVerifier: ethereumAddressSchema.describe(
 			'PLONK verifier for withdrawal contract address',
 		),
@@ -26,4 +25,4 @@ const deployedContractsSchema = z
 	})
 	.partial()
 
-type DeployedContracts = z.infer<typeof deployedContractsSchema>
+export type DeployedContracts = z.infer<typeof DeployedContractsSchema>

@@ -1,10 +1,9 @@
 import { ethers, upgrades } from 'hardhat'
 import type { Withdrawal } from '../typechain-types/contracts/withdrawal'
-import * as fs from 'fs'
-import { expect } from 'chai'
 import { BlockBuilderRegistry, Rollup } from '../typechain-types'
-import { loadWithdrawalInfo } from './utils/withdrawal'
-import { loadFullBlocks, postBlock } from './utils/rollup'
+import { loadWithdrawalInfo, makeWithdrawalInfo } from '../utils/withdrawal'
+import { loadFullBlocks, postBlock } from '../utils/rollup'
+import { getRandomSalt } from '../utils/rand'
 
 describe('Withdawal', function () {
 	let registry: BlockBuilderRegistry
@@ -59,6 +58,31 @@ describe('Withdawal', function () {
 			await postBlock(fullBlocks[i], rollup)
 		}
 		const withdrawalInfo = loadWithdrawalInfo()
+		await withdrawal.submitWithdrawalProof(
+			withdrawalInfo.withdrawals,
+			withdrawalInfo.withdrawalProofPublicInputs,
+			'0x',
+		)
+	})
+
+	it('should make dummy withdrawal', async function () {
+		await registry.updateBlockBuilder('', { value: ethers.parseEther('0.1') })
+		const fullBlocks = loadFullBlocks()
+		for (let i = 1; i < 3; i++) {
+			await postBlock(fullBlocks[i], rollup)
+		}
+		const blockNumber = 2
+		const blockHash = await rollup.blockHashes(blockNumber)
+		const recipient = (await ethers.getSigners())[0].address
+		const singleWithdrawal = {
+			recipient,
+			tokenIndex: 0,
+			amount: ethers.parseEther('0.1').toString(),
+			nullifier: getRandomSalt(),
+			blockHash,
+			blockNumber,
+		}
+		const withdrawalInfo = makeWithdrawalInfo(recipient, [singleWithdrawal])
 		await withdrawal.submitWithdrawalProof(
 			withdrawalInfo.withdrawals,
 			withdrawalInfo.withdrawalProofPublicInputs,

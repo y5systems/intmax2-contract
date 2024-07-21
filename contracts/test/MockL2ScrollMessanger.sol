@@ -6,12 +6,12 @@ import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.s
 import {IMockCommunication} from "./IMockCommunication.sol";
 
 contract MockL2ScrollMessenger is IL2ScrollMessenger, IMockCommunication {
-	mapping(bytes32 => bool) isL1MessageExecuted;
+	mapping(bytes32 => bool) private isL1MessageExecuted;
 	address public _xDomainMessageSender;
 	uint256 private nonce;
 
 	mapping(bytes32 => bool) public receivedCalldataHash;
-	address counterpart;
+	address private counterpart;
 
 	function initialize(address counterpart_) external {
 		counterpart = counterpart_;
