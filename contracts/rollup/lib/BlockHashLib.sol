@@ -8,9 +8,7 @@ library BlockHashLib {
 		bytes32[] storage blockHashes,
 		bytes32 initialDepositTreeRoot
 	) internal {
-		blockHashes.push(
-			_calcBlockHash(bytes32(0), initialDepositTreeRoot, bytes32(0), 0)
-		);
+		blockHashes.push(_calcBlockHash(0, initialDepositTreeRoot, 0, 0));
 	}
 
 	function getBlockNumber(
@@ -36,16 +34,13 @@ library BlockHashLib {
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash
 	) internal returns (bytes32 blockHash) {
-		uint32 blockNumber = getBlockNumber(blockHashes);
-		bytes32 prevHash = getPrevHash(blockHashes);
 		blockHash = _calcBlockHash(
-			prevHash,
+			getPrevHash(blockHashes),
 			depositTreeRoot,
 			signatureHash,
-			blockNumber
+			getBlockNumber(blockHashes)
 		);
 		blockHashes.push(blockHash);
-		return blockHash;
 	}
 
 	function _calcBlockHash(
