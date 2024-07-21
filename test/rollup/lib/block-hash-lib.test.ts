@@ -11,30 +11,33 @@ describe('BlockHashLib', function () {
 	}
 
 	describe('Genesis block', function () {
-		it('should push genesis block hash correctly', async function () {
+		it('should push and retrieve block hashes correctly', async function () {
 			const blockHashLibTest = await loadFixture(deployContractFixture)
 			const initialDepositTreeRoot = ethers.randomBytes(32)
 
 			await blockHashLibTest.pushGenesisBlockHash(initialDepositTreeRoot)
 
-			const blockNumber = await blockHashLibTest.getBlockNumber()
-			expect(blockNumber).to.equal(
-				0n,
-				'Block number should be 0 after pushing genesis block',
-			)
+			const depositTreeRoot = ethers.randomBytes(32)
+			const signatureHash = ethers.randomBytes(32)
 
-			const genesisBlockHash = await blockHashLibTest.getBlockHash(0)
+			const prevHash = await blockHashLibTest.getPrevHash()
 
-			const expectedGenesisHash = ethers.keccak256(
+			await blockHashLibTest.pushBlockHash(depositTreeRoot, signatureHash)
+
+			const newBlockHash = await blockHashLibTest.latestBlockHash()
+
+			const updatedBlockNumber = await blockHashLibTest.getBlockNumber()
+
+			const expectedNewHash = ethers.keccak256(
 				ethers.solidityPacked(
 					['bytes32', 'bytes32', 'bytes32', 'uint32'],
-					[ethers.ZeroHash, initialDepositTreeRoot, ethers.ZeroHash, 0],
+					[prevHash, depositTreeRoot, signatureHash, updatedBlockNumber - 1n],
 				),
 			)
 
-			expect(genesisBlockHash).to.equal(
-				expectedGenesisHash,
-				"Genesis block hash doesn't match expected hash",
+			expect(newBlockHash).to.equal(
+				expectedNewHash,
+				"New block hash doesn't match expected hash",
 			)
 		})
 	})
@@ -50,16 +53,27 @@ describe('BlockHashLib', function () {
 			const signatureHash = ethers.randomBytes(32)
 
 			const prevHash = await blockHashLibTest.getPrevHash()
+			const blockNumberBeforePush = await blockHashLibTest.getBlockNumber()
 
 			await blockHashLibTest.pushBlockHash(depositTreeRoot, signatureHash)
 			const newBlockHash = await blockHashLibTest.latestBlockHash()
 
+			const latestBlockHash = await blockHashLibTest.latestBlockHash()
+			expect(latestBlockHash).to.equal(
+				newBlockHash,
+				'Latest block hash should match the newly added block hash',
+			)
+
 			const updatedBlockNumber = await blockHashLibTest.getBlockNumber()
+			expect(updatedBlockNumber).to.equal(
+				blockNumberBeforePush + 1n,
+				'Block number should be incremented by 1',
+			)
 
 			const expectedNewHash = ethers.keccak256(
 				ethers.solidityPacked(
 					['bytes32', 'bytes32', 'bytes32', 'uint32'],
-					[prevHash, depositTreeRoot, signatureHash, updatedBlockNumber],
+					[prevHash, depositTreeRoot, signatureHash, blockNumberBeforePush],
 				),
 			)
 
@@ -67,14 +81,19 @@ describe('BlockHashLib', function () {
 				expectedNewHash,
 				"New block hash doesn't match expected hash",
 			)
+
+			// Verify that getPrevHash now returns the new block hash
+			const updatedPrevHash = await blockHashLibTest.getPrevHash()
+			expect(updatedPrevHash).to.equal(
+				newBlockHash,
+				'Updated previous hash should match the new block hash',
+			)
 		})
 	})
 
 	describe('Error handling', function () {
 		it('should revert with NoBlocksYet when trying to get block number or previous hash with no blocks', async function () {
-			const BlockHashLibTest =
-				await ethers.getContractFactory('BlockHashLibTest')
-			const blockHashLibTest = await BlockHashLibTest.deploy()
+			const blockHashLibTest = await loadFixture(deployContractFixture)
 
 			await expect(
 				blockHashLibTest.getBlockNumber(),
@@ -86,9 +105,7 @@ describe('BlockHashLib', function () {
 		})
 
 		it('should correctly handle the state after adding the genesis block', async function () {
-			const BlockHashLibTest =
-				await ethers.getContractFactory('BlockHashLibTest')
-			const blockHashLibTest = await BlockHashLibTest.deploy()
+			const blockHashLibTest = await loadFixture(deployContractFixture)
 
 			const initialDepositTreeRoot = ethers.randomBytes(32)
 			await blockHashLibTest.pushGenesisBlockHash(initialDepositTreeRoot)
@@ -109,6 +126,12 @@ describe('BlockHashLib', function () {
 			expect(prevHash).to.equal(
 				genesisBlockHash,
 				'Previous hash should match genesis block hash',
+			)
+
+			const latestBlockHash = await blockHashLibTest.latestBlockHash()
+			expect(latestBlockHash).to.equal(
+				genesisBlockHash,
+				'Latest block hash should match genesis block hash',
 			)
 		})
 	})

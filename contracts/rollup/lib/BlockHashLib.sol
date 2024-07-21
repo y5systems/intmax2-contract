@@ -36,7 +36,7 @@ library BlockHashLib {
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash
 	) internal returns (bytes32 blockHash) {
-		uint32 blockNumber = getBlockNumber(blockHashes) + 1;
+		uint32 blockNumber = getBlockNumber(blockHashes);
 		bytes32 prevHash = getPrevHash(blockHashes);
 		blockHash = _calcBlockHash(
 			prevHash,
