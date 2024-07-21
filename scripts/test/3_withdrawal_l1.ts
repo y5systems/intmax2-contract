@@ -1,6 +1,5 @@
 import { ethers, network } from 'hardhat'
-import type { ContractTransactionResponse } from 'ethers'
-import { readDeployedContracts, readL2ToL1Message } from '../utils/io'
+import { readDeployedContracts } from '../utils/io'
 import { getL1MessengerAddress } from '../utils/addressBook'
 import { IL1ScrollMessenger__factory } from '../../typechain-types'
 import { fetchUnclaimedWithdrawals } from '../utils/api'
