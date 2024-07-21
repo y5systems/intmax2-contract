@@ -92,7 +92,7 @@ async function main() {
 		lastClaimableWithdrawalId.toString(),
 	)
 
-	await sleep(60)
+	await sleep(30)
 
 	// relay
 	tx = await withdrawal.relayWithdrawals(
