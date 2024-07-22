@@ -20,8 +20,6 @@ library DepositQueueLib {
 		uint256 lastAnalyzedDepositId
 	);
 
-	error DepositIdIsNotInQueue(uint256 depositId, uint256 front, uint256 rear);
-
 	/**
 	 * @title depositQueue
 	 * @dev Represents a queue of pending deposits.
@@ -62,13 +60,6 @@ library DepositQueueLib {
 		DepositQueue storage depositQueue,
 		uint256 depositId
 	) internal returns (DepositData memory depositData) {
-		if (depositId < depositQueue.front || depositId >= depositQueue.rear) {
-			revert DepositIdIsNotInQueue(
-				depositId,
-				depositQueue.front,
-				depositQueue.rear
-			);
-		}
 		depositData = depositQueue.depositData[depositId];
 		delete depositQueue.depositData[depositId];
 	}

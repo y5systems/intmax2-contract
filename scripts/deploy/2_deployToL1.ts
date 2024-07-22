@@ -1,11 +1,11 @@
 import { ethers, network, upgrades } from 'hardhat'
-import { readDeployedContracts, writeDeployedContracts } from './utils/io'
+import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import {
 	getL1MessengerAddress,
 	getUSDCAddress,
 	getWBTCAddress,
-} from './utils/addressBook'
-import { sleep } from '../utils/sleep'
+} from '../utils/addressBook'
+import { sleep } from '../../utils/sleep'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')
@@ -53,6 +53,18 @@ async function main() {
 		)
 		await writeDeployedContracts({
 			liquidity: await liquidity.getAddress(),
+			...deployedContracts,
+		})
+	}
+
+	if (!deployedContracts.testErc20) {
+		console.log('deploying testErc20')
+		const TestERC20 = await ethers.getContractFactory('TestERC20')
+		const owner = (await ethers.getSigners())[0]
+		const testErc20 = await TestERC20.deploy(owner.address)
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			testErc20: await testErc20.getAddress(),
 			...deployedContracts,
 		})
 	}

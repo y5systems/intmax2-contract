@@ -25,6 +25,7 @@ const config: HardhatUserConfig = {
 			accounts,
 		},
 		scrollSepolia: {
+			// url: 'https://sepolia-rpc.scroll.io/',
 			url: 'https://scroll-testnet.rpc.grove.city/v1/a7a7c8e2',
 			accounts,
 		},

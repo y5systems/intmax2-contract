@@ -27,6 +27,9 @@ async function main() {
 		scrollMessengerAbi,
 		(await ethers.getSigners())[0],
 	)
+
+	// Following code is commented out because we use mock messaging data.
+
 	// const data = await fetchUnclaimedWithdrawals(deployedContracts.withdrawal)
 	// const results = data.data.results
 	// console.log('unclaimed withdrawals:', results)
@@ -41,6 +44,7 @@ async function main() {
 	// if (!claimInfo.claimable) {
 	// 	throw new Error('claimable is false')
 	// }
+
 	const claimInfo = {
 		from: deployedContracts.withdrawal,
 		to: deployedContracts.liquidity,
