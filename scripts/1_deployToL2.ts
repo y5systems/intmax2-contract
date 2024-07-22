@@ -22,9 +22,8 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
 	}
-
-	await sleep(30)
 
 	if (!deployedContracts.blockBuilderRegistry) {
 		console.log('deploying blockBuilderRegistry')
@@ -45,9 +44,8 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
 	}
-
-	await sleep(30)
 
 	if (!deployedContracts.withdrawal) {
 		console.log('deploying withdrawal')
@@ -62,9 +60,8 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
 	}
-
-	await sleep(30)
 
 	const MockPlonkVerifier_ =
 		await ethers.getContractFactory('MockPlonkVerifier')
@@ -78,6 +75,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
 	}
 
 	if (!deployedContracts.fraudPlonkVerifier) {
@@ -88,9 +86,8 @@ async function main() {
 			fraudPlonkVerifier: await fraudVerifier.getAddress(),
 			...deployedContracts,
 		})
+		await sleep(30)
 	}
-
-	await sleep(30)
 
 	if (!deployedContracts.mockL2ScrollMessenger) {
 		console.log('deploying mockL2ScrollMessenger')
