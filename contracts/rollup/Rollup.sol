@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-// interfaces
 import {IRollup} from "./IRollup.sol";
 import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
@@ -9,7 +8,6 @@ import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.s
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-// libs
 import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
 import {BlockHashLib} from "./lib/BlockHashLib.sol";
 import {PairingLib} from "./lib/PairingLib.sol";
@@ -60,7 +58,8 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
 
-		blockHashes.pushGenesisBlockHash(depositTree.getRoot());
+		depositTreeRoot = depositTree.getRoot();
+		blockHashes.pushGenesisBlockHash(depositTreeRoot);
 		blockBuilders.push(address(0));
 	}
 
