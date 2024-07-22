@@ -12,7 +12,7 @@ if (network.name !== 'sepolia') {
 }
 
 async function main() {
-	const deployedContracts = await readDeployedContracts()
+	let deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.mockL1ScrollMessenger) {
 		console.log('deploying mockL1ScrollMessenger')
 		const MockL1ScrollMessenger_ = await ethers.getContractFactory(
@@ -27,6 +27,7 @@ async function main() {
 		await sleep(30)
 	}
 
+	deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.liquidity) {
 		if (!deployedContracts.rollup) {
 			throw new Error('rollup address is not set')
@@ -50,11 +51,10 @@ async function main() {
 				kind: 'uups',
 			},
 		)
-		const newContractAddresses = {
+		await writeDeployedContracts({
 			liquidity: await liquidity.getAddress(),
 			...deployedContracts,
-		}
-		await writeDeployedContracts(newContractAddresses)
+		})
 	}
 }
 
