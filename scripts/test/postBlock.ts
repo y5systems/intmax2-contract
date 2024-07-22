@@ -1,6 +1,8 @@
 import { ethers } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 import type { ContractTransactionResponse } from 'ethers'
+import { loadFullBlocks, postBlock } from '../../utils/rollup'
+import { sleep } from '../../utils/sleep'
 
 async function main() {
 	const deployedContracts = await readDeployedContracts()
@@ -32,7 +34,13 @@ async function main() {
 	}
 
 	// post block
-	const blocks = loadFullBlocks()
+	const fullBlocks = loadFullBlocks()
+	for (let i = 1; i < 3; i++) {
+		tx = await postBlock(fullBlocks[i], rollup.connect(blockBuilder))
+		console.log(`post block ${i} tx hash: ${tx.hash}`)
+		await tx.wait()
+		await sleep(30)
+	}
 }
 
 main().catch((error) => {
