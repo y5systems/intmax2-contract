@@ -347,6 +347,10 @@ contract Liquidity is
 		return depositQueue.lastAnalyzedDepositId;
 	}
 
+	function getLastRelayedDepositId() external view returns (uint256) {
+		return depositQueue.front - 1;
+	}
+
 	function _authorizeUpgrade(
 		address
 	) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}

@@ -120,6 +120,8 @@ interface ILiquidity {
 
 	function getLastAnalyzedDepositId() external view returns (uint256);
 
+	function getLastRelayedDepositId() external view returns (uint256);
+
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;

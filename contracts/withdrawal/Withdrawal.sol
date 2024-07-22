@@ -209,16 +209,20 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		return withdrawalHashes;
 	}
 
-	function getDirectWithdrawalsQueueSize() external view returns (uint256) {
-		return directWithdrawalsQueue.size();
-	}
-
-	function getClaimableWithdrawalsQueueSize()
+	function getLastRelayedDirectWithdrawalId()
 		external
 		view
 		returns (uint256)
 	{
-		return claimableWithdrawalsQueue.size();
+		return directWithdrawalsQueue.front - 1;
+	}
+
+	function getLastRelayedClaimableWithdrawalId()
+		external
+		view
+		returns (uint256)
+	{
+		return claimableWithdrawalsQueue.front - 1;
 	}
 
 	// The specification of ScrollMessenger may change in the future.
