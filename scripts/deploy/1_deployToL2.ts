@@ -1,6 +1,6 @@
 import { ethers, network, upgrades } from 'hardhat'
-import { readDeployedContracts, writeDeployedContracts } from './utils/io'
-import { sleep } from '../utils/sleep'
+import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
+import { sleep } from '../../utils/sleep'
 
 if (network.name !== 'scrollSepolia') {
 	throw new Error('This script should be run on scrollSepolia network')

@@ -1,11 +1,11 @@
 import { ethers, network, upgrades } from 'hardhat'
-import { readDeployedContracts, writeDeployedContracts } from './utils/io'
+import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import {
 	getL1MessengerAddress,
 	getUSDCAddress,
 	getWBTCAddress,
-} from './utils/addressBook'
-import { sleep } from '../utils/sleep'
+} from '../utils/addressBook'
+import { sleep } from '../../utils/sleep'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')

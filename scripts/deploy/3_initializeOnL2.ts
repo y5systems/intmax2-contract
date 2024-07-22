@@ -1,7 +1,7 @@
 import { ethers, network } from 'hardhat'
-import { readDeployedContracts } from './utils/io'
-import { getL2MessengerAddress } from './utils/addressBook'
-import { sleep } from '../utils/sleep'
+import { readDeployedContracts } from '../utils/io'
+import { getL2MessengerAddress } from '../utils/addressBook'
+import { sleep } from '../../utils/sleep'
 
 if (network.name !== 'scrollSepolia') {
 	throw new Error('This script should be run on scrollSepolia network')
