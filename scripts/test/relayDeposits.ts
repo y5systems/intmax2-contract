@@ -11,10 +11,12 @@ async function main() {
 		'Liquidity',
 		deployedContracts.liquidity,
 	)
-	const lastAnalyzableDepositId = await liquidity.getLastAnalyzedDepositId()
-	console.log('lastAnalyzableDepositId:', lastAnalyzableDepositId)
+	const lastAnalyzedDepositId = await liquidity.getLastAnalyzedDepositId()
+	console.log('lastAnalyzedDepositId:', lastAnalyzedDepositId)
 
-	const tx = await liquidity.relayDeposits(lastAnalyzableDepositId, 800_000)
+	const tx = await liquidity.relayDeposits(lastAnalyzedDepositId, 800_000, {
+		value: ethers.parseEther('0.1'),
+	})
 	console.log('relayDeposits tx hash:', tx.hash)
 	await tx.wait()
 }

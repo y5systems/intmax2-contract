@@ -11,7 +11,14 @@ async function main() {
 		deployedContracts.liquidity,
 	)
 	const lastDepositId = await liquidity.getLastDepositId()
-	const tx = await liquidity.analyzeDeposits(lastDepositId, [])
+	console.log('lastDepositId:', lastDepositId)
+
+	const analyzer = (await ethers.getSigners())[1]
+	console.log('analyzer address:', analyzer.address)
+
+	const tx = await liquidity
+		.connect(analyzer)
+		.analyzeDeposits(lastDepositId, [])
 	console.log('analyzeDeposits tx hash:', tx.hash)
 	await tx.wait()
 }
