@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
+import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
 
 interface ILiquidity {
 	error OnlyRecipientCanCancelDeposit();
@@ -112,6 +113,10 @@ interface ILiquidity {
 		uint256 lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
 	) external;
+
+	function getDepositData(
+		uint256 depositId
+	) external view returns (DepositQueueLib.DepositData memory);
 
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals

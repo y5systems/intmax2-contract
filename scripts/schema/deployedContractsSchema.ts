@@ -10,6 +10,12 @@ const ethereumAddressSchema = z
 
 export const DeployedContractsSchema = z
 	.object({
+		mockL1ScrollMessenger: ethereumAddressSchema.describe(
+			'Mock L1 scroll messenger contract address',
+		),
+		mockL2ScrollMessenger: ethereumAddressSchema.describe(
+			'Mock L2 scroll messenger contract address',
+		),
 		withdrawalPlonkVerifier: ethereumAddressSchema.describe(
 			'PLONK verifier for withdrawal contract address',
 		),

@@ -77,11 +77,23 @@ async function main() {
 		console.log('deploying fraudPlonkVerifier')
 		const fraudVerifier = await MockPlonkVerifier_.deploy()
 		const deployedContracts = await readDeployedContracts()
-		const newContractAddresses = {
+		await writeDeployedContracts({
 			fraudPlonkVerifier: await fraudVerifier.getAddress(),
 			...deployedContracts,
-		}
-		await writeDeployedContracts(newContractAddresses)
+		})
+	}
+
+	if (!deployedContracts.mockL2ScrollMessenger) {
+		console.log('deploying mockL2ScrollMessenger')
+		const MockL2ScrollMessenger_ = await ethers.getContractFactory(
+			'MockL2ScrollMessenger',
+		)
+		const l2ScrollMessenger = await MockL2ScrollMessenger_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			mockL2ScrollMessenger: await l2ScrollMessenger.getAddress(),
+			...deployedContracts,
+		})
 	}
 }
 

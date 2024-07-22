@@ -41,6 +41,19 @@ async function main() {
 		}
 		await writeDeployedContracts(newContractAddresses)
 	}
+
+	if (!deployedContracts.mockL1ScrollMessenger) {
+		console.log('deploying mockL1ScrollMessenger')
+		const MockL1ScrollMessenger_ = await ethers.getContractFactory(
+			'MockL1ScrollMessenger',
+		)
+		const l1ScrollMessenger = await MockL1ScrollMessenger_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			mockL1ScrollMessenger: await l1ScrollMessenger.getAddress(),
+			...deployedContracts,
+		})
+	}
 }
 
 // We recommend this pattern to be able to use async/await everywhere

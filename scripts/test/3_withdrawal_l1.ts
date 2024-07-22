@@ -23,7 +23,7 @@ async function main() {
 		throw new Error('all contracts should be deployed')
 	}
 	const l1ScrollMessenger = new ethers.Contract(
-		getL1MessengerAddress(),
+		await getL1MessengerAddress(),
 		scrollMessengerAbi,
 		(await ethers.getSigners())[0],
 	)

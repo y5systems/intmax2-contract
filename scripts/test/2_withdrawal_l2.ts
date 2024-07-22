@@ -115,7 +115,7 @@ async function main() {
 
 	const { messageNonce, message } = (
 		await getLastSentEvent(
-			getL2MessengerAddress(),
+			await getL2MessengerAddress(),
 			deployedContracts.withdrawal,
 			relayedBlockNumber,
 		)

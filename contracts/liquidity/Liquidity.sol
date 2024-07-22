@@ -340,6 +340,12 @@ contract Liquidity is
 		emit ClaimableWithdrawalsProcessed(lastProcessedClaimableWithdrawalId);
 	}
 
+	function getDepositData(
+		uint256 depositId
+	) external view returns (DepositQueueLib.DepositData memory) {
+		return depositQueue.depositData[depositId];
+	}
+
 	function _authorizeUpgrade(
 		address
 	) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
