@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 
 interface ILiquidity {
@@ -32,12 +33,6 @@ interface ILiquidity {
 	event DepositsRelayed(
 		uint256 indexed lastRelayedDepositId,
 		uint256 gasLimit,
-		bytes message
-	);
-
-	event DepositsReplayed(
-		uint32 newGasLimit,
-		uint256 messageNonce,
 		bytes message
 	);
 
@@ -96,21 +91,10 @@ interface ILiquidity {
 		uint256 gasLimit
 	) external payable;
 
-	/**
-	 * @notice Retries sending a message to L2 that has been previously sent (and presumably failed).
-	 * @dev The `messageNonce` can be obtained from the `SentMessage` event emitted by `l1ScrollMessenger` during `relayDeposits` execution.
-	 * @dev Security considerations:
-	 *      - If this function attempts to send a message that has never been sent before, `l1ScrollMessenger` will revert.
-	 *      - The L2 ScrollMessenger ensures that even if multiple attempts are made, only one will succeed.
-	 * @param message The message to be sent to L2.
-	 * @param newGasLimit The new gas limit for the message.
-	 * @param messageNonce The nonce of the message to be retried.
-	 */
-	function replayDeposits(
-		bytes memory message,
-		uint32 newGasLimit,
-		uint256 messageNonce
-	) external payable;
+	function cancelDeposit(
+		uint256 depositId,
+		DepositLib.Deposit memory deposit
+	) external;
 
 	function processWithdrawals(
 		uint256 lastProcessedDirectWithdrawalId,
