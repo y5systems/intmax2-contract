@@ -11,11 +11,18 @@ async function main() {
 		'Liquidity',
 		deployedContracts.liquidity,
 	)
+	const lastRelayedDepositId = await liquidity.getLastRelayedDepositId()
 	const lastAnalyzedDepositId = await liquidity.getLastAnalyzedDepositId()
 	console.log('lastAnalyzedDepositId:', lastAnalyzedDepositId)
+	console.log('lastRelayedDepositId:', lastRelayedDepositId)
+	const numDepositsToRelay = lastRelayedDepositId - lastAnalyzedDepositId
+	console.log('number of deposits to relay:', numDepositsToRelay)
 
-	const tx = await liquidity.relayDeposits(lastAnalyzedDepositId, 800_000, {
-		value: ethers.parseEther('0.1'),
+	// The estimated gas limit is about 220k + 20k * numDeposits. For details, see scripts/test/rollup.ts
+	const buffer = 100_000n
+	const gasLimit = 220_000n + 20_000n * numDepositsToRelay + buffer
+	const tx = await liquidity.relayDeposits(lastAnalyzedDepositId, gasLimit, {
+		value: ethers.parseEther('0.1'), // will be refunded
 	})
 	console.log('relayDeposits tx hash:', tx.hash)
 	await tx.wait()
