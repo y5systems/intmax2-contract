@@ -118,6 +118,8 @@ interface ILiquidity {
 		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory);
 
+	function getLastAnalyzedDepositId() external view returns (uint256);
+
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;

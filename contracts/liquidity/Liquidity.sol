@@ -39,9 +39,6 @@ contract Liquidity is
 	mapping(bytes32 => uint256) private claimableWithdrawals;
 	DepositQueueLib.DepositQueue private depositQueue;
 
-	uint256 public lastProcessedDirectWithdrawalId;
-	uint256 public lastProcessedClaimableWithdrawalId;
-
 	modifier onlyWithdrawal() {
 		if (withdrawal == address(0)) {
 			revert WithdrawalAddressNotSet();
@@ -320,11 +317,8 @@ contract Liquidity is
 				tokenInfo.tokenId
 			);
 		}
-		if (
-			lastProcessedDirectWithdrawalId != _lastProcessedDirectWithdrawalId
-		) {
-			lastProcessedDirectWithdrawalId = _lastProcessedDirectWithdrawalId;
-			emit DirectWithdrawalsProcessed(lastProcessedDirectWithdrawalId);
+		if (withdrawals.length > 0) {
+			emit DirectWithdrawalsProcessed(_lastProcessedDirectWithdrawalId);
 		}
 	}
 
@@ -336,13 +330,9 @@ contract Liquidity is
 			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
 			emit WithdrawalClaimable(withdrawalHahes[i]);
 		}
-		if (
-			lastProcessedClaimableWithdrawalId !=
-			_lastProcessedClaimableWithdrawalId
-		) {
-			lastProcessedClaimableWithdrawalId = _lastProcessedClaimableWithdrawalId;
+		if (withdrawalHahes.length > 0) {
 			emit ClaimableWithdrawalsProcessed(
-				lastProcessedClaimableWithdrawalId
+				_lastProcessedClaimableWithdrawalId
 			);
 		}
 	}
@@ -351,6 +341,10 @@ contract Liquidity is
 		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory) {
 		return depositQueue.depositData[depositId];
+	}
+
+	function getLastAnalyzedDepositId() external view returns (uint256) {
+		return depositQueue.lastAnalyzedDepositId;
 	}
 
 	function _authorizeUpgrade(
