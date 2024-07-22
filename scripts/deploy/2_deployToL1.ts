@@ -56,6 +56,18 @@ async function main() {
 			...deployedContracts,
 		})
 	}
+
+	if (!deployedContracts.testErc20) {
+		console.log('deploying testErc20')
+		const TestERC20 = await ethers.getContractFactory('TestERC20')
+		const owner = (await ethers.getSigners())[0]
+		const testErc20 = await TestERC20.deploy(owner.address)
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			testErc20: await testErc20.getAddress(),
+			...deployedContracts,
+		})
+	}
 }
 
 // We recommend this pattern to be able to use async/await everywhere
