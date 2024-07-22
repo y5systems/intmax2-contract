@@ -20,9 +20,9 @@ npm run test test/integration.ts
 
 ```sh
 echo "{}" > ./scripts/data/deployedContracts.json # initialize contract addresses
-npx hardhat run ./scripts/deployStep1ToL2.ts --network scrollSepolia
-npx hardhat run ./scripts/deployStep2ToL1.ts --network sepolia
-npx hardhat run ./scripts/deployStep3ToL2.ts --network scrollSepolia
+npx hardhat run ./scripts/1_deployToL2.ts --network scrollSepolia
+npx hardhat run ./scripts/2_deployToL1.ts --network sepolia
+npx hardhat run ./scripts/3_initializeOnL2.ts --network scrollSepolia
 ```
 
 #### 1. Deposit on L1 & Relay to L2

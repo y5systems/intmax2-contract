@@ -52,8 +52,6 @@ describe('Integration', function () {
 		)
 		l2ScrollMessenger =
 			(await MockL2ScrollMessenger_.deploy()) as MockL2ScrollMessenger
-		await l1ScrollMessenger.initialize(await l2ScrollMessenger.getAddress())
-		await l2ScrollMessenger.initialize(await l1ScrollMessenger.getAddress())
 
 		// plonk verifier deployment
 		const MockPlonkVerifier_ =

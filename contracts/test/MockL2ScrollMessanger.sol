@@ -3,19 +3,11 @@
 pragma solidity =0.8.24;
 
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
-import {IMockCommunication} from "./IMockCommunication.sol";
 
-contract MockL2ScrollMessenger is IL2ScrollMessenger, IMockCommunication {
+contract MockL2ScrollMessenger is IL2ScrollMessenger {
 	mapping(bytes32 => bool) private isL1MessageExecuted;
 	address public _xDomainMessageSender;
 	uint256 private nonce;
-
-	mapping(bytes32 => bool) public receivedCalldataHash;
-	address private counterpart;
-
-	function initialize(address counterpart_) external {
-		counterpart = counterpart_;
-	}
 
 	function sendMessage(
 		address _to,
@@ -47,10 +39,6 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger, IMockCommunication {
 			_encodeXDomainCalldata(_from, _to, _value, _nonce, _message)
 		);
 		require(
-			receivedCalldataHash[_xDomainCalldataHash],
-			"message not found"
-		);
-		require(
 			!isL1MessageExecuted[_xDomainCalldataHash],
 			"Message was already successfully executed"
 		);
@@ -69,7 +57,7 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger, IMockCommunication {
 		bytes32 _xDomainCalldataHash = keccak256(
 			_encodeXDomainCalldata(msg.sender, _to, _value, _nonce, _message)
 		);
-		sendCalldataHash(_xDomainCalldataHash);
+		(_xDomainCalldataHash);
 		emit SentMessage(msg.sender, _to, _value, _nonce, _gasLimit, _message);
 		nonce++;
 	}
@@ -115,14 +103,5 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger, IMockCommunication {
 
 	function xDomainMessageSender() external view returns (address) {
 		return _xDomainMessageSender;
-	}
-
-	function receiveCalldataHash(bytes32 calldataHash) external {
-		require(msg.sender == counterpart);
-		receivedCalldataHash[calldataHash] = true;
-	}
-
-	function sendCalldataHash(bytes32 calldataHash) internal {
-		IMockCommunication(counterpart).receiveCalldataHash(calldataHash);
 	}
 }

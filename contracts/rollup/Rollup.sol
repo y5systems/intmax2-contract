@@ -29,6 +29,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 	IL2ScrollMessenger private l2ScrollMessenger;
 	DepositTreeLib.DepositTree private depositTree;
+	bytes32 public depositTreeRoot;
 
 	modifier onlyLiquidityContract() {
 		// note
@@ -153,7 +154,8 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			depositTree.deposit(depositHashes[i]);
 		}
 		lastProcessedDepositId = _lastProcessedDepositId;
-		emit DepositsProcessed(lastProcessedDepositId, depositTree.getRoot());
+		depositTreeRoot = depositTree.getRoot();
+		emit DepositsProcessed(lastProcessedDepositId, depositTreeRoot);
 	}
 
 	function _postBlock(
@@ -193,7 +195,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 		blockNumber = blockHashes.getBlockNumber();
 		bytes32 prevBlockHash = blockHashes.getPrevHash();
-		bytes32 depositTreeRoot = depositTree.getRoot();
 		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
 		blockBuilders.push(_msgSender());
 		emit BlockPosted(

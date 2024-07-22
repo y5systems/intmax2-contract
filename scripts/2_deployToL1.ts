@@ -5,13 +5,29 @@ import {
 	getUSDCAddress,
 	getWBTCAddress,
 } from './utils/addressBook'
+import { sleep } from '../utils/sleep'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')
 }
 
 async function main() {
-	const deployedContracts = await readDeployedContracts()
+	let deployedContracts = await readDeployedContracts()
+	if (!deployedContracts.mockL1ScrollMessenger) {
+		console.log('deploying mockL1ScrollMessenger')
+		const MockL1ScrollMessenger_ = await ethers.getContractFactory(
+			'MockL1ScrollMessenger',
+		)
+		const l1ScrollMessenger = await MockL1ScrollMessenger_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			mockL1ScrollMessenger: await l1ScrollMessenger.getAddress(),
+			...deployedContracts,
+		})
+		await sleep(30)
+	}
+
+	deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.liquidity) {
 		if (!deployedContracts.rollup) {
 			throw new Error('rollup address is not set')
@@ -25,7 +41,7 @@ async function main() {
 		const liquidity = await upgrades.deployProxy(
 			liquidityFactory,
 			[
-				getL1MessengerAddress(),
+				await getL1MessengerAddress(),
 				deployedContracts.rollup,
 				deployedContracts.withdrawal,
 				analyzer.address,
@@ -35,11 +51,10 @@ async function main() {
 				kind: 'uups',
 			},
 		)
-		const newContractAddresses = {
+		await writeDeployedContracts({
 			liquidity: await liquidity.getAddress(),
 			...deployedContracts,
-		}
-		await writeDeployedContracts(newContractAddresses)
+		})
 	}
 }
 

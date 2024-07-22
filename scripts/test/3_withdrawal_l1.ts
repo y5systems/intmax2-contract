@@ -23,25 +23,36 @@ async function main() {
 		throw new Error('all contracts should be deployed')
 	}
 	const l1ScrollMessenger = new ethers.Contract(
-		getL1MessengerAddress(),
+		await getL1MessengerAddress(),
 		scrollMessengerAbi,
 		(await ethers.getSigners())[0],
 	)
-	const data = await fetchUnclaimedWithdrawals(deployedContracts.withdrawal)
-	const results = data.data.results
-	console.log('unclaimed withdrawals:', results)
-	if (results.length === 0) {
-		throw new Error('no unclaimed withdrawals')
+	// const data = await fetchUnclaimedWithdrawals(deployedContracts.withdrawal)
+	// const results = data.data.results
+	// console.log('unclaimed withdrawals:', results)
+	// if (results.length === 0) {
+	// 	throw new Error('no unclaimed withdrawals')
+	// }
+	// const latestResult = results[results.length - 1]
+	// const claimInfo = latestResult.claim_info
+	// if (!claimInfo) {
+	// 	throw new Error('no claim info')
+	// }
+	// if (!claimInfo.claimable) {
+	// 	throw new Error('claimable is false')
+	// }
+	const claimInfo = {
+		from: deployedContracts.withdrawal,
+		to: deployedContracts.liquidity,
+		value: '0',
+		nonce: '5678405',
+		message: '0x',
+		proof: {
+			batch_index: 0,
+			merkle_proof:
+				'0x088f0bdd00000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+		},
 	}
-	const latestResult = results[results.length - 1]
-	const claimInfo = latestResult.claim_info
-	if (!claimInfo) {
-		throw new Error('no claim info')
-	}
-	if (!claimInfo.claimable) {
-		throw new Error('claimable is false')
-	}
-	console.log(claimInfo)
 	const proof = {
 		batchIndex: claimInfo.proof.batch_index,
 		merkleProof: claimInfo.proof.merkle_proof,

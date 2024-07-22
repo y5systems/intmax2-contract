@@ -56,7 +56,7 @@ async function main() {
 	await sleep(30)
 
 	// relay till depositId
-	tx = await liquidity.relayDeposits(depositId, 400_000, {
+	tx = await liquidity.relayDeposits(depositId, 800_000, {
 		value: ethers.parseEther('0.1'), // will be refunded automatically
 	})
 	console.log('relay tx hash:', tx.hash)

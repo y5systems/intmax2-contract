@@ -1,6 +1,7 @@
 import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from './utils/io'
 import { getL2MessengerAddress } from './utils/addressBook'
+import { sleep } from '../utils/sleep'
 
 if (network.name !== 'scrollSepolia') {
 	throw new Error('This script should be run on scrollSepolia network')
@@ -31,19 +32,22 @@ async function main() {
 
 	// Initialize contracts
 	if ((await rollup.owner()) === ethers.ZeroAddress) {
+		await sleep(10)
 		console.log('Initializing Rollup')
 		const tx = await rollup.initialize(
-			getL2MessengerAddress(),
+			await getL2MessengerAddress(),
 			deployedContracts.liquidity,
 			deployedContracts.blockBuilderRegistry,
 		)
 		await tx.wait()
 		console.log('Rollup initialized')
+		await sleep(20)
 	}
 	if ((await withdrawal.owner()) === ethers.ZeroAddress) {
+		await sleep(10)
 		console.log('Initializing Withdrawal')
 		const tx = await withdrawal.initialize(
-			getL2MessengerAddress(),
+			await getL2MessengerAddress(),
 			deployedContracts.withdrawalPlonkVerifier,
 			deployedContracts.liquidity,
 			deployedContracts.rollup,
@@ -51,8 +55,10 @@ async function main() {
 		)
 		await tx.wait()
 		console.log('Withdrawal initialized')
+		await sleep(20)
 	}
 	if ((await registry.owner()) === ethers.ZeroAddress) {
+		await sleep(10)
 		console.log('Initializing BlockBuilderRegistry')
 		const tx = await registry.initialize(
 			deployedContracts.rollup,
