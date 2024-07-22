@@ -39,9 +39,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 
-	uint256 public lastDirectWithdrawalId;
-	uint256 public lastClaimableWithdrawalId;
-
 	function initialize(
 		address _scrollMessenger,
 		address _withdrawalVerifier,
@@ -60,8 +57,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		}
 		directWithdrawalsQueue.initialize();
 		claimableWithdrawalsQueue.initialize();
-		lastDirectWithdrawalId = 0;
-		lastClaimableWithdrawalId = 0;
 	}
 
 	function submitWithdrawalProof(
@@ -105,20 +100,18 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
 				uint256 id = directWithdrawalsQueue.nextIndex();
 				withdrawal.id = id;
-				lastDirectWithdrawalId = id;
 				directWithdrawalsQueue.enqueue(withdrawal);
 				emit DirectWithdrawalQueued(id, withdrawal);
 			} else {
 				uint256 id = claimableWithdrawalsQueue.nextIndex();
 				withdrawal.id = id;
-				lastClaimableWithdrawalId = id;
 				claimableWithdrawalsQueue.enqueue(withdrawal.getHash());
 				emit ClaimableWithdrawalQueued(id, withdrawal);
 			}
 		}
 		emit WithdrawalsQueued(
-			lastDirectWithdrawalId,
-			lastClaimableWithdrawalId
+			getLastDirectWithdrawalId(),
+			getLastClaimableWithdrawalId()
 		);
 	}
 
@@ -127,13 +120,13 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		uint256 upToClamableWithdrawalId
 	) external {
 		WithdrawalLib.Withdrawal[] memory directWithdrawals;
-		if (upToDirectWithdrawalId != lastDirectWithdrawalId) {
+		if (upToDirectWithdrawalId != getLastRelayedDirectWithdrawalId()) {
 			directWithdrawals = _collectDirectWithdrawals(
 				upToDirectWithdrawalId
 			);
 		}
 		bytes32[] memory claimableWithdrawals;
-		if (upToClamableWithdrawalId != lastClaimableWithdrawalId) {
+		if (upToClamableWithdrawalId != getLastRelayedClaimableWithdrawalId()) {
 			claimableWithdrawals = _collectClaimableWithdrawals(
 				upToClamableWithdrawalId
 			);
@@ -209,16 +202,20 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		return withdrawalHashes;
 	}
 
-	function getLastRelayedDirectWithdrawalId()
-		external
-		view
-		returns (uint256)
-	{
+	function getLastDirectWithdrawalId() public view returns (uint256) {
+		return directWithdrawalsQueue.rear - 1;
+	}
+
+	function getLastClaimableWithdrawalId() public view returns (uint256) {
+		return claimableWithdrawalsQueue.rear - 1;
+	}
+
+	function getLastRelayedDirectWithdrawalId() public view returns (uint256) {
 		return directWithdrawalsQueue.front - 1;
 	}
 
 	function getLastRelayedClaimableWithdrawalId()
-		external
+		public
 		view
 		returns (uint256)
 	{

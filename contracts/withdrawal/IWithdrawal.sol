@@ -67,6 +67,10 @@ interface IWithdrawal {
 		uint256 upToClamableWithdrawalId
 	) external;
 
+	function getLastDirectWithdrawalId() external view returns (uint256);
+
+	function getLastClaimableWithdrawalId() external view returns (uint256);
+
 	function getLastRelayedDirectWithdrawalId() external view returns (uint256);
 
 	function getLastRelayedClaimableWithdrawalId()

@@ -343,6 +343,10 @@ contract Liquidity is
 		return depositQueue.depositData[depositId];
 	}
 
+	function getLastDepositId() external view returns (uint256) {
+		return depositQueue.rear - 1;
+	}
+
 	function getLastAnalyzedDepositId() external view returns (uint256) {
 		return depositQueue.lastAnalyzedDepositId;
 	}

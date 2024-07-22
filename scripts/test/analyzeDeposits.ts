@@ -2,7 +2,6 @@ import { ethers } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 
 async function main() {
-	// note you have to analyze the deposits before relaying them
 	const deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.liquidity) {
 		throw new Error('liquidity contracts should be deployed')
@@ -11,11 +10,9 @@ async function main() {
 		'Liquidity',
 		deployedContracts.liquidity,
 	)
-	const lastAnalyzableDepositId = await liquidity.getLastAnalyzedDepositId()
-	console.log('lastAnalyzableDepositId:', lastAnalyzableDepositId)
-
-	const tx = await liquidity.relayDeposits(lastAnalyzableDepositId, 800_000)
-	console.log('relayDeposits tx hash:', tx.hash)
+	const lastDepositId = await liquidity.getLastDepositId()
+	const tx = await liquidity.analyzeDeposits(lastDepositId, [])
+	console.log('analyzeDeposits tx hash:', tx.hash)
 	await tx.wait()
 }
 

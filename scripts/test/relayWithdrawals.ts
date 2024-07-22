@@ -11,8 +11,9 @@ async function main() {
 		deployedContracts.withdrawal,
 	)
 
-	const lastDirectWithdrawalId = await withdrawal.lastDirectWithdrawalId()
-	const lastClaimableWithdrawalId = await withdrawal.lastClaimableWithdrawalId()
+	const lastDirectWithdrawalId = await withdrawal.getLastDirectWithdrawalId()
+	const lastClaimableWithdrawalId =
+		await withdrawal.getLastClaimableWithdrawalId()
 	console.log('lastDirectWithdrawalId:', lastDirectWithdrawalId)
 	console.log('lastClaimableWithdrawalId:', lastClaimableWithdrawalId)
 
