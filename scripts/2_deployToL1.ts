@@ -5,6 +5,7 @@ import {
 	getUSDCAddress,
 	getWBTCAddress,
 } from './utils/addressBook'
+import { sleep } from '../utils/sleep'
 
 if (network.name !== 'sepolia') {
 	throw new Error('This script should be run on sepolia network')
@@ -41,6 +42,8 @@ async function main() {
 		}
 		await writeDeployedContracts(newContractAddresses)
 	}
+
+	await sleep(30)
 
 	if (!deployedContracts.mockL1ScrollMessenger) {
 		console.log('deploying mockL1ScrollMessenger')

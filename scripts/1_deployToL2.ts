@@ -1,5 +1,6 @@
 import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from './utils/io'
+import { sleep } from '../utils/sleep'
 
 if (network.name !== 'scrollSepolia') {
 	throw new Error('This script should be run on scrollSepolia network')
@@ -23,6 +24,8 @@ async function main() {
 		await writeDeployedContracts(newContractAddresses)
 	}
 
+	await sleep(30)
+
 	if (!deployedContracts.blockBuilderRegistry) {
 		console.log('deploying blockBuilderRegistry')
 		const blockBuilderRegistryFactory = await ethers.getContractFactory(
@@ -44,6 +47,8 @@ async function main() {
 		await writeDeployedContracts(newContractAddresses)
 	}
 
+	await sleep(30)
+
 	if (!deployedContracts.withdrawal) {
 		console.log('deploying withdrawal')
 		const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
@@ -58,6 +63,8 @@ async function main() {
 		}
 		await writeDeployedContracts(newContractAddresses)
 	}
+
+	await sleep(30)
 
 	const MockPlonkVerifier_ =
 		await ethers.getContractFactory('MockPlonkVerifier')
@@ -82,6 +89,8 @@ async function main() {
 			...deployedContracts,
 		})
 	}
+
+	await sleep(30)
 
 	if (!deployedContracts.mockL2ScrollMessenger) {
 		console.log('deploying mockL2ScrollMessenger')
