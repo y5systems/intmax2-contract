@@ -274,18 +274,14 @@ contract Liquidity is
 		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
 	) external onlyWithdrawal {
-		if (_lastProcessedDirectWithdrawalId != 0) {
-			_processDirectWithdrawals(
-				_lastProcessedDirectWithdrawalId,
-				withdrawals
-			);
-		}
-		if (_lastProcessedClaimableWithdrawalId != 0) {
-			_processClaimableWithdrawals(
-				_lastProcessedClaimableWithdrawalId,
-				withdrawalHahes
-			);
-		}
+		_processDirectWithdrawals(
+			_lastProcessedDirectWithdrawalId,
+			withdrawals
+		);
+		_processClaimableWithdrawals(
+			_lastProcessedClaimableWithdrawalId,
+			withdrawalHahes
+		);
 	}
 
 	function processDirectWithdrawals(
@@ -324,8 +320,12 @@ contract Liquidity is
 				tokenInfo.tokenId
 			);
 		}
-		lastProcessedDirectWithdrawalId = _lastProcessedDirectWithdrawalId;
-		emit DirectWithdrawalsProcessed(lastProcessedDirectWithdrawalId);
+		if (
+			lastProcessedDirectWithdrawalId != _lastProcessedDirectWithdrawalId
+		) {
+			lastProcessedDirectWithdrawalId = _lastProcessedDirectWithdrawalId;
+			emit DirectWithdrawalsProcessed(lastProcessedDirectWithdrawalId);
+		}
 	}
 
 	function _processClaimableWithdrawals(
@@ -336,8 +336,15 @@ contract Liquidity is
 			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
 			emit WithdrawalClaimable(withdrawalHahes[i]);
 		}
-		lastProcessedClaimableWithdrawalId = _lastProcessedClaimableWithdrawalId;
-		emit ClaimableWithdrawalsProcessed(lastProcessedClaimableWithdrawalId);
+		if (
+			lastProcessedClaimableWithdrawalId !=
+			_lastProcessedClaimableWithdrawalId
+		) {
+			lastProcessedClaimableWithdrawalId = _lastProcessedClaimableWithdrawalId;
+			emit ClaimableWithdrawalsProcessed(
+				lastProcessedClaimableWithdrawalId
+			);
+		}
 	}
 
 	function getDepositData(

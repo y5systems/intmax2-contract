@@ -39,6 +39,9 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 
+	uint256 public lastDirectWithdrawalId;
+	uint256 public lastClaimableWithdrawalId;
+
 	function initialize(
 		address _scrollMessenger,
 		address _withdrawalVerifier,
@@ -57,6 +60,8 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		}
 		directWithdrawalsQueue.initialize();
 		claimableWithdrawalsQueue.initialize();
+		lastDirectWithdrawalId = 0;
+		lastClaimableWithdrawalId = 0;
 	}
 
 	function submitWithdrawalProof(
@@ -77,9 +82,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert WithdrawalProofVerificationFailed();
 		}
-		uint256 lastDirectWithdrawalId = 0;
-		uint256 lastClaimableWithdrawalId = 0;
-
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
@@ -125,13 +127,13 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		uint256 upToClamableWithdrawalId
 	) external {
 		WithdrawalLib.Withdrawal[] memory directWithdrawals;
-		if (upToDirectWithdrawalId != 0) {
+		if (upToDirectWithdrawalId != lastDirectWithdrawalId) {
 			directWithdrawals = _collectDirectWithdrawals(
 				upToDirectWithdrawalId
 			);
 		}
 		bytes32[] memory claimableWithdrawals;
-		if (upToClamableWithdrawalId != 0) {
+		if (upToClamableWithdrawalId != lastClaimableWithdrawalId) {
 			claimableWithdrawals = _collectClaimableWithdrawals(
 				upToClamableWithdrawalId
 			);
