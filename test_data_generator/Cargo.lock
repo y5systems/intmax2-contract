@@ -1009,6 +1009,8 @@ name = "test_data_generator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "ark-bn254",
+ "ark-std",
  "intmax2-zkp",
  "rand",
  "serde",

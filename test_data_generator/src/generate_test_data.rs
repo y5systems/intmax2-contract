@@ -4,9 +4,16 @@ use std::{
     path::Path,
 };
 
+use ark_bn254::{G1Affine, G2Affine};
+use ark_std::UniformRand as _;
 use intmax2_zkp::{
     circuits::withdrawal::withdrawal_wrapper_circuit::WithdrawalProofPublicInputs,
-    common::{transfer::Transfer, withdrawal::Withdrawal, witness::block_witness::FullBlock},
+    common::{
+        signature::flatten::{FlatG1, FlatG2},
+        transfer::Transfer,
+        withdrawal::Withdrawal,
+        witness::block_witness::FullBlock,
+    },
     ethereum_types::{address::Address, bytes32::Bytes32, u32limb_trait::U32LimbTrait},
     mock::{block_builder::MockBlockBuilder, wallet::MockWallet},
 };
@@ -71,6 +78,22 @@ fn generate_test_data() {
     save_withdrawal_info("../test_data", &withdrawal_info).unwrap();
 }
 
+#[test]
+fn generate_pairing_test_data() {
+    let mut rng = StdRng::seed_from_u64(0);
+
+    let random_agg_pubkey = G1Affine::rand(&mut rng);
+    let random_agg_signature = G2Affine::rand(&mut rng);
+    let random_message_point = G2Affine::rand(&mut rng);
+
+    let pairing = PairingTestData {
+        agg_pubkey: random_agg_pubkey.into(),
+        agg_signature: random_agg_signature.into(),
+        message_point: random_message_point.into(),
+    };
+    save_pairing_test_data("../test_data", &pairing).unwrap();
+}
+
 fn save_full_blocks<P: AsRef<Path>>(dir_path: P, full_blocks: &[FullBlock]) -> anyhow::Result<()> {
     if !Path::new(dir_path.as_ref()).exists() {
         fs::create_dir(dir_path.as_ref())?;
@@ -99,10 +122,32 @@ fn save_withdrawal_info<P: AsRef<Path>>(
     Ok(())
 }
 
+fn save_pairing_test_data<P: AsRef<Path>>(
+    dir_path: P,
+    pairing_test_data: &PairingTestData,
+) -> anyhow::Result<()> {
+    if !Path::new(dir_path.as_ref()).exists() {
+        fs::create_dir(dir_path.as_ref())?;
+    }
+    let pairing_test_data_str = serde_json::to_string_pretty(pairing_test_data)?;
+    let file_path = format!("{}/pairing_test_data.json", dir_path.as_ref().display());
+    let mut file = File::create(file_path)?;
+    file.write_all(pairing_test_data_str.as_bytes())?;
+    Ok(())
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct WithdralwalInfo {
     withdrawals: Vec<Withdrawal>,
     withdrawal_proof_public_inputs: WithdrawalProofPublicInputs,
     pis_hash: Bytes32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct PairingTestData {
+    pub agg_pubkey: FlatG1,
+    pub agg_signature: FlatG2,
+    pub message_point: FlatG2,
 }
