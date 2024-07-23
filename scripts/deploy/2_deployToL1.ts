@@ -29,6 +29,7 @@ async function main() {
 
 	deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.liquidity) {
+		console.log('deploying liquidity')
 		if (!deployedContracts.rollup) {
 			throw new Error('rollup address is not set')
 		}
