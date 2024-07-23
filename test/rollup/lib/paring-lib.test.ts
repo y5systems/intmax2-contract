@@ -38,4 +38,9 @@ describe('PairingLibTest', function () {
 
 		expect(result).to.be.true
 	})
+	// TODO
+	// it('should return false', async function () {
+	// })
+	// it('revert PairingOpCodeFailed', async function () {
+	// })
 })
