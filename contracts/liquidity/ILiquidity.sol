@@ -72,10 +72,10 @@ interface ILiquidity {
 	/// @dev upToDepositId specifies the last deposit id that have been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
 	/// @dev rejectDepositIndices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
 	/// @param upToDepositId The upper limit of the Deposit ID that has been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
-	/// @param rejectDepositIndices An array of indices of deposits to exclude. These indices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
+	/// @param rejectDepositIds An array of ids of deposits to exclude. These indices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
 	function analyzeDeposits(
 		uint256 upToDepositId,
-		uint256[] memory rejectDepositIndices
+		uint256[] memory rejectDepositIds
 	) external;
 
 	/**
