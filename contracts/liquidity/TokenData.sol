@@ -27,7 +27,7 @@ contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) internal returns (uint32) {
-		(bool ok, uint32 tokenIndex) = _getTokenIndex(
+		(bool ok, uint32 tokenIndex) = getTokenIndex(
 			tokenType,
 			tokenAddress,
 			tokenId
@@ -41,32 +41,6 @@ contract TokenData is Initializable, ITokenData {
 
 	function _getNativeTokenIndex() internal view returns (uint32) {
 		return fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS];
-	}
-
-	function _getTokenIndex(
-		TokenType tokenType,
-		address tokenAddress,
-		uint256 tokenId
-	) internal view returns (bool, uint32) {
-		if (tokenType == TokenType.NATIVE) {
-			return (true, fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS]);
-		}
-		if (tokenAddress == address(0)) {
-			revert InvalidTokenAddress();
-		}
-		if (tokenType == TokenType.ERC20) {
-			uint32 tokenIndex = fungibleTokenIndexMap[tokenAddress];
-			if (tokenIndex != 0) {
-				return (true, tokenIndex);
-			}
-		}
-		if (tokenType == TokenType.ERC721 || tokenType == TokenType.ERC1155) {
-			uint32 tokenIndex = nonFungibleTokenIndexMap[tokenAddress][tokenId];
-			if (tokenIndex != 0) {
-				return (true, tokenIndex);
-			}
-		}
-		return (false, 0);
 	}
 
 	function _createTokenIndex(
@@ -91,6 +65,32 @@ contract TokenData is Initializable, ITokenData {
 		// ERC721 or ERC1155
 		nonFungibleTokenIndexMap[tokenAddress][tokenId] = tokenIndex;
 		return tokenIndex;
+	}
+
+	function getTokenIndex(
+		TokenType tokenType,
+		address tokenAddress,
+		uint256 tokenId
+	) public view returns (bool, uint32) {
+		if (tokenType == TokenType.NATIVE) {
+			return (true, fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS]);
+		}
+		if (tokenAddress == address(0)) {
+			revert InvalidTokenAddress();
+		}
+		if (tokenType == TokenType.ERC20) {
+			uint32 tokenIndex = fungibleTokenIndexMap[tokenAddress];
+			if (tokenIndex != 0) {
+				return (true, tokenIndex);
+			}
+		}
+		if (tokenType == TokenType.ERC721 || tokenType == TokenType.ERC1155) {
+			uint32 tokenIndex = nonFungibleTokenIndexMap[tokenAddress][tokenId];
+			if (tokenIndex != 0) {
+				return (true, tokenIndex);
+			}
+		}
+		return (false, 0);
 	}
 
 	function getTokenInfo(

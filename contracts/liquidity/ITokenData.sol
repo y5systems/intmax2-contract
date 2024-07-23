@@ -21,4 +21,10 @@ interface ITokenData {
 	function getTokenInfo(
 		uint32 tokenIndex
 	) external view returns (TokenInfo memory);
+
+	function getTokenIndex(
+		TokenType tokenType,
+		address tokenAddress,
+		uint256 tokenId
+	) external view returns (bool, uint32);
 }

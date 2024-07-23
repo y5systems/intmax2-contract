@@ -143,10 +143,10 @@ contract Liquidity is
 
 	function analyzeDeposits(
 		uint256 upToDepositId,
-		uint256[] memory rejectDepositIndices
+		uint256[] memory rejectDepositIds
 	) external onlyRole(ANALYZER) {
-		depositQueue.analyze(upToDepositId, rejectDepositIndices);
-		emit DepositsAnalyzed(upToDepositId, rejectDepositIndices);
+		depositQueue.analyze(upToDepositId, rejectDepositIds);
+		emit DepositsAnalyzed(upToDepositId, rejectDepositIds);
 	}
 
 	function relayDeposits(
