@@ -1,0 +1,13 @@
+[package]
+name = "test_data_generator"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.86"
+intmax2-zkp = {git="https://github.com/InternetMaximalism/intmax2-zkp.git", branch="dev"}
+rand = "0.8.5"
+serde = "1.0.204"
+serde_json = "1.0.120"
