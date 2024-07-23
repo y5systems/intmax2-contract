@@ -38,9 +38,10 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger {
 		bytes32 _xDomainCalldataHash = keccak256(
 			_encodeXDomainCalldata(_from, _to, _value, _nonce, _message)
 		);
+		// solhint-disable-next-line gas-custom-errors
 		require(
 			!isL1MessageExecuted[_xDomainCalldataHash],
-			"Message was already successfully executed"
+			"it was already successfully"
 		);
 		_executeMessage(_from, _to, _value, _message, _xDomainCalldataHash);
 	}
@@ -52,6 +53,7 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger {
 		uint256 _gasLimit
 	) internal {
 		(_gasLimit);
+		// solhint-disable-next-line gas-custom-errors
 		require(msg.value == _value, "msg.value mismatch");
 		uint256 _nonce = nonce;
 		bytes32 _xDomainCalldataHash = keccak256(
@@ -79,6 +81,7 @@ contract MockL2ScrollMessenger is IL2ScrollMessenger {
 			isL1MessageExecuted[_xDomainCalldataHash] = true;
 			emit RelayedMessage(_xDomainCalldataHash);
 		} else {
+			// solhint-disable-next-line gas-custom-errors
 			revert("Failed to execute message");
 		}
 	}

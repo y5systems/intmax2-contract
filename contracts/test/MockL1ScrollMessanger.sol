@@ -43,9 +43,10 @@ contract MockL1ScrollMessenger is IL1ScrollMessenger {
 		bytes32 _xDomainCalldataHash = keccak256(
 			_encodeXDomainCalldata(_from, _to, _value, _nonce, _message)
 		);
+		// solhint-disable-next-line gas-custom-errors
 		require(
 			!isL2MessageExecuted[_xDomainCalldataHash],
-			"Message was already successfully executed"
+			"it was already successfully"
 		);
 		xDomainMessageSender = _from;
 		(bool success, ) = _to.call{value: _value}(_message);
