@@ -6,7 +6,6 @@ if (network.name !== 'scrollSepolia') {
 }
 
 async function main() {
-	// validation of contract name
 	const deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.rollup) {
 		throw new Error('rollup contract should be deployed')

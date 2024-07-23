@@ -6,7 +6,6 @@ if (network.name !== 'scrollSepolia') {
 }
 
 async function main() {
-	// validation of contract name
 	const deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.withdrawal) {
 		throw new Error('withdrawal contract should be deployed')
