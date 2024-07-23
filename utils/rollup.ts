@@ -12,6 +12,12 @@ export function loadFullBlocks(): FullBlock[] {
 	return fullBlocks
 }
 
+export function loadPairingData(): PairingData {
+	const data = fs.readFileSync('test_data/pairing_test_data.json', 'utf8')
+	const jsonData = JSON.parse(data) as PairingData
+	return jsonData
+}
+
 export async function postBlock(
 	fullBlock: FullBlock,
 	rollup: Rollup,
