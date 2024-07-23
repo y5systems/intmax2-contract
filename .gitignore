@@ -8,9 +8,7 @@ typechain
 cache
 artifacts
 
-scripts/deployedContracts.json
 scripts/data/*
-/.openzeppelin
 
 .vscode/
 
