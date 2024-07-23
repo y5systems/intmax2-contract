@@ -27,7 +27,7 @@ describe('PairingLibTest', function () {
 			block1.signature.messagePoint[0],
 			block1.signature.messagePoint[1],
 			block1.signature.messagePoint[2],
-			block1.signature.messagePoint[2],
+			block1.signature.messagePoint[3],
 		]
 
 		const result = await lib.pairing(
