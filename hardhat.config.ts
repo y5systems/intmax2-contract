@@ -3,12 +3,24 @@ import '@nomicfoundation/hardhat-toolbox'
 import '@openzeppelin/hardhat-upgrades'
 import 'dotenv/config'
 import { cleanEnv, str } from 'envalid'
+import { parse } from 'ts-command-line-args'
 
 const env = cleanEnv(process.env, {
 	DEPLOYER_PRIVATE_KEY: str(),
 	ANALYZER_PRIVATE_KEY: str(),
 	ALCHEMY_KEY: str(),
 })
+
+// interface IArgs {
+// 	name: string
+// }
+
+// const args = parse<IArgs>({
+// 	name: {
+// 		type: String,
+// 		alias: 'n',
+// 	},
+// })
 
 const accounts = [env.DEPLOYER_PRIVATE_KEY, env.ANALYZER_PRIVATE_KEY]
 
