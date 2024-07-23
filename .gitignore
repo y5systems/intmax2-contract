@@ -7,9 +7,6 @@ typechain
 # Hardhat files
 cache
 artifacts
-
-scripts/data/*
-
 .vscode/
 
 typechain-types/
