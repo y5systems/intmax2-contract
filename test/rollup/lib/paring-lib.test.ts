@@ -3,6 +3,7 @@ import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { PairingLibTest } from '../../../typechain-types'
 import block1 from '../../../test_data/block1.json'
+import { loadPairingData } from '../../../utils/rollup'
 
 describe('PairingLibTest', function () {
 	const setup = async (): Promise<PairingLibTest> => {
@@ -38,9 +39,38 @@ describe('PairingLibTest', function () {
 
 		expect(result).to.be.true
 	})
+
+	it('should return false', async function () {
+		const pairingData = loadPairingData()
+		const lib = await loadFixture(setup)
+
+		const aggregatedPublicKey: [string, string] = [
+			pairingData.aggPubkey[0],
+			pairingData.aggPubkey[1],
+		]
+		const aggregatedSignature: [string, string, string, string] = [
+			pairingData.aggSignature[0],
+			pairingData.aggSignature[1],
+			pairingData.aggSignature[2],
+			pairingData.aggSignature[3],
+		]
+		const messagePoint: [string, string, string, string] = [
+			pairingData.messagePoint[0],
+			pairingData.messagePoint[1],
+			pairingData.messagePoint[2],
+			pairingData.messagePoint[3],
+		]
+
+		const result = await lib.pairing(
+			aggregatedPublicKey,
+			aggregatedSignature,
+			messagePoint,
+		)
+
+		expect(result).to.be.false
+	})
+
 	// TODO
-	// it('should return false', async function () {
-	// })
 	// it('revert PairingOpCodeFailed', async function () {
 	// })
 })
