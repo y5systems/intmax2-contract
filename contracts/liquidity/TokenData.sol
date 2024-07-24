@@ -4,7 +4,7 @@ pragma solidity 0.8.24;
 import {ITokenData} from "./ITokenData.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract TokenData is Initializable, ITokenData {
+abstract contract TokenData is Initializable, ITokenData {
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
 	uint256 private nextTokenIndex;
 	TokenInfo[] private tokenInfoList;
