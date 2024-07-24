@@ -4,7 +4,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
 import { TokenDataTest } from '../../typechain-types'
 
-describe.only('TokenData', () => {
+describe('TokenData', () => {
 	// ITokenData.sol
 	enum TokenType {
 		NATIVE,
@@ -28,7 +28,7 @@ describe.only('TokenData', () => {
 
 	describe('initialize', () => {
 		describe('success', () => {
-			it('NATIVE tokenと二つのERC20 tokenの情報が保持される', async () => {
+			it('should store information for NATIVE token and two ERC20 tokens', async () => {
 				const tokenData = await loadFixture(setup)
 				const nativeTokenInfo = await tokenData.getTokenInfo(0)
 				expect(nativeTokenInfo.tokenType).to.equal(TokenType.NATIVE)
@@ -52,7 +52,7 @@ describe.only('TokenData', () => {
 			})
 		})
 		describe('fail', () => {
-			it('__TokenData_initを再実行するとエラーになる', async () => {
+			it('should revert when trying to reinitialize', async () => {
 				const tokenData = await loadFixture(setup)
 				await expect(tokenData.initialize([])).to.be.revertedWithCustomError(
 					tokenData,
@@ -62,7 +62,7 @@ describe.only('TokenData', () => {
 		})
 	})
 	describe('getOrCreateTokenIndex', () => {
-		it('トークン情報がすでに存在する場合、tokenIndexが帰ってくる', async () => {
+		it('should return existing token index if token information already exists', async () => {
 			const tokenData = await loadFixture(setup)
 			expect(await tokenData.latestTokenIndex()).to.equal(0)
 			await tokenData.getOrCreateTokenIndex(
@@ -72,9 +72,9 @@ describe.only('TokenData', () => {
 			)
 			expect(await tokenData.latestTokenIndex()).to.equal(1)
 		})
-		describe('トークン情報が存在しない場合', () => {
+		describe('when token information does not exist', () => {
 			describe('success', () => {
-				it('新たなtoken情報が作成される(ERC20)', async () => {
+				it('should create new token information (ERC20)', async () => {
 					const tokenData = await loadFixture(setup)
 					const newERC20Address = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 					await tokenData.getOrCreateTokenIndex(
@@ -87,7 +87,7 @@ describe.only('TokenData', () => {
 					expect(tokenInfo.tokenAddress).to.equal(newERC20Address)
 					expect(tokenInfo.tokenId).to.equal(0)
 				})
-				it('新たなtoken情報が作成される(ERC721)', async () => {
+				it('should create new token information (ERC721)', async () => {
 					const tokenData = await loadFixture(setup)
 					const newERC721Address = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
 					const tokenId = 1
@@ -101,7 +101,7 @@ describe.only('TokenData', () => {
 					expect(tokenInfo.tokenAddress).to.equal(newERC721Address)
 					expect(tokenInfo.tokenId).to.equal(tokenId)
 				})
-				it('新たなtoken情報が作成される(ERC1155)', async () => {
+				it('should create new token information (ERC1155)', async () => {
 					const tokenData = await loadFixture(setup)
 					const newERC1155Address = '0x76BE3b62873462d2142405439777e971754E8E77'
 					const tokenId = 1
@@ -117,7 +117,7 @@ describe.only('TokenData', () => {
 				})
 			})
 			describe('fail', () => {
-				it('tokenAddressが0の場合、InvalidTokenAddressがrevertする', async () => {
+				it('should revert with InvalidTokenAddress if tokenAddress is 0', async () => {
 					const tokenData = await loadFixture(setup)
 					await expect(
 						tokenData.getOrCreateTokenIndex(
@@ -131,7 +131,7 @@ describe.only('TokenData', () => {
 		})
 	})
 	describe('getNativeTokenIndex', () => {
-		it('native tokenのindexが帰ってくる', async () => {
+		it('should return the index of the native token', async () => {
 			const tokenData = await loadFixture(setup)
 			const nativeTokenIndex = await tokenData.getNativeTokenIndex()
 			expect(nativeTokenIndex).to.equal(0)
@@ -139,7 +139,7 @@ describe.only('TokenData', () => {
 	})
 	describe('getTokenIndex', () => {
 		describe('success', () => {
-			it('NATIVE tokenの情報が取得できる', async () => {
+			it('should retrieve NATIVE token information', async () => {
 				const tokenData = await loadFixture(setup)
 				const [exists, tokenIndex] = await tokenData.getTokenIndex(
 					TokenType.NATIVE,
@@ -149,7 +149,7 @@ describe.only('TokenData', () => {
 				expect(exists).to.be.true
 				expect(tokenIndex).to.equal(0)
 			})
-			it('ERC20 tokenの情報が取得できる', async () => {
+			it('should retrieve ERC20 token information', async () => {
 				const tokenData = await loadFixture(setup)
 				const [exists, tokenIndex] = await tokenData.getTokenIndex(
 					TokenType.ERC20,
@@ -159,7 +159,7 @@ describe.only('TokenData', () => {
 				expect(exists).to.be.true
 				expect(tokenIndex).to.equal(1)
 			})
-			it('ERC721 tokenの情報が取得できる', async () => {
+			it('should retrieve ERC721 token information', async () => {
 				const tokenData = await loadFixture(setup)
 				const newERC721Address = '0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D'
 				const tokenId = 1
@@ -176,7 +176,7 @@ describe.only('TokenData', () => {
 				expect(exists).to.be.true
 				expect(tokenIndex).to.equal(3)
 			})
-			it('ERC1155 tokenの情報が取得できる', async () => {
+			it('should retrieve ERC1155 token information', async () => {
 				const tokenData = await loadFixture(setup)
 				const newERC1155Address = '0x76BE3b62873462d2142405439777e971754E8E77'
 				const tokenId = 1
@@ -193,7 +193,7 @@ describe.only('TokenData', () => {
 				expect(exists).to.be.true
 				expect(tokenIndex).to.equal(3)
 			})
-			it('存在しない情報は取得できない', async () => {
+			it('should not retrieve non-existent information', async () => {
 				const tokenData = await loadFixture(setup)
 				const [exists, tokenIndex] = await tokenData.getTokenIndex(
 					TokenType.ERC20,
@@ -205,7 +205,7 @@ describe.only('TokenData', () => {
 			})
 		})
 		describe('fail', () => {
-			it('0アドレスを指定すると、InvalidTokenAddressがrevertする', async () => {
+			it('should revert with InvalidTokenAddress when specifying 0 address', async () => {
 				const tokenData = await loadFixture(setup)
 				await expect(
 					tokenData.getTokenIndex(TokenType.ERC20, ethers.ZeroAddress, 0),
