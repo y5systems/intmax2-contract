@@ -7,11 +7,6 @@ typechain
 # Hardhat files
 cache
 artifacts
-
-scripts/deployedContracts.json
-scripts/data/*
-/.openzeppelin
-
 .vscode/
 
 typechain-types/
