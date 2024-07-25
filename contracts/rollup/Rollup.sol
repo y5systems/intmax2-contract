@@ -166,7 +166,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint
-	) internal returns (uint32 blockNumber) {
+	) private {
 		if (!blockBuilderRegistry.isValidBlockBuilder(_msgSender())) {
 			revert InvalidBlockBuilder();
 		}
@@ -192,7 +192,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			)
 		);
 
-		blockNumber = blockHashes.getBlockNumber();
+		uint32 blockNumber = blockHashes.getBlockNumber();
 		bytes32 prevBlockHash = blockHashes.getPrevHash();
 		blockHashes.pushBlockHash(depositTreeRoot, signatureHash);
 		blockBuilders.push(_msgSender());
@@ -203,8 +203,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			depositTreeRoot,
 			signatureHash
 		);
-
-		return blockNumber;
 	}
 
 	function getBlockBuilder(
