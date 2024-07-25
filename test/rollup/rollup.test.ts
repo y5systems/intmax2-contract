@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
-
+import { ContractTransactionReceipt } from 'ethers'
 import {
 	Rollup,
 	BlockBuilderRegistryTestForRollup,
@@ -45,16 +45,69 @@ describe('Rollup', () => {
 
 	type signers = {
 		deployer: HardhatEthersSigner
-		user: HardhatEthersSigner
+		user1: HardhatEthersSigner
+		user2: HardhatEthersSigner
+		user3: HardhatEthersSigner
 	}
 	const getSigners = async (): Promise<signers> => {
-		const [deployer, user] = await ethers.getSigners()
+		const [deployer, user1, user2, user3] = await ethers.getSigners()
 		return {
 			deployer,
-			user,
+			user1,
+			user2,
+			user3,
 		}
 	}
-
+	type validInputs = {
+		txTreeRoot: string
+		senderFlags: string
+		aggregatedPublicKey: [string, string]
+		aggregatedSignature: [string, string, string, string]
+		messagePoint: [string, string, string, string]
+		senderPublicKeys: bigint[]
+	}
+	const generateValidInputs = (): validInputs => {
+		return {
+			txTreeRoot:
+				'0xe9fe591a2052682636a8019b6be712fd1e000544be4acfd8fc6bcaf8d750f7a0',
+			senderFlags: '0xf6f27cffbbdff9cea5bc062a276505e2',
+			aggregatedPublicKey: [
+				block1.signature.aggPubkey[0],
+				block1.signature.aggPubkey[1],
+			] as [string, string],
+			aggregatedSignature: [
+				block1.signature.aggSignature[0],
+				block1.signature.aggSignature[1],
+				block1.signature.aggSignature[2],
+				block1.signature.aggSignature[3],
+			] as [string, string, string, string],
+			messagePoint: [
+				block1.signature.messagePoint[0],
+				block1.signature.messagePoint[1],
+				block1.signature.messagePoint[2],
+				block1.signature.messagePoint[3],
+			] as [string, string, string, string],
+			senderPublicKeys: [BigInt(1), BigInt(2), BigInt(3)],
+		}
+	}
+	const addBlock = async (
+		rollup: Rollup,
+		blockBuilderRegistry: BlockBuilderRegistryTestForRollup,
+		signer: HardhatEthersSigner,
+	): Promise<void> => {
+		await blockBuilderRegistry.setResult(true)
+		const inputs = generateValidInputs()
+		await rollup
+			.connect(signer)
+			.postRegistrationBlock(
+				inputs.txTreeRoot,
+				inputs.senderFlags,
+				inputs.aggregatedPublicKey,
+				inputs.aggregatedSignature,
+				inputs.messagePoint,
+				inputs.senderPublicKeys,
+			)
+	}
 	describe('initialize', () => {
 		describe('success', () => {
 			it('should set deployer as the owner', async () => {
@@ -93,38 +146,6 @@ describe('Rollup', () => {
 		})
 	})
 	describe('postRegistrationBlock', () => {
-		type validInputs = {
-			txTreeRoot: string
-			senderFlags: string
-			aggregatedPublicKey: [string, string]
-			aggregatedSignature: [string, string, string, string]
-			messagePoint: [string, string, string, string]
-			senderPublicKeys: bigint[]
-		}
-		const generateValidInputs = (): validInputs => {
-			return {
-				txTreeRoot:
-					'0xe9fe591a2052682636a8019b6be712fd1e000544be4acfd8fc6bcaf8d750f7a0',
-				senderFlags: '0xf6f27cffbbdff9cea5bc062a276505e2',
-				aggregatedPublicKey: [
-					block1.signature.aggPubkey[0],
-					block1.signature.aggPubkey[1],
-				] as [string, string],
-				aggregatedSignature: [
-					block1.signature.aggSignature[0],
-					block1.signature.aggSignature[1],
-					block1.signature.aggSignature[2],
-					block1.signature.aggSignature[3],
-				] as [string, string, string, string],
-				messagePoint: [
-					block1.signature.messagePoint[0],
-					block1.signature.messagePoint[1],
-					block1.signature.messagePoint[2],
-					block1.signature.messagePoint[3],
-				] as [string, string, string, string],
-				senderPublicKeys: [BigInt(1), BigInt(2), BigInt(3)],
-			}
-		}
 		describe('success', () => {
 			it('generate PubKeysPosted event', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
@@ -170,7 +191,7 @@ describe('Rollup', () => {
 				const signers = await getSigners()
 
 				await rollup
-					.connect(signers.user)
+					.connect(signers.user1)
 					.postRegistrationBlock(
 						inputs.txTreeRoot,
 						inputs.senderFlags,
@@ -181,7 +202,7 @@ describe('Rollup', () => {
 					)
 
 				const blockBuilder = await rollup.blockBuilders(1)
-				expect(blockBuilder).to.equal(signers.user.address)
+				expect(blockBuilder).to.equal(signers.user1.address)
 			})
 			it('generate BlockPosted event', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
@@ -192,7 +213,7 @@ describe('Rollup', () => {
 				const depositTreeRoot = await rollup.depositTreeRoot()
 				await expect(
 					rollup
-						.connect(signers.user)
+						.connect(signers.user1)
 						.postRegistrationBlock(
 							inputs.txTreeRoot,
 							inputs.senderFlags,
@@ -205,7 +226,7 @@ describe('Rollup', () => {
 					.to.emit(rollup, 'BlockPosted')
 					.withArgs(
 						FIRST_BLOCK_HASH,
-						signers.user.address,
+						signers.user1.address,
 						1,
 						depositTreeRoot,
 						'0x1b56ed5ee237a71b7c94d2ebbface7c6becf2ed08f6ba2264411febc98633772',
@@ -377,7 +398,7 @@ describe('Rollup', () => {
 				const signers = await getSigners()
 
 				await rollup
-					.connect(signers.user)
+					.connect(signers.user1)
 					.postNonRegistrationBlock(
 						inputs.txTreeRoot,
 						inputs.senderFlags,
@@ -389,7 +410,7 @@ describe('Rollup', () => {
 					)
 
 				const blockBuilder = await rollup.blockBuilders(1)
-				expect(blockBuilder).to.equal(signers.user.address)
+				expect(blockBuilder).to.equal(signers.user1.address)
 			})
 			it('generate BlockPosted event', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
@@ -400,7 +421,7 @@ describe('Rollup', () => {
 
 				await expect(
 					rollup
-						.connect(signers.user)
+						.connect(signers.user1)
 						.postNonRegistrationBlock(
 							inputs.txTreeRoot,
 							inputs.senderFlags,
@@ -414,7 +435,7 @@ describe('Rollup', () => {
 					.to.emit(rollup, 'BlockPosted')
 					.withArgs(
 						FIRST_BLOCK_HASH,
-						signers.user.address,
+						signers.user1.address,
 						1,
 						depositTreeRoot,
 						'0xbbd68029399208f3ff0895ac48162109373556e96c3ec2263d5fe696fba5c742',
@@ -585,7 +606,7 @@ describe('Rollup', () => {
 
 				await expect(
 					rollup
-						.connect(signers.user)
+						.connect(signers.user1)
 						.processDeposits(lastProcessedDepositId, depositHashes),
 				).to.be.revertedWithCustomError(rollup, 'OnlyScrollMessenger')
 			})
@@ -596,7 +617,7 @@ describe('Rollup', () => {
 				const lastProcessedDepositId = 10
 				const depositHashes = [ethers.randomBytes(32)]
 
-				await l2ScrollMessenger.setResult(signers.user.address) // Set incorrect liquidity address
+				await l2ScrollMessenger.setResult(signers.user1.address) // Set incorrect liquidity address
 				await expect(
 					l2ScrollMessenger.processDeposits(
 						await rollup.getAddress(),
@@ -604,6 +625,89 @@ describe('Rollup', () => {
 						depositHashes,
 					),
 				).to.be.revertedWithCustomError(rollup, 'OnlyLiquidity')
+			})
+		})
+	})
+	describe('getBlockBuilder', () => {
+		describe('success cases', () => {
+			it('should return the correct block builder for the genesis block', async () => {
+				const [rollup] = await loadFixture(setup)
+				const genesisBlockBuilder = await rollup.getBlockBuilder(0)
+				expect(genesisBlockBuilder).to.equal(ethers.ZeroAddress)
+			})
+
+			it('should return the correct block builder for a non-genesis block', async () => {
+				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
+				const signers = await getSigners()
+				await addBlock(rollup, blockBuilderRegistry, signers.user1)
+				const blockBuilder = await rollup.getBlockBuilder(1)
+				expect(blockBuilder).to.equal(signers.user1.address)
+			})
+
+			it('should return the correct block builder after multiple blocks have been added', async () => {
+				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
+				const signers = await getSigners()
+				await addBlock(rollup, blockBuilderRegistry, signers.user1)
+				await addBlock(rollup, blockBuilderRegistry, signers.user2)
+				await addBlock(rollup, blockBuilderRegistry, signers.user3)
+
+				expect(await rollup.getBlockBuilder(1)).to.equal(signers.user1.address)
+				expect(await rollup.getBlockBuilder(2)).to.equal(signers.user2.address)
+				expect(await rollup.getBlockBuilder(3)).to.equal(signers.user3.address)
+			})
+		})
+
+		describe('failure cases', () => {
+			it('should revert when querying a non-existent block number', async () => {
+				const [rollup] = await loadFixture(setup)
+				await expect(rollup.getBlockBuilder(1)).to.be.revertedWithCustomError(
+					rollup,
+					'BlockNumberOutOfRange',
+				)
+			})
+		})
+	})
+	describe('getBlockHash', () => {
+		describe('success cases', () => {
+			it('should return the correct hash for the genesis block', async () => {
+				const [rollup] = await loadFixture(setup)
+				const genesisBlockHash = await rollup.getBlockHash(0)
+				expect(genesisBlockHash).to.equal(FIRST_BLOCK_HASH)
+			})
+
+			it('should return the correct hash for a non-genesis block', async () => {
+				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
+				const signers = await getSigners()
+				await addBlock(rollup, blockBuilderRegistry, signers.user1)
+
+				const blockHash = await rollup.getBlockHash(1)
+
+				expect(blockHash).to.not.equal(ethers.ZeroHash)
+			})
+
+			it('should return the correct hashes after multiple blocks have been added', async () => {
+				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
+				const signers = await getSigners()
+
+				await addBlock(rollup, blockBuilderRegistry, signers.user1)
+				await addBlock(rollup, blockBuilderRegistry, signers.user1)
+
+				const blockHash1 = await rollup.getBlockHash(1)
+				const blockHash2 = await rollup.getBlockHash(2)
+
+				expect(blockHash1).to.not.equal(ethers.ZeroHash)
+				expect(blockHash2).to.not.equal(ethers.ZeroHash)
+				expect(blockHash1).to.not.equal(blockHash2)
+			})
+		})
+
+		describe('failure cases', () => {
+			it('should revert when querying a non-existent block number', async () => {
+				const [rollup] = await loadFixture(setup)
+				await expect(rollup.getBlockHash(1)).to.be.revertedWithCustomError(
+					rollup,
+					'BlockNumberOutOfRange',
+				)
 			})
 		})
 	})
@@ -626,13 +730,13 @@ describe('Rollup', () => {
 			const signers = await getSigners()
 			const rollupFactory = await ethers.getContractFactory(
 				'Rollup2Test',
-				signers.user,
+				signers.user1,
 			)
 			await expect(
 				upgrades.upgradeProxy(await rollup.getAddress(), rollupFactory),
 			)
 				.to.be.revertedWithCustomError(rollup, 'OwnableUnauthorizedAccount')
-				.withArgs(signers.user.address)
+				.withArgs(signers.user1.address)
 		})
 	})
 })
