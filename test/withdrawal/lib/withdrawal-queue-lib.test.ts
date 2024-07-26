@@ -3,7 +3,7 @@ import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { WithdrawalQueueLibTest } from '../../../typechain-types'
 
-describe.only('WithdrawalQueueLib', () => {
+describe('WithdrawalQueueLib', () => {
 	async function setup(): Promise<WithdrawalQueueLibTest> {
 		const libFactory = await ethers.getContractFactory('WithdrawalQueueLibTest')
 		const lib = await libFactory.deploy()
