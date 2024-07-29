@@ -59,12 +59,13 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		claimableWithdrawalsQueue.initialize();
 	}
 
+	// added onlyOwner for dummy zkp verification
 	function submitWithdrawalProof(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
 			calldata publicInputs,
 		bytes calldata proof
-	) external {
+	) external onlyOwner {
 		// verify public inputs
 		if (
 			!withdrawals.verifyWithdrawalChain(publicInputs.lastWithdrawalHash)

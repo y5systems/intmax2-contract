@@ -90,10 +90,11 @@ contract BlockBuilderRegistry is
 		emit BlockBuilderUpdated(_msgSender(), url, stakeAmount);
 	}
 
+	// add onlyOwner for dummy zkp verification
 	function submitBlockFraudProof(
 		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof
-	) external {
+	) external onlyOwner {
 		bytes32 blockHash = rollup.getBlockHash(publicInputs.blockNumber);
 		address builder = rollup.getBlockBuilder(publicInputs.blockNumber);
 
