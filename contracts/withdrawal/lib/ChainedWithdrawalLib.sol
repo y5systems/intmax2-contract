@@ -14,7 +14,7 @@ library ChainedWithdrawalLib {
 	function hashWithPrevHash(
 		ChainedWithdrawal memory withdrawal,
 		bytes32 prevWithdrawalHash
-	) internal pure returns (bytes32) {
+	) private pure returns (bytes32) {
 		return
 			keccak256(
 				abi.encodePacked(
