@@ -2,7 +2,6 @@ import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
-import { ContractTransactionReceipt } from 'ethers'
 import {
 	Rollup,
 	BlockBuilderRegistryTestForRollup,

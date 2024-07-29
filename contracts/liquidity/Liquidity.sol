@@ -82,7 +82,7 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 amount
-	) public {
+	) external {
 		if (amount == 0) {
 			revert InvalidAmount();
 		}
@@ -103,7 +103,7 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 tokenId
-	) public {
+	) external {
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -122,7 +122,7 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId,
 		uint256 amount
-	) public {
+	) external {
 		if (amount == 0) {
 			revert InvalidAmount();
 		}
@@ -226,7 +226,7 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount
-	) internal {
+	) private {
 		bytes32 depositHash = DepositLib
 			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
@@ -304,7 +304,7 @@ contract Liquidity is
 	function _processDirectWithdrawals(
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) internal {
+	) private {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			TokenInfo memory tokenInfo = getTokenInfo(
 				withdrawals[i].tokenIndex
@@ -325,7 +325,7 @@ contract Liquidity is
 	function _processClaimableWithdrawals(
 		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHahes
-	) internal {
+	) private {
 		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
 			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
 			emit WithdrawalClaimable(withdrawalHahes[i]);

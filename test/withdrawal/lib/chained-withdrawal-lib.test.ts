@@ -2,6 +2,10 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { ChainedWithdrawalLibTest } from '../../../typechain-types'
+import {
+	getPrevHashFromWithdrawals,
+	getChainedWithdrawals,
+} from '../common.test'
 
 describe('ChainedWithdrawalLib', () => {
 	const setup = async (): Promise<ChainedWithdrawalLibTest> => {
@@ -14,51 +18,9 @@ describe('ChainedWithdrawalLib', () => {
 		it('should return true for a valid withdrawal chain', async () => {
 			const contract = await loadFixture(setup)
 
-			const withdrawals = [
-				{
-					recipient: ethers.Wallet.createRandom().address,
-					tokenIndex: 1,
-					amount: ethers.parseEther('1'),
-					nullifier: ethers.randomBytes(32),
-					blockHash: ethers.randomBytes(32),
-					blockNumber: 1000,
-				},
-				{
-					recipient: ethers.Wallet.createRandom().address,
-					tokenIndex: 2,
-					amount: ethers.parseEther('2'),
-					nullifier: ethers.randomBytes(32),
-					blockHash: ethers.randomBytes(32),
-					blockNumber: 1001,
-				},
-			]
-
+			const withdrawals = getChainedWithdrawals(2)
 			// Calculate the last withdrawal hash manually
-			let prevHash = ethers.ZeroHash
-			for (const withdrawal of withdrawals) {
-				prevHash = ethers.keccak256(
-					ethers.solidityPacked(
-						[
-							'bytes32',
-							'address',
-							'uint32',
-							'uint256',
-							'bytes32',
-							'bytes32',
-							'uint32',
-						],
-						[
-							prevHash,
-							withdrawal.recipient,
-							withdrawal.tokenIndex,
-							withdrawal.amount,
-							withdrawal.nullifier,
-							withdrawal.blockHash,
-							withdrawal.blockNumber,
-						],
-					),
-				)
-			}
+			const prevHash = getPrevHashFromWithdrawals(withdrawals)
 
 			const isValid = await contract.verifyWithdrawalChain(
 				withdrawals,
@@ -70,25 +32,7 @@ describe('ChainedWithdrawalLib', () => {
 		it('should return false for an invalid withdrawal chain', async () => {
 			const contract = await loadFixture(setup)
 
-			const withdrawals = [
-				{
-					recipient: ethers.Wallet.createRandom().address,
-					tokenIndex: 1,
-					amount: ethers.parseEther('1'),
-					nullifier: ethers.randomBytes(32),
-					blockHash: ethers.randomBytes(32),
-					blockNumber: 1000,
-				},
-				{
-					recipient: ethers.Wallet.createRandom().address,
-					tokenIndex: 2,
-					amount: ethers.parseEther('2'),
-					nullifier: ethers.randomBytes(32),
-					blockHash: ethers.randomBytes(32),
-					blockNumber: 1001,
-				},
-			]
-
+			const withdrawals = getChainedWithdrawals(2)
 			const invalidLastHash = ethers.randomBytes(32)
 
 			const isValid = await contract.verifyWithdrawalChain(
@@ -114,40 +58,12 @@ describe('ChainedWithdrawalLib', () => {
 		it('should handle a single withdrawal in the chain', async () => {
 			const contract = await loadFixture(setup)
 
-			const withdrawal = {
-				recipient: ethers.Wallet.createRandom().address,
-				tokenIndex: 1,
-				amount: ethers.parseEther('1'),
-				nullifier: ethers.randomBytes(32),
-				blockHash: ethers.randomBytes(32),
-				blockNumber: 1000,
-			}
+			const withdrawals = getChainedWithdrawals(1)
 
-			const lastWithdrawalHash = ethers.keccak256(
-				ethers.solidityPacked(
-					[
-						'bytes32',
-						'address',
-						'uint32',
-						'uint256',
-						'bytes32',
-						'bytes32',
-						'uint32',
-					],
-					[
-						ethers.ZeroHash,
-						withdrawal.recipient,
-						withdrawal.tokenIndex,
-						withdrawal.amount,
-						withdrawal.nullifier,
-						withdrawal.blockHash,
-						withdrawal.blockNumber,
-					],
-				),
-			)
+			const lastWithdrawalHash = getPrevHashFromWithdrawals(withdrawals)
 
 			const isValid = await contract.verifyWithdrawalChain(
-				[withdrawal],
+				withdrawals,
 				lastWithdrawalHash,
 			)
 			expect(isValid).to.be.true

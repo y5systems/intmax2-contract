@@ -161,7 +161,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 
 	function _collectDirectWithdrawals(
 		uint256 upToDirectWithdrawalId
-	) internal returns (WithdrawalLib.Withdrawal[] memory) {
+	) private returns (WithdrawalLib.Withdrawal[] memory) {
 		if (upToDirectWithdrawalId >= directWithdrawalsQueue.rear) {
 			revert DirectWithdrawalIsTooLarge(
 				upToDirectWithdrawalId,
@@ -183,7 +183,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 
 	function _collectClaimableWithdrawals(
 		uint256 upToClamableWithdrawalId
-	) internal returns (bytes32[] memory) {
+	) private returns (bytes32[] memory) {
 		if (upToClamableWithdrawalId >= claimableWithdrawalsQueue.rear) {
 			revert ClaimableWithdrawalIsTooLarge(
 				upToClamableWithdrawalId,
@@ -224,7 +224,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 
 	// The specification of ScrollMessenger may change in the future.
 	// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
-	function _relayMessage(bytes memory message) internal {
+	function _relayMessage(bytes memory message) private {
 		uint256 value = 0; // relay to non-payable function
 		// In the current implementation of ScrollMessenger, the `gasLimit` is simply included in the L2 event log
 		// and does not impose any restrictions on the L1 gas limit. However, considering the possibility of
