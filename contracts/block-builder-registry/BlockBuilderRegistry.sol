@@ -123,10 +123,7 @@ contract BlockBuilderRegistry is
 		);
 	}
 
-	function _slashBlockBuilder(
-		address blockBuilder,
-		address challenger
-	) private {
+	function _slashBlockBuilder(address blockBuilder, address owner) private {
 		BlockBuilderInfo memory info = blockBuilders[blockBuilder];
 		if (info.isStaking() == false) {
 			revert BlockBuilderNotFound();
@@ -135,7 +132,7 @@ contract BlockBuilderRegistry is
 		if (!info.isStakeAmountSufficient() && info.isValid) {
 			info.isValid = false;
 		}
-		emit BlockBuilderSlashed(blockBuilder, challenger);
+		emit BlockBuilderSlashed(blockBuilder, owner);
 		if (info.stakeAmount < MIN_STAKE_AMOUNT) {
 			// The Block Builder cannot post a block unless it has a minimum amount of stakes,
 			// so it does not normally enter into this process.
@@ -143,9 +140,9 @@ contract BlockBuilderRegistry is
 			info.stakeAmount = 0;
 			blockBuilders[blockBuilder] = info;
 			if (slashAmount < MIN_STAKE_AMOUNT / 2) {
-				_transfer(challenger, slashAmount);
+				_transfer(owner, slashAmount);
 			} else {
-				_transfer(challenger, MIN_STAKE_AMOUNT / 2);
+				_transfer(owner, MIN_STAKE_AMOUNT / 2);
 				_transfer(burnAddress, slashAmount - (MIN_STAKE_AMOUNT / 2));
 			}
 			return;
@@ -158,7 +155,7 @@ contract BlockBuilderRegistry is
 		// submitting fraud proofs by oneself, which would place a burden on
 		// the generation of block validity proofs. An invalid block must prove
 		// in the block validity proof that it has been invalidated.
-		_transfer(challenger, MIN_STAKE_AMOUNT / 2);
+		_transfer(owner, MIN_STAKE_AMOUNT / 2);
 		_transfer(burnAddress, MIN_STAKE_AMOUNT / 2);
 	}
 
