@@ -15,6 +15,21 @@
 			"address": "0x04C57489d8827362172AE2fD176701132Fc10AeE",
 			"txHash": "0x7eace91753657f5827bb3813949509406578640dd7ec6880e0f4ac0bfadc97c8",
 			"kind": "uups"
+		},
+		{
+			"address": "0x589F6b1B94b2DCF3cA6cB069e3686fd91b0e6FD3",
+			"txHash": "0x64db49af008ce36b2a97ea9ca3995c10e412467bd1cddb0e4e504395c1f01af6",
+			"kind": "uups"
+		},
+		{
+			"address": "0x1614e0c273db1A48aCa29b93c2dD087b83cC42f2",
+			"txHash": "0x5f8ed1232d7b5eaf48aa9e24458860ccc1170f0550d191a71f9c4de0ce9a013c",
+			"kind": "uups"
+		},
+		{
+			"address": "0x2d8f5D86987c2e90101E44Af7f26b127f4590e6B",
+			"txHash": "0xdecfa709a15050dfec56b5d8bc2ad71106e2e8744cb77cb272a5c3376e47c2ba",
+			"kind": "uups"
 		}
 	],
 	"impls": {
@@ -629,6 +644,488 @@
 						"numberOfBytes": "64"
 					},
 					"t_struct(Withdrawal)4962_storage": {
+						"label": "struct WithdrawalLib.Withdrawal",
+						"members": [
+							{
+								"label": "recipient",
+								"type": "t_address",
+								"offset": 0,
+								"slot": "0"
+							},
+							{
+								"label": "tokenIndex",
+								"type": "t_uint32",
+								"offset": 20,
+								"slot": "0"
+							},
+							{
+								"label": "amount",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "1"
+							},
+							{
+								"label": "id",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "2"
+							}
+						],
+						"numberOfBytes": "96"
+					},
+					"t_uint256": {
+						"label": "uint256",
+						"numberOfBytes": "32"
+					},
+					"t_uint32": {
+						"label": "uint32",
+						"numberOfBytes": "4"
+					}
+				},
+				"namespaces": {
+					"erc7201:openzeppelin.storage.Ownable": [
+						{
+							"contract": "OwnableUpgradeable",
+							"label": "_owner",
+							"type": "t_address",
+							"src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+							"offset": 0,
+							"slot": "0"
+						}
+					],
+					"erc7201:openzeppelin.storage.Initializable": [
+						{
+							"contract": "Initializable",
+							"label": "_initialized",
+							"type": "t_uint64",
+							"src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+							"offset": 0,
+							"slot": "0"
+						},
+						{
+							"contract": "Initializable",
+							"label": "_initializing",
+							"type": "t_bool",
+							"src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+							"offset": 8,
+							"slot": "0"
+						}
+					]
+				}
+			}
+		},
+		"3c8b530637f1a44a861e5a5df2790096b2d3371fdc2c73420601ef056590e570": {
+			"address": "0x88aF67928453bB2E5e4Cb7D8d15885C9bEd2bAFC",
+			"txHash": "0x468af48405096d76e7046ecdfa67f0242d6767468e4ce01ea027d491ef7736b3",
+			"layout": {
+				"solcVersion": "0.8.24",
+				"storage": [
+					{
+						"label": "rollup",
+						"offset": 0,
+						"slot": "0",
+						"type": "t_contract(IRollup)6229",
+						"contract": "BlockBuilderRegistry",
+						"src": "contracts/block-builder-registry/BlockBuilderRegistry.sol:19"
+					},
+					{
+						"label": "fraudVerifier",
+						"offset": 0,
+						"slot": "1",
+						"type": "t_contract(IPlonkVerifier)4245",
+						"contract": "BlockBuilderRegistry",
+						"src": "contracts/block-builder-registry/BlockBuilderRegistry.sol:20"
+					},
+					{
+						"label": "burnAddress",
+						"offset": 0,
+						"slot": "2",
+						"type": "t_address",
+						"contract": "BlockBuilderRegistry",
+						"src": "contracts/block-builder-registry/BlockBuilderRegistry.sol:21"
+					},
+					{
+						"label": "blockBuilders",
+						"offset": 0,
+						"slot": "3",
+						"type": "t_mapping(t_address,t_struct(BlockBuilderInfo)4075_storage)",
+						"contract": "BlockBuilderRegistry",
+						"src": "contracts/block-builder-registry/BlockBuilderRegistry.sol:22"
+					},
+					{
+						"label": "slashedBlockNumbers",
+						"offset": 0,
+						"slot": "4",
+						"type": "t_mapping(t_uint32,t_bool)",
+						"contract": "BlockBuilderRegistry",
+						"src": "contracts/block-builder-registry/BlockBuilderRegistry.sol:23"
+					}
+				],
+				"types": {
+					"t_address": {
+						"label": "address",
+						"numberOfBytes": "20"
+					},
+					"t_bool": {
+						"label": "bool",
+						"numberOfBytes": "1"
+					},
+					"t_struct(InitializableStorage)150_storage": {
+						"label": "struct Initializable.InitializableStorage",
+						"members": [
+							{
+								"label": "_initialized",
+								"type": "t_uint64",
+								"offset": 0,
+								"slot": "0"
+							},
+							{
+								"label": "_initializing",
+								"type": "t_bool",
+								"offset": 8,
+								"slot": "0"
+							}
+						],
+						"numberOfBytes": "32"
+					},
+					"t_struct(OwnableStorage)99_storage": {
+						"label": "struct OwnableUpgradeable.OwnableStorage",
+						"members": [
+							{
+								"label": "_owner",
+								"type": "t_address",
+								"offset": 0,
+								"slot": "0"
+							}
+						],
+						"numberOfBytes": "32"
+					},
+					"t_uint64": {
+						"label": "uint64",
+						"numberOfBytes": "8"
+					},
+					"t_contract(IPlonkVerifier)4245": {
+						"label": "contract IPlonkVerifier",
+						"numberOfBytes": "20"
+					},
+					"t_contract(IRollup)6229": {
+						"label": "contract IRollup",
+						"numberOfBytes": "20"
+					},
+					"t_mapping(t_address,t_struct(BlockBuilderInfo)4075_storage)": {
+						"label": "mapping(address => struct IBlockBuilderRegistry.BlockBuilderInfo)",
+						"numberOfBytes": "32"
+					},
+					"t_mapping(t_uint32,t_bool)": {
+						"label": "mapping(uint32 => bool)",
+						"numberOfBytes": "32"
+					},
+					"t_string_storage": {
+						"label": "string",
+						"numberOfBytes": "32"
+					},
+					"t_struct(BlockBuilderInfo)4075_storage": {
+						"label": "struct IBlockBuilderRegistry.BlockBuilderInfo",
+						"members": [
+							{
+								"label": "blockBuilderUrl",
+								"type": "t_string_storage",
+								"offset": 0,
+								"slot": "0"
+							},
+							{
+								"label": "stakeAmount",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "1"
+							},
+							{
+								"label": "stopTime",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "2"
+							},
+							{
+								"label": "numSlashes",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "3"
+							},
+							{
+								"label": "isValid",
+								"type": "t_bool",
+								"offset": 0,
+								"slot": "4"
+							}
+						],
+						"numberOfBytes": "160"
+					},
+					"t_uint256": {
+						"label": "uint256",
+						"numberOfBytes": "32"
+					},
+					"t_uint32": {
+						"label": "uint32",
+						"numberOfBytes": "4"
+					}
+				},
+				"namespaces": {
+					"erc7201:openzeppelin.storage.Ownable": [
+						{
+							"contract": "OwnableUpgradeable",
+							"label": "_owner",
+							"type": "t_address",
+							"src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+							"offset": 0,
+							"slot": "0"
+						}
+					],
+					"erc7201:openzeppelin.storage.Initializable": [
+						{
+							"contract": "Initializable",
+							"label": "_initialized",
+							"type": "t_uint64",
+							"src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+							"offset": 0,
+							"slot": "0"
+						},
+						{
+							"contract": "Initializable",
+							"label": "_initializing",
+							"type": "t_bool",
+							"src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+							"offset": 8,
+							"slot": "0"
+						}
+					]
+				}
+			}
+		},
+		"9c504a3839359fe93db3a9dea772cd32c96351d05f4aeee6254fa4f38ce0c145": {
+			"address": "0x0A8fA56e95669808d5B9ff4836cdb2BA572dFbef",
+			"txHash": "0xaad0364c5fa59f76faba50c35469dba75eeda3aca2e002312bfb675336dc48c3",
+			"layout": {
+				"solcVersion": "0.8.24",
+				"storage": [
+					{
+						"label": "withdrawalVerifier",
+						"offset": 0,
+						"slot": "0",
+						"type": "t_contract(IPlonkVerifier)4245",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:33"
+					},
+					{
+						"label": "l2ScrollMessenger",
+						"offset": 0,
+						"slot": "1",
+						"type": "t_contract(IL2ScrollMessenger)3333",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:34"
+					},
+					{
+						"label": "rollup",
+						"offset": 0,
+						"slot": "2",
+						"type": "t_contract(IRollup)6229",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:35"
+					},
+					{
+						"label": "liquidity",
+						"offset": 0,
+						"slot": "3",
+						"type": "t_address",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:36"
+					},
+					{
+						"label": "directWithdrawalsQueue",
+						"offset": 0,
+						"slot": "4",
+						"type": "t_struct(Queue)8432_storage",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:37"
+					},
+					{
+						"label": "claimableWithdrawalsQueue",
+						"offset": 0,
+						"slot": "7",
+						"type": "t_struct(Queue)8135_storage",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:38"
+					},
+					{
+						"label": "nullifiers",
+						"offset": 0,
+						"slot": "10",
+						"type": "t_mapping(t_bytes32,t_bool)",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:39"
+					},
+					{
+						"label": "directWithdrawalTokenIndices",
+						"offset": 0,
+						"slot": "11",
+						"type": "t_struct(UintSet)3116_storage",
+						"contract": "Withdrawal",
+						"src": "contracts/withdrawal/Withdrawal.sol:40"
+					}
+				],
+				"types": {
+					"t_address": {
+						"label": "address",
+						"numberOfBytes": "20"
+					},
+					"t_bool": {
+						"label": "bool",
+						"numberOfBytes": "1"
+					},
+					"t_struct(InitializableStorage)150_storage": {
+						"label": "struct Initializable.InitializableStorage",
+						"members": [
+							{
+								"label": "_initialized",
+								"type": "t_uint64",
+								"offset": 0,
+								"slot": "0"
+							},
+							{
+								"label": "_initializing",
+								"type": "t_bool",
+								"offset": 8,
+								"slot": "0"
+							}
+						],
+						"numberOfBytes": "32"
+					},
+					"t_struct(OwnableStorage)99_storage": {
+						"label": "struct OwnableUpgradeable.OwnableStorage",
+						"members": [
+							{
+								"label": "_owner",
+								"type": "t_address",
+								"offset": 0,
+								"slot": "0"
+							}
+						],
+						"numberOfBytes": "32"
+					},
+					"t_uint64": {
+						"label": "uint64",
+						"numberOfBytes": "8"
+					},
+					"t_array(t_bytes32)dyn_storage": {
+						"label": "bytes32[]",
+						"numberOfBytes": "32"
+					},
+					"t_array(t_struct(Withdrawal)4256_storage)dyn_storage": {
+						"label": "struct WithdrawalLib.Withdrawal[]",
+						"numberOfBytes": "32"
+					},
+					"t_bytes32": {
+						"label": "bytes32",
+						"numberOfBytes": "32"
+					},
+					"t_contract(IL2ScrollMessenger)3333": {
+						"label": "contract IL2ScrollMessenger",
+						"numberOfBytes": "20"
+					},
+					"t_contract(IPlonkVerifier)4245": {
+						"label": "contract IPlonkVerifier",
+						"numberOfBytes": "20"
+					},
+					"t_contract(IRollup)6229": {
+						"label": "contract IRollup",
+						"numberOfBytes": "20"
+					},
+					"t_mapping(t_bytes32,t_bool)": {
+						"label": "mapping(bytes32 => bool)",
+						"numberOfBytes": "32"
+					},
+					"t_mapping(t_bytes32,t_uint256)": {
+						"label": "mapping(bytes32 => uint256)",
+						"numberOfBytes": "32"
+					},
+					"t_struct(Queue)8135_storage": {
+						"label": "struct Bytes32QueueLib.Queue",
+						"members": [
+							{
+								"label": "data",
+								"type": "t_array(t_bytes32)dyn_storage",
+								"offset": 0,
+								"slot": "0"
+							},
+							{
+								"label": "front",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "1"
+							},
+							{
+								"label": "rear",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "2"
+							}
+						],
+						"numberOfBytes": "96"
+					},
+					"t_struct(Queue)8432_storage": {
+						"label": "struct WithdrawalQueueLib.Queue",
+						"members": [
+							{
+								"label": "data",
+								"type": "t_array(t_struct(Withdrawal)4256_storage)dyn_storage",
+								"offset": 0,
+								"slot": "0"
+							},
+							{
+								"label": "front",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "1"
+							},
+							{
+								"label": "rear",
+								"type": "t_uint256",
+								"offset": 0,
+								"slot": "2"
+							}
+						],
+						"numberOfBytes": "96"
+					},
+					"t_struct(Set)2644_storage": {
+						"label": "struct EnumerableSet.Set",
+						"members": [
+							{
+								"label": "_values",
+								"type": "t_array(t_bytes32)dyn_storage",
+								"offset": 0,
+								"slot": "0"
+							},
+							{
+								"label": "_positions",
+								"type": "t_mapping(t_bytes32,t_uint256)",
+								"offset": 0,
+								"slot": "1"
+							}
+						],
+						"numberOfBytes": "64"
+					},
+					"t_struct(UintSet)3116_storage": {
+						"label": "struct EnumerableSet.UintSet",
+						"members": [
+							{
+								"label": "_inner",
+								"type": "t_struct(Set)2644_storage",
+								"offset": 0,
+								"slot": "0"
+							}
+						],
+						"numberOfBytes": "64"
+					},
+					"t_struct(Withdrawal)4256_storage": {
 						"label": "struct WithdrawalLib.Withdrawal",
 						"members": [
 							{
