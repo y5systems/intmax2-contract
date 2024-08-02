@@ -7,10 +7,6 @@ import {
 } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
 
-if (network.name !== 'sepolia') {
-	throw new Error('This script should be run on sepolia network')
-}
-
 async function main() {
 	let deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.mockL1ScrollMessenger) {

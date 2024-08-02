@@ -1,0 +1,8 @@
+{
+	"rollup": "0x589F6b1B94b2DCF3cA6cB069e3686fd91b0e6FD3",
+	"blockBuilderRegistry": "0x1614e0c273db1A48aCa29b93c2dD087b83cC42f2",
+	"withdrawal": "0x2d8f5D86987c2e90101E44Af7f26b127f4590e6B",
+	"withdrawalPlonkVerifier": "0x9A1D5Cfc7ea5c5a1Df2CA1BbC6924B205d9183C5",
+	"fraudPlonkVerifier": "0x4248d1D2bab6cb083fFb240A921fa6e3F6af89cA",
+	"mockL2ScrollMessenger": "0x3dB0E640144403A2bd4643621BDA34EDb7CaC575"
+}
