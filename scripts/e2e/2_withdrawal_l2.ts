@@ -13,7 +13,7 @@ if (network.name !== 'scrollSepolia') {
 }
 
 async function main() {
-	const deployedContracts = await readDeployedContracts()
+	const deployedContracts = await readDeployedContracts(network.name)
 	if (
 		!deployedContracts.rollup ||
 		!deployedContracts.withdrawal ||

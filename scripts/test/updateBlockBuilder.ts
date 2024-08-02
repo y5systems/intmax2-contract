@@ -1,10 +1,9 @@
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
 import type { ContractTransactionResponse } from 'ethers'
 import { readDeployedContracts } from '../utils/io'
-import { sleep } from '../../utils/sleep'
 
 async function main() {
-	const deployedContracts = await readDeployedContracts()
+	const deployedContracts = await readDeployedContracts(network.name)
 	if (!deployedContracts.blockBuilderRegistry) {
 		throw new Error('blockBuilderRegistry contract should be deployed')
 	}

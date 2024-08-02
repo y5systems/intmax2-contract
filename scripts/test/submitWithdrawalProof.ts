@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 import { getRandomSalt } from '../../utils/rand'
 import { makeWithdrawalInfo } from '../../utils/withdrawal'
@@ -6,7 +6,7 @@ import { makeWithdrawalInfo } from '../../utils/withdrawal'
 async function main() {
 	// note that to submit a withdrawal proof, you need to post at least one block
 
-	const deployedContracts = await readDeployedContracts()
+	const deployedContracts = await readDeployedContracts(network.name)
 	if (!deployedContracts.rollup || !deployedContracts.withdrawal) {
 		throw new Error('rollup and withdrawal contracts should be deployed')
 	}

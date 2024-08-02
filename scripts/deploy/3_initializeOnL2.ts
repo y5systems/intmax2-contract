@@ -3,12 +3,8 @@ import { readDeployedContracts } from '../utils/io'
 import { getL2MessengerAddress } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
 
-if (network.name !== 'scrollSepolia') {
-	throw new Error('This script should be run on scrollSepolia network')
-}
-
 async function main() {
-	const deployedContracts = await readDeployedContracts()
+	const deployedContracts = await readDeployedContracts(network.name)
 	if (
 		!deployedContracts.rollup ||
 		!deployedContracts.withdrawal ||

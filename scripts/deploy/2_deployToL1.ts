@@ -7,27 +7,23 @@ import {
 } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
 
-if (network.name !== 'sepolia') {
-	throw new Error('This script should be run on sepolia network')
-}
-
 async function main() {
-	let deployedContracts = await readDeployedContracts()
+	let deployedContracts = await readDeployedContracts(network.name)
 	if (!deployedContracts.mockL1ScrollMessenger) {
 		console.log('deploying mockL1ScrollMessenger')
 		const MockL1ScrollMessenger_ = await ethers.getContractFactory(
 			'MockL1ScrollMessenger',
 		)
 		const l1ScrollMessenger = await MockL1ScrollMessenger_.deploy()
-		const deployedContracts = await readDeployedContracts()
-		await writeDeployedContracts({
+		const deployedContracts = await readDeployedContracts(network.name)
+		await writeDeployedContracts(network.name, {
 			mockL1ScrollMessenger: await l1ScrollMessenger.getAddress(),
 			...deployedContracts,
 		})
 		await sleep(30)
 	}
 
-	deployedContracts = await readDeployedContracts()
+	deployedContracts = await readDeployedContracts(network.name)
 	if (!deployedContracts.liquidity) {
 		console.log('deploying liquidity')
 		if (!deployedContracts.rollup) {
@@ -52,7 +48,7 @@ async function main() {
 				kind: 'uups',
 			},
 		)
-		await writeDeployedContracts({
+		await writeDeployedContracts(network.name, {
 			liquidity: await liquidity.getAddress(),
 			...deployedContracts,
 		})
@@ -63,8 +59,8 @@ async function main() {
 		const TestERC20 = await ethers.getContractFactory('TestERC20')
 		const owner = (await ethers.getSigners())[0]
 		const testErc20 = await TestERC20.deploy(owner.address)
-		const deployedContracts = await readDeployedContracts()
-		await writeDeployedContracts({
+		const deployedContracts = await readDeployedContracts(network.name)
+		await writeDeployedContracts(network.name, {
 			testErc20: await testErc20.getAddress(),
 			...deployedContracts,
 		})

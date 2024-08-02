@@ -2,12 +2,8 @@ import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import { sleep } from '../../utils/sleep'
 
-if (network.name !== 'scrollSepolia') {
-	throw new Error('This script should be run on scrollSepolia network')
-}
-
 async function main() {
-	const deployedContracts = await readDeployedContracts()
+	const deployedContracts = await readDeployedContracts(network.name)
 
 	if (!deployedContracts.rollup) {
 		console.log('deploying rollup')
@@ -16,12 +12,12 @@ async function main() {
 			initializer: false,
 			kind: 'uups',
 		})
-		const deployedContracts = await readDeployedContracts()
+		const deployedContracts = await readDeployedContracts(network.name)
 		const newContractAddresses = {
 			rollup: await rollup.getAddress(),
 			...deployedContracts,
 		}
-		await writeDeployedContracts(newContractAddresses)
+		await writeDeployedContracts(network.name, newContractAddresses)
 		await sleep(30)
 	}
 
@@ -38,12 +34,12 @@ async function main() {
 				kind: 'uups',
 			},
 		)
-		const deployedContracts = await readDeployedContracts()
+		const deployedContracts = await readDeployedContracts(network.name)
 		const newContractAddresses = {
 			blockBuilderRegistry: await blockBuilderRegistry.getAddress(),
 			...deployedContracts,
 		}
-		await writeDeployedContracts(newContractAddresses)
+		await writeDeployedContracts(network.name, newContractAddresses)
 		await sleep(30)
 	}
 
@@ -54,12 +50,12 @@ async function main() {
 			initializer: false,
 			kind: 'uups',
 		})
-		const deployedContracts = await readDeployedContracts()
+		const deployedContracts = await readDeployedContracts(network.name)
 		const newContractAddresses = {
 			withdrawal: await withdrawal.getAddress(),
 			...deployedContracts,
 		}
-		await writeDeployedContracts(newContractAddresses)
+		await writeDeployedContracts(network.name, newContractAddresses)
 		await sleep(30)
 	}
 
@@ -69,20 +65,20 @@ async function main() {
 	if (!deployedContracts.withdrawalPlonkVerifier) {
 		console.log('deploying withdrawalPlonkVerifier')
 		const withdrawalVerifier = await MockPlonkVerifier_.deploy()
-		const deployedContracts = await readDeployedContracts()
+		const deployedContracts = await readDeployedContracts(network.name)
 		const newContractAddresses = {
 			withdrawalPlonkVerifier: await withdrawalVerifier.getAddress(),
 			...deployedContracts,
 		}
-		await writeDeployedContracts(newContractAddresses)
+		await writeDeployedContracts(network.name, newContractAddresses)
 		await sleep(30)
 	}
 
 	if (!deployedContracts.fraudPlonkVerifier) {
 		console.log('deploying fraudPlonkVerifier')
 		const fraudVerifier = await MockPlonkVerifier_.deploy()
-		const deployedContracts = await readDeployedContracts()
-		await writeDeployedContracts({
+		const deployedContracts = await readDeployedContracts(network.name)
+		await writeDeployedContracts(network.name, {
 			fraudPlonkVerifier: await fraudVerifier.getAddress(),
 			...deployedContracts,
 		})
@@ -95,8 +91,8 @@ async function main() {
 			'MockL2ScrollMessenger',
 		)
 		const l2ScrollMessenger = await MockL2ScrollMessenger_.deploy()
-		const deployedContracts = await readDeployedContracts()
-		await writeDeployedContracts({
+		const deployedContracts = await readDeployedContracts(network.name)
+		await writeDeployedContracts(network.name, {
 			mockL2ScrollMessenger: await l2ScrollMessenger.getAddress(),
 			...deployedContracts,
 		})
