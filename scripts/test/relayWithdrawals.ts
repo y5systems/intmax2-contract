@@ -1,8 +1,8 @@
-import { ethers, network } from 'hardhat'
+import { ethers } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 
 async function main() {
-	const deployedContracts = await readDeployedContracts(network.name)
+	const deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.withdrawal) {
 		throw new Error('withdrawal contracts should be deployed')
 	}

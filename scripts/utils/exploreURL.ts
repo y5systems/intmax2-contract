@@ -1,9 +1,8 @@
-import { network } from 'hardhat'
 import { DeployedContracts } from '../schema/deployedContractsSchema'
 import { readDeployedContracts } from './io'
 
 async function main() {
-	const deployedContracts = await readDeployedContracts(network.name)
+	const deployedContracts = await readDeployedContracts()
 	if (
 		!deployedContracts.rollup ||
 		!deployedContracts.withdrawal ||

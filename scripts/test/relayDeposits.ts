@@ -1,9 +1,9 @@
-import { ethers, network } from 'hardhat'
+import { ethers } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 
 async function main() {
 	// note you have to analyze the deposits before relaying them
-	const deployedContracts = await readDeployedContracts(network.name)
+	const deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.liquidity) {
 		throw new Error('liquidity contracts should be deployed')
 	}

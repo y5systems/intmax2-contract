@@ -4,13 +4,12 @@ import {
 	DeployedContractsSchema,
 } from '../schema/deployedContractsSchema'
 import fs from 'fs-extra'
+import { network } from 'hardhat'
 
 const deployedContractPath = 'scripts/data/{networkName}-deployedContracts.json'
 
-export async function readDeployedContracts(
-	networkName: string,
-): Promise<DeployedContracts> {
-	const path = deployedContractPath.replace('{networkName}', networkName)
+export async function readDeployedContracts(): Promise<DeployedContracts> {
+	const path = deployedContractPath.replace('{networkName}', network.name)
 	try {
 		const data = await fs.readJson(path)
 		return DeployedContractsSchema.parse(data)
@@ -25,10 +24,9 @@ export async function readDeployedContracts(
 }
 
 export async function writeDeployedContracts(
-	networkName: string,
 	data: DeployedContracts,
 ): Promise<void> {
-	const path = deployedContractPath.replace('{networkName}', networkName)
+	const path = deployedContractPath.replace('{networkName}', network.name)
 	try {
 		const validatedUsers = DeployedContractsSchema.parse(data)
 		await fs.writeJson(path, validatedUsers, { spaces: 4 })

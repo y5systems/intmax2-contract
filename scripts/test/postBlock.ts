@@ -1,11 +1,11 @@
-import { ethers, network } from 'hardhat'
+import { ethers } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 import type { ContractTransactionResponse } from 'ethers'
 import { loadFullBlocks, postBlock } from '../../utils/rollup'
 import { sleep } from '../../utils/sleep'
 
 async function main() {
-	const deployedContracts = await readDeployedContracts(network.name)
+	const deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.blockBuilderRegistry || !deployedContracts.rollup) {
 		throw new Error('blockBuilderRegistry contract should be deployed')
 	}

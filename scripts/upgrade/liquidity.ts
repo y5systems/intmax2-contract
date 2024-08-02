@@ -6,7 +6,7 @@ if (network.name !== 'sepolia') {
 }
 
 async function main() {
-	const deployedContracts = await readDeployedContracts(network.name)
+	const deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.liquidity) {
 		throw new Error('liquidity contract should be deployed')
 	}
