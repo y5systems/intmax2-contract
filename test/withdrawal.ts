@@ -5,7 +5,7 @@ import { loadWithdrawalInfo, makeWithdrawalInfo } from '../utils/withdrawal'
 import { loadFullBlocks, postBlock } from '../utils/rollup'
 import { getRandomSalt } from '../utils/rand'
 
-describe('Withdawal', function () {
+describe('Withdrawal', function () {
 	let registry: BlockBuilderRegistry
 	let rollup: Rollup
 	let withdrawal: Withdrawal

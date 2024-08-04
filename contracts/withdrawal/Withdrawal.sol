@@ -74,6 +74,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			revert WithdrawalProofVerificationFailed();
 		}
 		uint256 directWithdrawalCounter = 0;
+		uint256 claimableWithdrawalCounter = 0;
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
@@ -87,6 +88,24 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 				continue; // already withdrawn
 			}
 			nullifiers[chainedWithdrawal.nullifier] = true;
+			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
+				directWithdrawalCounter++;
+			} else {
+				claimableWithdrawalCounter++;
+			}
+		}
+		WithdrawalLib.Withdrawal[]
+			memory directWithdrawals = new WithdrawalLib.Withdrawal[](
+				directWithdrawalCounter
+			);
+
+		bytes32[] memory claimableWithdrawals = new bytes32[](
+			claimableWithdrawalCounter
+		);
+
+		for (uint256 i = 0; i < withdrawals.length; i++) {
+			ChainedWithdrawalLib.ChainedWithdrawal
+				memory chainedWithdrawal = withdrawals[i];
 			WithdrawalLib.Withdrawal memory withdrawal = WithdrawalLib
 				.Withdrawal(
 					chainedWithdrawal.recipient,
@@ -97,39 +116,21 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
 				lastDirectWithdrawalId++;
 				withdrawal.id = lastDirectWithdrawalId;
-				emit DirectWithdrawalQueued(lastDirectWithdrawalId, withdrawal);
+				directWithdrawals[i] = withdrawal;
+				emit DirectWithdrawalQueued(withdrawal.id, withdrawal);
 			} else {
 				lastClaimableWithdrawalId++;
 				withdrawal.id = lastClaimableWithdrawalId;
-				emit ClaimableWithdrawalQueued(
-					lastDirectWithdrawalId,
-					withdrawal
-				);
+				claimableWithdrawals[i] = withdrawal.getHash();
+				emit ClaimableWithdrawalQueued(withdrawal.id, withdrawal);
 			}
 		}
-	}
 
-	function relayWithdrawals(
-		uint256 upToDirectWithdrawalId,
-		uint256 upToClamableWithdrawalId
-	) external {
-		WithdrawalLib.Withdrawal[] memory directWithdrawals;
-		if (upToDirectWithdrawalId != getLastRelayedDirectWithdrawalId()) {
-			directWithdrawals = _collectDirectWithdrawals(
-				upToDirectWithdrawalId
-			);
-		}
-		bytes32[] memory claimableWithdrawals;
-		if (upToClamableWithdrawalId != getLastRelayedClaimableWithdrawalId()) {
-			claimableWithdrawals = _collectClaimableWithdrawals(
-				upToClamableWithdrawalId
-			);
-		}
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
-			upToDirectWithdrawalId,
+			lastDirectWithdrawalId,
 			directWithdrawals,
-			upToClamableWithdrawalId,
+			lastClaimableWithdrawalId,
 			claimableWithdrawals
 		);
 		_relayMessage(message);
