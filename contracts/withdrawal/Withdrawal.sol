@@ -9,14 +9,12 @@ import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.s
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
-import {WithdrawalQueueLib} from "./lib/WithdrawalQueueLib.sol";
-import {Bytes32QueueLib} from "./lib/Bytes32QueueLib.sol";
 
 contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;
@@ -24,8 +22,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using ChainedWithdrawalLib for ChainedWithdrawalLib.ChainedWithdrawal[];
 	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs;
 	using Byte32Lib for bytes32;
-	using WithdrawalQueueLib for WithdrawalQueueLib.Queue;
-	using Bytes32QueueLib for Bytes32QueueLib.Queue;
 
 	uint256 private constant MAX_RELAY_DIRECT_WITHDRAWALS = 20;
 	uint256 private constant MAX_RELAY_CLAIMABLE_WITHDRAWALS = 100;
@@ -34,10 +30,11 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	IL2ScrollMessenger private l2ScrollMessenger;
 	IRollup private rollup;
 	address private liquidity;
-	WithdrawalQueueLib.Queue private directWithdrawalsQueue;
-	Bytes32QueueLib.Queue private claimableWithdrawalsQueue;
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
+
+	uint256 public lastDirectWithdrawalId;
+	uint256 public lastClaimableWithdrawalId;
 
 	function initialize(
 		address _scrollMessenger,
@@ -55,8 +52,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < _directWithdrawalTokenIndices.length; i++) {
 			directWithdrawalTokenIndices.add(_directWithdrawalTokenIndices[i]);
 		}
-		directWithdrawalsQueue.initialize();
-		claimableWithdrawalsQueue.initialize();
 	}
 
 	// added onlyOwner for dummy zkp verification
@@ -78,6 +73,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert WithdrawalProofVerificationFailed();
 		}
+		uint256 directWithdrawalCounter = 0;
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
@@ -99,21 +95,18 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 					0 // set later
 				);
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
-				uint256 id = directWithdrawalsQueue.nextIndex();
-				withdrawal.id = id;
-				directWithdrawalsQueue.enqueue(withdrawal);
-				emit DirectWithdrawalQueued(id, withdrawal);
+				lastDirectWithdrawalId++;
+				withdrawal.id = lastDirectWithdrawalId;
+				emit DirectWithdrawalQueued(lastDirectWithdrawalId, withdrawal);
 			} else {
-				uint256 id = claimableWithdrawalsQueue.nextIndex();
-				withdrawal.id = id;
-				claimableWithdrawalsQueue.enqueue(withdrawal.getHash());
-				emit ClaimableWithdrawalQueued(id, withdrawal);
+				lastClaimableWithdrawalId++;
+				withdrawal.id = lastClaimableWithdrawalId;
+				emit ClaimableWithdrawalQueued(
+					lastDirectWithdrawalId,
+					withdrawal
+				);
 			}
 		}
-		emit WithdrawalsQueued(
-			getLastDirectWithdrawalId(),
-			getLastClaimableWithdrawalId()
-		);
 	}
 
 	function relayWithdrawals(
@@ -140,87 +133,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			claimableWithdrawals
 		);
 		_relayMessage(message);
-	}
-
-	function relayDirectWithdrawals(uint256 upToDirectWithdrawalId) external {
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processClaimableWithdrawals.selector,
-			_collectDirectWithdrawals(upToDirectWithdrawalId)
-		);
-		_relayMessage(message);
-	}
-
-	function relayClaimableWithdrawals(
-		uint256 upToClamableWithdrawalId
-	) external {
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processClaimableWithdrawals.selector,
-			_collectClaimableWithdrawals(upToClamableWithdrawalId)
-		);
-		_relayMessage(message);
-	}
-
-	function _collectDirectWithdrawals(
-		uint256 upToDirectWithdrawalId
-	) private returns (WithdrawalLib.Withdrawal[] memory) {
-		if (upToDirectWithdrawalId >= directWithdrawalsQueue.rear) {
-			revert DirectWithdrawalIsTooLarge(
-				upToDirectWithdrawalId,
-				directWithdrawalsQueue.rear
-			);
-		}
-		uint256 relayNum = upToDirectWithdrawalId -
-			directWithdrawalsQueue.front;
-		if (relayNum > MAX_RELAY_DIRECT_WITHDRAWALS) {
-			revert TooManyRelayDirectWithdrawals(relayNum);
-		}
-		WithdrawalLib.Withdrawal[]
-			memory withdrawals = new WithdrawalLib.Withdrawal[](relayNum);
-		for (uint256 i = 0; i < relayNum; i++) {
-			withdrawals[i] = directWithdrawalsQueue.dequeue();
-		}
-		return withdrawals;
-	}
-
-	function _collectClaimableWithdrawals(
-		uint256 upToClamableWithdrawalId
-	) private returns (bytes32[] memory) {
-		if (upToClamableWithdrawalId >= claimableWithdrawalsQueue.rear) {
-			revert ClaimableWithdrawalIsTooLarge(
-				upToClamableWithdrawalId,
-				claimableWithdrawalsQueue.rear
-			);
-		}
-		uint256 relayNum = upToClamableWithdrawalId -
-			claimableWithdrawalsQueue.front;
-		if (relayNum > MAX_RELAY_CLAIMABLE_WITHDRAWALS) {
-			revert TooManyRelayClaimableWithdrawals(relayNum);
-		}
-		bytes32[] memory withdrawalHashes = new bytes32[](relayNum);
-		for (uint256 i = 0; i < relayNum; i++) {
-			withdrawalHashes[i] = claimableWithdrawalsQueue.dequeue();
-		}
-		return withdrawalHashes;
-	}
-
-	function getLastDirectWithdrawalId() public view returns (uint256) {
-		return directWithdrawalsQueue.rear - 1;
-	}
-
-	function getLastClaimableWithdrawalId() public view returns (uint256) {
-		return claimableWithdrawalsQueue.rear - 1;
-	}
-
-	function getLastRelayedDirectWithdrawalId() public view returns (uint256) {
-		return directWithdrawalsQueue.front - 1;
-	}
-
-	function getLastRelayedClaimableWithdrawalId()
-		public
-		view
-		returns (uint256)
-	{
-		return claimableWithdrawalsQueue.front - 1;
 	}
 
 	// The specification of ScrollMessenger may change in the future.
