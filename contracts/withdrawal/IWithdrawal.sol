@@ -55,26 +55,4 @@ interface IWithdrawal {
 			calldata publicInputs,
 		bytes calldata proof
 	) external;
-
-	function relayWithdrawals(
-		uint256 upToDirectWithdrawalId,
-		uint256 upToClamableWithdrawalId
-	) external;
-
-	function relayDirectWithdrawals(uint256 upToDirectWithdrawalId) external;
-
-	function relayClaimableWithdrawals(
-		uint256 upToClamableWithdrawalId
-	) external;
-
-	function getLastDirectWithdrawalId() external view returns (uint256);
-
-	function getLastClaimableWithdrawalId() external view returns (uint256);
-
-	function getLastRelayedDirectWithdrawalId() external view returns (uint256);
-
-	function getLastRelayedClaimableWithdrawalId()
-		external
-		view
-		returns (uint256);
 }

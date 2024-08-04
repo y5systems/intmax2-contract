@@ -219,11 +219,6 @@ describe('Integration', function () {
 		)
 		const { lastDirectWithdrawalId, lastClaimableWithdrawalId } =
 			withdrawalsQueuedEvent.args
-		// relay withdrawal
-		await withdrawal.relayWithdrawals(
-			lastDirectWithdrawalId,
-			lastClaimableWithdrawalId,
-		)
 		const sentEvent = await getLastSentEvent(
 			await l2ScrollMessenger.getAddress(),
 			await withdrawal.getAddress(),
