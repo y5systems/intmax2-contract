@@ -418,7 +418,7 @@ describe('Withdrawal', () => {
 		})
 
 		describe('fail', () => {
-			it.only('only owner', async () => {
+			it('only owner', async () => {
 				const [withdrawal] = await loadFixture(setup)
 				const { deployer, user } = await getSigners()
 
