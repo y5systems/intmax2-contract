@@ -16,8 +16,6 @@ import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
 
-// consoleをimport
-
 contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
