@@ -23,4 +23,13 @@ contract L2ScrollMessengerTestForWithdrawal {
 		sender = _sender;
 		msgValue = msg.value;
 	}
+
+	function clear() external {
+		to = address(0);
+		value = 0;
+		message = "";
+		gasLimit = 0;
+		sender = address(0);
+		msgValue = 0;
+	}
 }

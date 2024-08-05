@@ -16,6 +16,8 @@ import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
 
+// consoleをimport
+
 contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
@@ -61,29 +63,24 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			calldata publicInputs,
 		bytes calldata proof
 	) external onlyOwner {
-		// verify public inputs
-		if (
-			!withdrawals.verifyWithdrawalChain(publicInputs.lastWithdrawalHash)
-		) {
-			revert WithdrawalChainVerificationFailed();
-		}
-		if (publicInputs.withdrawalAggregator != _msgSender()) {
-			revert WithdrawalAggregatorMismatch();
-		}
-		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
-			revert WithdrawalProofVerificationFailed();
-		}
+		_validWithdrawalProof(withdrawals, publicInputs, proof);
 		uint256 directWithdrawalCounter = 0;
 		uint256 claimableWithdrawalCounter = 0;
+		uint256 effectiveWithdrawalsIndex = 0;
+		uint256 effectiveWithdrawalsCount = getEffectiveWithdrawalsCount(
+			withdrawals
+		);
+		if (effectiveWithdrawalsCount == 0) {
+			return;
+		}
+		ChainedWithdrawalLib.ChainedWithdrawal[]
+			memory effectiveWithdrawals = new ChainedWithdrawalLib.ChainedWithdrawal[](
+				effectiveWithdrawalsCount
+			);
+
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
-			bytes32 expectedBlockHash = rollup.getBlockHash(
-				chainedWithdrawal.blockNumber
-			);
-			if (expectedBlockHash != chainedWithdrawal.blockHash) {
-				revert BlockHashNotExists(chainedWithdrawal.blockHash);
-			}
 			if (nullifiers[chainedWithdrawal.nullifier] == true) {
 				continue; // already withdrawn
 			}
@@ -93,19 +90,22 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			} else {
 				claimableWithdrawalCounter++;
 			}
+			effectiveWithdrawals[effectiveWithdrawalsIndex] = chainedWithdrawal;
+			effectiveWithdrawalsIndex++;
 		}
 		WithdrawalLib.Withdrawal[]
 			memory directWithdrawals = new WithdrawalLib.Withdrawal[](
 				directWithdrawalCounter
 			);
-
 		bytes32[] memory claimableWithdrawals = new bytes32[](
 			claimableWithdrawalCounter
 		);
 
-		for (uint256 i = 0; i < withdrawals.length; i++) {
+		uint256 directWithdrawalIndexCounter = 0;
+		uint256 claimableWithdrawalIndexCounter = 0;
+		for (uint256 i = 0; i < effectiveWithdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
-				memory chainedWithdrawal = withdrawals[i];
+				memory chainedWithdrawal = effectiveWithdrawals[i];
 			WithdrawalLib.Withdrawal memory withdrawal = WithdrawalLib
 				.Withdrawal(
 					chainedWithdrawal.recipient,
@@ -116,16 +116,19 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
 				lastDirectWithdrawalId++;
 				withdrawal.id = lastDirectWithdrawalId;
-				directWithdrawals[i] = withdrawal;
+				directWithdrawals[directWithdrawalIndexCounter] = withdrawal;
 				emit DirectWithdrawalQueued(withdrawal.id, withdrawal);
+				directWithdrawalIndexCounter++;
 			} else {
 				lastClaimableWithdrawalId++;
 				withdrawal.id = lastClaimableWithdrawalId;
-				claimableWithdrawals[i] = withdrawal.getHash();
+				claimableWithdrawals[
+					claimableWithdrawalIndexCounter
+				] = withdrawal.getHash();
 				emit ClaimableWithdrawalQueued(withdrawal.id, withdrawal);
+				claimableWithdrawalIndexCounter++;
 			}
 		}
-
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
 			lastDirectWithdrawalId,
@@ -155,8 +158,53 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 
 	function _isDirectWithdrawalToken(
 		uint32 tokenIndex
-	) internal view returns (bool) {
+	) private view returns (bool) {
 		return directWithdrawalTokenIndices.contains(tokenIndex);
+	}
+
+	function getEffectiveWithdrawalsCount(
+		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals
+	) private view returns (uint256) {
+		uint256 count = 0;
+		for (uint256 i = 0; i < withdrawals.length; i++) {
+			ChainedWithdrawalLib.ChainedWithdrawal
+				memory chainedWithdrawal = withdrawals[i];
+			if (nullifiers[chainedWithdrawal.nullifier] == true) {
+				continue; // already withdrawn
+			}
+			count++;
+		}
+		return count;
+	}
+
+	function _validWithdrawalProof(
+		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
+		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
+			calldata publicInputs,
+		bytes calldata proof
+	) private view {
+		if (
+			!withdrawals.verifyWithdrawalChain(publicInputs.lastWithdrawalHash)
+		) {
+			revert WithdrawalChainVerificationFailed();
+		}
+		if (publicInputs.withdrawalAggregator != _msgSender()) {
+			revert WithdrawalAggregatorMismatch();
+		}
+		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
+			revert WithdrawalProofVerificationFailed();
+		}
+
+		for (uint256 i = 0; i < withdrawals.length; i++) {
+			ChainedWithdrawalLib.ChainedWithdrawal
+				memory chainedWithdrawal = withdrawals[i];
+			bytes32 expectedBlockHash = rollup.getBlockHash(
+				chainedWithdrawal.blockNumber
+			);
+			if (expectedBlockHash != chainedWithdrawal.blockHash) {
+				revert BlockHashNotExists(chainedWithdrawal.blockHash);
+			}
+		}
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}
