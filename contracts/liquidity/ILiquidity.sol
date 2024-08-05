@@ -104,16 +104,6 @@ interface ILiquidity {
 		bytes32[] calldata withdrawalHahes
 	) external;
 
-	function processDirectWithdrawals(
-		uint256 lastProcessedDirectWithdrawalId,
-		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) external;
-
-	function processClaimableWithdrawals(
-		uint256 lastProcessedClaimableWithdrawalId,
-		bytes32[] calldata withdrawalHahes
-	) external;
-
 	function getDepositData(
 		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory);
