@@ -15,8 +15,6 @@ import {
 
 describe('Withdrawal', () => {
 	const DIRECT_WITHDRAWAL_TOKEN_INDICES = [1, 2, 3]
-	const MAX_RELAY_DIRECT_WITHDRAWALS = 20
-	const MAX_RELAY_CLAIMABLE_WITHDRAWALS = 100
 	const UINT256_MAX =
 		'115792089237316195423570985008687907853269984665640564039457584007913129639935'
 	async function setup(): Promise<
@@ -99,8 +97,13 @@ describe('Withdrawal', () => {
 	describe('submitWithdrawalProof', () => {
 		describe('success', () => {
 			it('should accept valid withdrawal proof and queue direct withdrawals', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
+				const [
+					withdrawal,
+					scrollMessenger,
+					mockPlonkVerifier,
+					rollupTestForWithdrawal,
+					liquidity,
+				] = await loadFixture(setup)
 				const { deployer } = await getSigners()
 
 				// Create withdrawals for direct withdrawal tokens
@@ -147,12 +150,24 @@ describe('Withdrawal', () => {
 					.withArgs(2, 0)
 
 				// Verify that the withdrawals were queued
-				expect(await withdrawal.getLastDirectWithdrawalId()).to.equal(2)
-				expect(await withdrawal.getLastClaimableWithdrawalId()).to.equal(0)
+				expect(await withdrawal.lastDirectWithdrawalId()).to.equal(2)
+				expect(await withdrawal.lastClaimableWithdrawalId()).to.equal(0)
+
+				expect(await scrollMessenger.to()).to.equal(liquidity)
+				expect(await scrollMessenger.value()).to.equal(0)
+				expect(await scrollMessenger.message()).to.not.equal('0x')
+				expect(await scrollMessenger.gasLimit()).to.equal(UINT256_MAX)
+				expect(await scrollMessenger.sender()).to.equal(deployer.address)
+				expect(await scrollMessenger.msgValue()).to.equal(0)
 			})
 			it('should accept valid withdrawal proof and queue claimable withdrawals', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
+				const [
+					withdrawal,
+					scrollMessenger,
+					mockPlonkVerifier,
+					rollupTestForWithdrawal,
+					liquidity,
+				] = await loadFixture(setup)
 				const { deployer } = await getSigners()
 
 				// Create withdrawals for non-direct withdrawal tokens
@@ -200,12 +215,24 @@ describe('Withdrawal', () => {
 					.withArgs(0, 2)
 
 				// Verify that the withdrawals were queued
-				expect(await withdrawal.getLastDirectWithdrawalId()).to.equal(0)
-				expect(await withdrawal.getLastClaimableWithdrawalId()).to.equal(2)
+				expect(await withdrawal.lastDirectWithdrawalId()).to.equal(0)
+				expect(await withdrawal.lastClaimableWithdrawalId()).to.equal(2)
+
+				expect(await scrollMessenger.to()).to.equal(liquidity)
+				expect(await scrollMessenger.value()).to.equal(0)
+				expect(await scrollMessenger.message()).to.not.equal('0x')
+				expect(await scrollMessenger.gasLimit()).to.equal(UINT256_MAX)
+				expect(await scrollMessenger.sender()).to.equal(deployer.address)
+				expect(await scrollMessenger.msgValue()).to.equal(0)
 			})
 			it('should handle mixed direct and claimable withdrawals', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
+				const [
+					withdrawal,
+					scrollMessenger,
+					mockPlonkVerifier,
+					rollupTestForWithdrawal,
+					liquidity,
+				] = await loadFixture(setup)
 				const { deployer } = await getSigners()
 
 				const mixedWithdrawals = [
@@ -243,13 +270,25 @@ describe('Withdrawal', () => {
 					.to.emit(withdrawal, 'DirectWithdrawalQueued')
 					.and.to.emit(withdrawal, 'ClaimableWithdrawalQueued')
 					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(1, 1)
+				expect(await withdrawal.lastDirectWithdrawalId()).to.equal(1)
+				expect(await withdrawal.lastClaimableWithdrawalId()).to.equal(1)
 
-				expect(await withdrawal.getLastDirectWithdrawalId()).to.equal(1)
-				expect(await withdrawal.getLastClaimableWithdrawalId()).to.equal(1)
+				expect(await scrollMessenger.to()).to.equal(liquidity)
+				expect(await scrollMessenger.value()).to.equal(0)
+				expect(await scrollMessenger.message()).to.not.equal('0x')
+				expect(await scrollMessenger.gasLimit()).to.equal(UINT256_MAX)
+				expect(await scrollMessenger.sender()).to.equal(deployer.address)
+				expect(await scrollMessenger.msgValue()).to.equal(0)
 			})
 			it('should emit DirectWithdrawalQueued event for direct withdrawals', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
+				const [
+					withdrawal,
+					scrollMessenger,
+					mockPlonkVerifier,
+					rollupTestForWithdrawal,
+					liquidity,
+				] = await loadFixture(setup)
 				const { deployer } = await getSigners()
 
 				const directWithdrawal = {
@@ -285,10 +324,23 @@ describe('Withdrawal', () => {
 						directWithdrawal.amount,
 						1,
 					])
+					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(1, 0)
+				expect(await scrollMessenger.to()).to.equal(liquidity)
+				expect(await scrollMessenger.value()).to.equal(0)
+				expect(await scrollMessenger.message()).to.not.equal('0x')
+				expect(await scrollMessenger.gasLimit()).to.equal(UINT256_MAX)
+				expect(await scrollMessenger.sender()).to.equal(deployer.address)
+				expect(await scrollMessenger.msgValue()).to.equal(0)
 			})
 			it('should emit ClaimableWithdrawalQueued event for claimable withdrawals', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
+				const [
+					withdrawal,
+					scrollMessenger,
+					mockPlonkVerifier,
+					rollupTestForWithdrawal,
+					liquidity,
+				] = await loadFixture(setup)
 				const { deployer } = await getSigners()
 
 				const claimableWithdrawal = {
@@ -324,49 +376,22 @@ describe('Withdrawal', () => {
 						claimableWithdrawal.amount,
 						1,
 					])
-			})
-			it('should emit WithdrawalsQueued event', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				const mixedWithdrawals = [
-					{
-						...getChainedWithdrawals(1)[0],
-						tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-						blockNumber: 1000,
-					},
-					{
-						...getChainedWithdrawals(1)[0],
-						tokenIndex: 1000,
-						blockNumber: 2000,
-					},
-				]
-				const lastWithdrawalHash = getPrevHashFromWithdrawals(mixedWithdrawals)
-
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of mixedWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				await expect(
-					withdrawal.submitWithdrawalProof(
-						mixedWithdrawals,
-						validPublicInputs,
-						'0x',
-					),
-				)
-					.to.emit(withdrawal, 'WithdrawalsQueued')
-					.withArgs(1, 1)
+					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(0, 1)
+				expect(await scrollMessenger.to()).to.equal(liquidity)
+				expect(await scrollMessenger.value()).to.equal(0)
+				expect(await scrollMessenger.message()).to.not.equal('0x')
+				expect(await scrollMessenger.gasLimit()).to.equal(UINT256_MAX)
+				expect(await scrollMessenger.sender()).to.equal(deployer.address)
+				expect(await scrollMessenger.msgValue()).to.equal(0)
 			})
 			it('should not requeue already processed withdrawals (nullifier check)', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
+				const [
+					withdrawal,
+					scrollMessenger,
+					mockPlonkVerifier,
+					rollupTestForWithdrawal,
+				] = await loadFixture(setup)
 				const { deployer } = await getSigners()
 
 				const singleWithdrawal = getChainedWithdrawals(1)[0]
@@ -392,6 +417,8 @@ describe('Withdrawal', () => {
 					'0x',
 				)
 
+				await scrollMessenger.clear()
+
 				// Second submission with the same withdrawal
 				await expect(
 					withdrawal.submitWithdrawalProof(
@@ -400,20 +427,28 @@ describe('Withdrawal', () => {
 						'0x',
 					),
 				)
+					.to.not.emit(withdrawal, 'WithdrawalsQueued')
 					.to.not.emit(withdrawal, 'DirectWithdrawalQueued')
 					.and.to.not.emit(withdrawal, 'ClaimableWithdrawalQueued')
 
 				// Check that the withdrawal IDs haven't changed
-				expect(await withdrawal.getLastDirectWithdrawalId()).to.equal(
+				expect(await withdrawal.lastDirectWithdrawalId()).to.equal(
 					singleWithdrawal.tokenIndex === DIRECT_WITHDRAWAL_TOKEN_INDICES[0]
 						? 1
 						: 0,
 				)
-				expect(await withdrawal.getLastClaimableWithdrawalId()).to.equal(
+				expect(await withdrawal.lastClaimableWithdrawalId()).to.equal(
 					singleWithdrawal.tokenIndex === DIRECT_WITHDRAWAL_TOKEN_INDICES[0]
 						? 0
 						: 1,
 				)
+
+				expect(await scrollMessenger.to()).to.equal(ethers.ZeroAddress)
+				expect(await scrollMessenger.value()).to.equal(0)
+				expect(await scrollMessenger.message()).to.equal('0x')
+				expect(await scrollMessenger.gasLimit()).to.equal(0)
+				expect(await scrollMessenger.sender()).to.equal(ethers.ZeroAddress)
+				expect(await scrollMessenger.msgValue()).to.equal(0)
 			})
 		})
 
@@ -546,744 +581,7 @@ describe('Withdrawal', () => {
 			})
 		})
 	})
-	describe('relayWithdrawals', () => {
-		describe('success', () => {
-			it('should relay direct withdrawals', async () => {
-				const [
-					withdrawal,
-					l2ScrollMessenger,
-					mockPlonkVerifier,
-					rollupTestForWithdrawal,
-					liquidity,
-				] = await loadFixture(setup)
-				const { deployer } = await getSigners()
 
-				// Create and submit direct withdrawals
-				const directWithdrawalsCount = 10
-				const directWithdrawals = getChainedWithdrawals(
-					directWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-				}))
-
-				const lastWithdrawalHash = getPrevHashFromWithdrawals(directWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of directWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					directWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Relay withdrawals up to a specific ID
-				const relayUpToId = 5n
-				await withdrawal.relayWithdrawals(relayUpToId, 0)
-
-				// Check that the correct number of withdrawals were relayed
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(
-					relayUpToId - 1n,
-				)
-
-				expect(await l2ScrollMessenger.to()).to.equal(liquidity)
-				expect(await l2ScrollMessenger.value()).to.equal(0)
-				expect((await l2ScrollMessenger.message()).length).to.equal(1418)
-				expect(await l2ScrollMessenger.gasLimit()).to.equal(UINT256_MAX)
-				expect(await l2ScrollMessenger.sender()).to.equal(deployer.address)
-				expect(await l2ScrollMessenger.msgValue()).to.equal(0)
-			})
-
-			it('should relay claimable withdrawals', async () => {
-				const [
-					withdrawal,
-					l2ScrollMessenger,
-					mockPlonkVerifier,
-					rollupTestForWithdrawal,
-					liquidity,
-				] = await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit claimable withdrawals
-				const claimableWithdrawalsCount = 10
-				const claimableWithdrawals = getChainedWithdrawals(
-					claimableWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: 1000, // Non-direct withdrawal token index
-				}))
-
-				const lastWithdrawalHash =
-					getPrevHashFromWithdrawals(claimableWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of claimableWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					claimableWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Relay withdrawals up to a specific ID
-				const relayUpToId = 5n
-				await withdrawal.relayWithdrawals(0, relayUpToId)
-
-				// Check that the correct number of withdrawals were relayed
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					relayUpToId - 1n,
-				)
-
-				// Verify the L2ScrollMessenger interaction
-				expect(await l2ScrollMessenger.to()).to.equal(liquidity)
-				expect(await l2ScrollMessenger.value()).to.equal(0)
-				expect((await l2ScrollMessenger.message()).length).to.equal(650)
-				expect(await l2ScrollMessenger.gasLimit()).to.equal(UINT256_MAX)
-				expect(await l2ScrollMessenger.sender()).to.equal(deployer.address)
-				expect(await l2ScrollMessenger.msgValue()).to.equal(0)
-			})
-
-			it('should relay both direct and claimable withdrawals', async () => {
-				const [
-					withdrawal,
-					l2ScrollMessenger,
-					mockPlonkVerifier,
-					rollupTestForWithdrawal,
-					liquidity,
-				] = await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit direct withdrawals
-				const directWithdrawalsCount = 5
-				const directWithdrawals = getChainedWithdrawals(
-					directWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-				}))
-
-				// Create and submit claimable withdrawals
-				const claimableWithdrawalsCount = 5
-				const claimableWithdrawals = getChainedWithdrawals(
-					claimableWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: 1000, // Non-direct withdrawal token index
-				}))
-
-				const allWithdrawals = [...directWithdrawals, ...claimableWithdrawals]
-				const lastWithdrawalHash = getPrevHashFromWithdrawals(allWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of allWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit all withdrawals
-				await withdrawal.submitWithdrawalProof(
-					allWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Relay both direct and claimable withdrawals
-				const relayDirectUpToId = 4n
-				const relayClaimableUpToId = 3n
-				await withdrawal.relayWithdrawals(
-					relayDirectUpToId,
-					relayClaimableUpToId,
-				)
-
-				// Check that the correct number of withdrawals were relayed
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(
-					relayDirectUpToId - 1n,
-				)
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					relayClaimableUpToId - 1n,
-				)
-
-				// Verify the L2ScrollMessenger interaction
-				expect(await l2ScrollMessenger.to()).to.equal(liquidity)
-				expect(await l2ScrollMessenger.value()).to.equal(0)
-				expect((await l2ScrollMessenger.message()).length).to.be.greaterThan(0)
-				expect(await l2ScrollMessenger.gasLimit()).to.equal(UINT256_MAX)
-				expect(await l2ScrollMessenger.sender()).to.equal(deployer.address)
-				expect(await l2ScrollMessenger.msgValue()).to.equal(0)
-			})
-
-			it('should update the last relayed withdrawal IDs correctly', async () => {
-				const [
-					withdrawal,
-					l2ScrollMessenger,
-					mockPlonkVerifier,
-					rollupTestForWithdrawal,
-				] = await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit mixed withdrawals
-				const directWithdrawalsCount = 10
-				const claimableWithdrawalsCount = 10
-				const directWithdrawals = getChainedWithdrawals(
-					directWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-				}))
-				const claimableWithdrawals = getChainedWithdrawals(
-					claimableWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: 1000, // Non-direct withdrawal token index
-				}))
-
-				const allWithdrawals = [...directWithdrawals, ...claimableWithdrawals]
-				const lastWithdrawalHash = getPrevHashFromWithdrawals(allWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of allWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit all withdrawals
-				await withdrawal.submitWithdrawalProof(
-					allWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Initial state check
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(0n)
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					0n,
-				)
-
-				// First relay: only direct withdrawals
-				await withdrawal.relayWithdrawals(5n, 0n)
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(4n)
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					0n,
-				)
-
-				// Second relay: only claimable withdrawals
-				await withdrawal.relayWithdrawals(5n, 6n)
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(4n)
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					5n,
-				)
-
-				// Third relay: both types of withdrawals
-				await withdrawal.relayWithdrawals(8n, 9n)
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(7n)
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					8n,
-				)
-
-				// Final relay: up to the last ID for both types
-				await withdrawal.relayWithdrawals(10n, 10n)
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(9n)
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					9n,
-				)
-			})
-
-			describe('fail', () => {
-				it('should revert when trying to relay more than MAX_RELAY_DIRECT_WITHDRAWALS direct withdrawals', async () => {
-					const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-						await loadFixture(setup)
-					const { deployer } = await getSigners()
-
-					// Create and submit more than MAX_RELAY_DIRECT_WITHDRAWALS direct withdrawals
-					const directWithdrawals = getChainedWithdrawals(
-						MAX_RELAY_DIRECT_WITHDRAWALS + 2,
-					).map((w) => ({
-						...w,
-						tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-					}))
-
-					const lastWithdrawalHash =
-						getPrevHashFromWithdrawals(directWithdrawals)
-					const validPublicInputs = {
-						lastWithdrawalHash,
-						withdrawalAggregator: deployer.address,
-					}
-
-					await mockPlonkVerifier.setResult(true)
-					for (const w of directWithdrawals) {
-						await rollupTestForWithdrawal.setTestData(
-							w.blockNumber,
-							w.blockHash,
-						)
-					}
-
-					// Submit the withdrawals
-					await withdrawal.submitWithdrawalProof(
-						directWithdrawals,
-						validPublicInputs,
-						'0x',
-					)
-
-					// Try to relay more than MAX_RELAY_DIRECT_WITHDRAWALS
-					await expect(
-						withdrawal.relayWithdrawals(MAX_RELAY_DIRECT_WITHDRAWALS + 2, 0),
-					).to.be.revertedWithCustomError(
-						withdrawal,
-						'TooManyRelayDirectWithdrawals',
-					)
-				})
-
-				it('should revert when trying to relay more than MAX_RELAY_CLAIMABLE_WITHDRAWALS claimable withdrawals', async () => {
-					const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-						await loadFixture(setup)
-					const { deployer } = await getSigners()
-
-					// Create and submit more than MAX_RELAY_CLAIMABLE_WITHDRAWALS claimable withdrawals
-					const claimableWithdrawals = getChainedWithdrawals(
-						MAX_RELAY_CLAIMABLE_WITHDRAWALS + 2,
-					).map((w) => ({
-						...w,
-						tokenIndex: 1000, // Non-direct withdrawal token index
-					}))
-
-					const lastWithdrawalHash =
-						getPrevHashFromWithdrawals(claimableWithdrawals)
-					const validPublicInputs = {
-						lastWithdrawalHash,
-						withdrawalAggregator: deployer.address,
-					}
-
-					await mockPlonkVerifier.setResult(true)
-					for (const w of claimableWithdrawals) {
-						await rollupTestForWithdrawal.setTestData(
-							w.blockNumber,
-							w.blockHash,
-						)
-					}
-
-					// Submit the withdrawals
-					await withdrawal.submitWithdrawalProof(
-						claimableWithdrawals,
-						validPublicInputs,
-						'0x',
-					)
-
-					// Try to relay more than MAX_RELAY_CLAIMABLE_WITHDRAWALS
-					await expect(
-						withdrawal.relayWithdrawals(0, MAX_RELAY_CLAIMABLE_WITHDRAWALS + 2),
-					).to.be.revertedWithCustomError(
-						withdrawal,
-						'TooManyRelayClaimableWithdrawals',
-					)
-				})
-
-				it('should revert when the directWithdrawalId is too large', async () => {
-					const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-						await loadFixture(setup)
-					const { deployer } = await getSigners()
-
-					// Create and submit a few direct withdrawals
-					const directWithdrawals = getChainedWithdrawals(5).map((w) => ({
-						...w,
-						tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-					}))
-
-					const lastWithdrawalHash =
-						getPrevHashFromWithdrawals(directWithdrawals)
-					const validPublicInputs = {
-						lastWithdrawalHash,
-						withdrawalAggregator: deployer.address,
-					}
-
-					await mockPlonkVerifier.setResult(true)
-					for (const w of directWithdrawals) {
-						await rollupTestForWithdrawal.setTestData(
-							w.blockNumber,
-							w.blockHash,
-						)
-					}
-
-					// Submit the withdrawals
-					await withdrawal.submitWithdrawalProof(
-						directWithdrawals,
-						validPublicInputs,
-						'0x',
-					)
-
-					// Get the current last direct withdrawal ID
-					const lastDirectWithdrawalId =
-						await withdrawal.getLastDirectWithdrawalId()
-
-					// Try to relay with a directWithdrawalId that is too large
-					const tooLargeId = lastDirectWithdrawalId + 2n
-					await expect(withdrawal.relayWithdrawals(tooLargeId, 0))
-						.to.be.revertedWithCustomError(
-							withdrawal,
-							'DirectWithdrawalIsTooLarge',
-						)
-						.withArgs(tooLargeId, lastDirectWithdrawalId + 1n)
-				})
-
-				it('should revert when the claimableWithdrawalId is too large', async () => {
-					const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-						await loadFixture(setup)
-					const { deployer } = await getSigners()
-
-					// Create and submit a few claimable withdrawals
-					const claimableWithdrawals = getChainedWithdrawals(5).map((w) => ({
-						...w,
-						tokenIndex: 1000, // Non-direct withdrawal token index
-					}))
-
-					const lastWithdrawalHash =
-						getPrevHashFromWithdrawals(claimableWithdrawals)
-					const validPublicInputs = {
-						lastWithdrawalHash,
-						withdrawalAggregator: deployer.address,
-					}
-
-					await mockPlonkVerifier.setResult(true)
-					for (const w of claimableWithdrawals) {
-						await rollupTestForWithdrawal.setTestData(
-							w.blockNumber,
-							w.blockHash,
-						)
-					}
-
-					// Submit the withdrawals
-					await withdrawal.submitWithdrawalProof(
-						claimableWithdrawals,
-						validPublicInputs,
-						'0x',
-					)
-
-					// Get the current last claimable withdrawal ID
-					const lastClaimableWithdrawalId =
-						await withdrawal.getLastClaimableWithdrawalId()
-
-					// Try to relay with a claimableWithdrawalId that is too large
-					const tooLargeId = lastClaimableWithdrawalId + 2n
-					await expect(withdrawal.relayWithdrawals(0, tooLargeId))
-						.to.be.revertedWithCustomError(
-							withdrawal,
-							'ClaimableWithdrawalIsTooLarge',
-						)
-						.withArgs(tooLargeId, lastClaimableWithdrawalId + 1n)
-				})
-			})
-		})
-	})
-	describe('relayDirectWithdrawals', () => {
-		describe('success', () => {
-			it('should relay direct withdrawals up to the specified ID', async () => {
-				const [
-					withdrawal,
-					l2ScrollMessenger,
-					mockPlonkVerifier,
-					rollupTestForWithdrawal,
-					liquidity,
-				] = await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit direct withdrawals
-				const directWithdrawalsCount = 10
-				const directWithdrawals = getChainedWithdrawals(
-					directWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-				}))
-
-				const lastWithdrawalHash = getPrevHashFromWithdrawals(directWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of directWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					directWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-				// Relay direct withdrawals up to a specific ID
-				const relayUpToId = 5n
-				await withdrawal.relayDirectWithdrawals(relayUpToId)
-				// Check that the correct number of withdrawals were relayed
-				expect(await withdrawal.getLastRelayedDirectWithdrawalId()).to.equal(
-					relayUpToId - 1n,
-				)
-				// Verify the L2ScrollMessenger interaction
-				expect(await l2ScrollMessenger.to()).to.equal(liquidity)
-				expect(await l2ScrollMessenger.value()).to.equal(0)
-				expect((await l2ScrollMessenger.message()).length).to.equal(1162)
-				expect(await l2ScrollMessenger.gasLimit()).to.equal(UINT256_MAX)
-				expect(await l2ScrollMessenger.sender()).to.equal(deployer.address)
-				expect(await l2ScrollMessenger.msgValue()).to.equal(0)
-			})
-		})
-
-		describe('fail', () => {
-			it('should revert when trying to relay more than MAX_RELAY_DIRECT_WITHDRAWALS', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit more than MAX_RELAY_DIRECT_WITHDRAWALS direct withdrawals
-				const directWithdrawals = getChainedWithdrawals(
-					MAX_RELAY_DIRECT_WITHDRAWALS + 2,
-				).map((w) => ({
-					...w,
-					tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-				}))
-
-				const lastWithdrawalHash = getPrevHashFromWithdrawals(directWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of directWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					directWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Try to relay more than MAX_RELAY_DIRECT_WITHDRAWALS
-				await expect(
-					withdrawal.relayDirectWithdrawals(
-						BigInt(MAX_RELAY_DIRECT_WITHDRAWALS + 2),
-					),
-				).to.be.revertedWithCustomError(
-					withdrawal,
-					'TooManyRelayDirectWithdrawals',
-				)
-			})
-
-			it('should revert when the directWithdrawalId is too large', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit a few direct withdrawals
-				const directWithdrawals = getChainedWithdrawals(5).map((w) => ({
-					...w,
-					tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0],
-				}))
-
-				const lastWithdrawalHash = getPrevHashFromWithdrawals(directWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of directWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					directWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Get the current last direct withdrawal ID
-				const lastDirectWithdrawalId =
-					await withdrawal.getLastDirectWithdrawalId()
-
-				// Try to relay with a directWithdrawalId that is too large
-				const tooLargeId = lastDirectWithdrawalId + 2n
-				await expect(withdrawal.relayDirectWithdrawals(tooLargeId))
-					.to.be.revertedWithCustomError(
-						withdrawal,
-						'DirectWithdrawalIsTooLarge',
-					)
-					.withArgs(tooLargeId, lastDirectWithdrawalId + 1n)
-			})
-		})
-	})
-
-	describe('relayClaimableWithdrawals', () => {
-		describe('success', () => {
-			it('should relay claimable withdrawals up to the specified ID', async () => {
-				const [
-					withdrawal,
-					l2ScrollMessenger,
-					mockPlonkVerifier,
-					rollupTestForWithdrawal,
-					liquidity,
-				] = await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit claimable withdrawals
-				const claimableWithdrawalsCount = 10
-				const claimableWithdrawals = getChainedWithdrawals(
-					claimableWithdrawalsCount,
-				).map((w) => ({
-					...w,
-					tokenIndex: 1000, // Non-direct withdrawal token index
-				}))
-
-				const lastWithdrawalHash =
-					getPrevHashFromWithdrawals(claimableWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of claimableWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					claimableWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Relay claimable withdrawals up to a specific ID
-				const relayUpToId = 5n
-				await withdrawal.relayClaimableWithdrawals(relayUpToId)
-
-				// Check that the correct number of withdrawals were relayed
-				expect(await withdrawal.getLastRelayedClaimableWithdrawalId()).to.equal(
-					relayUpToId - 1n,
-				)
-
-				// Verify the L2ScrollMessenger interaction
-				expect(await l2ScrollMessenger.to()).to.equal(liquidity)
-				expect(await l2ScrollMessenger.value()).to.equal(0)
-				expect((await l2ScrollMessenger.message()).length).to.equal(394)
-				expect(await l2ScrollMessenger.gasLimit()).to.equal(UINT256_MAX)
-				expect(await l2ScrollMessenger.sender()).to.equal(deployer.address)
-				expect(await l2ScrollMessenger.msgValue()).to.equal(0)
-			})
-		})
-
-		describe('fail', () => {
-			it('should revert when trying to relay more than MAX_RELAY_CLAIMABLE_WITHDRAWALS', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit more than MAX_RELAY_CLAIMABLE_WITHDRAWALS claimable withdrawals
-				const claimableWithdrawals = getChainedWithdrawals(
-					MAX_RELAY_CLAIMABLE_WITHDRAWALS + 2,
-				).map((w) => ({
-					...w,
-					tokenIndex: 1000, // Non-direct withdrawal token index
-				}))
-
-				const lastWithdrawalHash =
-					getPrevHashFromWithdrawals(claimableWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of claimableWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					claimableWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Try to relay more than MAX_RELAY_CLAIMABLE_WITHDRAWALS
-				await expect(
-					withdrawal.relayClaimableWithdrawals(
-						BigInt(MAX_RELAY_CLAIMABLE_WITHDRAWALS + 2),
-					),
-				).to.be.revertedWithCustomError(
-					withdrawal,
-					'TooManyRelayClaimableWithdrawals',
-				)
-			})
-
-			it('should revert when the claimableWithdrawalId is too large', async () => {
-				const [withdrawal, , mockPlonkVerifier, rollupTestForWithdrawal] =
-					await loadFixture(setup)
-				const { deployer } = await getSigners()
-
-				// Create and submit a few claimable withdrawals
-				const claimableWithdrawals = getChainedWithdrawals(5).map((w) => ({
-					...w,
-					tokenIndex: 1000, // Non-direct withdrawal token index
-				}))
-
-				const lastWithdrawalHash =
-					getPrevHashFromWithdrawals(claimableWithdrawals)
-				const validPublicInputs = {
-					lastWithdrawalHash,
-					withdrawalAggregator: deployer.address,
-				}
-
-				await mockPlonkVerifier.setResult(true)
-				for (const w of claimableWithdrawals) {
-					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
-				}
-
-				// Submit the withdrawals
-				await withdrawal.submitWithdrawalProof(
-					claimableWithdrawals,
-					validPublicInputs,
-					'0x',
-				)
-
-				// Get the current last claimable withdrawal ID
-				const lastClaimableWithdrawalId =
-					await withdrawal.getLastClaimableWithdrawalId()
-
-				// Try to relay with a claimableWithdrawalId that is too large
-				const tooLargeId = lastClaimableWithdrawalId + 2n
-				await expect(withdrawal.relayClaimableWithdrawals(tooLargeId))
-					.to.be.revertedWithCustomError(
-						withdrawal,
-						'ClaimableWithdrawalIsTooLarge',
-					)
-					.withArgs(tooLargeId, lastClaimableWithdrawalId + 1n)
-			})
-		})
-	})
 	describe('upgrade', () => {
 		it('channel contract is upgradable', async () => {
 			const [withdrawal] = await loadFixture(setup)

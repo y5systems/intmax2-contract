@@ -61,49 +61,47 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			calldata publicInputs,
 		bytes calldata proof
 	) external onlyOwner {
-		// verify public inputs
-		if (
-			!withdrawals.verifyWithdrawalChain(publicInputs.lastWithdrawalHash)
-		) {
-			revert WithdrawalChainVerificationFailed();
-		}
-		if (publicInputs.withdrawalAggregator != _msgSender()) {
-			revert WithdrawalAggregatorMismatch();
-		}
-		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
-			revert WithdrawalProofVerificationFailed();
-		}
+		_validWithdrawalProof(withdrawals, publicInputs, proof);
 		uint256 directWithdrawalCounter = 0;
 		uint256 claimableWithdrawalCounter = 0;
+		bool[] memory isSkippedFlags = new bool[](withdrawals.length);
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
+			if (nullifiers[chainedWithdrawal.nullifier] == true) {
+				isSkippedFlags[i] = true;
+				continue; // already withdrawn
+			}
+			nullifiers[chainedWithdrawal.nullifier] = true;
 			bytes32 expectedBlockHash = rollup.getBlockHash(
 				chainedWithdrawal.blockNumber
 			);
 			if (expectedBlockHash != chainedWithdrawal.blockHash) {
 				revert BlockHashNotExists(chainedWithdrawal.blockHash);
 			}
-			if (nullifiers[chainedWithdrawal.nullifier] == true) {
-				continue; // already withdrawn
-			}
-			nullifiers[chainedWithdrawal.nullifier] = true;
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
 				directWithdrawalCounter++;
 			} else {
 				claimableWithdrawalCounter++;
 			}
 		}
+		if (directWithdrawalCounter == 0 && claimableWithdrawalCounter == 0) {
+			return;
+		}
 		WithdrawalLib.Withdrawal[]
 			memory directWithdrawals = new WithdrawalLib.Withdrawal[](
 				directWithdrawalCounter
 			);
-
 		bytes32[] memory claimableWithdrawals = new bytes32[](
 			claimableWithdrawalCounter
 		);
 
+		uint256 directWithdrawalIndex = 0;
+		uint256 claimableWithdrawalIndex = 0;
 		for (uint256 i = 0; i < withdrawals.length; i++) {
+			if (isSkippedFlags[i]) {
+				continue; // skipped withdrawal
+			}
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
 			WithdrawalLib.Withdrawal memory withdrawal = WithdrawalLib
@@ -116,15 +114,22 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
 				lastDirectWithdrawalId++;
 				withdrawal.id = lastDirectWithdrawalId;
-				directWithdrawals[i] = withdrawal;
+				directWithdrawals[directWithdrawalIndex] = withdrawal;
 				emit DirectWithdrawalQueued(withdrawal.id, withdrawal);
+				directWithdrawalIndex++;
 			} else {
 				lastClaimableWithdrawalId++;
 				withdrawal.id = lastClaimableWithdrawalId;
-				claimableWithdrawals[i] = withdrawal.getHash();
+				claimableWithdrawals[claimableWithdrawalIndex] = withdrawal
+					.getHash();
 				emit ClaimableWithdrawalQueued(withdrawal.id, withdrawal);
+				claimableWithdrawalIndex++;
 			}
 		}
+		emit WithdrawalsQueued(
+			lastDirectWithdrawalId,
+			lastClaimableWithdrawalId
+		);
 
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
@@ -155,8 +160,27 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 
 	function _isDirectWithdrawalToken(
 		uint32 tokenIndex
-	) internal view returns (bool) {
+	) private view returns (bool) {
 		return directWithdrawalTokenIndices.contains(tokenIndex);
+	}
+
+	function _validWithdrawalProof(
+		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
+		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
+			calldata publicInputs,
+		bytes calldata proof
+	) private view {
+		if (
+			!withdrawals.verifyWithdrawalChain(publicInputs.lastWithdrawalHash)
+		) {
+			revert WithdrawalChainVerificationFailed();
+		}
+		if (publicInputs.withdrawalAggregator != _msgSender()) {
+			revert WithdrawalAggregatorMismatch();
+		}
+		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
+			revert WithdrawalProofVerificationFailed();
+		}
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

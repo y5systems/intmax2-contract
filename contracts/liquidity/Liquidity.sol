@@ -281,26 +281,6 @@ contract Liquidity is
 		);
 	}
 
-	function processDirectWithdrawals(
-		uint256 _lastProcessedDirectWithdrawalId,
-		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) external onlyWithdrawal {
-		_processDirectWithdrawals(
-			_lastProcessedDirectWithdrawalId,
-			withdrawals
-		);
-	}
-
-	function processClaimableWithdrawals(
-		uint256 _lastProcessedClaimableWithdrawalId,
-		bytes32[] calldata withdrawalHahes
-	) external onlyWithdrawal {
-		_processClaimableWithdrawals(
-			_lastProcessedClaimableWithdrawalId,
-			withdrawalHahes
-		);
-	}
-
 	function _processDirectWithdrawals(
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
