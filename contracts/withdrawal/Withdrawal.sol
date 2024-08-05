@@ -85,6 +85,9 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 				claimableWithdrawalCounter++;
 			}
 		}
+		if (directWithdrawalCounter == 0 && claimableWithdrawalCounter == 0) {
+			return;
+		}
 		WithdrawalLib.Withdrawal[]
 			memory directWithdrawals = new WithdrawalLib.Withdrawal[](
 				directWithdrawalCounter

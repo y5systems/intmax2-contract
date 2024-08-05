@@ -146,6 +146,8 @@ describe('Withdrawal', () => {
 						directWithdrawals[1].amount,
 						2,
 					])
+					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(2, 0)
 
 				// Verify that the withdrawals were queued
 				expect(await withdrawal.lastDirectWithdrawalId()).to.equal(2)
@@ -209,6 +211,8 @@ describe('Withdrawal', () => {
 						claimableWithdrawals[1].amount,
 						2,
 					])
+					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(0, 2)
 
 				// Verify that the withdrawals were queued
 				expect(await withdrawal.lastDirectWithdrawalId()).to.equal(0)
@@ -265,7 +269,8 @@ describe('Withdrawal', () => {
 				)
 					.to.emit(withdrawal, 'DirectWithdrawalQueued')
 					.and.to.emit(withdrawal, 'ClaimableWithdrawalQueued')
-
+					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(1, 1)
 				expect(await withdrawal.lastDirectWithdrawalId()).to.equal(1)
 				expect(await withdrawal.lastClaimableWithdrawalId()).to.equal(1)
 
@@ -319,6 +324,8 @@ describe('Withdrawal', () => {
 						directWithdrawal.amount,
 						1,
 					])
+					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(1, 0)
 				expect(await scrollMessenger.to()).to.equal(liquidity)
 				expect(await scrollMessenger.value()).to.equal(0)
 				expect(await scrollMessenger.message()).to.not.equal('0x')
@@ -369,6 +376,8 @@ describe('Withdrawal', () => {
 						claimableWithdrawal.amount,
 						1,
 					])
+					.and.to.emit(withdrawal, 'WithdrawalsQueued')
+					.withArgs(0, 1)
 				expect(await scrollMessenger.to()).to.equal(liquidity)
 				expect(await scrollMessenger.value()).to.equal(0)
 				expect(await scrollMessenger.message()).to.not.equal('0x')
@@ -418,6 +427,7 @@ describe('Withdrawal', () => {
 						'0x',
 					),
 				)
+					.to.not.emit(withdrawal, 'WithdrawalsQueued')
 					.to.not.emit(withdrawal, 'DirectWithdrawalQueued')
 					.and.to.not.emit(withdrawal, 'ClaimableWithdrawalQueued')
 
