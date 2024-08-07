@@ -115,14 +115,22 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 				lastDirectWithdrawalId++;
 				withdrawal.id = lastDirectWithdrawalId;
 				directWithdrawals[directWithdrawalIndex] = withdrawal;
-				emit DirectWithdrawalQueued(withdrawal.id, withdrawal);
+				emit DirectWithdrawalQueued(
+					withdrawal.id,
+					withdrawal.recipient,
+					withdrawal
+				);
 				directWithdrawalIndex++;
 			} else {
 				lastClaimableWithdrawalId++;
 				withdrawal.id = lastClaimableWithdrawalId;
 				claimableWithdrawals[claimableWithdrawalIndex] = withdrawal
 					.getHash();
-				emit ClaimableWithdrawalQueued(withdrawal.id, withdrawal);
+				emit ClaimableWithdrawalQueued(
+					withdrawal.id,
+					withdrawal.recipient,
+					withdrawal
+				);
 				claimableWithdrawalIndex++;
 			}
 		}

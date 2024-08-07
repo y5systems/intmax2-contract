@@ -47,6 +47,11 @@ interface ILiquidity {
 		uint256 indexed lastProcessedClaimableWithdrawalId
 	);
 
+	event ClaimedWithdrawal(
+		address indexed recipient,
+		bytes32 indexed withdrawalHash
+	);
+
 	function depositETH(bytes32 recipientSaltHash) external payable;
 
 	function depositERC20(

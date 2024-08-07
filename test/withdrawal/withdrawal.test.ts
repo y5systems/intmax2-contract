@@ -133,14 +133,14 @@ describe('Withdrawal', () => {
 					),
 				)
 					.to.emit(withdrawal, 'DirectWithdrawalQueued')
-					.withArgs(1, [
+					.withArgs(1, directWithdrawals[0].recipient, [
 						directWithdrawals[0].recipient,
 						directWithdrawals[0].tokenIndex,
 						directWithdrawals[0].amount,
 						1,
 					])
 					.and.to.emit(withdrawal, 'DirectWithdrawalQueued')
-					.withArgs(2, [
+					.withArgs(2, directWithdrawals[1].recipient, [
 						directWithdrawals[1].recipient,
 						directWithdrawals[1].tokenIndex,
 						directWithdrawals[1].amount,
@@ -198,14 +198,14 @@ describe('Withdrawal', () => {
 					),
 				)
 					.to.emit(withdrawal, 'ClaimableWithdrawalQueued')
-					.withArgs(1, [
+					.withArgs(1, claimableWithdrawals[0].recipient, [
 						claimableWithdrawals[0].recipient,
 						claimableWithdrawals[0].tokenIndex,
 						claimableWithdrawals[0].amount,
 						1,
 					])
 					.and.to.emit(withdrawal, 'ClaimableWithdrawalQueued')
-					.withArgs(2, [
+					.withArgs(2, claimableWithdrawals[1].recipient, [
 						claimableWithdrawals[1].recipient,
 						claimableWithdrawals[1].tokenIndex,
 						claimableWithdrawals[1].amount,
@@ -318,7 +318,7 @@ describe('Withdrawal', () => {
 					),
 				)
 					.to.emit(withdrawal, 'DirectWithdrawalQueued')
-					.withArgs(1, [
+					.withArgs(1, directWithdrawal.recipient, [
 						directWithdrawal.recipient,
 						directWithdrawal.tokenIndex,
 						directWithdrawal.amount,
@@ -370,7 +370,7 @@ describe('Withdrawal', () => {
 					),
 				)
 					.to.emit(withdrawal, 'ClaimableWithdrawalQueued')
-					.withArgs(1, [
+					.withArgs(1, claimableWithdrawal.recipient, [
 						claimableWithdrawal.recipient,
 						claimableWithdrawal.tokenIndex,
 						claimableWithdrawal.amount,

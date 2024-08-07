@@ -30,12 +30,14 @@ interface IWithdrawal {
 	);
 
 	event ClaimableWithdrawalQueued(
-		uint256 claimableWithdrawalId,
+		uint256 indexed claimableWithdrawalId,
+		address indexed recipient,
 		WithdrawalLib.Withdrawal withdrawal
 	);
 
 	event DirectWithdrawalQueued(
-		uint256 directWithdrawalId,
+		uint256 indexed directWithdrawalId,
+		address indexed recipient,
 		WithdrawalLib.Withdrawal withdrawal
 	);
 
