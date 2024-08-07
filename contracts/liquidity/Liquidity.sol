@@ -185,13 +185,14 @@ contract Liquidity is
 			}
 			TokenInfo memory tokenInfo = getTokenInfo(w.tokenIndex);
 			delete claimableWithdrawals[withdrawalHash];
-			sendToken(
+			_sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,
 				w.recipient,
 				w.amount,
 				tokenInfo.tokenId
 			);
+			emit ClaimedWithdrawal(w.recipient, withdrawalHash);
 		}
 	}
 
@@ -211,7 +212,7 @@ contract Liquidity is
 			);
 		}
 		TokenInfo memory tokenInfo = getTokenInfo(deposit.tokenIndex);
-		sendToken(
+		_sendToken(
 			tokenInfo.tokenType,
 			tokenInfo.tokenAddress,
 			depositData.sender,
@@ -241,7 +242,7 @@ contract Liquidity is
 		);
 	}
 
-	function sendToken(
+	function _sendToken(
 		TokenType tokenType,
 		address token,
 		address recipient,
@@ -289,7 +290,7 @@ contract Liquidity is
 			TokenInfo memory tokenInfo = getTokenInfo(
 				withdrawals[i].tokenIndex
 			);
-			sendToken(
+			_sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,
 				withdrawals[i].recipient,
