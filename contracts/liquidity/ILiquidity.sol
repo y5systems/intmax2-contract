@@ -18,7 +18,7 @@ interface ILiquidity {
 	event Deposited(
 		uint256 indexed depositId,
 		address indexed sender,
-		bytes32 recipientSaltHash,
+		bytes32 indexed recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,
 		uint256 requestedAt
