@@ -17,7 +17,7 @@ describe('Contribution', function () {
 		const weights = [1, 2, 3]
 		await contribution.registerWeights(0, tags, weights)
 
-		const allTags = await contribution.getAllTags()
+		const allTags = await contribution.getTags(0)
 		console.log('allTags', allTags)
 	})
 
@@ -26,15 +26,8 @@ describe('Contribution', function () {
 		const users = await ethers.getSigners()
 		const user1 = users[0]
 		const user2 = users[1]
-		await contribution.recordContribution(0, tag, await user1.getAddress(), 10)
-		await contribution.recordContribution(0, tag, await user2.getAddress(), 20)
-
-		const user1ContributionPerTag = await contribution.getContributionRateOfTag(
-			0,
-			tag,
-			await user1.getAddress(),
-		)
-		console.log('user1ContributionPerTag', user1ContributionPerTag.toString())
+		await contribution.recordContribution(tag, await user1.getAddress(), 10)
+		await contribution.recordContribution(tag, await user2.getAddress(), 20)
 
 		const user1Contribution = await contribution.getContributionRate(
 			0,

@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
-
 import {UD60x18, ud, convert} from "@prb/math/src/UD60x18.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
-
 import {IContribution} from "./IContribution.sol";
 
 contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
@@ -19,21 +17,45 @@ contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
 		_grantRole(CONTRIBUTOR, _msgSender());
 	}
 
+	uint256 public currentPeriod;
+
 	// period to tag to total contributions
 	mapping(uint256 => mapping(bytes32 => uint256))
 		public totalContributionsInPeriod;
 
 	// period to tag to user contributions
 	mapping(uint256 => mapping(bytes32 => mapping(address => uint256)))
-		public userContributionsInPeriod;
+		public contributionsInPeriod;
 
-	mapping(uint256 => mapping(bytes32 => uint256))
-		public contributionWeightOfPeriod;
+	// period to tag to weight
+	mapping(uint256 => mapping(bytes32 => uint256)) public allWeights;
 
-	bytes32[] allTags;
+	// period to tags
+	mapping(uint256 => bytes32[]) allTags;
 
-	function getAllTags() external view returns (bytes32[] memory) {
-		return allTags;
+	modifier onlyAfterWeightRegistration() {
+		require(allTags[currentPeriod].length > 0, "Weights not registered");
+		_;
+	}
+
+	function getTags(
+		uint256 periodNumber
+	) external view returns (bytes32[] memory) {
+		return allTags[periodNumber];
+	}
+
+	function getWeights(
+		uint256 periodNumber
+	) external view returns (uint256[] memory) {
+		uint256[] memory weights = new uint256[](allTags[periodNumber].length);
+		for (uint256 i = 0; i < allTags[periodNumber].length; i++) {
+			weights[i] = allWeights[periodNumber][allTags[periodNumber][i]];
+		}
+		return weights;
+	}
+
+	function incrementPeriod() external onlyRole(WEIGHT_REGISTRAR) {
+		currentPeriod++;
 	}
 
 	function registerWeights(
@@ -43,33 +65,18 @@ contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
 	) external onlyRole(WEIGHT_REGISTRAR) {
 		require(tags.length == weights.length, "Invalid input length");
 		for (uint256 i = 0; i < tags.length; i++) {
-			contributionWeightOfPeriod[periodNumber][tags[i]] = weights[i];
+			allWeights[periodNumber][tags[i]] = weights[i];
 		}
-		allTags = tags;
+		allTags[periodNumber] = tags;
 	}
 
 	function recordContribution(
-		uint256 periodNumber,
 		bytes32 tag,
 		address user,
 		uint256 amount
 	) external onlyRole(CONTRIBUTOR) {
-		totalContributionsInPeriod[periodNumber][tag] += amount;
-		userContributionsInPeriod[periodNumber][tag][user] += amount;
-	}
-
-	function getContributionRateOfTag(
-		uint256 periodNumber,
-		bytes32 tag,
-		address contributor
-	) public view returns (UD60x18) {
-		uint256 totalContribution = totalContributionsInPeriod[periodNumber][
-			tag
-		];
-		uint256 userContribution = userContributionsInPeriod[periodNumber][tag][
-			contributor
-		];
-		return convert(userContribution).div(convert(totalContribution));
+		totalContributionsInPeriod[currentPeriod][tag] += amount;
+		contributionsInPeriod[currentPeriod][tag][user] += amount;
 	}
 
 	function getContributionRate(
@@ -78,20 +85,16 @@ contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
 	) external view returns (UD60x18) {
 		UD60x18 totalContribution = ud(0);
 		UD60x18 userContribution = ud(0);
-		for (uint256 i = 0; i < allTags.length; i++) {
-			bytes32 tag = allTags[i];
-			UD60x18 weight = convert(
-				contributionWeightOfPeriod[periodNumber][tag]
-			);
+		for (uint256 i = 0; i < allTags[periodNumber].length; i++) {
+			bytes32 tag = allTags[currentPeriod][i];
+			UD60x18 weight = convert(allWeights[periodNumber][tag]);
 			totalContribution =
 				totalContribution +
 				convert(totalContributionsInPeriod[periodNumber][tag]) *
 				weight;
 			userContribution =
 				userContribution +
-				convert(
-					userContributionsInPeriod[periodNumber][tag][contributor]
-				) *
+				convert(contributionsInPeriod[periodNumber][tag][contributor]) *
 				weight;
 		}
 		return userContribution.div(totalContribution);
