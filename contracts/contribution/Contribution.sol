@@ -35,7 +35,7 @@ contract Contribution is
 	mapping(uint256 => mapping(bytes32 => uint256)) public allWeights;
 
 	// period to tags
-	mapping(uint256 => bytes32[]) allTags;
+	mapping(uint256 => bytes32[]) private allTags;
 
 	modifier onlyAfterWeightRegistration() {
 		if (allTags[currentPeriod].length == 0) {
@@ -69,7 +69,9 @@ contract Contribution is
 		bytes32[] memory tags,
 		uint256[] memory weights
 	) external onlyRole(WEIGHT_REGISTRAR) {
-		require(tags.length == weights.length, "Invalid input length");
+		if (tags.length != weights.length) {
+			revert InvalidInputLength();
+		}
 		for (uint256 i = 0; i < tags.length; i++) {
 			allWeights[periodNumber][tags[i]] = weights[i];
 		}

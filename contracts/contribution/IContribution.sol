@@ -5,6 +5,7 @@ import {UD60x18} from "@prb/math/src/UD60x18.sol";
 
 interface IContribution {
 	error WeightsNotRegistered();
+	error InvalidInputLength();
 
 	function getTags(
 		uint256 periodNumber
