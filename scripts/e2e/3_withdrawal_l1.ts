@@ -2,7 +2,6 @@ import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 import { getL1MessengerAddress } from '../utils/addressBook'
 import { IL1ScrollMessenger__factory } from '../../typechain-types'
-import { fetchUnclaimedWithdrawals } from '../utils/api'
 
 const scrollMessengerAbi = IL1ScrollMessenger__factory.abi
 

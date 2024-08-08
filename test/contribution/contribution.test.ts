@@ -16,9 +16,6 @@ describe('Contribution', function () {
 		)
 		const weights = [1, 2, 3]
 		await contribution.registerWeights(0, tags, weights)
-
-		const allTags = await contribution.getTags(0)
-		console.log('allTags', allTags)
 	})
 
 	it('should be able to record contribution', async function () {
