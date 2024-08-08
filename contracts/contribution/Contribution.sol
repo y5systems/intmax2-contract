@@ -13,14 +13,6 @@ contract Contribution is
 	bytes32 public constant WEIGHT_REGISTRAR = keccak256("WEIGHT_REGISTRAR");
 	bytes32 public constant CONTRIBUTOR = keccak256("CONTRIBUTOR");
 
-	function initialize() public initializer {
-		__UUPSUpgradeable_init();
-		__AccessControl_init();
-		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
-		_grantRole(WEIGHT_REGISTRAR, _msgSender());
-		_grantRole(CONTRIBUTOR, _msgSender());
-	}
-
 	uint256 public currentPeriod;
 
 	// period to tag to total contributions
@@ -42,6 +34,14 @@ contract Contribution is
 			revert WeightsNotRegistered();
 		}
 		_;
+	}
+
+	function initialize() public initializer {
+		__UUPSUpgradeable_init();
+		__AccessControl_init();
+		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+		_grantRole(WEIGHT_REGISTRAR, _msgSender());
+		_grantRole(CONTRIBUTOR, _msgSender());
 	}
 
 	function getTags(
