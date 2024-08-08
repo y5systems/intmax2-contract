@@ -5,7 +5,11 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {IContribution} from "./IContribution.sol";
 
-contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
+contract Contribution is
+	IContribution,
+	UUPSUpgradeable,
+	AccessControlUpgradeable
+{
 	bytes32 public constant WEIGHT_REGISTRAR = keccak256("WEIGHT_REGISTRAR");
 	bytes32 public constant CONTRIBUTOR = keccak256("CONTRIBUTOR");
 
@@ -34,7 +38,9 @@ contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
 	mapping(uint256 => bytes32[]) allTags;
 
 	modifier onlyAfterWeightRegistration() {
-		require(allTags[currentPeriod].length > 0, "Weights not registered");
+		if (allTags[currentPeriod].length == 0) {
+			revert WeightsNotRegistered();
+		}
 		_;
 	}
 

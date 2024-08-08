@@ -4,11 +4,13 @@ pragma solidity 0.8.24;
 import {UD60x18} from "@prb/math/src/UD60x18.sol";
 
 interface IContribution {
+	error WeightsNotRegistered();
+
 	function getTags(
 		uint256 periodNumber
 	) external view returns (bytes32[] memory);
 
-	function getWeight(
+	function getWeights(
 		uint256 periodNumber
 	) external view returns (uint256[] memory);
 
@@ -25,6 +27,7 @@ interface IContribution {
 	) external;
 
 	function getContributionRate(
+		uint256 periodNumber,
 		address contributor
 	) external view returns (UD60x18);
 }
