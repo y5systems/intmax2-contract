@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {UD60x18, ud} from "@prb/math/src/UD60x18.sol";
+import {UD60x18, ud, convert} from "@prb/math/src/UD60x18.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
@@ -69,7 +69,7 @@ contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
 		uint256 userContribution = userContributionsInPeriod[periodNumber][tag][
 			contributor
 		];
-		return ud(userContribution).div(ud(totalContribution));
+		return convert(userContribution).div(convert(totalContribution));
 	}
 
 	function getContributionRate(
@@ -80,14 +80,18 @@ contract Contribution is UUPSUpgradeable, AccessControlUpgradeable {
 		UD60x18 userContribution = ud(0);
 		for (uint256 i = 0; i < allTags.length; i++) {
 			bytes32 tag = allTags[i];
-			UD60x18 weight = ud(contributionWeightOfPeriod[periodNumber][tag]);
+			UD60x18 weight = convert(
+				contributionWeightOfPeriod[periodNumber][tag]
+			);
 			totalContribution =
 				totalContribution +
-				ud(totalContributionsInPeriod[periodNumber][tag]) *
+				convert(totalContributionsInPeriod[periodNumber][tag]) *
 				weight;
 			userContribution =
 				userContribution +
-				ud(userContributionsInPeriod[periodNumber][tag][contributor]) *
+				convert(
+					userContributionsInPeriod[periodNumber][tag][contributor]
+				) *
 				weight;
 		}
 		return userContribution.div(totalContribution);
