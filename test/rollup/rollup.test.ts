@@ -29,6 +29,7 @@ describe('Rollup', () => {
 			(await L2ScrollMessengerTestForRollupFactory.deploy()) as L2ScrollMessengerTestForRollup
 		const rollupFactory = await ethers.getContractFactory('Rollup')
 		const liquidity = ethers.Wallet.createRandom().address
+		const contribution = ethers.Wallet.createRandom().address
 		await l2ScrollMessenger.setResult(liquidity)
 		const rollup = (await upgrades.deployProxy(
 			rollupFactory,
@@ -36,6 +37,7 @@ describe('Rollup', () => {
 				await l2ScrollMessenger.getAddress(),
 				liquidity,
 				await blockBuilderRegistry.getAddress(),
+				contribution,
 			],
 			{ kind: 'uups' },
 		)) as unknown as Rollup
@@ -136,6 +138,7 @@ describe('Rollup', () => {
 
 				await expect(
 					rollup.initialize(
+						ethers.ZeroAddress,
 						ethers.ZeroAddress,
 						ethers.ZeroAddress,
 						ethers.ZeroAddress,
