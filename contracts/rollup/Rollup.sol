@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 import {IRollup} from "./IRollup.sol";
 import {IBlockBuilderRegistry} from "../block-builder-registry/IBlockBuilderRegistry.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
+import {IContribution} from "../contribution/IContribution.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -26,6 +27,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	address[] public blockBuilders;
 
 	IL2ScrollMessenger private l2ScrollMessenger;
+	IContribution private contribution;
 	DepositTreeLib.DepositTree private depositTree;
 	bytes32 public depositTreeRoot;
 
@@ -49,7 +51,8 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	function initialize(
 		address _scrollMessenger,
 		address _liquidity,
-		address _blockBuilderRegistry
+		address _blockBuilderRegistry,
+		address _contribution
 	) public initializer {
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
@@ -57,6 +60,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		liquidity = _liquidity;
 		blockBuilderRegistry = IBlockBuilderRegistry(_blockBuilderRegistry);
+		contribution = IContribution(_contribution);
 
 		depositTreeRoot = depositTree.getRoot();
 		blockHashes.pushGenesisBlockHash(depositTreeRoot);

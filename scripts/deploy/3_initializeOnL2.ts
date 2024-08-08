@@ -11,7 +11,8 @@ async function main() {
 		!deployedContracts.blockBuilderRegistry ||
 		!deployedContracts.withdrawalPlonkVerifier ||
 		!deployedContracts.fraudPlonkVerifier ||
-		!deployedContracts.liquidity
+		!deployedContracts.liquidity ||
+		!deployedContracts.l2Contribution
 	) {
 		throw new Error('all contracts should be deployed')
 	}
@@ -34,6 +35,7 @@ async function main() {
 			await getL2MessengerAddress(),
 			deployedContracts.liquidity,
 			deployedContracts.blockBuilderRegistry,
+			deployedContracts.l2Contribution,
 		)
 		await tx.wait()
 		console.log('Rollup initialized')
@@ -47,6 +49,7 @@ async function main() {
 			deployedContracts.withdrawalPlonkVerifier,
 			deployedContracts.liquidity,
 			deployedContracts.rollup,
+			deployedContracts.l2Contribution,
 			[0, 1, 2], // 0: eth, 1: usdc, 2: wbtc
 		)
 		await tx.wait()

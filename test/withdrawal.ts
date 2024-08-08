@@ -1,6 +1,6 @@
 import { ethers, upgrades } from 'hardhat'
 import type { Withdrawal } from '../typechain-types/contracts/withdrawal'
-import { BlockBuilderRegistry, Rollup } from '../typechain-types'
+import { BlockBuilderRegistry, Contribution, Rollup } from '../typechain-types'
 import { loadWithdrawalInfo, makeWithdrawalInfo } from '../utils/withdrawal'
 import { loadFullBlocks, postBlock } from '../utils/rollup'
 import { getRandomSalt } from '../utils/rand'
@@ -18,6 +18,12 @@ describe('Withdrawal', function () {
 			initializer: false,
 			kind: 'uups',
 		})) as unknown as BlockBuilderRegistry
+
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const contribution = (await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})) as unknown as Contribution
+
 		const rollupFactory = await ethers.getContractFactory('Rollup')
 		rollup = (await upgrades.deployProxy(rollupFactory, [], {
 			initializer: false,
@@ -27,6 +33,7 @@ describe('Withdrawal', function () {
 			ethers.ZeroAddress,
 			ethers.ZeroAddress,
 			await registry.getAddress(),
+			await contribution.getAddress(),
 		)
 		const rollupAddress = await rollup.getAddress()
 
@@ -47,11 +54,13 @@ describe('Withdrawal', function () {
 			initializer: false,
 			kind: 'uups',
 		})) as unknown as Withdrawal
+
 		await withdrawal.initialize(
 			mockL2ScrollMessengerAddress,
 			mockPlonkVerifierAddress,
 			ethers.ZeroAddress,
 			rollupAddress,
+			await contribution.getAddress(),
 			[],
 		)
 	})

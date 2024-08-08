@@ -23,6 +23,19 @@ async function main() {
 		await sleep(30)
 	}
 
+	if (!deployedContracts.l1Contribution) {
+		console.log('deploying l1Contribution')
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const l1Contribution = await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			l2Contribution: await l1Contribution.getAddress(),
+			...deployedContracts,
+		})
+	}
+
 	deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.liquidity) {
 		console.log('deploying liquidity')
@@ -42,6 +55,7 @@ async function main() {
 				deployedContracts.rollup,
 				deployedContracts.withdrawal,
 				analyzer.address,
+				deployedContracts.l1Contribution,
 				initialERC20Tokens,
 			],
 			{

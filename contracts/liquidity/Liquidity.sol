@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/Rollup.sol";
+import {IContribution} from "../contribution/Contribution.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -34,6 +35,7 @@ contract Liquidity is
 	bytes32 public constant ANALYZER = keccak256("ANALYZER");
 
 	IL1ScrollMessenger private l1ScrollMessenger;
+	IContribution private contribution;
 	address private rollup;
 	address private withdrawal;
 	mapping(bytes32 => uint256) private claimableWithdrawals;
@@ -57,6 +59,7 @@ contract Liquidity is
 		address _rollup,
 		address _withdrawal,
 		address _analyzer,
+		address _contribution,
 		address[] memory initialERC20Tokens
 	) public initializer {
 		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -66,6 +69,7 @@ contract Liquidity is
 		__TokenData_init(initialERC20Tokens);
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
+		contribution = IContribution(_contribution);
 		rollup = _rollup;
 		withdrawal = _withdrawal;
 	}

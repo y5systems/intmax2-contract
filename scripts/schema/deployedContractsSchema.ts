@@ -16,6 +16,12 @@ export const DeployedContractsSchema = z
 		mockL2ScrollMessenger: ethereumAddressSchema.describe(
 			'Mock L2 scroll messenger contract address',
 		),
+		l1Contribution: ethereumAddressSchema.describe(
+			'L1 contribution contract address',
+		),
+		l2Contribution: ethereumAddressSchema.describe(
+			'L2 contribution contract address',
+		),
 		testErc20: ethereumAddressSchema.describe('Test ERC20 contract address'),
 		withdrawalPlonkVerifier: ethereumAddressSchema.describe(
 			'PLONK verifier for withdrawal contract address',
