@@ -5,6 +5,7 @@ import {IWithdrawal} from "./IWithdrawal.sol";
 import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
 import {IRollup} from "../rollup/IRollup.sol";
+import {IContribution} from "../contribution/IContribution.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -30,6 +31,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	IL2ScrollMessenger private l2ScrollMessenger;
 	IRollup private rollup;
 	address private liquidity;
+	IContribution private contribution;
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 
@@ -41,6 +43,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _withdrawalVerifier,
 		address _liquidity,
 		address _rollup,
+		address _contribution,
 		uint256[] memory _directWithdrawalTokenIndices
 	) public initializer {
 		__Ownable_init(_msgSender());
@@ -48,6 +51,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
 		rollup = IRollup(_rollup);
+		contribution = IContribution(_contribution);
 		liquidity = _liquidity;
 		for (uint256 i = 0; i < _directWithdrawalTokenIndices.length; i++) {
 			directWithdrawalTokenIndices.add(_directWithdrawalTokenIndices[i]);

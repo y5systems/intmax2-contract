@@ -1,6 +1,7 @@
 import { ethers, upgrades } from 'hardhat'
 import type {
 	BlockBuilderRegistry,
+	Contribution,
 	MockL2ScrollMessenger,
 	Rollup,
 } from '../typechain-types'
@@ -32,10 +33,16 @@ describe('Rollup', function () {
 			initializer: false,
 			kind: 'uups',
 		})) as unknown as Rollup
+
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const contribution = (await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})) as unknown as Contribution
 		await rollup.initialize(
 			await mockL2ScrollMessenger.getAddress(),
 			ethers.ZeroAddress,
 			await registry.getAddress(),
+			await contribution.getAddress(),
 		)
 	})
 

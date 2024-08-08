@@ -8,6 +8,7 @@ import type {
 	Withdrawal,
 	Rollup,
 	TestERC20,
+	Contribution,
 } from '../typechain-types'
 import { expect } from 'chai'
 import { loadFullBlocks, postBlock } from '../utils/rollup'
@@ -40,6 +41,23 @@ describe('Integration', function () {
 		// test token
 		const TestERC20_ = await ethers.getContractFactory('TestERC20')
 		testToken = (await TestERC20_.deploy(deployer)) as TestERC20
+
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const l1Contribution = (await upgrades.deployProxy(
+			contributionFactory,
+			[],
+			{
+				kind: 'uups',
+			},
+		)) as unknown as Contribution
+
+		const l2Contribution = (await upgrades.deployProxy(
+			contributionFactory,
+			[],
+			{
+				kind: 'uups',
+			},
+		)) as unknown as Contribution
 
 		// scroll messanger deployment
 		const MockL1ScrollMessenger_ = await ethers.getContractFactory(
@@ -103,6 +121,7 @@ describe('Integration', function () {
 			rollupAddress,
 			withdrawalAddress,
 			analyzer.address,
+			await l1Contribution.getAddress(),
 			[testTokenAddress], // testToken
 		)
 
@@ -111,12 +130,14 @@ describe('Integration', function () {
 			l2ScrollMessengerAddress,
 			liquidityAddress,
 			registryAddress,
+			await l2Contribution.getAddress(),
 		)
 		await withdrawal.initialize(
 			l2ScrollMessenger,
 			withdrawalVerifierAddress,
 			liquidity,
 			rollupAddress,
+			await l2Contribution.getAddress(),
 			[0, 1], // 0: eth, 1: testToken
 		)
 		await registry.initialize(rollupAddress, fraudVerifierAddress)

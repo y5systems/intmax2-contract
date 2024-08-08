@@ -101,11 +101,6 @@ async function main() {
 	await sleep(30)
 
 	// relay
-	tx = await withdrawal.relayWithdrawals(
-		lastDirectWithdrawalId,
-		lastClaimableWithdrawalId,
-	)
-	console.log('relayWithdrawals tx hash:', tx.hash)
 	const receipt = await tx.wait()
 	if (!receipt?.blockNumber) {
 		throw new Error('blockNumber not found')

@@ -1,6 +1,6 @@
 import { ethers, upgrades } from 'hardhat'
 import type { Withdrawal } from '../typechain-types/contracts/withdrawal'
-import { BlockBuilderRegistry, Rollup } from '../typechain-types'
+import { BlockBuilderRegistry, Contribution, Rollup } from '../typechain-types'
 import { loadWithdrawalInfo, makeWithdrawalInfo } from '../utils/withdrawal'
 import { loadFullBlocks, postBlock } from '../utils/rollup'
 import { getRandomSalt } from '../utils/rand'
@@ -18,6 +18,12 @@ describe('Withdrawal', function () {
 			initializer: false,
 			kind: 'uups',
 		})) as unknown as BlockBuilderRegistry
+
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const contribution = (await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})) as unknown as Contribution
+
 		const rollupFactory = await ethers.getContractFactory('Rollup')
 		rollup = (await upgrades.deployProxy(rollupFactory, [], {
 			initializer: false,
@@ -27,6 +33,7 @@ describe('Withdrawal', function () {
 			ethers.ZeroAddress,
 			ethers.ZeroAddress,
 			await registry.getAddress(),
+			await contribution.getAddress(),
 		)
 		const rollupAddress = await rollup.getAddress()
 
@@ -35,16 +42,25 @@ describe('Withdrawal', function () {
 		const mockPlonkVerifier = await mockPlonkVerifierFactory.deploy()
 		const mockPlonkVerifierAddress = await mockPlonkVerifier.getAddress()
 
+		const mockL2MessengerFactory = await ethers.getContractFactory(
+			'MockL2ScrollMessenger',
+		)
+		const mockL2ScrollMessenger = await mockL2MessengerFactory.deploy()
+		const mockL2ScrollMessengerAddress =
+			await mockL2ScrollMessenger.getAddress()
+
 		const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
 		withdrawal = (await upgrades.deployProxy(withdrawalFactory, [], {
 			initializer: false,
 			kind: 'uups',
 		})) as unknown as Withdrawal
+
 		await withdrawal.initialize(
-			ethers.ZeroAddress,
+			mockL2ScrollMessengerAddress,
 			mockPlonkVerifierAddress,
 			ethers.ZeroAddress,
 			rollupAddress,
+			await contribution.getAddress(),
 			[],
 		)
 	})

@@ -39,6 +39,7 @@ describe('Withdrawal', () => {
 		const rollupTestForWithdrawal =
 			await rollupTestForWithdrawalFactory.deploy()
 		const liquidity = ethers.Wallet.createRandom().address
+		const contribution = ethers.Wallet.createRandom().address
 		const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
 		const withdrawal = (await upgrades.deployProxy(
 			withdrawalFactory,
@@ -47,6 +48,7 @@ describe('Withdrawal', () => {
 				await mockPlonkVerifier.getAddress(),
 				liquidity,
 				await rollupTestForWithdrawal.getAddress(),
+				contribution,
 				DIRECT_WITHDRAWAL_TOKEN_INDICES,
 			],
 			{ kind: 'uups' },
@@ -84,6 +86,7 @@ describe('Withdrawal', () => {
 
 				await expect(
 					withdrawal.initialize(
+						ethers.ZeroAddress,
 						ethers.ZeroAddress,
 						ethers.ZeroAddress,
 						ethers.ZeroAddress,

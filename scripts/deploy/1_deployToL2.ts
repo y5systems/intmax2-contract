@@ -59,6 +59,21 @@ async function main() {
 		await sleep(30)
 	}
 
+	if (!deployedContracts.l2Contribution) {
+		console.log('deploying l2Contribution')
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const l2Contribution = await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			l2Contribution: await l2Contribution.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
+	}
+
 	const MockPlonkVerifier_ =
 		await ethers.getContractFactory('MockPlonkVerifier')
 
