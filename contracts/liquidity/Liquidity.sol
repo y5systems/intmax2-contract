@@ -145,20 +145,14 @@ contract Liquidity is
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, amount);
 	}
 
-	function analyzeDeposits(
+	function analyzeAndRelayDeposits(
 		uint256 upToDepositId,
-		uint256[] memory rejectDepositIds
-	) external onlyRole(ANALYZER) {
-		depositQueue.analyze(upToDepositId, rejectDepositIds);
-		emit DepositsAnalyzed(upToDepositId, rejectDepositIds);
-	}
-
-	function relayDeposits(
-		uint256 upToDepositId,
+		uint256[] memory rejectDepositIds,
 		uint256 gasLimit
-	) external payable nonReentrant {
-		bytes32[] memory depositHashes = depositQueue.collectAcceptedDeposits(
-			upToDepositId
+	) external payable onlyRole(ANALYZER) {
+		bytes32[] memory depositHashes = depositQueue.analyze(
+			upToDepositId,
+			rejectDepositIds
 		);
 		bytes memory message = abi.encodeWithSelector(
 			IRollup.processDeposits.selector,
@@ -175,7 +169,12 @@ contract Liquidity is
 			gasLimit,
 			_msgSender()
 		);
-		emit DepositsRelayed(upToDepositId, gasLimit, message);
+		emit DepositsAnalyzedAndRelayed(
+			upToDepositId,
+			rejectDepositIds,
+			gasLimit,
+			message
+		);
 	}
 
 	function claimWithdrawals(
@@ -328,16 +327,12 @@ contract Liquidity is
 		return depositQueue.depositData[depositId];
 	}
 
-	function getLastDepositId() external view returns (uint256) {
-		return depositQueue.rear - 1;
-	}
-
-	function getLastAnalyzedDepositId() external view returns (uint256) {
-		return depositQueue.lastAnalyzedDepositId;
-	}
-
 	function getLastRelayedDepositId() external view returns (uint256) {
 		return depositQueue.front - 1;
+	}
+
+	function getLastDepositId() external view returns (uint256) {
+		return depositQueue.rear - 1;
 	}
 
 	function _authorizeUpgrade(

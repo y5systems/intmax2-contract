@@ -11,13 +11,8 @@ library DepositQueueLib {
 
 	error TriedToRejectOutOfRange(
 		uint256 rejectIndex,
-		uint256 lastAnalyzedDepositId,
+		uint256 front,
 		uint256 upToDepositId
-	);
-
-	error UpToDepositIdIsTooOld(
-		uint256 upToDepositId,
-		uint256 lastAnalyzedDepositId
 	);
 
 	/**
@@ -28,7 +23,6 @@ library DepositQueueLib {
 		DepositData[] depositData; ///< Array of deposits that are pending.
 		uint256 front; ///< Index of the first element in the queue.
 		uint256 rear; ///< Index of the next position after the last element in the queue.
-		uint256 lastAnalyzedDepositId; ///< Index of the last analyzed deposit. Must satisfy lastAnalyzedDepositId < rear.
 	}
 
 	struct DepositData {
@@ -43,7 +37,6 @@ library DepositQueueLib {
 		depositQueue.depositData.push(DepositData(0, address(0), false));
 		depositQueue.front = 1;
 		depositQueue.rear = 1;
-		depositQueue.lastAnalyzedDepositId = 0;
 	}
 
 	function enqueue(
@@ -68,69 +61,39 @@ library DepositQueueLib {
 		DepositQueue storage depositQueue,
 		uint256 upToDepositId,
 		uint256[] memory rejectIndices
-	) internal {
-		// assert that depositQueue.lastAnalyzedDepositId < upToDepositId
-		if (depositQueue.lastAnalyzedDepositId >= upToDepositId) {
-			revert UpToDepositIdIsTooOld(
-				upToDepositId,
-				depositQueue.lastAnalyzedDepositId
-			);
-		}
+	) internal returns (bytes32[] memory) {
 		// assert that upToDepositId < rear
 		if (upToDepositId >= depositQueue.rear) {
 			revert TriedAnalyzeNotExists(upToDepositId, depositQueue.rear);
 		}
-
-		uint256 lastAnalyzedDepositId = depositQueue.lastAnalyzedDepositId;
 		for (uint256 i = 0; i < rejectIndices.length; i++) {
 			uint256 rejectIndex = rejectIndices[i];
-			// assert that lastAnalyzedDepositId < rejectIndex <= upToDepositId
+			// assert that front <= rejectIndex <= upToDepositId
 			if (
-				rejectIndex > upToDepositId ||
-				rejectIndex <= lastAnalyzedDepositId
+				rejectIndex > upToDepositId || rejectIndex < depositQueue.front
 			) {
 				revert TriedToRejectOutOfRange(
 					rejectIndex,
-					lastAnalyzedDepositId,
+					depositQueue.front,
 					upToDepositId
 				);
 			}
 			depositQueue.depositData[rejectIndex].isRejected = true;
 		}
-		depositQueue.lastAnalyzedDepositId = upToDepositId;
-	}
-
-	// accepted deposits are the deposits that have been analyzed and are not rejected.
-	function collectAcceptedDeposits(
-		DepositQueue storage depositQueue,
-		uint256 upToDepositId
-	) internal returns (bytes32[] memory) {
-		if (depositQueue.lastAnalyzedDepositId < upToDepositId) {
-			revert TriedCollectDepositsNotAnalyzedYet(
-				upToDepositId,
-				depositQueue.lastAnalyzedDepositId
-			);
-		}
-		uint256 acceptedDepositsCount = 0;
-		for (
-			uint256 i = depositQueue.front;
-			i <= upToDepositId; // assumed that upToDepositId <= lastAnalyzedDepositId < rear
-			i++
-		) {
-			if (!depositQueue.depositData[i].isRejected) {
-				acceptedDepositsCount++;
-			}
-		}
-		bytes32[] memory depositHashes = new bytes32[](acceptedDepositsCount);
-		uint256 depisitHashesIndex = 0;
+		uint256 counter = 0;
 		for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
 			if (!depositQueue.depositData[i].isRejected) {
-				DepositData storage depositData = depositQueue.depositData[i];
-				depositHashes[depisitHashesIndex] = depositData.depositHash;
-				depisitHashesIndex++;
-				// delete depositData to save gas
-				delete depositData.sender;
-				delete depositData.depositHash;
+				counter++;
+			}
+		}
+		bytes32[] memory depositHashes = new bytes32[](counter);
+		uint256 depositHashesIndex = 0;
+		for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
+			if (!depositQueue.depositData[i].isRejected) {
+				depositHashes[depositHashesIndex] = depositQueue
+					.depositData[i]
+					.depositHash;
+				depositHashesIndex++;
 			}
 		}
 		// because front <= upToDepositId < rear, we can safely update front

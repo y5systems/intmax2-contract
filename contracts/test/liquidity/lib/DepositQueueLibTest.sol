@@ -35,14 +35,14 @@ contract DepositQueueLibTest {
 		depositQueue.analyze(upToDepositId, rejectIndices);
 	}
 
-	function collectAcceptedDeposits(
-		uint256 upToDepositId
-	) external returns (bytes32[] memory) {
-		latestDepositHashes = depositQueue.collectAcceptedDeposits(
-			upToDepositId
-		);
-		return latestDepositHashes;
-	}
+	// function collectAcceptedDeposits(
+	// 	uint256 upToDepositId
+	// ) external returns (bytes32[] memory) {
+	// 	latestDepositHashes = depositQueue.collectAcceptedDeposits(
+	// 		upToDepositId
+	// 	);
+	// 	return latestDepositHashes;
+	// }
 
 	function size() external view returns (uint256) {
 		return DepositQueueLib.size(depositQueue);
@@ -55,10 +55,6 @@ contract DepositQueueLibTest {
 
 	function getRear() external view returns (uint256) {
 		return depositQueue.rear;
-	}
-
-	function getLastAnalyzedDepositId() external view returns (uint256) {
-		return depositQueue.lastAnalyzedDepositId;
 	}
 
 	function getDepositData(
