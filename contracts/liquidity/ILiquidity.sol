@@ -24,18 +24,14 @@ interface ILiquidity {
 		uint256 requestedAt
 	);
 
-	event DepositsAnalyzed(
-		uint256 indexed lastAnalyzedDepositId,
-		uint256[] rejectedIndices
-	);
-
-	event DepositCanceled(uint256 indexed depositId);
-
-	event DepositsRelayed(
-		uint256 indexed lastRelayedDepositId,
+	event DepositsAnalyzedAndRelayed(
+		uint256 indexed upToDepositId,
+		uint256[] rejectedIndices,
 		uint256 gasLimit,
 		bytes message
 	);
+
+	event DepositCanceled(uint256 indexed depositId);
 
 	event WithdrawalClaimable(bytes32 indexed withdrawalHash);
 
@@ -78,22 +74,10 @@ interface ILiquidity {
 	/// @dev rejectDepositIndices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
 	/// @param upToDepositId The upper limit of the Deposit ID that has been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
 	/// @param rejectDepositIds An array of ids of deposits to exclude. These indices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
-	function analyzeDeposits(
+	/// @param gasLimit The gas limit for the l2 transaction.
+	function analyzeAndRelayDeposits(
 		uint256 upToDepositId,
-		uint256[] memory rejectDepositIds
-	) external;
-
-	/**
-	 * @notice Relays deposits that have already been analyzed.
-	 * @dev The `gasLimit` must be set according to the number of deposits. If the gas limit is too low, the L2 Rollup may not be able to execute.
-	 * @dev The messaging fee calculated from the `gasLimit` must be sent as `msg.value`. Any excess amount will be refunded to the caller.
-	 *      However, if the `gasLimit` is set higher than the actual gas consumed, the excess messaging fee will still be charged. There will be no refund for the unused gas.
-	 * @dev Note: If the transaction fails on the L2 Rollup due to insufficient gas, it can be retried using `replayDeposits`.
-	 * @param lastProcessedDepositId The ID of the last deposit to be relayed.
-	 * @param gasLimit The gas limit for the transaction.
-	 */
-	function relayDeposits(
-		uint256 lastProcessedDepositId,
+		uint256[] memory rejectDepositIds,
 		uint256 gasLimit
 	) external payable;
 
@@ -109,13 +93,11 @@ interface ILiquidity {
 		bytes32[] calldata withdrawalHahes
 	) external;
 
+	function getLastRelayedDepositId() external view returns (uint256);
+
 	function getDepositData(
 		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory);
-
-	function getLastAnalyzedDepositId() external view returns (uint256);
-
-	function getLastRelayedDepositId() external view returns (uint256);
 
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
