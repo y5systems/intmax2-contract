@@ -242,5 +242,42 @@ describe('Contribution', function () {
 			)
 		})
 	})
-	// TODO upgrades test
+	describe('upgrade', () => {
+		it('channel contract is upgradable', async () => {
+			const [contribution] = await loadFixture(setup)
+
+			await contribution.incrementPeriod()
+
+			const contribution2Factory =
+				await ethers.getContractFactory('Contribution2Test')
+			const next = await upgrades.upgradeProxy(
+				await contribution.getAddress(),
+				contribution2Factory,
+			)
+			const currentPeriod = await next.currentPeriod()
+			expect(currentPeriod).to.equal(1)
+			const val = await next.getVal()
+			expect(val).to.equal(99)
+		})
+		it('Cannot upgrade except for a deployer.', async () => {
+			const [contribution] = await loadFixture(setup)
+			const signers = await getSigners()
+			const contribution2Factory = await ethers.getContractFactory(
+				'Contribution2Test',
+				signers.user1,
+			)
+			const role = contribution.DEFAULT_ADMIN_ROLE()
+			await expect(
+				upgrades.upgradeProxy(
+					await contribution.getAddress(),
+					contribution2Factory,
+				),
+			)
+				.to.be.revertedWithCustomError(
+					contribution,
+					'AccessControlUnauthorizedAccount',
+				)
+				.withArgs(signers.user1.address, role)
+		})
+	})
 })
