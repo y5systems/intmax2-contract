@@ -82,19 +82,29 @@ library DepositQueueLib {
 		}
 		uint256 counter = 0;
 		for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
-			if (!depositQueue.depositData[i].isRejected) {
-				counter++;
+			// deleted data are skipped
+			if (depositQueue.depositData[i].sender == address(0)) {
+				continue;
 			}
+			if (depositQueue.depositData[i].isRejected) {
+				continue;
+			}
+			counter++;
 		}
 		bytes32[] memory depositHashes = new bytes32[](counter);
 		uint256 depositHashesIndex = 0;
 		for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
-			if (!depositQueue.depositData[i].isRejected) {
-				depositHashes[depositHashesIndex] = depositQueue
-					.depositData[i]
-					.depositHash;
-				depositHashesIndex++;
+			// deleted data are skipped
+			if (depositQueue.depositData[i].sender == address(0)) {
+				continue;
 			}
+			if (depositQueue.depositData[i].isRejected) {
+				continue;
+			}
+			depositHashes[depositHashesIndex] = depositQueue
+				.depositData[i]
+				.depositHash;
+			depositHashesIndex++;
 		}
 		// because front <= upToDepositId < rear, we can safely update front
 		depositQueue.front = upToDepositId + 1;
