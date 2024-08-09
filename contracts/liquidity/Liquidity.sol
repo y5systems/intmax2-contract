@@ -309,7 +309,8 @@ contract Liquidity is
 			// where the actual gas payer may differ from tx.origin.
 			contribution.recordContribution(
 				keccak256("PROCESS_DIRECT_WITHDRAWALS"),
-				tx.origin,
+				// solhint-disable-next-line avoid-tx-origin
+				tx.origin, // msg.sender is ScrollMessenger, so we use tx.origin
 				withdrawals.length
 			);
 		}
@@ -329,6 +330,7 @@ contract Liquidity is
 			);
 			contribution.recordContribution(
 				keccak256("PROCESS_CLAIMABLE_WITHDRAWALS"),
+				// solhint-disable-next-line avoid-tx-origin
 				tx.origin, // msg.sender is ScrollMessenger, so we use tx.origin
 				withdrawalHashes.length
 			);

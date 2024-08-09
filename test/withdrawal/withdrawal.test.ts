@@ -99,6 +99,7 @@ describe('Withdrawal', () => {
 	})
 	describe('submitWithdrawalProof', () => {
 		describe('success', () => {
+			// TODO call contribution
 			it('should accept valid withdrawal proof and queue direct withdrawals', async () => {
 				const [
 					withdrawal,
@@ -584,6 +585,9 @@ describe('Withdrawal', () => {
 			})
 		})
 	})
+	// TODO getDirectWithdrawalTokenIndices test
+	// TODO addDirectWithdrawalTokenIndices test
+	// TODO removeDirectWithdrawalTokenIndices test
 
 	describe('upgrade', () => {
 		it('channel contract is upgradable', async () => {

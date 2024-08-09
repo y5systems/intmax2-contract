@@ -29,13 +29,6 @@ contract Contribution is
 	// period to tags
 	mapping(uint256 => bytes32[]) private allTags;
 
-	modifier onlyAfterWeightRegistration() {
-		if (allTags[currentPeriod].length == 0) {
-			revert WeightsNotRegistered();
-		}
-		_;
-	}
-
 	function initialize() public initializer {
 		__UUPSUpgradeable_init();
 		__AccessControl_init();
@@ -89,7 +82,7 @@ contract Contribution is
 	function getContributionRate(
 		uint256 periodNumber,
 		address contributor
-	) external view onlyAfterWeightRegistration returns (UD60x18) {
+	) external view returns (UD60x18) {
 		UD60x18 totalContribution = ud(0);
 		UD60x18 userContribution = ud(0);
 		for (uint256 i = 0; i < allTags[periodNumber].length; i++) {
