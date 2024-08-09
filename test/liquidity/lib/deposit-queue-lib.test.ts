@@ -73,10 +73,9 @@ describe('DepositQueueLib', function () {
 				await lib.enqueue(depositHash3, sender.address)
 
 				await lib.analyze(3, [2]) // Reject deposit 2
-				const depositHashes = [
-					await lib.latestDepositHashes(0),
-					await lib.latestDepositHashes(1),
-				]
+				const depositHashes = await Promise.all(
+					[...Array(2)].map((_, i) => lib.latestDepositHashes(i)),
+				)
 
 				expect(depositHashes).to.have.lengthOf(2)
 				expect(depositHashes[0]).to.equal(depositHash1)
@@ -103,11 +102,9 @@ describe('DepositQueueLib', function () {
 
 				// Analyze all deposits, rejecting the second one
 				await lib.analyze(5, [2])
-				const depositHashes = [
-					await lib.latestDepositHashes(0),
-					await lib.latestDepositHashes(1),
-					await lib.latestDepositHashes(2),
-				]
+				const depositHashes = await Promise.all(
+					[...Array(3)].map((_, i) => lib.latestDepositHashes(i)),
+				)
 				expect(depositHashes).to.have.lengthOf(3)
 				expect(depositHashes[0]).to.equal(depositHash1)
 				expect(depositHashes[1]).to.equal(depositHash4)
