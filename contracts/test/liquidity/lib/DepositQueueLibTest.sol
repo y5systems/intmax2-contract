@@ -7,6 +7,7 @@ contract DepositQueueLibTest {
 	using DepositQueueLib for DepositQueueLib.DepositQueue;
 
 	DepositQueueLib.DepositQueue private depositQueue;
+	DepositQueueLib.DepositData public deletedData;
 	uint256 public latestDepositId;
 	bytes32[] public latestDepositHashes;
 
@@ -14,34 +15,22 @@ contract DepositQueueLibTest {
 		depositQueue.initialize();
 	}
 
-	function enqueue(
-		bytes32 depositHash,
-		address sender
-	) external returns (uint256) {
+	function enqueue(bytes32 depositHash, address sender) external {
 		latestDepositId = depositQueue.enqueue(depositHash, sender);
-		return latestDepositId;
 	}
 
-	function deleteDeposit(
-		uint256 depositId
-	) external returns (DepositQueueLib.DepositData memory) {
-		return depositQueue.deleteDeposit(depositId);
+	function deleteDeposit(uint256 depositId) external {
+		deletedData = depositQueue.deleteDeposit(depositId);
 	}
 
 	function analyze(
 		uint256 upToDepositId,
 		uint256[] memory rejectIndices
 	) external {
-		depositQueue.analyze(upToDepositId, rejectIndices);
-	}
-
-	function collectAcceptedDeposits(
-		uint256 upToDepositId
-	) external returns (bytes32[] memory) {
-		latestDepositHashes = depositQueue.collectAcceptedDeposits(
-			upToDepositId
+		latestDepositHashes = depositQueue.analyze(
+			upToDepositId,
+			rejectIndices
 		);
-		return latestDepositHashes;
 	}
 
 	function size() external view returns (uint256) {
@@ -55,10 +44,6 @@ contract DepositQueueLibTest {
 
 	function getRear() external view returns (uint256) {
 		return depositQueue.rear;
-	}
-
-	function getLastAnalyzedDepositId() external view returns (uint256) {
-		return depositQueue.lastAnalyzedDepositId;
 	}
 
 	function getDepositData(

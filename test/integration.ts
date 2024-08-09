@@ -17,7 +17,7 @@ import { getPubkeySaltHash } from '../utils/hash'
 import { loadWithdrawalInfo } from '../utils/withdrawal'
 import {
 	getLastDepositedEvent,
-	getLastDepositsRelayedEvent,
+	getLastDepositsAnalyzedAndRelayedEvent,
 	getLastSentEvent,
 	getWithdrawalsQueuedEvent,
 } from '../utils/events'
@@ -169,16 +169,15 @@ describe('Integration', function () {
 			0,
 		)
 		const depositId = lastDepositedEvent.args.depositId
-		await liquidity.connect(analyzer).analyzeDeposits(depositId, [])
-		const analyzedEvent = (
-			await liquidity.queryFilter(liquidity.filters.DepositsAnalyzed())
-		)[0]
-		const analyzedDepositId = analyzedEvent.args.lastAnalyzedDepositId
-		expect(analyzedDepositId).to.be.eq(depositId)
-		await liquidity.relayDeposits(analyzedDepositId, 400_000, {
-			value: ethers.parseEther('0.1'), // will be refunded automatically
-		})
-		const relayedEvent = await getLastDepositsRelayedEvent(liquidity, 0)
+		await liquidity
+			.connect(analyzer)
+			.analyzeAndRelayDeposits(depositId, [], 400_000, {
+				value: ethers.parseEther('0.1'), // will be refunded automatically
+			})
+		const relayedEvent = await getLastDepositsAnalyzedAndRelayedEvent(
+			liquidity,
+			0,
+		)
 		const { message } = relayedEvent.args
 		// this is not required in the production environment,
 		// because scroll messenger will relay the message to L2 automatically.
