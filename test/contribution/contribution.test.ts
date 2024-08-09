@@ -9,6 +9,13 @@ describe('Contribution', function () {
 		contribution = (await upgrades.deployProxy(contributionFactory, [], {
 			kind: 'uups',
 		})) as unknown as Contribution
+		// grant contribution role to the signer
+		const signer = (await ethers.getSigners())[0]
+		await contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			await signer.getAddress(),
+		)
+
 		// register the weight of the contribution
 		const tagsStr = ['tag1', 'tag2', 'tag3']
 		const tags = tagsStr.map((tag) =>

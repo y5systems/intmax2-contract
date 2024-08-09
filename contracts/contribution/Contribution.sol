@@ -18,7 +18,6 @@ contract Contribution is
 		__AccessControl_init();
 		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_grantRole(WEIGHT_REGISTRAR, _msgSender());
-		_grantRole(CONTRIBUTOR, _msgSender());
 	}
 
 	uint256 public currentPeriod;
@@ -90,7 +89,7 @@ contract Contribution is
 	function getContributionRate(
 		uint256 periodNumber,
 		address contributor
-	) external view returns (UD60x18) {
+	) external view onlyAfterWeightRegistration returns (UD60x18) {
 		UD60x18 totalContribution = ud(0);
 		UD60x18 userContribution = ud(0);
 		for (uint256 i = 0; i < allTags[periodNumber].length; i++) {

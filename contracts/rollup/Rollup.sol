@@ -207,6 +207,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			depositTreeRoot,
 			signatureHash
 		);
+
+		contribution.recordContribution(
+			keccak256("POST_BLOCK"),
+			_msgSender(),
+			1
+		);
 	}
 
 	function getLatestBlockNumber() external view returns (uint32) {

@@ -44,6 +44,10 @@ describe('Rollup', function () {
 			await registry.getAddress(),
 			await contribution.getAddress(),
 		)
+		await contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			rollup,
+		)
 	})
 
 	it('should match block hashes', async function () {
