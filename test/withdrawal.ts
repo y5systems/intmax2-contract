@@ -63,6 +63,14 @@ describe('Withdrawal', function () {
 			await contribution.getAddress(),
 			[],
 		)
+		await contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			withdrawal,
+		)
+		await contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			rollup,
+		)
 	})
 
 	it('should be able to submit withdraw', async function () {

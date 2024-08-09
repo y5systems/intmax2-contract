@@ -151,6 +151,12 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			claimableWithdrawals
 		);
 		_relayMessage(message);
+
+		contribution.recordContribution(
+			keccak256("WITHDRAWAL"),
+			_msgSender(),
+			directWithdrawalCounter + claimableWithdrawalCounter
+		);
 	}
 
 	// The specification of ScrollMessenger may change in the future.
@@ -192,6 +198,30 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		}
 		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
 			revert WithdrawalProofVerificationFailed();
+		}
+	}
+
+	function getDirectWithdrawalTokenIndices()
+		external
+		view
+		returns (uint256[] memory)
+	{
+		return directWithdrawalTokenIndices.values();
+	}
+
+	function addDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external onlyOwner {
+		for (uint256 i = 0; i < tokenIndices.length; i++) {
+			directWithdrawalTokenIndices.add(tokenIndices[i]);
+		}
+	}
+
+	function removeDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external onlyOwner {
+		for (uint256 i = 0; i < tokenIndices.length; i++) {
+			directWithdrawalTokenIndices.remove(tokenIndices[i]);
 		}
 	}
 

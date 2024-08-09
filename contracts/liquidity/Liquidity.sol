@@ -273,7 +273,7 @@ contract Liquidity is
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
 		uint256 _lastProcessedClaimableWithdrawalId,
-		bytes32[] calldata withdrawalHahes
+		bytes32[] calldata withdrawalHashes
 	) external onlyWithdrawal {
 		_processDirectWithdrawals(
 			_lastProcessedDirectWithdrawalId,
@@ -281,7 +281,7 @@ contract Liquidity is
 		);
 		_processClaimableWithdrawals(
 			_lastProcessedClaimableWithdrawalId,
-			withdrawalHahes
+			withdrawalHashes
 		);
 	}
 
@@ -303,20 +303,36 @@ contract Liquidity is
 		}
 		if (withdrawals.length > 0) {
 			emit DirectWithdrawalsProcessed(_lastProcessedDirectWithdrawalId);
+			// In the ScrollMessenger, it is not possible to identify the person who relayed the message.
+			// Here we consider tx.origin as the gas payer and record their contribution accordingly.
+			// However, this approach can be problematic in cases of sponsored transactions or meta transactions,
+			// where the actual gas payer may differ from tx.origin.
+			contribution.recordContribution(
+				keccak256("PROCESS_DIRECT_WITHDRAWALS"),
+				// solhint-disable-next-line avoid-tx-origin
+				tx.origin, // msg.sender is ScrollMessenger, so we use tx.origin
+				withdrawals.length
+			);
 		}
 	}
 
 	function _processClaimableWithdrawals(
 		uint256 _lastProcessedClaimableWithdrawalId,
-		bytes32[] calldata withdrawalHahes
+		bytes32[] calldata withdrawalHashes
 	) private {
-		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
-			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
-			emit WithdrawalClaimable(withdrawalHahes[i]);
+		for (uint256 i = 0; i < withdrawalHashes.length; i++) {
+			claimableWithdrawals[withdrawalHashes[i]] = block.timestamp;
+			emit WithdrawalClaimable(withdrawalHashes[i]);
 		}
-		if (withdrawalHahes.length > 0) {
+		if (withdrawalHashes.length > 0) {
 			emit ClaimableWithdrawalsProcessed(
 				_lastProcessedClaimableWithdrawalId
+			);
+			contribution.recordContribution(
+				keccak256("PROCESS_CLAIMABLE_WITHDRAWALS"),
+				// solhint-disable-next-line avoid-tx-origin
+				tx.origin, // msg.sender is ScrollMessenger, so we use tx.origin
+				withdrawalHashes.length
 			);
 		}
 	}

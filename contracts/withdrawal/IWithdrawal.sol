@@ -57,4 +57,17 @@ interface IWithdrawal {
 			calldata publicInputs,
 		bytes calldata proof
 	) external;
+
+	function getDirectWithdrawalTokenIndices()
+		external
+		view
+		returns (uint256[] memory);
+
+	function addDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external;
+
+	function removeDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external;
 }

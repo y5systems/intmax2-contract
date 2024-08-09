@@ -29,19 +29,11 @@ contract Contribution is
 	// period to tags
 	mapping(uint256 => bytes32[]) private allTags;
 
-	modifier onlyAfterWeightRegistration() {
-		if (allTags[currentPeriod].length == 0) {
-			revert WeightsNotRegistered();
-		}
-		_;
-	}
-
 	function initialize() public initializer {
 		__UUPSUpgradeable_init();
 		__AccessControl_init();
 		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_grantRole(WEIGHT_REGISTRAR, _msgSender());
-		_grantRole(CONTRIBUTOR, _msgSender());
 	}
 
 	function getTags(

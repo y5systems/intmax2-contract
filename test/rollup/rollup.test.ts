@@ -149,6 +149,7 @@ describe('Rollup', () => {
 	})
 	describe('postRegistrationBlock', () => {
 		describe('success', () => {
+			//  TODO call contribution
 			it('generate PubKeysPosted event', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
 				const inputs = generateValidInputs()
@@ -354,6 +355,7 @@ describe('Rollup', () => {
 			}
 		}
 		describe('success', () => {
+			// TODO call contribution
 			it('generate AccountIdsPosted event', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
 				const inputs = generateValidInputs()

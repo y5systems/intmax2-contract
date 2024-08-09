@@ -10,23 +10,30 @@ describe('Contribution', function () {
 		const contribution = (await upgrades.deployProxy(contributionFactory, [], {
 			kind: 'uups',
 		})) as unknown as Contribution
+
+		// register the weight of the contribution
 		const tagsStr = ['tag1', 'tag2', 'tag3']
 		const tags = tagsStr.map((tag) =>
 			ethers.solidityPackedKeccak256(['string'], [tag]),
 		)
 		const weights = [1, 2, 3]
 		await contribution.registerWeights(0, tags, weights)
+		const role = await contribution.CONTRIBUTOR()
+		const { contributor } = await getSigners()
+		await contribution.grantRole(role, contributor.address)
 		return [contribution]
 	}
 	type signers = {
 		deployer: HardhatEthersSigner
+		contributor: HardhatEthersSigner
 		user1: HardhatEthersSigner
 		user2: HardhatEthersSigner
 	}
 	const getSigners = async (): Promise<signers> => {
-		const [deployer, user1, user2] = await ethers.getSigners()
+		const [deployer, contributor, user1, user2] = await ethers.getSigners()
 		return {
 			deployer,
+			contributor,
 			user1,
 			user2,
 		}
@@ -50,8 +57,8 @@ describe('Contribution', function () {
 			const [contribution] = await loadFixture(setup)
 			const signers = await getSigners()
 			const role = await contribution.CONTRIBUTOR()
-			expect(await contribution.hasRole(role, signers.deployer.address)).to.be
-				.true
+			expect(await contribution.hasRole(role, signers.contributor.address)).to
+				.be.true
 		})
 	})
 	describe('incrementPeriod', () => {
@@ -126,11 +133,11 @@ describe('Contribution', function () {
 		describe('success', () => {
 			it('set record', async () => {
 				const [contribution] = await loadFixture(setup)
-				const { deployer, user1 } = await getSigners()
+				const { contributor, user1 } = await getSigners()
 				const tag = ethers.solidityPackedKeccak256(['string'], ['tag1'])
 				const amount = 100n
 				await contribution
-					.connect(deployer)
+					.connect(contributor)
 					.recordContribution(tag, user1.address, amount)
 				const currentPeriod = await contribution.currentPeriod()
 				const totalContribution = await contribution.totalContributionsInPeriod(
@@ -147,13 +154,13 @@ describe('Contribution', function () {
 			})
 			it('set record(increment currentPeriod)', async () => {
 				const [contribution] = await loadFixture(setup)
-				const { deployer, user1 } = await getSigners()
+				const { deployer, contributor, user1 } = await getSigners()
 				const tag = ethers.solidityPackedKeccak256(['string'], ['tag1'])
 				const amount = 100n
 				await contribution.connect(deployer).incrementPeriod()
 				const currentPeriod = await contribution.currentPeriod()
 				await contribution
-					.connect(deployer)
+					.connect(contributor)
 					.recordContribution(tag, user1.address, amount)
 				const totalContribution = await contribution.totalContributionsInPeriod(
 					currentPeriod,
@@ -169,14 +176,14 @@ describe('Contribution', function () {
 			})
 			it('set record(add amount)', async () => {
 				const [contribution] = await loadFixture(setup)
-				const { deployer, user1 } = await getSigners()
+				const { contributor, user1 } = await getSigners()
 				const tag = ethers.solidityPackedKeccak256(['string'], ['tag1'])
 				const amount = 100n
 				await contribution
-					.connect(deployer)
+					.connect(contributor)
 					.recordContribution(tag, user1.address, amount)
 				await contribution
-					.connect(deployer)
+					.connect(contributor)
 					.recordContribution(tag, user1.address, amount)
 				const currentPeriod = await contribution.currentPeriod()
 				const totalContribution = await contribution.totalContributionsInPeriod(
@@ -215,17 +222,17 @@ describe('Contribution', function () {
 	describe('getContributionRate', () => {
 		it('get contribution rate', async () => {
 			const [contribution] = await loadFixture(setup)
-			const { deployer, user1 } = await getSigners()
+			const { deployer, contributor, user1 } = await getSigners()
 			const tag1 = ethers.solidityPackedKeccak256(['string'], ['tag1'])
 			const tag2 = ethers.solidityPackedKeccak256(['string'], ['tag2'])
 			await contribution
-				.connect(deployer)
+				.connect(contributor)
 				.recordContribution(tag1, user1.address, 100n)
 			await contribution
-				.connect(deployer)
+				.connect(contributor)
 				.recordContribution(tag2, user1.address, 200n)
 			await contribution
-				.connect(deployer)
+				.connect(contributor)
 				.recordContribution(tag1, deployer.address, 300n)
 			const rate = await contribution.getContributionRate(0, user1.address)
 			// Expected rate: (100 * 1 + 200 * 2) / (400 * 1 + 200 * 2) = 500 / 800 = 0.625
@@ -235,4 +242,5 @@ describe('Contribution', function () {
 			)
 		})
 	})
+	// TODO upgrades test
 })
