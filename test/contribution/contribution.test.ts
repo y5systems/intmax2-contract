@@ -20,13 +20,15 @@ describe('Contribution', function () {
 	}
 	type signers = {
 		deployer: HardhatEthersSigner
-		user: HardhatEthersSigner
+		user1: HardhatEthersSigner
+		user2: HardhatEthersSigner
 	}
 	const getSigners = async (): Promise<signers> => {
-		const [deployer, user] = await ethers.getSigners()
+		const [deployer, user1, user2] = await ethers.getSigners()
 		return {
 			deployer,
-			user,
+			user1,
+			user2,
 		}
 	}
 	describe('initialize', () => {
@@ -65,14 +67,14 @@ describe('Contribution', function () {
 		describe('fail', () => {
 			it('only weight registrar', async () => {
 				const [contribution] = await loadFixture(setup)
-				const { user } = await getSigners()
+				const { user1 } = await getSigners()
 				const role = await contribution.WEIGHT_REGISTRAR()
-				await expect(contribution.connect(user).incrementPeriod())
+				await expect(contribution.connect(user1).incrementPeriod())
 					.to.be.revertedWithCustomError(
 						contribution,
 						'AccessControlUnauthorizedAccount',
 					)
-					.withArgs(user.address, role)
+					.withArgs(user1.address, role)
 			})
 		})
 	})
@@ -81,42 +83,156 @@ describe('Contribution', function () {
 			it('set register weights', async () => {
 				const [contribution] = await loadFixture(setup)
 				const { deployer } = await getSigners()
-				// TODO
+				const tagsStr = ['newTag1', 'newTag2']
+				const tags = tagsStr.map((tag) =>
+					ethers.solidityPackedKeccak256(['string'], [tag]),
+				)
+				const weights = [4, 5]
+				await contribution.connect(deployer).registerWeights(1, tags, weights)
+				const registeredTags = await contribution.getTags(1)
+				const registeredWeights = await contribution.getWeights(1)
+				expect(registeredTags).to.deep.equal(tags)
+				expect(registeredWeights).to.deep.equal(weights)
 			})
 		})
 		describe('fail', () => {
 			it('only weight registrar', async () => {
 				const [contribution] = await loadFixture(setup)
-				const { user } = await getSigners()
+				const { user1 } = await getSigners()
 				const role = await contribution.WEIGHT_REGISTRAR()
-				// TODO
+				const tags = [ethers.randomBytes(32)]
+				const weights = [1]
+				await expect(
+					contribution.connect(user1).registerWeights(1, tags, weights),
+				)
+					.to.be.revertedWithCustomError(
+						contribution,
+						'AccessControlUnauthorizedAccount',
+					)
+					.withArgs(user1.address, role)
 			})
 			it('InvalidInputLength', async () => {
 				const [contribution] = await loadFixture(setup)
-				// TODO
+				const { deployer } = await getSigners()
+				const tags = [ethers.randomBytes(32), ethers.randomBytes(32)]
+				const weights = [1]
+				await expect(
+					contribution.connect(deployer).registerWeights(1, tags, weights),
+				).to.be.revertedWithCustomError(contribution, 'InvalidInputLength')
 			})
 		})
 	})
-
-	it('should be able to record contribution', async function () {
-		const [contribution] = await loadFixture(setup)
-		const tag = ethers.solidityPackedKeccak256(['string'], ['tag1'])
-		const users = await ethers.getSigners()
-		const user1 = users[0]
-		const user2 = users[1]
-		await contribution.recordContribution(tag, await user1.getAddress(), 10)
-		await contribution.recordContribution(tag, await user2.getAddress(), 20)
-
-		const user1Contribution = await contribution.getContributionRate(
-			0,
-			await user1.getAddress(),
-		)
-		const user2Contribution = await contribution.getContributionRate(
-			0,
-			await user2.getAddress(),
-		)
-
-		console.log('user1Contribution', user1Contribution.toString())
-		console.log('user2Contribution', user2Contribution.toString())
+	describe('recordContribution', () => {
+		describe('success', () => {
+			it('set record', async () => {
+				const [contribution] = await loadFixture(setup)
+				const { deployer, user1 } = await getSigners()
+				const tag = ethers.solidityPackedKeccak256(['string'], ['tag1'])
+				const amount = 100n
+				await contribution
+					.connect(deployer)
+					.recordContribution(tag, user1.address, amount)
+				const currentPeriod = await contribution.currentPeriod()
+				const totalContribution = await contribution.totalContributionsInPeriod(
+					currentPeriod,
+					tag,
+				)
+				const userContribution = await contribution.contributionsInPeriod(
+					currentPeriod,
+					tag,
+					user1.address,
+				)
+				expect(totalContribution).to.equal(amount)
+				expect(userContribution).to.equal(amount)
+			})
+			it('set record(increment currentPeriod)', async () => {
+				const [contribution] = await loadFixture(setup)
+				const { deployer, user1 } = await getSigners()
+				const tag = ethers.solidityPackedKeccak256(['string'], ['tag1'])
+				const amount = 100n
+				await contribution.connect(deployer).incrementPeriod()
+				const currentPeriod = await contribution.currentPeriod()
+				await contribution
+					.connect(deployer)
+					.recordContribution(tag, user1.address, amount)
+				const totalContribution = await contribution.totalContributionsInPeriod(
+					currentPeriod,
+					tag,
+				)
+				const userContribution = await contribution.contributionsInPeriod(
+					currentPeriod,
+					tag,
+					user1.address,
+				)
+				expect(totalContribution).to.equal(amount)
+				expect(userContribution).to.equal(amount)
+			})
+			it('set record(add amount)', async () => {
+				const [contribution] = await loadFixture(setup)
+				const { deployer, user1 } = await getSigners()
+				const tag = ethers.solidityPackedKeccak256(['string'], ['tag1'])
+				const amount = 100n
+				await contribution
+					.connect(deployer)
+					.recordContribution(tag, user1.address, amount)
+				await contribution
+					.connect(deployer)
+					.recordContribution(tag, user1.address, amount)
+				const currentPeriod = await contribution.currentPeriod()
+				const totalContribution = await contribution.totalContributionsInPeriod(
+					currentPeriod,
+					tag,
+				)
+				const userContribution = await contribution.contributionsInPeriod(
+					currentPeriod,
+					tag,
+					user1.address,
+				)
+				expect(totalContribution).to.equal(amount * 2n)
+				expect(userContribution).to.equal(amount * 2n)
+			})
+		})
+		describe('fail', () => {
+			it('only contributor', async () => {
+				const [contribution] = await loadFixture(setup)
+				const { user1 } = await getSigners()
+				const role = await contribution.CONTRIBUTOR()
+				const tag = ethers.randomBytes(32)
+				const amount = 100n
+				await expect(
+					contribution
+						.connect(user1)
+						.recordContribution(tag, user1.address, amount),
+				)
+					.to.be.revertedWithCustomError(
+						contribution,
+						'AccessControlUnauthorizedAccount',
+					)
+					.withArgs(user1.address, role)
+			})
+		})
+	})
+	describe('getContributionRate', () => {
+		it('get contribution rate', async () => {
+			const [contribution] = await loadFixture(setup)
+			const { deployer, user1 } = await getSigners()
+			const tag1 = ethers.solidityPackedKeccak256(['string'], ['tag1'])
+			const tag2 = ethers.solidityPackedKeccak256(['string'], ['tag2'])
+			await contribution
+				.connect(deployer)
+				.recordContribution(tag1, user1.address, 100n)
+			await contribution
+				.connect(deployer)
+				.recordContribution(tag2, user1.address, 200n)
+			await contribution
+				.connect(deployer)
+				.recordContribution(tag1, deployer.address, 300n)
+			const rate = await contribution.getContributionRate(0, user1.address)
+			// Expected rate: (100 * 1 + 200 * 2) / (400 * 1 + 200 * 2) = 500 / 800 = 0.625
+			expect(rate).to.be.closeTo(
+				ethers.parseUnits('0.625', 18),
+				ethers.parseUnits('0.0001', 18),
+			)
+		})
 	})
 })
