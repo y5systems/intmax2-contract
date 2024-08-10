@@ -49,6 +49,16 @@ interface IBlockBuilderRegistry {
 	}
 
 	/**
+	 * @notice Block builder info with address.
+	 * @param blockBuilderAddress The address of the block builder.
+	 * @param info The block builder information.
+	 */
+	struct BlockBuilderInfoWithAddress {
+		address blockBuilderAddress;
+		BlockBuilderInfo info;
+	}
+
+	/**
 	 * @notice Update block builder.
 	 * @dev This method is used to register or update the URL or IP address of the block builder.
 	 * @dev The block builder must send at least 0.1 ETH to this contract to register.
@@ -86,10 +96,13 @@ interface IBlockBuilderRegistry {
 	) external view returns (bool);
 
 	/**
-	 * @notice Get all valid block builders addresss
-	 * @return Addresses of all valid block builders.
+	 * @notice Get the block builder information of valid block builders.
+	 * @return The block builder information.
 	 */
-	function getValidBlockBuilders() external view returns (address[] memory);
+	function getValidBlockBuilders()
+		external
+		view
+		returns (BlockBuilderInfoWithAddress[] memory);
 
 	/**
 	 * @notice Set the burn address.
