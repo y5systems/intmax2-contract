@@ -20,6 +20,7 @@ contract BlockBuilderRegistry is
 	IPlonkVerifier private fraudVerifier;
 	address private burnAddress;
 	mapping(address => BlockBuilderInfo) public blockBuilders;
+	address[] allBlockBuilders;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 
 	using BlockBuilderInfoLib for BlockBuilderInfo;
@@ -49,7 +50,13 @@ contract BlockBuilderRegistry is
 	}
 
 	function updateBlockBuilder(string memory url) external payable {
+		if (bytes(url).length == 0) {
+			revert URLIsEmpty();
+		}
 		BlockBuilderInfo memory info = blockBuilders[_msgSender()];
+		if (bytes(info.blockBuilderUrl).length == 0) {
+			allBlockBuilders.push(_msgSender());
+		}
 		uint256 stakeAmount = info.stakeAmount + msg.value;
 		if (stakeAmount < MIN_STAKE_AMOUNT) {
 			revert InsufficientStakeAmount();
@@ -167,6 +174,24 @@ contract BlockBuilderRegistry is
 
 	function setBurnAddress(address _burnAddress) external onlyOwner {
 		burnAddress = _burnAddress;
+	}
+
+	function getValidBlockBuilders() external view returns (address[] memory) {
+		uint256 counter = 0;
+		for (uint256 i = 0; i < allBlockBuilders.length; i++) {
+			if (blockBuilders[allBlockBuilders[i]].isValid) {
+				counter++;
+			}
+		}
+		address[] memory validBlockBuilders = new address[](counter);
+		uint256 index = 0;
+		for (uint256 i = 0; i < allBlockBuilders.length; i++) {
+			if (blockBuilders[allBlockBuilders[i]].isValid) {
+				validBlockBuilders[index] = allBlockBuilders[i];
+				index++;
+			}
+		}
+		return validBlockBuilders;
 	}
 
 	function _transfer(address to, uint256 _value) private {

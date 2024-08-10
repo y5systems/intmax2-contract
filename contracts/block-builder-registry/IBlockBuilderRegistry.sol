@@ -4,6 +4,7 @@ pragma solidity 0.8.24;
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 
 interface IBlockBuilderRegistry {
+	error URLIsEmpty();
 	error InsufficientStakeAmount();
 	error BlockBuilderNotFound();
 	error CannotUnstakeWithinChallengeDuration();
@@ -83,6 +84,12 @@ interface IBlockBuilderRegistry {
 	function isValidBlockBuilder(
 		address blockBuilder
 	) external view returns (bool);
+
+	/**
+	 * @notice Get all valid block builders addresss
+	 * @return Addresses of all valid block builders.
+	 */
+	function getValidBlockBuilders() external view returns (address[] memory);
 
 	/**
 	 * @notice Set the burn address.
