@@ -72,17 +72,28 @@ describe('BlockBuilderRegistry', () => {
 
 	type signers = {
 		deployer: HardhatEthersSigner
-		blockBuilder: HardhatEthersSigner
+		blockBuilder1: HardhatEthersSigner
+		blockBuilder2: HardhatEthersSigner
+		blockBuilder3: HardhatEthersSigner
 		notStakedBlockBuilder: HardhatEthersSigner
 		challenger: HardhatEthersSigner
 		user: HardhatEthersSigner
 	}
 	const getSigners = async (): Promise<signers> => {
-		const [deployer, blockBuilder, notStakedBlockBuilder, challenger, user] =
-			await ethers.getSigners()
+		const [
+			deployer,
+			blockBuilder1,
+			blockBuilder2,
+			blockBuilder3,
+			notStakedBlockBuilder,
+			challenger,
+			user,
+		] = await ethers.getSigners()
 		return {
 			deployer,
-			blockBuilder,
+			blockBuilder1,
+			blockBuilder2,
+			blockBuilder3,
 			notStakedBlockBuilder,
 			challenger,
 			user,
@@ -130,7 +141,7 @@ describe('BlockBuilderRegistry', () => {
 		const signers = await getSigners()
 		const stakeAmount = ethers.parseEther('0.11')
 		await blockBuilderRegistry
-			.connect(signers.blockBuilder)
+			.connect(signers.blockBuilder1)
 			.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 		const fraudProof = await getTestFraudProofPublicInputs(
 			DUMMY_BLOCK_HASH,
@@ -139,7 +150,7 @@ describe('BlockBuilderRegistry', () => {
 		await rollup.setTestData(
 			fraudProof.blockNumber,
 			fraudProof.blockHash,
-			signers.blockBuilder.address,
+			signers.blockBuilder1.address,
 		)
 		return [blockBuilderRegistry, rollup, verifier, stakeAmount, fraudProof]
 	}
@@ -167,7 +178,7 @@ describe('BlockBuilderRegistry', () => {
 				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const blockBuilderInfoBefore = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(
 					blockBuilderInfoBefore,
@@ -176,10 +187,10 @@ describe('BlockBuilderRegistry', () => {
 
 				const stakeAmount = ethers.parseEther('0.3')
 				await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 				const blockBuilderInfoAfter = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(blockBuilderInfoAfter, {
 					blockBuilderUrl: DUMMY_URL,
@@ -193,15 +204,15 @@ describe('BlockBuilderRegistry', () => {
 				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const balanceBefore = await ethers.provider.getBalance(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const stakeAmount = ethers.parseEther('0.3')
 				const res = await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 				const gasCost = await getGasCost(res)
 				const balanceAfter = await ethers.provider.getBalance(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				expect(balanceBefore - stakeAmount - gasCost).to.equal(balanceAfter)
 			})
@@ -209,15 +220,15 @@ describe('BlockBuilderRegistry', () => {
 				const [blockBuilderRegistry] = await loadFixture(setup)
 				const signers = await getSigners()
 				const balanceBefore = await ethers.provider.getBalance(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const stakeAmount1 = ethers.parseEther('0.3')
 				const res1 = await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.updateBlockBuilder(DUMMY_URL, { value: stakeAmount1 })
 				const gasCost1 = await getGasCost(res1)
 				const blockBuilderInfoBefore = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(blockBuilderInfoBefore, {
 					blockBuilderUrl: DUMMY_URL,
@@ -229,14 +240,14 @@ describe('BlockBuilderRegistry', () => {
 
 				const stakeAmount2 = ethers.parseEther('0.5')
 				const res2 = await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.updateBlockBuilder(DUMMY_URL, { value: stakeAmount2 })
 				const balanceAfter = await ethers.provider.getBalance(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const gasCost2 = await getGasCost(res2)
 				const blockBuilderInfoAfter = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(blockBuilderInfoAfter, {
 					blockBuilderUrl: DUMMY_URL,
@@ -255,11 +266,11 @@ describe('BlockBuilderRegistry', () => {
 				const stakeAmount = ethers.parseEther('0.3')
 				await expect(
 					blockBuilderRegistry
-						.connect(signers.blockBuilder)
+						.connect(signers.blockBuilder1)
 						.updateBlockBuilder(DUMMY_URL, { value: stakeAmount }),
 				)
 					.to.emit(blockBuilderRegistry, 'BlockBuilderUpdated')
-					.withArgs(signers.blockBuilder.address, DUMMY_URL, stakeAmount)
+					.withArgs(signers.blockBuilder1.address, DUMMY_URL, stakeAmount)
 			})
 		})
 		describe('fail', () => {
@@ -268,12 +279,21 @@ describe('BlockBuilderRegistry', () => {
 				const signers = await getSigners()
 				await expect(
 					blockBuilderRegistry
-						.connect(signers.blockBuilder)
+						.connect(signers.blockBuilder1)
 						.updateBlockBuilder(DUMMY_URL),
 				).to.be.revertedWithCustomError(
 					blockBuilderRegistry,
 					'InsufficientStakeAmount',
 				)
+			})
+			it('should revert with URLIsEmpty when url is 0 length', async () => {
+				const [blockBuilderRegistry] = await loadFixture(setup)
+				const signers = await getSigners()
+				await expect(
+					blockBuilderRegistry
+						.connect(signers.blockBuilder1)
+						.updateBlockBuilder(''),
+				).to.be.revertedWithCustomError(blockBuilderRegistry, 'URLIsEmpty')
 			})
 		})
 	})
@@ -284,11 +304,11 @@ describe('BlockBuilderRegistry', () => {
 				const signers = await getSigners()
 				const stakeAmount = ethers.parseEther('0.3')
 				await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 
 				const blockBuilderInfoBefore = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(blockBuilderInfoBefore, {
 					blockBuilderUrl: DUMMY_URL,
@@ -298,11 +318,11 @@ describe('BlockBuilderRegistry', () => {
 					isValid: true,
 				})
 				await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.stopBlockBuilder()
 				const currentTimestamp = await time.latest()
 				const blockBuilderInfoAfter = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(blockBuilderInfoAfter, {
 					blockBuilderUrl: DUMMY_URL,
@@ -317,14 +337,16 @@ describe('BlockBuilderRegistry', () => {
 				const signers = await getSigners()
 				const stakeAmount = ethers.parseEther('0.3')
 				await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 
 				await expect(
-					blockBuilderRegistry.connect(signers.blockBuilder).stopBlockBuilder(),
+					blockBuilderRegistry
+						.connect(signers.blockBuilder1)
+						.stopBlockBuilder(),
 				)
 					.to.emit(blockBuilderRegistry, 'BlockBuilderStopped')
-					.withArgs(signers.blockBuilder.address)
+					.withArgs(signers.blockBuilder1.address)
 			})
 		})
 		describe('fail', () => {
@@ -353,11 +375,11 @@ describe('BlockBuilderRegistry', () => {
 			const signers = await getSigners()
 			const stakeAmount = ethers.parseEther('0.3')
 			await blockBuilderRegistry
-				.connect(signers.blockBuilder)
+				.connect(signers.blockBuilder1)
 				.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 
 			await blockBuilderRegistry
-				.connect(signers.blockBuilder)
+				.connect(signers.blockBuilder1)
 				.stopBlockBuilder()
 			return [blockBuilderRegistry, stakeAmount]
 		}
@@ -369,7 +391,7 @@ describe('BlockBuilderRegistry', () => {
 
 				const currentTimestamp = await time.latest()
 				const blockBuilderInfoBefore = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(blockBuilderInfoBefore, {
 					blockBuilderUrl: DUMMY_URL,
@@ -379,9 +401,9 @@ describe('BlockBuilderRegistry', () => {
 					isValid: false,
 				})
 				await time.increase(ONE_DAY_SECONDS)
-				await blockBuilderRegistry.connect(signers.blockBuilder).unstake()
+				await blockBuilderRegistry.connect(signers.blockBuilder1).unstake()
 				const blockBuilderInfoAfter = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				checkBlockBuilderInfo(
 					blockBuilderInfoAfter,
@@ -396,14 +418,14 @@ describe('BlockBuilderRegistry', () => {
 				await time.increase(ONE_DAY_SECONDS)
 
 				const balanceBefore = await ethers.provider.getBalance(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const res = await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.unstake()
 				const gasCost = await getGasCost(res)
 				const balanceAfter = await ethers.provider.getBalance(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				expect(balanceBefore + stakeAmount - gasCost).to.equal(balanceAfter)
 			})
@@ -414,10 +436,10 @@ describe('BlockBuilderRegistry', () => {
 				const signers = await getSigners()
 				await time.increase(ONE_DAY_SECONDS)
 				await expect(
-					blockBuilderRegistry.connect(signers.blockBuilder).unstake(),
+					blockBuilderRegistry.connect(signers.blockBuilder1).unstake(),
 				)
 					.to.emit(blockBuilderRegistry, 'BlockBuilderUpdated')
-					.withArgs(signers.blockBuilder.address, DUMMY_URL, stakeAmount)
+					.withArgs(signers.blockBuilder1.address, DUMMY_URL, stakeAmount)
 			})
 		})
 		describe('fail', () => {
@@ -440,7 +462,7 @@ describe('BlockBuilderRegistry', () => {
 				const [blockBuilderRegistry] = await loadFixture(unstakeSetup)
 				const signers = await getSigners()
 				await expect(
-					blockBuilderRegistry.connect(signers.blockBuilder).unstake(),
+					blockBuilderRegistry.connect(signers.blockBuilder1).unstake(),
 				).to.be.revertedWithCustomError(
 					blockBuilderRegistry,
 					'CannotUnstakeWithinChallengeDuration',
@@ -466,7 +488,7 @@ describe('BlockBuilderRegistry', () => {
 					.to.emit(blockBuilderRegistry, 'BlockFraudProofSubmitted')
 					.withArgs(
 						fraudProof.blockNumber,
-						signers.blockBuilder.address,
+						signers.blockBuilder1.address,
 						signers.deployer.address,
 					)
 			})
@@ -507,14 +529,14 @@ describe('BlockBuilderRegistry', () => {
 						.submitBlockFraudProof(fraudProof, DUMMY_PROOF),
 				)
 					.to.emit(blockBuilderRegistry, 'BlockBuilderSlashed')
-					.withArgs(signers.blockBuilder.address, signers.deployer.address)
+					.withArgs(signers.blockBuilder1.address, signers.deployer.address)
 			})
 			it('should update blockBuilders (case 1)', async () => {
 				const [blockBuilderRegistry, , , stakeAmount, fraudProof] =
 					await loadFixture(slashBlockBuilderSetup)
 				const signers = await getSigners()
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				expect(beforeBlockBuilderInfo.blockBuilderUrl).to.equal(DUMMY_URL)
 				expect(beforeBlockBuilderInfo.stakeAmount).to.equal(stakeAmount)
@@ -526,7 +548,7 @@ describe('BlockBuilderRegistry', () => {
 					.connect(signers.deployer)
 					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 				const afterBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				expect(afterBlockBuilderInfo.blockBuilderUrl).to.equal(DUMMY_URL)
 				expect(afterBlockBuilderInfo.stakeAmount).to.equal(
@@ -545,7 +567,7 @@ describe('BlockBuilderRegistry', () => {
 					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				expect(beforeBlockBuilderInfo.blockBuilderUrl).to.equal(DUMMY_URL)
 				expect(beforeBlockBuilderInfo.stakeAmount).to.equal(
@@ -562,14 +584,14 @@ describe('BlockBuilderRegistry', () => {
 				await rollup.setTestData(
 					nextFraudProof.blockNumber,
 					nextFraudProof.blockHash,
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 
 				await blockBuilderRegistry
 					.connect(signers.deployer)
 					.submitBlockFraudProof(nextFraudProof, DUMMY_PROOF)
 				const afterBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				expect(afterBlockBuilderInfo.blockBuilderUrl).to.equal(DUMMY_URL)
 				expect(afterBlockBuilderInfo.stakeAmount).to.equal(0)
@@ -586,7 +608,7 @@ describe('BlockBuilderRegistry', () => {
 					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const stakeAmount = beforeBlockBuilderInfo.stakeAmount
 				expect(stakeAmount < MIN_STAKE_AMOUNT / 2n).to.be.true
@@ -601,7 +623,7 @@ describe('BlockBuilderRegistry', () => {
 				await rollup.setTestData(
 					nextFraudProof.blockNumber,
 					nextFraudProof.blockHash,
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const beforeChallengerBalance = await ethers.provider.getBalance(
 					signers.deployer.address,
@@ -625,14 +647,14 @@ describe('BlockBuilderRegistry', () => {
 					await loadFixture(slashBlockBuilderSetup)
 				const signers = await getSigners()
 				await blockBuilderRegistry
-					.connect(signers.blockBuilder)
+					.connect(signers.blockBuilder1)
 					.updateBlockBuilder(DUMMY_URL, { value: ethers.parseEther('0.05') })
 				await blockBuilderRegistry
 					.connect(signers.deployer)
 					.submitBlockFraudProof(fraudProof, DUMMY_PROOF)
 
 				const beforeBlockBuilderInfo = await blockBuilderRegistry.blockBuilders(
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const stakeAmount = beforeBlockBuilderInfo.stakeAmount
 				expect(stakeAmount >= MIN_STAKE_AMOUNT / 2n).to.be.true
@@ -648,7 +670,7 @@ describe('BlockBuilderRegistry', () => {
 				await rollup.setTestData(
 					nextFraudProof.blockNumber,
 					nextFraudProof.blockHash,
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 				const beforeChallengerBalance = await ethers.provider.getBalance(
 					signers.deployer.address,
@@ -771,7 +793,7 @@ describe('BlockBuilderRegistry', () => {
 				await rollup.setTestData(
 					fraudProof.blockNumber,
 					fraudProof.blockHash,
-					signers.blockBuilder.address,
+					signers.blockBuilder1.address,
 				)
 
 				await expect(
@@ -856,12 +878,96 @@ describe('BlockBuilderRegistry', () => {
 			const signers = await getSigners()
 			const stakeAmount = ethers.parseEther('0.3')
 			await blockBuilderRegistry
-				.connect(signers.blockBuilder)
+				.connect(signers.blockBuilder1)
 				.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 			const result = await blockBuilderRegistry.isValidBlockBuilder(
-				signers.blockBuilder.address,
+				signers.blockBuilder1.address,
 			)
 			expect(result).to.be.true
+		})
+	})
+
+	describe('getValidBlockBuilders', () => {
+		it('get block builder info', async () => {
+			const [blockBuilderRegistry] = await loadFixture(setup)
+			const { blockBuilder1, blockBuilder2, blockBuilder3 } = await getSigners()
+
+			await blockBuilderRegistry
+				.connect(blockBuilder1)
+				.updateBlockBuilder(DUMMY_URL + '1', {
+					value: ethers.parseEther('0.3'),
+				})
+			await blockBuilderRegistry
+				.connect(blockBuilder2)
+				.updateBlockBuilder(DUMMY_URL + '2', {
+					value: ethers.parseEther('0.2'),
+				})
+			await blockBuilderRegistry
+				.connect(blockBuilder3)
+				.updateBlockBuilder(DUMMY_URL + '3', {
+					value: ethers.parseEther('0.1'),
+				})
+			const builders = await blockBuilderRegistry.getValidBlockBuilders()
+			expect(builders.length).to.equal(3)
+			expect(builders[0].blockBuilderAddress).to.equal(blockBuilder1)
+			expect(builders[0].info.blockBuilderUrl).to.equal(DUMMY_URL + '1')
+			expect(builders[0].info.stakeAmount).to.equal(ethers.parseEther('0.3'))
+			expect(builders[0].info.stopTime).to.equal(0)
+			expect(builders[0].info.numSlashes).to.equal(0)
+			expect(builders[0].info.isValid).to.equal(true)
+
+			expect(builders[1].blockBuilderAddress).to.equal(blockBuilder2)
+			expect(builders[1].info.blockBuilderUrl).to.equal(DUMMY_URL + '2')
+			expect(builders[1].info.stakeAmount).to.equal(ethers.parseEther('0.2'))
+			expect(builders[1].info.stopTime).to.equal(0)
+			expect(builders[1].info.numSlashes).to.equal(0)
+			expect(builders[1].info.isValid).to.equal(true)
+
+			expect(builders[2].blockBuilderAddress).to.equal(blockBuilder3)
+			expect(builders[2].info.blockBuilderUrl).to.equal(DUMMY_URL + '3')
+			expect(builders[2].info.stakeAmount).to.equal(ethers.parseEther('0.1'))
+			expect(builders[2].info.stopTime).to.equal(0)
+			expect(builders[2].info.numSlashes).to.equal(0)
+			expect(builders[2].info.isValid).to.equal(true)
+		})
+
+		it('only valid block info', async () => {
+			const [blockBuilderRegistry] = await loadFixture(setup)
+			const { blockBuilder1, blockBuilder2, blockBuilder3 } = await getSigners()
+
+			await blockBuilderRegistry
+				.connect(blockBuilder1)
+				.updateBlockBuilder(DUMMY_URL + '1', {
+					value: ethers.parseEther('0.3'),
+				})
+			await blockBuilderRegistry
+				.connect(blockBuilder2)
+				.updateBlockBuilder(DUMMY_URL + '2', {
+					value: ethers.parseEther('0.2'),
+				})
+			await blockBuilderRegistry
+				.connect(blockBuilder3)
+				.updateBlockBuilder(DUMMY_URL + '3', {
+					value: ethers.parseEther('0.1'),
+				})
+
+			await blockBuilderRegistry.connect(blockBuilder2).stopBlockBuilder()
+
+			const builders = await blockBuilderRegistry.getValidBlockBuilders()
+			expect(builders.length).to.equal(2)
+			expect(builders[0].blockBuilderAddress).to.equal(blockBuilder1)
+			expect(builders[0].info.blockBuilderUrl).to.equal(DUMMY_URL + '1')
+			expect(builders[0].info.stakeAmount).to.equal(ethers.parseEther('0.3'))
+			expect(builders[0].info.stopTime).to.equal(0)
+			expect(builders[0].info.numSlashes).to.equal(0)
+			expect(builders[0].info.isValid).to.equal(true)
+
+			expect(builders[1].blockBuilderAddress).to.equal(blockBuilder3)
+			expect(builders[1].info.blockBuilderUrl).to.equal(DUMMY_URL + '3')
+			expect(builders[1].info.stakeAmount).to.equal(ethers.parseEther('0.1'))
+			expect(builders[1].info.stopTime).to.equal(0)
+			expect(builders[1].info.numSlashes).to.equal(0)
+			expect(builders[1].info.isValid).to.equal(true)
 		})
 	})
 	describe('upgrade', () => {
@@ -871,7 +977,7 @@ describe('BlockBuilderRegistry', () => {
 
 			const stakeAmount = ethers.parseEther('0.3')
 			await blockBuilderRegistry
-				.connect(signers.blockBuilder)
+				.connect(signers.blockBuilder1)
 				.updateBlockBuilder(DUMMY_URL, { value: stakeAmount })
 
 			const registry2Factory = await ethers.getContractFactory(
@@ -882,7 +988,7 @@ describe('BlockBuilderRegistry', () => {
 				registry2Factory,
 			)
 			const blockBuilderInfo = await blockBuilderRegistry.blockBuilders(
-				signers.blockBuilder.address,
+				signers.blockBuilder1.address,
 			)
 			expect(blockBuilderInfo.blockBuilderUrl).to.equal(DUMMY_URL)
 			const val = await next.getVal()

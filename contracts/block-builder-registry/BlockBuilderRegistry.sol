@@ -20,7 +20,7 @@ contract BlockBuilderRegistry is
 	IPlonkVerifier private fraudVerifier;
 	address private burnAddress;
 	mapping(address => BlockBuilderInfo) public blockBuilders;
-	address[] blockBuilderAddresses;
+	address[] private blockBuilderAddresses;
 	mapping(uint32 => bool) private slashedBlockNumbers;
 
 	using BlockBuilderInfoLib for BlockBuilderInfo;
