@@ -222,7 +222,9 @@ describe('Integration', function () {
 
 	it('withdrawal', async function () {
 		// setup: post blocks
-		await registry.updateBlockBuilder('', { value: ethers.parseEther('0.1') })
+		await registry.updateBlockBuilder('http://example.com', {
+			value: ethers.parseEther('0.1'),
+		})
 		const fullBlocks = loadFullBlocks()
 		for (let i = 1; i < 3; i++) {
 			await postBlock(fullBlocks[i], rollup)
