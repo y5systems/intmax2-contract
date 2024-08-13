@@ -337,6 +337,16 @@ contract Liquidity is
 		}
 	}
 
+	function onERC1155Received(
+		address,
+		address,
+		uint256,
+		uint256,
+		bytes calldata
+	) external pure returns (bytes4) {
+		return this.onERC1155Received.selector;
+	}
+
 	function getDepositData(
 		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory) {
