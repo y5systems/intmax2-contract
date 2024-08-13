@@ -102,4 +102,12 @@ interface ILiquidity {
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;
+
+	function onERC1155Received(
+		address,
+		address,
+		uint256,
+		uint256,
+		bytes calldata
+	) external pure returns (bytes4);
 }
