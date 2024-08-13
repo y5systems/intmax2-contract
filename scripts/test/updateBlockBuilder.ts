@@ -1,7 +1,6 @@
 import { ethers } from 'hardhat'
 import type { ContractTransactionResponse } from 'ethers'
 import { readDeployedContracts } from '../utils/io'
-import { sleep } from '../../utils/sleep'
 
 async function main() {
 	const deployedContracts = await readDeployedContracts()

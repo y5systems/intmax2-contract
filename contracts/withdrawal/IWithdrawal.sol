@@ -24,18 +24,24 @@ interface IWithdrawal {
 
 	error DirectWithdrawalIsTooLarge(uint256 directWithdrawalId, uint256 rear);
 
+	error TokenAlreadyExist(uint256 tokenIndice);
+
+	error TokenNotExist(uint256 tokenIndice);
+
 	error ClaimableWithdrawalIsTooLarge(
 		uint256 claimableWithdrawalId,
 		uint256 rear
 	);
 
 	event ClaimableWithdrawalQueued(
-		uint256 claimableWithdrawalId,
+		uint256 indexed claimableWithdrawalId,
+		address indexed recipient,
 		WithdrawalLib.Withdrawal withdrawal
 	);
 
 	event DirectWithdrawalQueued(
-		uint256 directWithdrawalId,
+		uint256 indexed directWithdrawalId,
+		address indexed recipient,
 		WithdrawalLib.Withdrawal withdrawal
 	);
 
@@ -56,25 +62,16 @@ interface IWithdrawal {
 		bytes calldata proof
 	) external;
 
-	function relayWithdrawals(
-		uint256 upToDirectWithdrawalId,
-		uint256 upToClamableWithdrawalId
-	) external;
-
-	function relayDirectWithdrawals(uint256 upToDirectWithdrawalId) external;
-
-	function relayClaimableWithdrawals(
-		uint256 upToClamableWithdrawalId
-	) external;
-
-	function getLastDirectWithdrawalId() external view returns (uint256);
-
-	function getLastClaimableWithdrawalId() external view returns (uint256);
-
-	function getLastRelayedDirectWithdrawalId() external view returns (uint256);
-
-	function getLastRelayedClaimableWithdrawalId()
+	function getDirectWithdrawalTokenIndices()
 		external
 		view
-		returns (uint256);
+		returns (uint256[] memory);
+
+	function addDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external;
+
+	function removeDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external;
 }

@@ -5,18 +5,17 @@ import {IWithdrawal} from "./IWithdrawal.sol";
 import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
 import {ILiquidity} from "../liquidity/ILiquidity.sol";
 import {IRollup} from "../rollup/IRollup.sol";
+import {IContribution} from "../contribution/IContribution.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
-import {WithdrawalQueueLib} from "./lib/WithdrawalQueueLib.sol";
-import {Bytes32QueueLib} from "./lib/Bytes32QueueLib.sol";
 
 contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using EnumerableSet for EnumerableSet.UintSet;
@@ -24,8 +23,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using ChainedWithdrawalLib for ChainedWithdrawalLib.ChainedWithdrawal[];
 	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs;
 	using Byte32Lib for bytes32;
-	using WithdrawalQueueLib for WithdrawalQueueLib.Queue;
-	using Bytes32QueueLib for Bytes32QueueLib.Queue;
 
 	uint256 private constant MAX_RELAY_DIRECT_WITHDRAWALS = 20;
 	uint256 private constant MAX_RELAY_CLAIMABLE_WITHDRAWALS = 100;
@@ -34,16 +31,19 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	IL2ScrollMessenger private l2ScrollMessenger;
 	IRollup private rollup;
 	address private liquidity;
-	WithdrawalQueueLib.Queue private directWithdrawalsQueue;
-	Bytes32QueueLib.Queue private claimableWithdrawalsQueue;
+	IContribution private contribution;
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
+
+	uint256 public lastDirectWithdrawalId;
+	uint256 public lastClaimableWithdrawalId;
 
 	function initialize(
 		address _scrollMessenger,
 		address _withdrawalVerifier,
 		address _liquidity,
 		address _rollup,
+		address _contribution,
 		uint256[] memory _directWithdrawalTokenIndices
 	) public initializer {
 		__Ownable_init(_msgSender());
@@ -51,12 +51,11 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
 		rollup = IRollup(_rollup);
+		contribution = IContribution(_contribution);
 		liquidity = _liquidity;
 		for (uint256 i = 0; i < _directWithdrawalTokenIndices.length; i++) {
 			directWithdrawalTokenIndices.add(_directWithdrawalTokenIndices[i]);
 		}
-		directWithdrawalsQueue.initialize();
-		claimableWithdrawalsQueue.initialize();
 	}
 
 	// added onlyOwner for dummy zkp verification
@@ -66,31 +65,49 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			calldata publicInputs,
 		bytes calldata proof
 	) external onlyOwner {
-		// verify public inputs
-		if (
-			!withdrawals.verifyWithdrawalChain(publicInputs.lastWithdrawalHash)
-		) {
-			revert WithdrawalChainVerificationFailed();
-		}
-		if (publicInputs.withdrawalAggregator != _msgSender()) {
-			revert WithdrawalAggregatorMismatch();
-		}
-		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
-			revert WithdrawalProofVerificationFailed();
-		}
+		_validWithdrawalProof(withdrawals, publicInputs, proof);
+		uint256 directWithdrawalCounter = 0;
+		uint256 claimableWithdrawalCounter = 0;
+		bool[] memory isSkippedFlags = new bool[](withdrawals.length);
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
+			if (nullifiers[chainedWithdrawal.nullifier] == true) {
+				isSkippedFlags[i] = true;
+				continue; // already withdrawn
+			}
+			nullifiers[chainedWithdrawal.nullifier] = true;
 			bytes32 expectedBlockHash = rollup.getBlockHash(
 				chainedWithdrawal.blockNumber
 			);
 			if (expectedBlockHash != chainedWithdrawal.blockHash) {
 				revert BlockHashNotExists(chainedWithdrawal.blockHash);
 			}
-			if (nullifiers[chainedWithdrawal.nullifier] == true) {
-				continue; // already withdrawn
+			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
+				directWithdrawalCounter++;
+			} else {
+				claimableWithdrawalCounter++;
 			}
-			nullifiers[chainedWithdrawal.nullifier] = true;
+		}
+		if (directWithdrawalCounter == 0 && claimableWithdrawalCounter == 0) {
+			return;
+		}
+		WithdrawalLib.Withdrawal[]
+			memory directWithdrawals = new WithdrawalLib.Withdrawal[](
+				directWithdrawalCounter
+			);
+		bytes32[] memory claimableWithdrawals = new bytes32[](
+			claimableWithdrawalCounter
+		);
+
+		uint256 directWithdrawalIndex = 0;
+		uint256 claimableWithdrawalIndex = 0;
+		for (uint256 i = 0; i < withdrawals.length; i++) {
+			if (isSkippedFlags[i]) {
+				continue; // skipped withdrawal
+			}
+			ChainedWithdrawalLib.ChainedWithdrawal
+				memory chainedWithdrawal = withdrawals[i];
 			WithdrawalLib.Withdrawal memory withdrawal = WithdrawalLib
 				.Withdrawal(
 					chainedWithdrawal.recipient,
@@ -99,133 +116,52 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 					0 // set later
 				);
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
-				uint256 id = directWithdrawalsQueue.nextIndex();
-				withdrawal.id = id;
-				directWithdrawalsQueue.enqueue(withdrawal);
-				emit DirectWithdrawalQueued(id, withdrawal);
+				lastDirectWithdrawalId++;
+				withdrawal.id = lastDirectWithdrawalId;
+				directWithdrawals[directWithdrawalIndex] = withdrawal;
+				emit DirectWithdrawalQueued(
+					withdrawal.id,
+					withdrawal.recipient,
+					withdrawal
+				);
+				directWithdrawalIndex++;
 			} else {
-				uint256 id = claimableWithdrawalsQueue.nextIndex();
-				withdrawal.id = id;
-				claimableWithdrawalsQueue.enqueue(withdrawal.getHash());
-				emit ClaimableWithdrawalQueued(id, withdrawal);
+				lastClaimableWithdrawalId++;
+				withdrawal.id = lastClaimableWithdrawalId;
+				claimableWithdrawals[claimableWithdrawalIndex] = withdrawal
+					.getHash();
+				emit ClaimableWithdrawalQueued(
+					withdrawal.id,
+					withdrawal.recipient,
+					withdrawal
+				);
+				claimableWithdrawalIndex++;
 			}
 		}
 		emit WithdrawalsQueued(
-			getLastDirectWithdrawalId(),
-			getLastClaimableWithdrawalId()
+			lastDirectWithdrawalId,
+			lastClaimableWithdrawalId
 		);
-	}
 
-	function relayWithdrawals(
-		uint256 upToDirectWithdrawalId,
-		uint256 upToClamableWithdrawalId
-	) external {
-		WithdrawalLib.Withdrawal[] memory directWithdrawals;
-		if (upToDirectWithdrawalId != getLastRelayedDirectWithdrawalId()) {
-			directWithdrawals = _collectDirectWithdrawals(
-				upToDirectWithdrawalId
-			);
-		}
-		bytes32[] memory claimableWithdrawals;
-		if (upToClamableWithdrawalId != getLastRelayedClaimableWithdrawalId()) {
-			claimableWithdrawals = _collectClaimableWithdrawals(
-				upToClamableWithdrawalId
-			);
-		}
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
-			upToDirectWithdrawalId,
+			lastDirectWithdrawalId,
 			directWithdrawals,
-			upToClamableWithdrawalId,
+			lastClaimableWithdrawalId,
 			claimableWithdrawals
 		);
 		_relayMessage(message);
-	}
 
-	function relayDirectWithdrawals(uint256 upToDirectWithdrawalId) external {
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processClaimableWithdrawals.selector,
-			_collectDirectWithdrawals(upToDirectWithdrawalId)
+		contribution.recordContribution(
+			keccak256("WITHDRAWAL"),
+			_msgSender(),
+			directWithdrawalCounter + claimableWithdrawalCounter
 		);
-		_relayMessage(message);
-	}
-
-	function relayClaimableWithdrawals(
-		uint256 upToClamableWithdrawalId
-	) external {
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processClaimableWithdrawals.selector,
-			_collectClaimableWithdrawals(upToClamableWithdrawalId)
-		);
-		_relayMessage(message);
-	}
-
-	function _collectDirectWithdrawals(
-		uint256 upToDirectWithdrawalId
-	) internal returns (WithdrawalLib.Withdrawal[] memory) {
-		if (upToDirectWithdrawalId >= directWithdrawalsQueue.rear) {
-			revert DirectWithdrawalIsTooLarge(
-				upToDirectWithdrawalId,
-				directWithdrawalsQueue.rear
-			);
-		}
-		uint256 relayNum = upToDirectWithdrawalId -
-			directWithdrawalsQueue.front;
-		if (relayNum > MAX_RELAY_DIRECT_WITHDRAWALS) {
-			revert TooManyRelayDirectWithdrawals(relayNum);
-		}
-		WithdrawalLib.Withdrawal[]
-			memory withdrawals = new WithdrawalLib.Withdrawal[](relayNum);
-		for (uint256 i = 0; i < relayNum; i++) {
-			withdrawals[i] = directWithdrawalsQueue.dequeue();
-		}
-		return withdrawals;
-	}
-
-	function _collectClaimableWithdrawals(
-		uint256 upToClamableWithdrawalId
-	) internal returns (bytes32[] memory) {
-		if (upToClamableWithdrawalId >= claimableWithdrawalsQueue.rear) {
-			revert ClaimableWithdrawalIsTooLarge(
-				upToClamableWithdrawalId,
-				claimableWithdrawalsQueue.rear
-			);
-		}
-		uint256 relayNum = upToClamableWithdrawalId -
-			claimableWithdrawalsQueue.front;
-		if (relayNum > MAX_RELAY_CLAIMABLE_WITHDRAWALS) {
-			revert TooManyRelayClaimableWithdrawals(relayNum);
-		}
-		bytes32[] memory withdrawalHashes = new bytes32[](relayNum);
-		for (uint256 i = 0; i < relayNum; i++) {
-			withdrawalHashes[i] = claimableWithdrawalsQueue.dequeue();
-		}
-		return withdrawalHashes;
-	}
-
-	function getLastDirectWithdrawalId() public view returns (uint256) {
-		return directWithdrawalsQueue.rear - 1;
-	}
-
-	function getLastClaimableWithdrawalId() public view returns (uint256) {
-		return claimableWithdrawalsQueue.rear - 1;
-	}
-
-	function getLastRelayedDirectWithdrawalId() public view returns (uint256) {
-		return directWithdrawalsQueue.front - 1;
-	}
-
-	function getLastRelayedClaimableWithdrawalId()
-		public
-		view
-		returns (uint256)
-	{
-		return claimableWithdrawalsQueue.front - 1;
 	}
 
 	// The specification of ScrollMessenger may change in the future.
 	// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
-	function _relayMessage(bytes memory message) internal {
+	function _relayMessage(bytes memory message) private {
 		uint256 value = 0; // relay to non-payable function
 		// In the current implementation of ScrollMessenger, the `gasLimit` is simply included in the L2 event log
 		// and does not impose any restrictions on the L1 gas limit. However, considering the possibility of
@@ -242,8 +178,57 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 
 	function _isDirectWithdrawalToken(
 		uint32 tokenIndex
-	) internal view returns (bool) {
+	) private view returns (bool) {
 		return directWithdrawalTokenIndices.contains(tokenIndex);
+	}
+
+	function _validWithdrawalProof(
+		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
+		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
+			calldata publicInputs,
+		bytes calldata proof
+	) private view {
+		if (
+			!withdrawals.verifyWithdrawalChain(publicInputs.lastWithdrawalHash)
+		) {
+			revert WithdrawalChainVerificationFailed();
+		}
+		if (publicInputs.withdrawalAggregator != _msgSender()) {
+			revert WithdrawalAggregatorMismatch();
+		}
+		if (!withdrawalVerifier.Verify(proof, publicInputs.getHash().split())) {
+			revert WithdrawalProofVerificationFailed();
+		}
+	}
+
+	function getDirectWithdrawalTokenIndices()
+		external
+		view
+		returns (uint256[] memory)
+	{
+		return directWithdrawalTokenIndices.values();
+	}
+
+	function addDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external onlyOwner {
+		for (uint256 i = 0; i < tokenIndices.length; i++) {
+			bool result = directWithdrawalTokenIndices.add(tokenIndices[i]);
+			if (result == false) {
+				revert TokenAlreadyExist(tokenIndices[i]);
+			}
+		}
+	}
+
+	function removeDirectWithdrawalTokenIndices(
+		uint256[] calldata tokenIndices
+	) external onlyOwner {
+		for (uint256 i = 0; i < tokenIndices.length; i++) {
+			bool result = directWithdrawalTokenIndices.remove(tokenIndices[i]);
+			if (result == false) {
+				revert TokenNotExist(tokenIndices[i]);
+			}
+		}
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

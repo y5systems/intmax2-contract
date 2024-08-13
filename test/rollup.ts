@@ -1,6 +1,7 @@
 import { ethers, upgrades } from 'hardhat'
 import type {
 	BlockBuilderRegistry,
+	Contribution,
 	MockL2ScrollMessenger,
 	Rollup,
 } from '../typechain-types'
@@ -32,15 +33,27 @@ describe('Rollup', function () {
 			initializer: false,
 			kind: 'uups',
 		})) as unknown as Rollup
+
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const contribution = (await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})) as unknown as Contribution
 		await rollup.initialize(
 			await mockL2ScrollMessenger.getAddress(),
 			ethers.ZeroAddress,
 			await registry.getAddress(),
+			await contribution.getAddress(),
+		)
+		await contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			rollup,
 		)
 	})
 
 	it('should match block hashes', async function () {
-		await registry.updateBlockBuilder('', { value: ethers.parseEther('0.1') })
+		await registry.updateBlockBuilder('http://example.com', {
+			value: ethers.parseEther('0.1'),
+		})
 		const fullBlocks = loadFullBlocks()
 		for (let i = 1; i < 3; i++) {
 			await postBlock(fullBlocks[i], rollup)

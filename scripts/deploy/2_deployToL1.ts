@@ -6,10 +6,7 @@ import {
 	getWBTCAddress,
 } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
-
-if (network.name !== 'sepolia') {
-	throw new Error('This script should be run on sepolia network')
-}
+import { getCounterPartNetwork } from '../utils/counterPartNetwork'
 
 async function main() {
 	let deployedContracts = await readDeployedContracts()
@@ -27,14 +24,34 @@ async function main() {
 		await sleep(30)
 	}
 
-	deployedContracts = await readDeployedContracts()
+	if (!deployedContracts.l1Contribution) {
+		console.log('deploying l1Contribution')
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const l1Contribution = await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			l1Contribution: await l1Contribution.getAddress(),
+			...deployedContracts,
+		})
+	}
+
 	if (!deployedContracts.liquidity) {
-		if (!deployedContracts.rollup) {
+		console.log('deploying liquidity')
+		const deployedL2Contracts = await readDeployedContracts(
+			getCounterPartNetwork(),
+		)
+		if (!deployedL2Contracts.rollup) {
 			throw new Error('rollup address is not set')
 		}
-		if (!deployedContracts.withdrawal) {
+		if (!deployedL2Contracts.withdrawal) {
 			throw new Error('withdrawal address is not set')
 		}
+		if (!deployedContracts.l1Contribution) {
+			throw new Error('l1Contribution address is not set')
+		}
+
 		const analyzer = (await ethers.getSigners())[1]
 		const liquidityFactory = await ethers.getContractFactory('Liquidity')
 		const initialERC20Tokens = [getUSDCAddress(), getWBTCAddress()]
@@ -42,15 +59,32 @@ async function main() {
 			liquidityFactory,
 			[
 				await getL1MessengerAddress(),
-				deployedContracts.rollup,
-				deployedContracts.withdrawal,
+				deployedL2Contracts.rollup,
+				deployedL2Contracts.withdrawal,
 				analyzer.address,
+				deployedContracts.l1Contribution,
 				initialERC20Tokens,
 			],
 			{
 				kind: 'uups',
 			},
 		)
+
+		// grant roles
+		if (!deployedContracts.l1Contribution) {
+			throw new Error('l1Contribution address is not set')
+		}
+		const l1Contribution = await ethers.getContractAt(
+			'Contribution',
+			deployedContracts.l1Contribution,
+		)
+		await l1Contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			liquidity,
+		)
+		console.log('granted role')
+
+		deployedContracts = await readDeployedContracts()
 		await writeDeployedContracts({
 			liquidity: await liquidity.getAddress(),
 			...deployedContracts,

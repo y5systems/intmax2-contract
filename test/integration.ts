@@ -8,6 +8,7 @@ import type {
 	Withdrawal,
 	Rollup,
 	TestERC20,
+	Contribution,
 } from '../typechain-types'
 import { expect } from 'chai'
 import { loadFullBlocks, postBlock } from '../utils/rollup'
@@ -16,7 +17,7 @@ import { getPubkeySaltHash } from '../utils/hash'
 import { loadWithdrawalInfo } from '../utils/withdrawal'
 import {
 	getLastDepositedEvent,
-	getLastDepositsRelayedEvent,
+	getLastDepositsAnalyzedAndRelayedEvent,
 	getLastSentEvent,
 	getWithdrawalsQueuedEvent,
 } from '../utils/events'
@@ -24,6 +25,8 @@ import {
 describe('Integration', function () {
 	let l1ScrollMessenger: MockL1ScrollMessenger
 	let l2ScrollMessenger: MockL2ScrollMessenger
+	let l1Contribution: Contribution
+	let l2Contribution: Contribution
 	let withdrawalVerifier: MockPlonkVerifier
 	let fraudVerifier: MockPlonkVerifier
 
@@ -40,6 +43,15 @@ describe('Integration', function () {
 		// test token
 		const TestERC20_ = await ethers.getContractFactory('TestERC20')
 		testToken = (await TestERC20_.deploy(deployer)) as TestERC20
+
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		l1Contribution = (await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})) as unknown as Contribution
+
+		l2Contribution = (await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})) as unknown as Contribution
 
 		// scroll messanger deployment
 		const MockL1ScrollMessenger_ = await ethers.getContractFactory(
@@ -96,6 +108,8 @@ describe('Integration', function () {
 		const withdrawalAddress = await withdrawal.getAddress()
 		const liquidityAddress = await liquidity.getAddress()
 		const registryAddress = await registry.getAddress()
+		const l1ContributionAddress = await l1Contribution.getAddress()
+		const l2ContributionAddress = await l2Contribution.getAddress()
 
 		// L1 initialize
 		await liquidity.initialize(
@@ -103,7 +117,12 @@ describe('Integration', function () {
 			rollupAddress,
 			withdrawalAddress,
 			analyzer.address,
+			l1ContributionAddress,
 			[testTokenAddress], // testToken
+		)
+		await l1Contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			liquidityAddress,
 		)
 
 		// L2 initialize
@@ -111,15 +130,25 @@ describe('Integration', function () {
 			l2ScrollMessengerAddress,
 			liquidityAddress,
 			registryAddress,
+			await l2Contribution.getAddress(),
 		)
 		await withdrawal.initialize(
 			l2ScrollMessenger,
 			withdrawalVerifierAddress,
 			liquidity,
 			rollupAddress,
+			await l2Contribution.getAddress(),
 			[0, 1], // 0: eth, 1: testToken
 		)
 		await registry.initialize(rollupAddress, fraudVerifierAddress)
+		await l2Contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			rollupAddress,
+		)
+		await l2Contribution.grantRole(
+			ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR']),
+			withdrawalAddress,
+		)
 	})
 
 	it('deposit', async function () {
@@ -148,16 +177,15 @@ describe('Integration', function () {
 			0,
 		)
 		const depositId = lastDepositedEvent.args.depositId
-		await liquidity.connect(analyzer).analyzeDeposits(depositId, [])
-		const analyzedEvent = (
-			await liquidity.queryFilter(liquidity.filters.DepositsAnalyzed())
-		)[0]
-		const analyzedDepositId = analyzedEvent.args.lastAnalyzedDepositId
-		expect(analyzedDepositId).to.be.eq(depositId)
-		await liquidity.relayDeposits(analyzedDepositId, 400_000, {
-			value: ethers.parseEther('0.1'), // will be refunded automatically
-		})
-		const relayedEvent = await getLastDepositsRelayedEvent(liquidity, 0)
+		await liquidity
+			.connect(analyzer)
+			.analyzeAndRelayDeposits(depositId, [], 400_000, {
+				value: ethers.parseEther('0.1'), // will be refunded automatically
+			})
+		const relayedEvent = await getLastDepositsAnalyzedAndRelayedEvent(
+			liquidity,
+			0,
+		)
 		const { message } = relayedEvent.args
 		// this is not required in the production environment,
 		// because scroll messenger will relay the message to L2 automatically.
@@ -194,7 +222,9 @@ describe('Integration', function () {
 
 	it('withdrawal', async function () {
 		// setup: post blocks
-		await registry.updateBlockBuilder('', { value: ethers.parseEther('0.1') })
+		await registry.updateBlockBuilder('http://example.com', {
+			value: ethers.parseEther('0.1'),
+		})
 		const fullBlocks = loadFullBlocks()
 		for (let i = 1; i < 3; i++) {
 			await postBlock(fullBlocks[i], rollup)
@@ -219,11 +249,6 @@ describe('Integration', function () {
 		)
 		const { lastDirectWithdrawalId, lastClaimableWithdrawalId } =
 			withdrawalsQueuedEvent.args
-		// relay withdrawal
-		await withdrawal.relayWithdrawals(
-			lastDirectWithdrawalId,
-			lastClaimableWithdrawalId,
-		)
 		const sentEvent = await getLastSentEvent(
 			await l2ScrollMessenger.getAddress(),
 			await withdrawal.getAddress(),

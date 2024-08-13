@@ -2,10 +2,6 @@ import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import { sleep } from '../../utils/sleep'
 
-if (network.name !== 'scrollSepolia') {
-	throw new Error('This script should be run on scrollSepolia network')
-}
-
 async function main() {
 	const deployedContracts = await readDeployedContracts()
 
@@ -57,6 +53,21 @@ async function main() {
 		const deployedContracts = await readDeployedContracts()
 		const newContractAddresses = {
 			withdrawal: await withdrawal.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
+	}
+
+	if (!deployedContracts.l2Contribution) {
+		console.log('deploying l2Contribution')
+		const contributionFactory = await ethers.getContractFactory('Contribution')
+		const l2Contribution = await upgrades.deployProxy(contributionFactory, [], {
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			l2Contribution: await l2Contribution.getAddress(),
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)

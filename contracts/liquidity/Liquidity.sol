@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/Rollup.sol";
+import {IContribution} from "../contribution/Contribution.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
@@ -34,6 +35,7 @@ contract Liquidity is
 	bytes32 public constant ANALYZER = keccak256("ANALYZER");
 
 	IL1ScrollMessenger private l1ScrollMessenger;
+	IContribution private contribution;
 	address private rollup;
 	address private withdrawal;
 	mapping(bytes32 => uint256) private claimableWithdrawals;
@@ -57,6 +59,7 @@ contract Liquidity is
 		address _rollup,
 		address _withdrawal,
 		address _analyzer,
+		address _contribution,
 		address[] memory initialERC20Tokens
 	) public initializer {
 		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
@@ -66,6 +69,7 @@ contract Liquidity is
 		__TokenData_init(initialERC20Tokens);
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
+		contribution = IContribution(_contribution);
 		rollup = _rollup;
 		withdrawal = _withdrawal;
 	}
@@ -82,7 +86,7 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 amount
-	) public {
+	) external {
 		if (amount == 0) {
 			revert InvalidAmount();
 		}
@@ -103,7 +107,7 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 tokenId
-	) public {
+	) external {
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -122,7 +126,7 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId,
 		uint256 amount
-	) public {
+	) external {
 		if (amount == 0) {
 			revert InvalidAmount();
 		}
@@ -141,20 +145,14 @@ contract Liquidity is
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, amount);
 	}
 
-	function analyzeDeposits(
+	function analyzeAndRelayDeposits(
 		uint256 upToDepositId,
-		uint256[] memory rejectDepositIds
-	) external onlyRole(ANALYZER) {
-		depositQueue.analyze(upToDepositId, rejectDepositIds);
-		emit DepositsAnalyzed(upToDepositId, rejectDepositIds);
-	}
-
-	function relayDeposits(
-		uint256 upToDepositId,
+		uint256[] memory rejectDepositIds,
 		uint256 gasLimit
-	) external payable nonReentrant {
-		bytes32[] memory depositHashes = depositQueue.collectAcceptedDeposits(
-			upToDepositId
+	) external payable onlyRole(ANALYZER) {
+		bytes32[] memory depositHashes = depositQueue.analyze(
+			upToDepositId,
+			rejectDepositIds
 		);
 		bytes memory message = abi.encodeWithSelector(
 			IRollup.processDeposits.selector,
@@ -171,7 +169,12 @@ contract Liquidity is
 			gasLimit,
 			_msgSender()
 		);
-		emit DepositsRelayed(upToDepositId, gasLimit, message);
+		emit DepositsAnalyzedAndRelayed(
+			upToDepositId,
+			rejectDepositIds,
+			gasLimit,
+			message
+		);
 	}
 
 	function claimWithdrawals(
@@ -185,13 +188,14 @@ contract Liquidity is
 			}
 			TokenInfo memory tokenInfo = getTokenInfo(w.tokenIndex);
 			delete claimableWithdrawals[withdrawalHash];
-			sendToken(
+			_sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,
 				w.recipient,
 				w.amount,
 				tokenInfo.tokenId
 			);
+			emit ClaimedWithdrawal(w.recipient, withdrawalHash);
 		}
 	}
 
@@ -211,7 +215,7 @@ contract Liquidity is
 			);
 		}
 		TokenInfo memory tokenInfo = getTokenInfo(deposit.tokenIndex);
-		sendToken(
+		_sendToken(
 			tokenInfo.tokenType,
 			tokenInfo.tokenAddress,
 			depositData.sender,
@@ -226,7 +230,7 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount
-	) internal {
+	) private {
 		bytes32 depositHash = DepositLib
 			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
@@ -241,7 +245,7 @@ contract Liquidity is
 		);
 	}
 
-	function sendToken(
+	function _sendToken(
 		TokenType tokenType,
 		address token,
 		address recipient,
@@ -269,7 +273,7 @@ contract Liquidity is
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
 		uint256 _lastProcessedClaimableWithdrawalId,
-		bytes32[] calldata withdrawalHahes
+		bytes32[] calldata withdrawalHashes
 	) external onlyWithdrawal {
 		_processDirectWithdrawals(
 			_lastProcessedDirectWithdrawalId,
@@ -277,39 +281,19 @@ contract Liquidity is
 		);
 		_processClaimableWithdrawals(
 			_lastProcessedClaimableWithdrawalId,
-			withdrawalHahes
-		);
-	}
-
-	function processDirectWithdrawals(
-		uint256 _lastProcessedDirectWithdrawalId,
-		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) external onlyWithdrawal {
-		_processDirectWithdrawals(
-			_lastProcessedDirectWithdrawalId,
-			withdrawals
-		);
-	}
-
-	function processClaimableWithdrawals(
-		uint256 _lastProcessedClaimableWithdrawalId,
-		bytes32[] calldata withdrawalHahes
-	) external onlyWithdrawal {
-		_processClaimableWithdrawals(
-			_lastProcessedClaimableWithdrawalId,
-			withdrawalHahes
+			withdrawalHashes
 		);
 	}
 
 	function _processDirectWithdrawals(
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) internal {
+	) private {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			TokenInfo memory tokenInfo = getTokenInfo(
 				withdrawals[i].tokenIndex
 			);
-			sendToken(
+			_sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,
 				withdrawals[i].recipient,
@@ -319,20 +303,36 @@ contract Liquidity is
 		}
 		if (withdrawals.length > 0) {
 			emit DirectWithdrawalsProcessed(_lastProcessedDirectWithdrawalId);
+			// In the ScrollMessenger, it is not possible to identify the person who relayed the message.
+			// Here we consider tx.origin as the gas payer and record their contribution accordingly.
+			// However, this approach can be problematic in cases of sponsored transactions or meta transactions,
+			// where the actual gas payer may differ from tx.origin.
+			contribution.recordContribution(
+				keccak256("PROCESS_DIRECT_WITHDRAWALS"),
+				// solhint-disable-next-line avoid-tx-origin
+				tx.origin, // msg.sender is ScrollMessenger, so we use tx.origin
+				withdrawals.length
+			);
 		}
 	}
 
 	function _processClaimableWithdrawals(
 		uint256 _lastProcessedClaimableWithdrawalId,
-		bytes32[] calldata withdrawalHahes
-	) internal {
-		for (uint256 i = 0; i < withdrawalHahes.length; i++) {
-			claimableWithdrawals[withdrawalHahes[i]] = block.timestamp;
-			emit WithdrawalClaimable(withdrawalHahes[i]);
+		bytes32[] calldata withdrawalHashes
+	) private {
+		for (uint256 i = 0; i < withdrawalHashes.length; i++) {
+			claimableWithdrawals[withdrawalHashes[i]] = block.timestamp;
+			emit WithdrawalClaimable(withdrawalHashes[i]);
 		}
-		if (withdrawalHahes.length > 0) {
+		if (withdrawalHashes.length > 0) {
 			emit ClaimableWithdrawalsProcessed(
 				_lastProcessedClaimableWithdrawalId
+			);
+			contribution.recordContribution(
+				keccak256("PROCESS_CLAIMABLE_WITHDRAWALS"),
+				// solhint-disable-next-line avoid-tx-origin
+				tx.origin, // msg.sender is ScrollMessenger, so we use tx.origin
+				withdrawalHashes.length
 			);
 		}
 	}
@@ -343,16 +343,12 @@ contract Liquidity is
 		return depositQueue.depositData[depositId];
 	}
 
-	function getLastDepositId() external view returns (uint256) {
-		return depositQueue.rear - 1;
-	}
-
-	function getLastAnalyzedDepositId() external view returns (uint256) {
-		return depositQueue.lastAnalyzedDepositId;
-	}
-
 	function getLastRelayedDepositId() external view returns (uint256) {
 		return depositQueue.front - 1;
+	}
+
+	function getLastDepositId() external view returns (uint256) {
+		return depositQueue.rear - 1;
 	}
 
 	function _authorizeUpgrade(
