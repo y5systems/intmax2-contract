@@ -213,7 +213,10 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		uint256[] calldata tokenIndices
 	) external onlyOwner {
 		for (uint256 i = 0; i < tokenIndices.length; i++) {
-			directWithdrawalTokenIndices.add(tokenIndices[i]);
+			bool result = directWithdrawalTokenIndices.add(tokenIndices[i]);
+			if (result == false) {
+				revert TokenAlreadyExist(tokenIndices[i]);
+			}
 		}
 	}
 
@@ -221,7 +224,10 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		uint256[] calldata tokenIndices
 	) external onlyOwner {
 		for (uint256 i = 0; i < tokenIndices.length; i++) {
-			directWithdrawalTokenIndices.remove(tokenIndices[i]);
+			bool result = directWithdrawalTokenIndices.remove(tokenIndices[i]);
+			if (result == false) {
+				revert TokenNotExist(tokenIndices[i]);
+			}
 		}
 	}
 

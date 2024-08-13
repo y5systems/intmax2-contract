@@ -7,6 +7,7 @@ import {
 	L2ScrollMessengerTestForWithdrawal,
 	MockPlonkVerifier,
 	RollupTestForWithdrawal,
+	ContributionTest,
 } from '../../typechain-types'
 import {
 	getPrevHashFromWithdrawals,
@@ -24,6 +25,7 @@ describe('Withdrawal', () => {
 			MockPlonkVerifier,
 			RollupTestForWithdrawal,
 			string,
+			ContributionTest,
 		]
 	> {
 		const l2ScrollMessengerFactory = await ethers.getContractFactory(
@@ -39,7 +41,10 @@ describe('Withdrawal', () => {
 		const rollupTestForWithdrawal =
 			await rollupTestForWithdrawalFactory.deploy()
 		const liquidity = ethers.Wallet.createRandom().address
-		const contribution = ethers.Wallet.createRandom().address
+		const contributionTestFactory =
+			await ethers.getContractFactory('ContributionTest')
+		const contribution =
+			(await contributionTestFactory.deploy()) as ContributionTest
 		const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
 		const withdrawal = (await upgrades.deployProxy(
 			withdrawalFactory,
@@ -48,7 +53,7 @@ describe('Withdrawal', () => {
 				await mockPlonkVerifier.getAddress(),
 				liquidity,
 				await rollupTestForWithdrawal.getAddress(),
-				contribution,
+				await contribution.getAddress(),
 				DIRECT_WITHDRAWAL_TOKEN_INDICES,
 			],
 			{ kind: 'uups' },
@@ -59,6 +64,7 @@ describe('Withdrawal', () => {
 			mockPlonkVerifier,
 			rollupTestForWithdrawal,
 			liquidity,
+			contribution,
 		]
 	}
 	type signers = {
@@ -99,7 +105,6 @@ describe('Withdrawal', () => {
 	})
 	describe('submitWithdrawalProof', () => {
 		describe('success', () => {
-			// TODO call contribution
 			it('should accept valid withdrawal proof and queue direct withdrawals', async () => {
 				const [
 					withdrawal,
@@ -454,6 +459,47 @@ describe('Withdrawal', () => {
 				expect(await scrollMessenger.sender()).to.equal(ethers.ZeroAddress)
 				expect(await scrollMessenger.msgValue()).to.equal(0)
 			})
+
+			it('call contribution', async () => {
+				const [
+					withdrawal,
+					,
+					mockPlonkVerifier,
+					rollupTestForWithdrawal,
+					,
+					contribution,
+				] = await loadFixture(setup)
+				const { deployer } = await getSigners()
+
+				// Create withdrawals for direct withdrawal tokens
+				const directWithdrawals = getChainedWithdrawals(2).map((w) => ({
+					...w,
+					tokenIndex: DIRECT_WITHDRAWAL_TOKEN_INDICES[0], // Use a direct withdrawal token index
+				}))
+				const lastWithdrawalHash = getPrevHashFromWithdrawals(directWithdrawals)
+
+				const validPublicInputs = {
+					lastWithdrawalHash,
+					withdrawalAggregator: deployer.address,
+				}
+
+				// Set up mock responses
+				await mockPlonkVerifier.setResult(true)
+				for (const w of directWithdrawals) {
+					await rollupTestForWithdrawal.setTestData(w.blockNumber, w.blockHash)
+				}
+
+				// Submit the withdrawal proof
+				await withdrawal.submitWithdrawalProof(
+					directWithdrawals,
+					validPublicInputs,
+					'0x',
+				)
+				const tag = ethers.solidityPackedKeccak256(['string'], ['WITHDRAWAL'])
+				expect(await contribution.latestTag()).to.equal(tag)
+				expect(await contribution.latestUser()).to.equal(deployer.address)
+				expect(await contribution.latestAmount()).to.equal(2)
+			})
 		})
 
 		describe('fail', () => {
@@ -585,10 +631,43 @@ describe('Withdrawal', () => {
 			})
 		})
 	})
-	// TODO getDirectWithdrawalTokenIndices test
-	// TODO addDirectWithdrawalTokenIndices test
-	// TODO removeDirectWithdrawalTokenIndices test
-
+	describe('DirectWithdrawalTokenIndices', () => {
+		describe('success', () => {
+			it('get token indices', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				const indices = await withdrawal.getDirectWithdrawalTokenIndices()
+				expect(indices).to.deep.equal(DIRECT_WITHDRAWAL_TOKEN_INDICES)
+			})
+			it('add token indices', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				await withdrawal.addDirectWithdrawalTokenIndices([4, 5])
+				const indices = await withdrawal.getDirectWithdrawalTokenIndices()
+				expect(indices).to.deep.equal(
+					DIRECT_WITHDRAWAL_TOKEN_INDICES.concat([4, 5]),
+				)
+			})
+			it('remove token indices', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				await withdrawal.removeDirectWithdrawalTokenIndices([1, 3])
+				const indices = await withdrawal.getDirectWithdrawalTokenIndices()
+				expect(indices).to.deep.equal([2])
+			})
+		})
+		describe('fail', () => {
+			it('duplicate data.', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				await expect(withdrawal.addDirectWithdrawalTokenIndices([1]))
+					.to.be.revertedWithCustomError(withdrawal, 'TokenAlreadyExist')
+					.withArgs(1)
+			})
+			it('remove token indices', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				await expect(withdrawal.removeDirectWithdrawalTokenIndices([4]))
+					.to.be.revertedWithCustomError(withdrawal, 'TokenNotExist')
+					.withArgs(4)
+			})
+		})
+	})
 	describe('upgrade', () => {
 		it('channel contract is upgradable', async () => {
 			const [withdrawal] = await loadFixture(setup)

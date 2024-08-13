@@ -24,6 +24,10 @@ interface IWithdrawal {
 
 	error DirectWithdrawalIsTooLarge(uint256 directWithdrawalId, uint256 rear);
 
+	error TokenAlreadyExist(uint256 tokenIndice);
+
+	error TokenNotExist(uint256 tokenIndice);
+
 	error ClaimableWithdrawalIsTooLarge(
 		uint256 claimableWithdrawalId,
 		uint256 rear
