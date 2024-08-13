@@ -74,7 +74,7 @@ contract Liquidity is
 		withdrawal = _withdrawal;
 	}
 
-	function depositETH(bytes32 recipientSaltHash) external payable {
+	function depositNativeToken(bytes32 recipientSaltHash) external payable {
 		if (msg.value == 0) {
 			revert InvalidValue();
 		}

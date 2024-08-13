@@ -98,7 +98,7 @@ describe('Liquidity', () => {
 			})
 		})
 	})
-	describe('depositETH', () => {
+	describe('depositNativeToken', () => {
 		describe('success', () => {
 			it('emit Deposited event', async () => {
 				const { liquidity } = await loadFixture(setup)
@@ -112,7 +112,7 @@ describe('Liquidity', () => {
 				await expect(
 					liquidity
 						.connect(user)
-						.depositETH(recipientSaltHash, { value: depositAmount }),
+						.depositNativeToken(recipientSaltHash, { value: depositAmount }),
 				)
 					.to.emit(liquidity, 'Deposited')
 					.withArgs(
@@ -135,7 +135,7 @@ describe('Liquidity', () => {
 				)
 				await liquidity
 					.connect(user)
-					.depositETH(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
 				const finalBalance = await ethers.provider.getBalance(
 					await liquidity.getAddress(),
 				)
@@ -151,7 +151,9 @@ describe('Liquidity', () => {
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 
 				await expect(
-					liquidity.connect(user).depositETH(recipientSaltHash, { value: 0 }),
+					liquidity
+						.connect(user)
+						.depositNativeToken(recipientSaltHash, { value: 0 }),
 				).to.be.revertedWithCustomError(liquidity, 'InvalidValue')
 			})
 		})
@@ -435,6 +437,159 @@ describe('Liquidity', () => {
 							depositAmount,
 						),
 				).to.be.revertedWithCustomError(liquidity, 'InvalidAmount')
+			})
+		})
+	})
+	describe('analyzeAndRelayDeposits', () => {
+		describe('success', () => {
+			it('send scroll messenger', async () => {
+				const { liquidity, scrollMessenger, rollup } = await loadFixture(setup)
+				const { analyzer, user } = await getSigners()
+
+				// Create some deposits using ETH
+				const depositAmount = ethers.parseEther('1')
+
+				for (let i = 0; i < 5; i++) {
+					const recipientSaltHash = ethers.keccak256(
+						ethers.toUtf8Bytes(`test${i}`),
+					)
+					await liquidity
+						.connect(user)
+						.depositNativeToken(recipientSaltHash, { value: depositAmount })
+				}
+
+				const upToDepositId = 5
+				const rejectDepositIds: number[] = [2, 4]
+				const gasLimit = 1000000
+
+				await liquidity
+					.connect(analyzer)
+					.analyzeAndRelayDeposits(upToDepositId, rejectDepositIds, gasLimit, {
+						value: ethers.parseEther('1'),
+					})
+
+				expect(await scrollMessenger.to()).to.equal(rollup)
+				expect(await scrollMessenger.value()).to.equal(0)
+				expect(await scrollMessenger.gasLimit()).to.equal(gasLimit)
+				expect(await scrollMessenger.sender()).to.equal(analyzer.address)
+				expect(await scrollMessenger.msgValue()).to.equal(
+					ethers.parseEther('1'),
+				)
+
+				const depositHash0 = ethers.keccak256(
+					ethers.solidityPacked(
+						['bytes32', 'uint32', 'uint256'],
+						[ethers.keccak256(ethers.toUtf8Bytes('test0')), 0, depositAmount],
+					),
+				)
+				const depositHash2 = ethers.keccak256(
+					ethers.solidityPacked(
+						['bytes32', 'uint32', 'uint256'],
+						[ethers.keccak256(ethers.toUtf8Bytes('test2')), 0, depositAmount],
+					),
+				)
+				const depositHash4 = ethers.keccak256(
+					ethers.solidityPacked(
+						['bytes32', 'uint32', 'uint256'],
+						[ethers.keccak256(ethers.toUtf8Bytes('test4')), 0, depositAmount],
+					),
+				)
+				const funcSelector = ethers
+					.id('processDeposits(uint256,bytes32[])')
+					.slice(0, 10)
+
+				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
+					['uint256', 'bytes32[]'],
+					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
+				)
+				const encodedData = funcSelector + encodedParams.slice(2)
+				expect(await scrollMessenger.message()).to.equal(encodedData)
+			})
+			it('emit DepositsAnalyzedAndRelayed event', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { analyzer, user } = await getSigners()
+
+				// Create some deposits using ETH
+				const depositAmount = ethers.parseEther('1')
+
+				for (let i = 0; i < 5; i++) {
+					const recipientSaltHash = ethers.keccak256(
+						ethers.toUtf8Bytes(`test${i}`),
+					)
+					await liquidity
+						.connect(user)
+						.depositNativeToken(recipientSaltHash, { value: depositAmount })
+				}
+
+				const upToDepositId = 5
+				const rejectDepositIds: number[] = [2, 4]
+				const gasLimit = 1000000
+
+				const depositHash0 = ethers.keccak256(
+					ethers.solidityPacked(
+						['bytes32', 'uint32', 'uint256'],
+						[ethers.keccak256(ethers.toUtf8Bytes('test0')), 0, depositAmount],
+					),
+				)
+				const depositHash2 = ethers.keccak256(
+					ethers.solidityPacked(
+						['bytes32', 'uint32', 'uint256'],
+						[ethers.keccak256(ethers.toUtf8Bytes('test2')), 0, depositAmount],
+					),
+				)
+				const depositHash4 = ethers.keccak256(
+					ethers.solidityPacked(
+						['bytes32', 'uint32', 'uint256'],
+						[ethers.keccak256(ethers.toUtf8Bytes('test4')), 0, depositAmount],
+					),
+				)
+				const funcSelector = ethers
+					.id('processDeposits(uint256,bytes32[])')
+					.slice(0, 10)
+
+				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
+					['uint256', 'bytes32[]'],
+					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
+				)
+				const expectedEncodedData = funcSelector + encodedParams.slice(2)
+
+				await expect(
+					liquidity
+						.connect(analyzer)
+						.analyzeAndRelayDeposits(
+							upToDepositId,
+							rejectDepositIds,
+							gasLimit,
+							{ value: ethers.parseEther('1') },
+						),
+				)
+					.to.emit(liquidity, 'DepositsAnalyzedAndRelayed')
+					.withArgs(
+						upToDepositId,
+						rejectDepositIds,
+						gasLimit,
+						expectedEncodedData,
+					)
+			})
+		})
+		describe('fail', () => {
+			it('only analyzer', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { user } = await getSigners()
+				const upToDepositId = 5
+				const rejectDepositIds: number[] = [2, 4]
+				const gasLimit = 1000000
+
+				await expect(
+					liquidity
+						.connect(user)
+						.analyzeAndRelayDeposits(upToDepositId, rejectDepositIds, gasLimit),
+				)
+					.to.be.revertedWithCustomError(
+						liquidity,
+						'AccessControlUnauthorizedAccount',
+					)
+					.withArgs(user.address, await liquidity.ANALYZER())
 			})
 		})
 	})
