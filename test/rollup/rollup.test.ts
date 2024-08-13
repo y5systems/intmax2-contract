@@ -6,6 +6,7 @@ import {
 	Rollup,
 	BlockBuilderRegistryTestForRollup,
 	L2ScrollMessengerTestForRollup,
+	ContributionTest,
 } from '../../typechain-types'
 import { loadPairingData } from '../../utils/rollup'
 import block1 from '../../test_data/block1.json'
@@ -16,7 +17,12 @@ describe('Rollup', () => {
 	const FIRST_DEPOSIT_TREE_ROOT =
 		'0xb6155ab566bbd2e341525fd88c43b4d69572bf4afe7df45cd74d6901a172e41c'
 	const setup = async (): Promise<
-		[Rollup, BlockBuilderRegistryTestForRollup, L2ScrollMessengerTestForRollup]
+		[
+			Rollup,
+			BlockBuilderRegistryTestForRollup,
+			L2ScrollMessengerTestForRollup,
+			ContributionTest,
+		]
 	> => {
 		const blockBuilderRegistryFactory = await ethers.getContractFactory(
 			'BlockBuilderRegistryTestForRollup',
@@ -29,7 +35,10 @@ describe('Rollup', () => {
 			(await L2ScrollMessengerTestForRollupFactory.deploy()) as L2ScrollMessengerTestForRollup
 		const rollupFactory = await ethers.getContractFactory('Rollup')
 		const liquidity = ethers.Wallet.createRandom().address
-		const contribution = ethers.Wallet.createRandom().address
+		const contributionTestFactory =
+			await ethers.getContractFactory('ContributionTest')
+		const contribution =
+			(await contributionTestFactory.deploy()) as ContributionTest
 		await l2ScrollMessenger.setResult(liquidity)
 		const rollup = (await upgrades.deployProxy(
 			rollupFactory,
@@ -37,11 +46,11 @@ describe('Rollup', () => {
 				await l2ScrollMessenger.getAddress(),
 				liquidity,
 				await blockBuilderRegistry.getAddress(),
-				contribution,
+				await contribution.getAddress(),
 			],
 			{ kind: 'uups' },
 		)) as unknown as Rollup
-		return [rollup, blockBuilderRegistry, l2ScrollMessenger]
+		return [rollup, blockBuilderRegistry, l2ScrollMessenger, contribution]
 	}
 
 	type signers = {
@@ -149,7 +158,6 @@ describe('Rollup', () => {
 	})
 	describe('postRegistrationBlock', () => {
 		describe('success', () => {
-			//  TODO call contribution
 			it('generate PubKeysPosted event', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
 				const inputs = generateValidInputs()
@@ -234,6 +242,28 @@ describe('Rollup', () => {
 						depositTreeRoot,
 						'0x1b56ed5ee237a71b7c94d2ebbface7c6becf2ed08f6ba2264411febc98633772',
 					)
+			})
+			it('call contribution', async () => {
+				const [rollup, blockBuilderRegistry, , contribution] =
+					await loadFixture(setup)
+				const signers = await getSigners()
+				const inputs = generateValidInputs()
+				await blockBuilderRegistry.setResult(true)
+
+				await rollup.postRegistrationBlock(
+					inputs.txTreeRoot,
+					inputs.senderFlags,
+					inputs.aggregatedPublicKey,
+					inputs.aggregatedSignature,
+					inputs.messagePoint,
+					inputs.senderPublicKeys,
+				)
+				const tag = ethers.solidityPackedKeccak256(['string'], ['POST_BLOCK'])
+				expect(await contribution.latestTag()).to.equal(tag)
+				expect(await contribution.latestUser()).to.equal(
+					signers.deployer.address,
+				)
+				expect(await contribution.latestAmount()).to.equal(1)
 			})
 		})
 		describe('fail', () => {
@@ -355,7 +385,6 @@ describe('Rollup', () => {
 			}
 		}
 		describe('success', () => {
-			// TODO call contribution
 			it('generate AccountIdsPosted event', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
 				const inputs = generateValidInputs()
@@ -444,6 +473,29 @@ describe('Rollup', () => {
 						depositTreeRoot,
 						'0xbbd68029399208f3ff0895ac48162109373556e96c3ec2263d5fe696fba5c742',
 					)
+			})
+			it('call contribution', async () => {
+				const [rollup, blockBuilderRegistry, , contribution] =
+					await loadFixture(setup)
+				const signers = await getSigners()
+				const inputs = generateValidInputs()
+				await blockBuilderRegistry.setResult(true)
+
+				await rollup.postNonRegistrationBlock(
+					inputs.txTreeRoot,
+					inputs.senderFlags,
+					inputs.aggregatedPublicKey,
+					inputs.aggregatedSignature,
+					inputs.messagePoint,
+					inputs.publicKeysHash,
+					inputs.senderAccountIds,
+				)
+				const tag = ethers.solidityPackedKeccak256(['string'], ['POST_BLOCK'])
+				expect(await contribution.latestTag()).to.equal(tag)
+				expect(await contribution.latestUser()).to.equal(
+					signers.deployer.address,
+				)
+				expect(await contribution.latestAmount()).to.equal(1)
 			})
 		})
 		describe('fail', () => {
