@@ -45,7 +45,7 @@ async function main() {
 	)
 	if (!isValidBlockBuilder) {
 		console.log('registering block builder...')
-		tx = await registry.connect(blockBuilder).updateBlockBuilder('', {
+		tx = await registry.connect(blockBuilder).updateBlockBuilder('http://example.com', {
 			value: ethers.parseEther('0.1'),
 		})
 		console.log('updateBlockBuilder tx hash:', tx.hash)

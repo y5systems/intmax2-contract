@@ -27,7 +27,9 @@ async function main() {
 		console.log('stake amount is not enough. Staking more...')
 		tx = await registry
 			.connect(blockBuilder)
-			.updateBlockBuilder('', { value: ethers.parseEther('0.1') - stakeAmount })
+			.updateBlockBuilder('http://example.com', {
+				value: ethers.parseEther('0.1') - stakeAmount,
+			})
 		console.log('update tx hash:', tx.hash)
 		await tx.wait()
 		console.log('stake amount updated')
