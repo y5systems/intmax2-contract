@@ -162,17 +162,18 @@ describe('Liquidity', () => {
 		type TestObjectsForDepositERC20 = TestObjects & {
 			testERC20: TestERC20
 		}
-		async function setupForDepositERC20(): Promise<TestObjectsForDepositERC20> {
-			const testObjects = await loadFixture(setup)
-			const { user } = await getSigners()
+		const setupForDepositERC20 =
+			async (): Promise<TestObjectsForDepositERC20> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
 
-			const testERC20Factory = await ethers.getContractFactory('TestERC20')
-			const testERC20 = await testERC20Factory.deploy(user.address)
-			return {
-				...testObjects,
-				testERC20,
+				const testERC20Factory = await ethers.getContractFactory('TestERC20')
+				const testERC20 = await testERC20Factory.deploy(user.address)
+				return {
+					...testObjects,
+					testERC20,
+				}
 			}
-		}
 		describe('success', () => {
 			it('emit Deposited event', async () => {
 				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
@@ -249,17 +250,18 @@ describe('Liquidity', () => {
 		type TestObjectsForDepositERC721 = TestObjects & {
 			testNFT: TestNFT
 		}
-		async function setupForDepositERC721(): Promise<TestObjectsForDepositERC721> {
-			const testObjects = await loadFixture(setup)
-			const { user } = await getSigners()
+		const setupForDepositERC721 =
+			async (): Promise<TestObjectsForDepositERC721> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
 
-			const testNFTFactory = await ethers.getContractFactory('TestNFT')
-			const testNFT = await testNFTFactory.connect(user).deploy()
-			return {
-				...testObjects,
-				testNFT,
+				const testNFTFactory = await ethers.getContractFactory('TestNFT')
+				const testNFT = await testNFTFactory.connect(user).deploy()
+				return {
+					...testObjects,
+					testNFT,
+				}
 			}
-		}
 		it('emit Deposited event', async () => {
 			const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
 			const { user } = await getSigners()
@@ -313,21 +315,22 @@ describe('Liquidity', () => {
 		type TestObjectsForDepositERC1155 = TestObjects & {
 			testERC1155: TestERC1155
 		}
-		async function setupForDepositERC1155(): Promise<TestObjectsForDepositERC1155> {
-			const testObjects = await loadFixture(setup)
-			const { user } = await getSigners()
+		const setupForDepositERC1155 =
+			async (): Promise<TestObjectsForDepositERC1155> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
 
-			const test1155Factory = await ethers.getContractFactory('TestERC1155')
-			const testERC1155 = await test1155Factory.connect(user).deploy()
-			const tokenId = 1
-			const amount = 100
-			await testERC1155.mint(user.address, tokenId, amount, '0x')
+				const test1155Factory = await ethers.getContractFactory('TestERC1155')
+				const testERC1155 = await test1155Factory.connect(user).deploy()
+				const tokenId = 1
+				const amount = 100
+				await testERC1155.mint(user.address, tokenId, amount, '0x')
 
-			return {
-				...testObjects,
-				testERC1155,
+				return {
+					...testObjects,
+					testERC1155,
+				}
 			}
-		}
 		describe('success', () => {
 			it('emit Deposited event', async () => {
 				const { liquidity, testERC1155 } = await loadFixture(
@@ -591,6 +594,207 @@ describe('Liquidity', () => {
 					)
 					.withArgs(user.address, await liquidity.ANALYZER())
 			})
+		})
+	})
+	describe('cancelDeposit', () => {
+		type TestObjectsForDepositERC20 = TestObjects & {
+			depositAmount: bigint
+			recipientSaltHash: string
+			depositId: bigint
+		}
+		const setupCancelDeposit =
+			async (): Promise<TestObjectsForDepositERC20> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
+				const depositAmount = ethers.parseEther('1')
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				await testObjects.liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+				const depositId = await testObjects.liquidity.getLastDepositId()
+				return {
+					...testObjects,
+					depositAmount,
+					recipientSaltHash,
+					depositId,
+				}
+			}
+		describe('success', () => {
+			it('send token', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user } = await getSigners()
+				const initialBalance = await ethers.provider.getBalance(user.address)
+
+				const tx = await liquidity.connect(user).cancelDeposit(depositId, {
+					recipientSaltHash,
+					tokenIndex: 0,
+					amount: depositAmount,
+				})
+				const receipt = await tx.wait()
+				const gasCost = receipt!.gasUsed * receipt!.gasPrice
+
+				const finalBalance = await ethers.provider.getBalance(user.address)
+				expect(finalBalance - initialBalance + gasCost).to.equal(depositAmount)
+			})
+			it('emit DepositCanceled event', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user } = await getSigners()
+
+				await expect(
+					liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				)
+					.to.emit(liquidity, 'DepositCanceled')
+					.withArgs(depositId)
+			})
+		})
+		describe('fail', () => {
+			it('revert OnlyRecipientCanCancelDeposit', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { analyzer } = await getSigners()
+
+				await expect(
+					liquidity.connect(analyzer).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'OnlyRecipientCanCancelDeposit',
+				)
+			})
+			it('revert InvalidDepositHash', async () => {
+				const { liquidity, depositAmount, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user } = await getSigners()
+
+				await expect(
+					liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash: ethers.keccak256(ethers.toUtf8Bytes('wrong')),
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				).to.be.revertedWithCustomError(liquidity, 'InvalidDepositHash')
+			})
+			it.skip('reentrancy', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const reentrancyTestFactory = await ethers.getContractFactory(
+					'LiquidityReentrancyTest',
+				)
+				const reentrancyTest = await reentrancyTestFactory.deploy(
+					await liquidity.getAddress(),
+				)
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('1')
+				await reentrancyTest.depositNativeToken(recipientSaltHash, {
+					value: depositAmount,
+				})
+
+				const depositId = await liquidity.getLastDepositId()
+
+				await reentrancyTest.setTestArgs(
+					depositId,
+					recipientSaltHash,
+					0,
+					depositAmount,
+				)
+				await expect(
+					reentrancyTest.cancelDeposit(),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'ReentrancyGuardReentrantCall',
+				)
+			})
+		})
+	})
+
+	describe('onERC1155Received', () => {
+		it('get selector', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const result = await liquidity.onERC1155Received(
+				ethers.ZeroAddress,
+				ethers.ZeroAddress,
+				0,
+				0,
+				ethers.ZeroHash,
+			)
+			expect(result).to.equal('0xf23a6e61')
+		})
+	})
+	describe('getDepositData', () => {
+		it('get DepositData', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { user } = await getSigners()
+
+			// Create some deposits using ETH
+			const depositAmount = ethers.parseEther('1')
+
+			for (let i = 0; i < 5; i++) {
+				const recipientSaltHash = ethers.keccak256(
+					ethers.toUtf8Bytes(`test${i}`),
+				)
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			}
+
+			const depositData0 = await liquidity.getDepositData(1)
+			const depositHash0 = ethers.keccak256(
+				ethers.solidityPacked(
+					['bytes32', 'uint32', 'uint256'],
+					[ethers.keccak256(ethers.toUtf8Bytes('test0')), 0, depositAmount],
+				),
+			)
+			expect(depositData0.depositHash).to.equal(depositHash0)
+			expect(depositData0.sender).to.equal(user.address)
+			expect(depositData0.isRejected).to.equal(false)
+
+			const depositData2 = await liquidity.getDepositData(3)
+			const depositHash2 = ethers.keccak256(
+				ethers.solidityPacked(
+					['bytes32', 'uint32', 'uint256'],
+					[ethers.keccak256(ethers.toUtf8Bytes('test2')), 0, depositAmount],
+				),
+			)
+			expect(depositData2.depositHash).to.equal(depositHash2)
+			expect(depositData2.sender).to.equal(user.address)
+			expect(depositData2.isRejected).to.equal(false)
+		})
+	})
+	describe('getLastRelayedDepositId, getLastDepositId', () => {
+		it('get DepositId', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { analyzer, user } = await getSigners()
+
+			expect(await liquidity.getLastRelayedDepositId()).to.equal(0)
+			expect(await liquidity.getLastDepositId()).to.equal(0)
+
+			// Create some deposits using ETH
+			const depositAmount = ethers.parseEther('1')
+
+			for (let i = 0; i < 5; i++) {
+				const recipientSaltHash = ethers.keccak256(
+					ethers.toUtf8Bytes(`test${i}`),
+				)
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			}
+
+			expect(await liquidity.getLastRelayedDepositId()).to.equal(0)
+			expect(await liquidity.getLastDepositId()).to.equal(5)
+
+			await liquidity.connect(analyzer).analyzeAndRelayDeposits(3, [], 1000000)
+
+			expect(await liquidity.getLastRelayedDepositId()).to.equal(3)
+			expect(await liquidity.getLastDepositId()).to.equal(5)
 		})
 	})
 	describe('upgrade', () => {

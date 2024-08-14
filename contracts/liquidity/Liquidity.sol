@@ -179,7 +179,7 @@ contract Liquidity is
 
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) external {
+	) external nonReentrant {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			WithdrawalLib.Withdrawal memory w = withdrawals[i];
 			bytes32 withdrawalHash = w.getHash();
@@ -202,7 +202,7 @@ contract Liquidity is
 	function cancelDeposit(
 		uint256 depositId,
 		DepositLib.Deposit memory deposit
-	) external {
+	) external nonReentrant {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.deleteDeposit(depositId);
 		if (depositData.sender != _msgSender()) {
@@ -274,7 +274,7 @@ contract Liquidity is
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
 		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHashes
-	) external onlyWithdrawal {
+	) external nonReentrant onlyWithdrawal {
 		_processDirectWithdrawals(
 			_lastProcessedDirectWithdrawalId,
 			withdrawals
