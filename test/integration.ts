@@ -231,7 +231,7 @@ describe('Integration', function () {
 		}
 		// setup: fund liquidity contract for withdrawal liquidity
 		const liquidityAddress = await liquidity.getAddress()
-		await liquidity.depositETH(ethers.ZeroHash, {
+		await liquidity.depositNativeToken(ethers.ZeroHash, {
 			value: ethers.parseEther('100'),
 		})
 		await testToken.transfer(liquidityAddress, ethers.parseEther('100'))

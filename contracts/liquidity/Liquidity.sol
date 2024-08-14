@@ -74,7 +74,7 @@ contract Liquidity is
 		withdrawal = _withdrawal;
 	}
 
-	function depositETH(bytes32 recipientSaltHash) external payable {
+	function depositNativeToken(bytes32 recipientSaltHash) external payable {
 		if (msg.value == 0) {
 			revert InvalidValue();
 		}
@@ -335,6 +335,16 @@ contract Liquidity is
 				withdrawalHashes.length
 			);
 		}
+	}
+
+	function onERC1155Received(
+		address,
+		address,
+		uint256,
+		uint256,
+		bytes calldata
+	) external pure returns (bytes4) {
+		return this.onERC1155Received.selector;
 	}
 
 	function getDepositData(

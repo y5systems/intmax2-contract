@@ -48,7 +48,7 @@ interface ILiquidity {
 		bytes32 indexed withdrawalHash
 	);
 
-	function depositETH(bytes32 recipientSaltHash) external payable;
+	function depositNativeToken(bytes32 recipientSaltHash) external payable;
 
 	function depositERC20(
 		address tokenAddress,
@@ -102,4 +102,12 @@ interface ILiquidity {
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;
+
+	function onERC1155Received(
+		address,
+		address,
+		uint256,
+		uint256,
+		bytes calldata
+	) external pure returns (bytes4);
 }
