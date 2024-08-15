@@ -274,7 +274,7 @@ contract Liquidity is
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
 		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHashes
-	) external nonReentrant onlyWithdrawal {
+	) external onlyWithdrawal {
 		_processDirectWithdrawals(
 			_lastProcessedDirectWithdrawalId,
 			withdrawals

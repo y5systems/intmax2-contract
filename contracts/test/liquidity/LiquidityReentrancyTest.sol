@@ -43,11 +43,13 @@ contract LiquidityReentrancyTest {
 
 	// solhint-disable-next-line no-complex-fallback
 	receive() external payable {
-		DepositLib.Deposit memory deposit = DepositLib.Deposit({
-			recipientSaltHash: recipientSaltHash,
-			tokenIndex: tokenIndex,
-			amount: amount
-		});
-		LIQUIDITY.cancelDeposit(depositId, deposit);
+		LIQUIDITY.cancelDeposit(
+			depositId,
+			DepositLib.Deposit({
+				recipientSaltHash: recipientSaltHash,
+				tokenIndex: tokenIndex,
+				amount: amount
+			})
+		);
 	}
 }
