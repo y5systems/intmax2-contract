@@ -710,7 +710,7 @@ describe('Liquidity', () => {
 			})
 		})
 	})
-	describe.only('processWithdrawals', () => {
+	describe('processWithdrawals', () => {
 		describe('success', () => {
 			describe('DirectWithdrawals', () => {
 				describe('send token', () => {
@@ -1073,6 +1073,22 @@ describe('Liquidity', () => {
 				// ・Security of l1ScrollMessenger's message receiving function is the responsibility of Scroll
 				// Therefore, reentrancy check of processWithdrawals is not performed
 			})
+		})
+	})
+	describe('claimWithdrawals', () => {
+		describe('success', () => {
+			describe('send token', () => {
+				it('native token', async () => {})
+				it('erc20', async () => {})
+				it('erc721', async () => {})
+				it('erc1155', async () => {})
+			})
+			it('emit ClaimedWithdrawal', async () => {})
+			it('emit ClaimedWithdrawal(twice)', async () => {})
+		})
+		describe('fail', () => {
+			it('revert WithdrawalNotFound', async () => {})
+			it('reentrancy', async () => {})
 		})
 	})
 	describe('onERC1155Received', () => {
