@@ -11,7 +11,6 @@ import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.s
 
 import {TokenData} from "./TokenData.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
@@ -23,7 +22,6 @@ contract Liquidity is
 	TokenData,
 	UUPSUpgradeable,
 	AccessControlUpgradeable,
-	ReentrancyGuardUpgradeable,
 	ILiquidity
 {
 	using SafeERC20 for IERC20;
@@ -65,7 +63,6 @@ contract Liquidity is
 		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_grantRole(ANALYZER, _analyzer);
 		__UUPSUpgradeable_init();
-		__ReentrancyGuard_init();
 		__TokenData_init(initialERC20Tokens);
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
@@ -179,7 +176,7 @@ contract Liquidity is
 
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
-	) external nonReentrant {
+	) external {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			WithdrawalLib.Withdrawal memory w = withdrawals[i];
 			bytes32 withdrawalHash = w.getHash();
@@ -202,7 +199,7 @@ contract Liquidity is
 	function cancelDeposit(
 		uint256 depositId,
 		DepositLib.Deposit memory deposit
-	) external nonReentrant {
+	) external {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.deleteDeposit(depositId);
 		if (depositData.sender != _msgSender()) {
