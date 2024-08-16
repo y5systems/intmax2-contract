@@ -11,7 +11,7 @@ import {
 	TestERC1155,
 } from '../../typechain-types'
 
-import { INITIAL_ERC20_TOKEN_ADDRESSES } from './common.test'
+import { INITIAL_ERC20_TOKEN_ADDRESSES, TokenType } from './common.test'
 
 describe('Liquidity', () => {
 	type TestObjects = {
@@ -28,6 +28,7 @@ describe('Liquidity', () => {
 		const l1ScrollMessenger = await l1ScrollMessengerFactory.deploy()
 		const rollup = ethers.Wallet.createRandom().address
 		const withdrawal = ethers.Wallet.createRandom().address
+		await l1ScrollMessenger.setXDomainMessageSender(withdrawal)
 		const contributionFactory =
 			await ethers.getContractFactory('ContributionTest')
 		const contribution = await contributionFactory.deploy()
@@ -45,6 +46,7 @@ describe('Liquidity', () => {
 			],
 			{ kind: 'uups' },
 		)) as unknown as Liquidity
+		await l1ScrollMessenger.setLiquidity(await liquidity.getAddress())
 		return {
 			liquidity,
 			scrollMessenger: l1ScrollMessenger,
@@ -162,17 +164,18 @@ describe('Liquidity', () => {
 		type TestObjectsForDepositERC20 = TestObjects & {
 			testERC20: TestERC20
 		}
-		async function setupForDepositERC20(): Promise<TestObjectsForDepositERC20> {
-			const testObjects = await loadFixture(setup)
-			const { user } = await getSigners()
+		const setupForDepositERC20 =
+			async (): Promise<TestObjectsForDepositERC20> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
 
-			const testERC20Factory = await ethers.getContractFactory('TestERC20')
-			const testERC20 = await testERC20Factory.deploy(user.address)
-			return {
-				...testObjects,
-				testERC20,
+				const testERC20Factory = await ethers.getContractFactory('TestERC20')
+				const testERC20 = await testERC20Factory.deploy(user.address)
+				return {
+					...testObjects,
+					testERC20,
+				}
 			}
-		}
 		describe('success', () => {
 			it('emit Deposited event', async () => {
 				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
@@ -244,22 +247,22 @@ describe('Liquidity', () => {
 			})
 		})
 	})
-
 	describe('depositERC721', () => {
 		type TestObjectsForDepositERC721 = TestObjects & {
 			testNFT: TestNFT
 		}
-		async function setupForDepositERC721(): Promise<TestObjectsForDepositERC721> {
-			const testObjects = await loadFixture(setup)
-			const { user } = await getSigners()
+		const setupForDepositERC721 =
+			async (): Promise<TestObjectsForDepositERC721> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
 
-			const testNFTFactory = await ethers.getContractFactory('TestNFT')
-			const testNFT = await testNFTFactory.connect(user).deploy()
-			return {
-				...testObjects,
-				testNFT,
+				const testNFTFactory = await ethers.getContractFactory('TestNFT')
+				const testNFT = await testNFTFactory.connect(user).deploy()
+				return {
+					...testObjects,
+					testNFT,
+				}
 			}
-		}
 		it('emit Deposited event', async () => {
 			const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
 			const { user } = await getSigners()
@@ -313,21 +316,22 @@ describe('Liquidity', () => {
 		type TestObjectsForDepositERC1155 = TestObjects & {
 			testERC1155: TestERC1155
 		}
-		async function setupForDepositERC1155(): Promise<TestObjectsForDepositERC1155> {
-			const testObjects = await loadFixture(setup)
-			const { user } = await getSigners()
+		const setupForDepositERC1155 =
+			async (): Promise<TestObjectsForDepositERC1155> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
 
-			const test1155Factory = await ethers.getContractFactory('TestERC1155')
-			const testERC1155 = await test1155Factory.connect(user).deploy()
-			const tokenId = 1
-			const amount = 100
-			await testERC1155.mint(user.address, tokenId, amount, '0x')
+				const test1155Factory = await ethers.getContractFactory('TestERC1155')
+				const testERC1155 = await test1155Factory.connect(user).deploy()
+				const tokenId = 1
+				const amount = 100
+				await testERC1155.mint(user.address, tokenId, amount, '0x')
 
-			return {
-				...testObjects,
-				testERC1155,
+				return {
+					...testObjects,
+					testERC1155,
+				}
 			}
-		}
 		describe('success', () => {
 			it('emit Deposited event', async () => {
 				const { liquidity, testERC1155 } = await loadFixture(
@@ -591,6 +595,1098 @@ describe('Liquidity', () => {
 					)
 					.withArgs(user.address, await liquidity.ANALYZER())
 			})
+		})
+	})
+	describe('cancelDeposit', () => {
+		type TestObjectsForDepositERC20 = TestObjects & {
+			depositAmount: bigint
+			recipientSaltHash: string
+			depositId: bigint
+		}
+		const setupCancelDeposit =
+			async (): Promise<TestObjectsForDepositERC20> => {
+				const testObjects = await loadFixture(setup)
+				const { user } = await getSigners()
+				const depositAmount = ethers.parseEther('1')
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				await testObjects.liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+				const depositId = await testObjects.liquidity.getLastDepositId()
+				return {
+					...testObjects,
+					depositAmount,
+					recipientSaltHash,
+					depositId,
+				}
+			}
+		describe('success', () => {
+			describe('send token', () => {
+				it('native token', async () => {
+					const { liquidity, depositAmount, recipientSaltHash, depositId } =
+						await loadFixture(setupCancelDeposit)
+					const { user } = await getSigners()
+					const initialBalance = await ethers.provider.getBalance(user.address)
+
+					const tx = await liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					})
+					const receipt = await tx.wait()
+					const gasCost = receipt!.gasUsed * receipt!.gasPrice
+
+					const finalBalance = await ethers.provider.getBalance(user.address)
+					expect(finalBalance - initialBalance + gasCost).to.equal(
+						depositAmount,
+					)
+				})
+				it('erc20', async () => {
+					const { liquidity } = await loadFixture(setup)
+					const { user } = await getSigners()
+
+					const testERC20Factory = await ethers.getContractFactory('TestERC20')
+					const testERC20 = await testERC20Factory.deploy(user.address)
+
+					const depositAmount = ethers.parseEther('100')
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+
+					await testERC20
+						.connect(user)
+						.approve(await liquidity.getAddress(), depositAmount)
+					await liquidity
+						.connect(user)
+						.depositERC20(
+							await testERC20.getAddress(),
+							recipientSaltHash,
+							depositAmount,
+						)
+
+					const depositId = await liquidity.getLastDepositId()
+
+					// Check balances before cancellation
+					const initialUserBalance = await testERC20.balanceOf(user.address)
+					const initialLiquidityBalance = await testERC20.balanceOf(
+						await liquidity.getAddress(),
+					)
+
+					await liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 3, // Assuming 1 is the index for the first ERC20 token
+						amount: depositAmount,
+					})
+
+					// Check balances after cancellation
+					const finalUserBalance = await testERC20.balanceOf(user.address)
+					const finalLiquidityBalance = await testERC20.balanceOf(
+						await liquidity.getAddress(),
+					)
+
+					// Verify balance changes
+					expect(finalUserBalance - initialUserBalance).to.equal(depositAmount)
+					expect(initialLiquidityBalance - finalLiquidityBalance).to.equal(
+						depositAmount,
+					)
+				})
+				it('erc721', async () => {
+					const { liquidity } = await loadFixture(setup)
+					const { deployer, user } = await getSigners()
+
+					const testNFTFactory = await ethers.getContractFactory('TestNFT')
+					const testNFT = await testNFTFactory.deploy()
+
+					const tokenId = 1
+					await testNFT.transferFrom(deployer.address, user.address, tokenId)
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+
+					await testNFT
+						.connect(user)
+						.approve(await liquidity.getAddress(), tokenId)
+					await liquidity
+						.connect(user)
+						.depositERC721(
+							await testNFT.getAddress(),
+							recipientSaltHash,
+							tokenId,
+						)
+
+					const depositId = await liquidity.getLastDepositId()
+
+					await liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 3,
+						amount: 1,
+					})
+
+					expect(await testNFT.ownerOf(tokenId)).to.equal(user.address)
+				})
+				it('erc1155', async () => {
+					const { liquidity } = await loadFixture(setup)
+					const { user } = await getSigners()
+
+					const testERC1155Factory =
+						await ethers.getContractFactory('TestERC1155')
+					const testERC1155 = await testERC1155Factory.deploy()
+
+					const tokenId = 1
+					const amount = 100
+					await testERC1155.mint(user.address, tokenId, amount, '0x')
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+
+					await testERC1155
+						.connect(user)
+						.setApprovalForAll(await liquidity.getAddress(), true)
+					await liquidity
+						.connect(user)
+						.depositERC1155(
+							await testERC1155.getAddress(),
+							recipientSaltHash,
+							tokenId,
+							amount,
+						)
+
+					const depositId = await liquidity.getLastDepositId()
+					const initialBalance = await testERC1155.balanceOf(
+						user.address,
+						tokenId,
+					)
+
+					await liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 3, // Assuming 3 is the index for the first ERC1155 token
+						amount: amount,
+					})
+
+					const finalBalance = await testERC1155.balanceOf(
+						user.address,
+						tokenId,
+					)
+					expect(finalBalance - initialBalance).to.equal(amount)
+				})
+			})
+			it('emit DepositCanceled event', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user } = await getSigners()
+
+				await expect(
+					liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				)
+					.to.emit(liquidity, 'DepositCanceled')
+					.withArgs(depositId)
+			})
+		})
+		describe('fail', () => {
+			it('revert OnlyRecipientCanCancelDeposit', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { analyzer } = await getSigners()
+
+				await expect(
+					liquidity.connect(analyzer).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'OnlyRecipientCanCancelDeposit',
+				)
+			})
+			it('revert InvalidDepositHash', async () => {
+				const { liquidity, depositAmount, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user } = await getSigners()
+
+				await expect(
+					liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash: ethers.keccak256(ethers.toUtf8Bytes('wrong')),
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				).to.be.revertedWithCustomError(liquidity, 'InvalidDepositHash')
+			})
+			it('rejects duplicate cancel deposit', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user } = await getSigners()
+
+				await liquidity.connect(user).cancelDeposit(depositId, {
+					recipientSaltHash,
+					tokenIndex: 0,
+					amount: depositAmount,
+				})
+
+				await expect(
+					liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'OnlyRecipientCanCancelDeposit',
+				)
+			})
+			it.skip('reentrancy attack', async () => {
+				// payable(recipient).transfer(amount);
+				// The gas consumption is limited to 2500 because the transfer function is performed.
+				// Therefore, reentrancy attacks that execute complex logic are not possible.
+			})
+		})
+	})
+	describe('processWithdrawals', () => {
+		describe('success', () => {
+			describe('DirectWithdrawals', () => {
+				describe('send token', () => {
+					it('native token', async () => {
+						const { liquidity, scrollMessenger } = await loadFixture(setup)
+						const recipientSaltHash = ethers.keccak256(
+							ethers.toUtf8Bytes('test'),
+						)
+						const depositAmount = ethers.parseEther('1')
+						await liquidity.depositNativeToken(recipientSaltHash, {
+							value: depositAmount,
+						})
+						const initialBalance = await ethers.provider.getBalance(
+							await liquidity.getAddress(),
+						)
+						await scrollMessenger.processWithdrawals(
+							2,
+							[
+								{
+									recipient: ethers.Wallet.createRandom().address,
+									tokenIndex: 0,
+									amount: depositAmount,
+									id: 0,
+								},
+							],
+							0,
+							[],
+						)
+						const finalBalance = await ethers.provider.getBalance(
+							await liquidity.getAddress(),
+						)
+						expect(initialBalance - finalBalance).to.equal(depositAmount)
+					})
+					it('erc20', async () => {
+						const { liquidity, scrollMessenger } = await loadFixture(setup)
+						const { user } = await getSigners()
+						const testERC20Factory =
+							await ethers.getContractFactory('TestERC20')
+						const testERC20 = await testERC20Factory.deploy(user.address)
+						const depositAmount = ethers.parseEther('100')
+						const recipientSaltHash = ethers.keccak256(
+							ethers.toUtf8Bytes('test'),
+						)
+
+						await testERC20
+							.connect(user)
+							.approve(await liquidity.getAddress(), depositAmount)
+						await liquidity
+							.connect(user)
+							.depositERC20(
+								testERC20.getAddress(),
+								recipientSaltHash,
+								depositAmount,
+							)
+
+						const recipient = ethers.Wallet.createRandom().address
+						const [, tokenIndex] = await liquidity.getTokenIndex(
+							TokenType.ERC20,
+							testERC20.getAddress(),
+							0,
+						)
+						const beforeBalance = await testERC20.balanceOf(recipient)
+						await scrollMessenger.processWithdrawals(
+							2,
+							[
+								{
+									recipient: recipient,
+									tokenIndex: tokenIndex,
+									amount: depositAmount,
+									id: 0,
+								},
+							],
+							0,
+							[],
+						)
+						const afterBalance = await testERC20.balanceOf(recipient)
+						expect(afterBalance - beforeBalance).to.equal(depositAmount)
+					})
+					it('erc721', async () => {
+						const { liquidity, scrollMessenger } = await loadFixture(setup)
+						const { user } = await getSigners()
+						const testNFTFactory = await ethers.getContractFactory(
+							'TestNFT',
+							user,
+						)
+						const testNFT = await testNFTFactory.deploy()
+						const tokenId = 0
+						const recipientSaltHash = ethers.keccak256(
+							ethers.toUtf8Bytes('test'),
+						)
+
+						await testNFT
+							.connect(user)
+							.approve(await liquidity.getAddress(), tokenId)
+						await liquidity
+							.connect(user)
+							.depositERC721(testNFT.getAddress(), recipientSaltHash, tokenId)
+
+						const recipient = ethers.Wallet.createRandom().address
+						const [, tokenIndex] = await liquidity.getTokenIndex(
+							TokenType.ERC721,
+							testNFT.getAddress(),
+							tokenId,
+						)
+
+						const beforeOwner = await testNFT.ownerOf(tokenId)
+						await scrollMessenger.processWithdrawals(
+							2,
+							[{ recipient, tokenIndex, amount: 1, id: 0 }],
+							0,
+							[],
+						)
+						const afterOwner = await testNFT.ownerOf(tokenId)
+
+						expect(beforeOwner).to.equal(await liquidity.getAddress())
+						expect(afterOwner).to.equal(recipient)
+					})
+					it('erc1155', async () => {
+						const { liquidity, scrollMessenger } = await loadFixture(setup)
+						const { user } = await getSigners()
+						const testERC1155Factory = await ethers.getContractFactory(
+							'TestERC1155',
+							user,
+						)
+						const testERC1155 = await testERC1155Factory.deploy()
+						const tokenId = 1
+						const amount = 100
+						const recipientSaltHash = ethers.keccak256(
+							ethers.toUtf8Bytes('test'),
+						)
+
+						await testERC1155.mint(user.address, tokenId, amount, '0x')
+						await testERC1155
+							.connect(user)
+							.setApprovalForAll(await liquidity.getAddress(), true)
+						await liquidity
+							.connect(user)
+							.depositERC1155(
+								testERC1155.getAddress(),
+								recipientSaltHash,
+								tokenId,
+								amount,
+							)
+
+						const recipient = ethers.Wallet.createRandom().address
+						const [, tokenIndex] = await liquidity.getTokenIndex(
+							TokenType.ERC1155,
+							testERC1155.getAddress(),
+							tokenId,
+						)
+
+						const beforeBalanceLiquidity = await testERC1155.balanceOf(
+							await liquidity.getAddress(),
+							tokenId,
+						)
+						const beforeBalanceRecipient = await testERC1155.balanceOf(
+							recipient,
+							tokenId,
+						)
+
+						await scrollMessenger.processWithdrawals(
+							2,
+							[{ recipient, tokenIndex, amount, id: 0 }],
+							0,
+							[],
+						)
+
+						const afterBalanceLiquidity = await testERC1155.balanceOf(
+							await liquidity.getAddress(),
+							tokenId,
+						)
+						const afterBalanceRecipient = await testERC1155.balanceOf(
+							recipient,
+							tokenId,
+						)
+
+						expect(beforeBalanceLiquidity).to.equal(amount)
+						expect(beforeBalanceRecipient).to.equal(0)
+						expect(afterBalanceLiquidity).to.equal(0)
+						expect(afterBalanceRecipient).to.equal(amount)
+					})
+				})
+				it('emit DirectWithdrawalsProcessed event', async () => {
+					const { liquidity, scrollMessenger } = await loadFixture(setup)
+					const { user } = await getSigners()
+
+					// Setup a deposit to ensure there's something to withdraw
+					const depositAmount = ethers.parseEther('1')
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					await liquidity
+						.connect(user)
+						.depositNativeToken(recipientSaltHash, { value: depositAmount })
+
+					const recipient = ethers.Wallet.createRandom().address
+					const lastProcessedDirectWithdrawalId = 5 // Assuming this is the current last processed ID
+
+					await expect(
+						scrollMessenger.processWithdrawals(
+							lastProcessedDirectWithdrawalId,
+							[{ recipient, tokenIndex: 0, amount: depositAmount, id: 0 }],
+							0,
+							[],
+						),
+					)
+						.to.emit(liquidity, 'DirectWithdrawalsProcessed')
+						.withArgs(lastProcessedDirectWithdrawalId)
+				})
+				it('call recordContribution', async () => {
+					const { liquidity, scrollMessenger, contribution } =
+						await loadFixture(setup)
+					const { deployer, user } = await getSigners()
+
+					// Setup a deposit to ensure there's something to withdraw
+					const depositAmount = ethers.parseEther('1')
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					await liquidity
+						.connect(user)
+						.depositNativeToken(recipientSaltHash, { value: depositAmount })
+
+					const recipient = ethers.Wallet.createRandom().address
+					const lastProcessedDirectWithdrawalId = 5 // Assuming this is the current last processed ID
+
+					await scrollMessenger.processWithdrawals(
+						lastProcessedDirectWithdrawalId,
+						[{ recipient, tokenIndex: 0, amount: depositAmount, id: 0 }],
+						0,
+						[],
+					)
+
+					// Check if recordContribution was called with correct arguments
+					expect(await contribution.latestTag()).to.equal(
+						ethers.keccak256(ethers.toUtf8Bytes('PROCESS_DIRECT_WITHDRAWALS')),
+					)
+					expect(await contribution.latestUser()).to.equal(deployer.address)
+					expect(await contribution.latestAmount()).to.equal(1) // Assuming one withdrawal was processed
+				})
+			})
+			describe('ClaimableWithdrawals', () => {
+				it('emit WithdrawalClaimable event', async () => {
+					const { liquidity, scrollMessenger } = await loadFixture(setup)
+					const withdrawalHash = ethers.keccak256(
+						ethers.toUtf8Bytes('testWithdrawal'),
+					)
+
+					await expect(
+						scrollMessenger.processWithdrawals(
+							0,
+							[],
+							5, // lastProcessedClaimableWithdrawalId
+							[withdrawalHash],
+						),
+					)
+						.to.emit(liquidity, 'WithdrawalClaimable')
+						.withArgs(withdrawalHash)
+				})
+				it('emit ClaimableWithdrawalsProcessed event', async () => {
+					const { liquidity, scrollMessenger } = await loadFixture(setup)
+					const withdrawalHash = ethers.keccak256(
+						ethers.toUtf8Bytes('testWithdrawal'),
+					)
+					const lastProcessedClaimableWithdrawalId = 5
+
+					await expect(
+						scrollMessenger.processWithdrawals(
+							0,
+							[],
+							lastProcessedClaimableWithdrawalId,
+							[withdrawalHash],
+						),
+					)
+						.to.emit(liquidity, 'ClaimableWithdrawalsProcessed')
+						.withArgs(lastProcessedClaimableWithdrawalId)
+				})
+				it('call recordContribution', async () => {
+					const { scrollMessenger, contribution } = await loadFixture(setup)
+					const { deployer } = await getSigners()
+					const withdrawalHash = ethers.keccak256(
+						ethers.toUtf8Bytes('testWithdrawal'),
+					)
+					const lastProcessedClaimableWithdrawalId = 5
+
+					await scrollMessenger.processWithdrawals(
+						0,
+						[],
+						lastProcessedClaimableWithdrawalId,
+						[withdrawalHash],
+					)
+
+					// Check if recordContribution was called with correct arguments
+					expect(await contribution.latestTag()).to.equal(
+						ethers.keccak256(
+							ethers.toUtf8Bytes('PROCESS_CLAIMABLE_WITHDRAWALS'),
+						),
+					)
+					expect(await contribution.latestUser()).to.equal(deployer.address) // Using deployer's address as tx.origin
+					expect(await contribution.latestAmount()).to.equal(1) // Assuming one withdrawal hash was processed
+				})
+			})
+		})
+		describe('fail', () => {
+			it('revert WithdrawalAddressNotSet', async () => {
+				const { scrollMessenger, rollup, contribution } =
+					await loadFixture(setup)
+				const { analyzer } = await getSigners()
+
+				// Deploy a new Liquidity contract without setting the withdrawal address
+				const liquidityFactory = await ethers.getContractFactory('Liquidity')
+				const newLiquidity = (await upgrades.deployProxy(
+					liquidityFactory,
+					[
+						await scrollMessenger.getAddress(),
+						rollup,
+						ethers.ZeroAddress, // Set withdrawal address to zero
+						analyzer.address,
+						await contribution.getAddress(),
+						INITIAL_ERC20_TOKEN_ADDRESSES,
+					],
+					{ kind: 'uups' },
+				)) as unknown as Liquidity
+
+				await scrollMessenger.setLiquidity(await newLiquidity.getAddress())
+
+				await expect(
+					scrollMessenger.processWithdrawals(0, [], 0, []),
+				).to.be.revertedWithCustomError(newLiquidity, 'WithdrawalAddressNotSet')
+			})
+			it('revert SenderIsNotScrollMessenger', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { user } = await getSigners()
+
+				await expect(
+					liquidity.connect(user).processWithdrawals(0, [], 0, []),
+				).to.be.revertedWithCustomError(liquidity, 'SenderIsNotScrollMessenger')
+			})
+			it('revert InvalidWithdrawalAddress', async () => {
+				const { liquidity, scrollMessenger } = await loadFixture(setup)
+				const { user } = await getSigners()
+
+				// Set an invalid withdrawal address
+				await scrollMessenger.setXDomainMessageSender(user.address)
+
+				await expect(
+					scrollMessenger.processWithdrawals(0, [], 0, []),
+				).to.be.revertedWithCustomError(liquidity, 'InvalidWithdrawalAddress')
+			})
+			it.skip('withdrawals length is 0', async () => {
+				// The test is omitted because it is impossible
+				// for processWithdrawals to be executed with an empty array of withdrawals,
+				// as it is checked in the Withdrawal contract.
+			})
+			it.skip('withdrawalHashes length is 0', async () => {
+				// The test is omitted because it is impossible
+				// for processWithdrawals to be executed with an empty array of withdrawalHashes,
+				// as it is checked in the Withdrawal contract.
+			})
+			it.skip('reentrancy attack', async () => {
+				// payable(recipient).transfer(amount);
+				// The gas consumption is limited to 2500 because the transfer function is performed.
+				// Therefore, reentrancy attacks that execute complex logic are not possible.
+			})
+		})
+	})
+	describe('claimWithdrawals', () => {
+		const getWithdrawalHash = (withdrawal: {
+			recipient: string
+			tokenIndex: number | bigint
+			amount: bigint
+			id: number
+		}): string => {
+			return ethers.keccak256(
+				ethers.solidityPacked(
+					['address', 'uint32', 'uint256', 'uint256'],
+					[
+						withdrawal.recipient,
+						withdrawal.tokenIndex,
+						withdrawal.amount,
+						withdrawal.id,
+					],
+				),
+			)
+		}
+		describe('success', () => {
+			describe('send token', () => {
+				it('native token', async () => {
+					const { liquidity, scrollMessenger } = await loadFixture(setup)
+					const { user } = await getSigners()
+
+					// Create a claimable withdrawal
+					const withdrawalAmount = ethers.parseEther('1')
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					await liquidity.depositNativeToken(recipientSaltHash, {
+						value: withdrawalAmount,
+					})
+
+					const withdrawal = {
+						recipient: user.address,
+						tokenIndex: 0, // Assuming 0 is the index for native token
+						amount: withdrawalAmount,
+						id: 1,
+					}
+
+					const withdrawalHash = getWithdrawalHash(withdrawal)
+
+					// Process the withdrawal to make it claimable
+					await scrollMessenger.processWithdrawals(0, [], 0, [withdrawalHash])
+
+					// Get initial balances
+					const initialUserBalance = await ethers.provider.getBalance(
+						user.address,
+					)
+					const initialLiquidityBalance = await ethers.provider.getBalance(
+						await liquidity.getAddress(),
+					)
+
+					// Claim the withdrawal
+					const tx = await liquidity
+						.connect(user)
+						.claimWithdrawals([withdrawal])
+					const receipt = await tx.wait()
+					const gasCost = receipt!.gasUsed * receipt!.gasPrice
+
+					// Get final balances
+					const finalUserBalance = await ethers.provider.getBalance(
+						user.address,
+					)
+					const finalLiquidityBalance = await ethers.provider.getBalance(
+						await liquidity.getAddress(),
+					)
+
+					// Check balances
+					expect(finalUserBalance).to.equal(
+						initialUserBalance + withdrawalAmount - gasCost,
+					)
+					expect(finalLiquidityBalance).to.equal(
+						initialLiquidityBalance - withdrawalAmount,
+					)
+				})
+				it('erc20', async () => {
+					const { liquidity, scrollMessenger } = await loadFixture(setup)
+					const { user } = await getSigners()
+
+					const testERC20Factory = await ethers.getContractFactory('TestERC20')
+					const testERC20 = await testERC20Factory.deploy(user.address)
+
+					const withdrawalAmount = ethers.parseEther('100')
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+
+					// Approve and deposit ERC20 tokens
+					await testERC20
+						.connect(user)
+						.approve(await liquidity.getAddress(), withdrawalAmount)
+					await liquidity
+						.connect(user)
+						.depositERC20(
+							await testERC20.getAddress(),
+							recipientSaltHash,
+							withdrawalAmount,
+						)
+
+					const [, tokenIndex] = await liquidity.getTokenIndex(
+						TokenType.ERC20,
+						await testERC20.getAddress(),
+						0,
+					)
+
+					const withdrawal = {
+						recipient: user.address,
+						tokenIndex,
+						amount: withdrawalAmount,
+						id: 1,
+					}
+
+					const withdrawalHash = getWithdrawalHash(withdrawal)
+					await scrollMessenger.processWithdrawals(0, [], 0, [withdrawalHash])
+
+					// Check balances before withdrawal
+					const initialUserBalance = await testERC20.balanceOf(user.address)
+					const initialLiquidityBalance = await testERC20.balanceOf(
+						await liquidity.getAddress(),
+					)
+
+					// Claim withdrawal
+					await liquidity.connect(user).claimWithdrawals([withdrawal])
+
+					// Check balances after withdrawal
+					const finalUserBalance = await testERC20.balanceOf(user.address)
+					const finalLiquidityBalance = await testERC20.balanceOf(
+						await liquidity.getAddress(),
+					)
+
+					// Verify balance changes
+					expect(finalUserBalance - initialUserBalance).to.equal(
+						withdrawalAmount,
+					)
+					expect(initialLiquidityBalance - finalLiquidityBalance).to.equal(
+						withdrawalAmount,
+					)
+				})
+				it('erc721', async () => {
+					const { liquidity, scrollMessenger } = await loadFixture(setup)
+					const { deployer, user } = await getSigners()
+
+					const testNFTFactory = await ethers.getContractFactory('TestNFT')
+					const testNFT = await testNFTFactory.deploy()
+
+					const tokenId = 1
+					await testNFT.transferFrom(deployer.address, user.address, tokenId)
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+
+					// Approve and deposit ERC721 token
+					await testNFT
+						.connect(user)
+						.approve(await liquidity.getAddress(), tokenId)
+					await liquidity
+						.connect(user)
+						.depositERC721(
+							await testNFT.getAddress(),
+							recipientSaltHash,
+							tokenId,
+						)
+
+					const [, tokenIndex] = await liquidity.getTokenIndex(
+						TokenType.ERC721,
+						await testNFT.getAddress(),
+						tokenId,
+					)
+
+					const withdrawal = {
+						recipient: user.address,
+						tokenIndex,
+						amount: 1n,
+						id: 1,
+					}
+
+					const withdrawalHash = getWithdrawalHash(withdrawal)
+					await scrollMessenger.processWithdrawals(0, [], 0, [withdrawalHash])
+
+					// Check ownership before withdrawal
+					expect(await testNFT.ownerOf(tokenId)).to.equal(
+						await liquidity.getAddress(),
+					)
+
+					// Claim withdrawal
+					await liquidity.connect(user).claimWithdrawals([withdrawal])
+
+					// Check ownership after withdrawal
+					expect(await testNFT.ownerOf(tokenId)).to.equal(user.address)
+				})
+				it('erc1155', async () => {
+					const { liquidity, scrollMessenger } = await loadFixture(setup)
+					const { user } = await getSigners()
+
+					const testERC1155Factory =
+						await ethers.getContractFactory('TestERC1155')
+					const testERC1155 = await testERC1155Factory.deploy()
+
+					const tokenId = 1
+					const amount = 100
+					await testERC1155.mint(user.address, tokenId, amount, '0x')
+					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+
+					// Approve and deposit ERC1155 tokens
+					await testERC1155
+						.connect(user)
+						.setApprovalForAll(await liquidity.getAddress(), true)
+					await liquidity
+						.connect(user)
+						.depositERC1155(
+							await testERC1155.getAddress(),
+							recipientSaltHash,
+							tokenId,
+							amount,
+						)
+
+					const [, tokenIndex] = await liquidity.getTokenIndex(
+						TokenType.ERC1155,
+						await testERC1155.getAddress(),
+						tokenId,
+					)
+
+					const withdrawal = {
+						recipient: user.address,
+						tokenIndex,
+						amount: BigInt(amount),
+						id: 1,
+					}
+
+					const withdrawalHash = getWithdrawalHash(withdrawal)
+					await scrollMessenger.processWithdrawals(0, [], 0, [withdrawalHash])
+
+					// Check balances before withdrawal
+					const initialUserBalance = await testERC1155.balanceOf(
+						user.address,
+						tokenId,
+					)
+					const initialLiquidityBalance = await testERC1155.balanceOf(
+						await liquidity.getAddress(),
+						tokenId,
+					)
+
+					// Claim withdrawal
+					await liquidity.connect(user).claimWithdrawals([withdrawal])
+
+					// Check balances after withdrawal
+					const finalUserBalance = await testERC1155.balanceOf(
+						user.address,
+						tokenId,
+					)
+					const finalLiquidityBalance = await testERC1155.balanceOf(
+						await liquidity.getAddress(),
+						tokenId,
+					)
+
+					// Verify balance changes
+					expect(finalUserBalance - initialUserBalance).to.equal(amount)
+					expect(initialLiquidityBalance - finalLiquidityBalance).to.equal(
+						amount,
+					)
+				})
+			})
+			it('emit ClaimedWithdrawal', async () => {
+				const { liquidity, scrollMessenger } = await loadFixture(setup)
+				const { user } = await getSigners()
+
+				// First, create a claimable withdrawal
+				const withdrawalAmount = ethers.parseEther('1')
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: withdrawalAmount })
+
+				const withdrawal = {
+					recipient: user.address,
+					tokenIndex: 0, // Assuming 0 is the index for native token
+					amount: withdrawalAmount,
+					id: 1,
+				}
+
+				const withdrawalHash = getWithdrawalHash(withdrawal)
+
+				// Process the withdrawal to make it claimable
+				await scrollMessenger.processWithdrawals(0, [], 0, [withdrawalHash])
+
+				// Now claim the withdrawal
+				await expect(liquidity.connect(user).claimWithdrawals([withdrawal]))
+					.to.emit(liquidity, 'ClaimedWithdrawal')
+					.withArgs(user.address, withdrawalHash)
+			})
+			it('emit ClaimedWithdrawal for multiple withdrawals', async () => {
+				const { liquidity, scrollMessenger } = await loadFixture(setup)
+				const { user } = await getSigners()
+
+				// Create two claimable withdrawals
+				const withdrawalAmount1 = ethers.parseEther('1')
+				const withdrawalAmount2 = ethers.parseEther('2')
+				const recipientSaltHash1 = ethers.keccak256(ethers.toUtf8Bytes('test1'))
+				const recipientSaltHash2 = ethers.keccak256(ethers.toUtf8Bytes('test2'))
+
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash1, { value: withdrawalAmount1 })
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash2, { value: withdrawalAmount2 })
+
+				const withdrawal1 = {
+					recipient: user.address,
+					tokenIndex: 0,
+					amount: withdrawalAmount1,
+					id: 1,
+				}
+
+				const withdrawal2 = {
+					recipient: user.address,
+					tokenIndex: 0,
+					amount: withdrawalAmount2,
+					id: 2,
+				}
+
+				const withdrawalHash1 = getWithdrawalHash(withdrawal1)
+				const withdrawalHash2 = getWithdrawalHash(withdrawal2)
+
+				// Process both withdrawals to make them claimable
+				await scrollMessenger.processWithdrawals(0, [], 0, [
+					withdrawalHash1,
+					withdrawalHash2,
+				])
+
+				await liquidity
+					.connect(user)
+					.claimWithdrawals([withdrawal1, withdrawal2])
+
+				const filter = liquidity.filters.ClaimedWithdrawal()
+				const claimedEvents = await liquidity.queryFilter(filter)
+
+				expect(claimedEvents?.length).to.equal(2)
+
+				// Check the details of each event
+				expect(claimedEvents?.[0].args?.recipient).to.equal(user.address)
+				expect(claimedEvents?.[0].args?.withdrawalHash).to.equal(
+					withdrawalHash1,
+				)
+
+				expect(claimedEvents?.[1].args?.recipient).to.equal(user.address)
+				expect(claimedEvents?.[1].args?.withdrawalHash).to.equal(
+					withdrawalHash2,
+				)
+			})
+		})
+		describe('fail', () => {
+			it('revert WithdrawalNotFound', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { user } = await getSigners()
+
+				// Create a withdrawal object that hasn't been processed
+				const nonExistentWithdrawal = {
+					recipient: user.address,
+					tokenIndex: 0, // Assuming 0 is for native token
+					amount: ethers.parseEther('1'),
+					id: 9999, // Use a high number to ensure it doesn't exist
+				}
+
+				const withdrawalHash = getWithdrawalHash(nonExistentWithdrawal)
+
+				// Attempt to claim the non-existent withdrawal
+				await expect(
+					liquidity.connect(user).claimWithdrawals([nonExistentWithdrawal]),
+				)
+					.to.be.revertedWithCustomError(liquidity, 'WithdrawalNotFound')
+					.withArgs(withdrawalHash)
+			})
+			it('rejects duplicate withdrawal claims', async () => {
+				const { liquidity, scrollMessenger } = await loadFixture(setup)
+				const { user } = await getSigners()
+
+				// Create a claimable withdrawal
+				const withdrawalAmount = ethers.parseEther('1')
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				await liquidity.depositNativeToken(recipientSaltHash, {
+					value: withdrawalAmount,
+				})
+
+				const withdrawal = {
+					recipient: user.address,
+					tokenIndex: 0, // Assuming 0 is the index for native token
+					amount: withdrawalAmount,
+					id: 1,
+				}
+
+				const withdrawalHash = getWithdrawalHash(withdrawal)
+
+				// Process the withdrawal to make it claimable
+				await scrollMessenger.processWithdrawals(0, [], 0, [withdrawalHash])
+
+				// Claim the withdrawal
+				await liquidity.connect(user).claimWithdrawals([withdrawal])
+				await expect(liquidity.connect(user).claimWithdrawals([withdrawal]))
+					.to.be.revertedWithCustomError(liquidity, 'WithdrawalNotFound')
+					.withArgs(withdrawalHash)
+			})
+			it.skip('reentrancy attack', async () => {
+				// payable(recipient).transfer(amount);
+				// The gas consumption is limited to 2500 because the transfer function is performed.
+				// Therefore, reentrancy attacks that execute complex logic are not possible.
+			})
+		})
+	})
+	describe('onERC1155Received', () => {
+		it('get selector', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const result = await liquidity.onERC1155Received(
+				ethers.ZeroAddress,
+				ethers.ZeroAddress,
+				0,
+				0,
+				ethers.ZeroHash,
+			)
+			expect(result).to.equal('0xf23a6e61')
+		})
+	})
+	describe('getDepositData', () => {
+		it('get DepositData', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { user } = await getSigners()
+
+			// Create some deposits using ETH
+			const depositAmount = ethers.parseEther('1')
+
+			for (let i = 0; i < 5; i++) {
+				const recipientSaltHash = ethers.keccak256(
+					ethers.toUtf8Bytes(`test${i}`),
+				)
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			}
+
+			const depositData0 = await liquidity.getDepositData(1)
+			const depositHash0 = ethers.keccak256(
+				ethers.solidityPacked(
+					['bytes32', 'uint32', 'uint256'],
+					[ethers.keccak256(ethers.toUtf8Bytes('test0')), 0, depositAmount],
+				),
+			)
+			expect(depositData0.depositHash).to.equal(depositHash0)
+			expect(depositData0.sender).to.equal(user.address)
+			expect(depositData0.isRejected).to.equal(false)
+
+			const depositData2 = await liquidity.getDepositData(3)
+			const depositHash2 = ethers.keccak256(
+				ethers.solidityPacked(
+					['bytes32', 'uint32', 'uint256'],
+					[ethers.keccak256(ethers.toUtf8Bytes('test2')), 0, depositAmount],
+				),
+			)
+			expect(depositData2.depositHash).to.equal(depositHash2)
+			expect(depositData2.sender).to.equal(user.address)
+			expect(depositData2.isRejected).to.equal(false)
+		})
+	})
+	describe('getLastRelayedDepositId, getLastDepositId', () => {
+		it('get DepositId', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { analyzer, user } = await getSigners()
+
+			expect(await liquidity.getLastRelayedDepositId()).to.equal(0)
+			expect(await liquidity.getLastDepositId()).to.equal(0)
+
+			// Create some deposits using ETH
+			const depositAmount = ethers.parseEther('1')
+
+			for (let i = 0; i < 5; i++) {
+				const recipientSaltHash = ethers.keccak256(
+					ethers.toUtf8Bytes(`test${i}`),
+				)
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			}
+
+			expect(await liquidity.getLastRelayedDepositId()).to.equal(0)
+			expect(await liquidity.getLastDepositId()).to.equal(5)
+
+			await liquidity.connect(analyzer).analyzeAndRelayDeposits(3, [], 1000000)
+
+			expect(await liquidity.getLastRelayedDepositId()).to.equal(3)
+			expect(await liquidity.getLastDepositId()).to.equal(5)
 		})
 	})
 	describe('upgrade', () => {

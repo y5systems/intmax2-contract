@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+import {WithdrawalLib} from "../../common/WithdrawalLib.sol";
+import {ILiquidity} from "../../liquidity/ILiquidity.sol";
 contract L1ScrollMessengerTestForLiquidity {
 	address public to;
 	uint256 public value;
@@ -10,6 +12,8 @@ contract L1ScrollMessengerTestForLiquidity {
 	uint256 public msgValue;
 
 	address private xDomainMessageSenderAddress;
+
+	ILiquidity private liquidity;
 
 	function sendMessage(
 		address _to,
@@ -32,5 +36,23 @@ contract L1ScrollMessengerTestForLiquidity {
 
 	function xDomainMessageSender() external view returns (address) {
 		return xDomainMessageSenderAddress;
+	}
+
+	function setLiquidity(address _liquidity) external {
+		liquidity = ILiquidity(_liquidity);
+	}
+
+	function processWithdrawals(
+		uint256 _lastProcessedDirectWithdrawalId,
+		WithdrawalLib.Withdrawal[] calldata withdrawals,
+		uint256 _lastProcessedClaimableWithdrawalId,
+		bytes32[] calldata withdrawalHashes
+	) external {
+		liquidity.processWithdrawals(
+			_lastProcessedDirectWithdrawalId,
+			withdrawals,
+			_lastProcessedClaimableWithdrawalId,
+			withdrawalHashes
+		);
 	}
 }

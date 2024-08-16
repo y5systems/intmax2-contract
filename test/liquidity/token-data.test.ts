@@ -4,17 +4,9 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 
 import { TokenDataTest } from '../../typechain-types'
 
-import { INITIAL_ERC20_TOKEN_ADDRESSES } from './common.test'
+import { INITIAL_ERC20_TOKEN_ADDRESSES, TokenType } from './common.test'
 
 describe('TokenData', () => {
-	// ITokenData.sol
-	enum TokenType {
-		NATIVE,
-		ERC20,
-		ERC721,
-		ERC1155,
-	}
-
 	const setup = async (): Promise<TokenDataTest> => {
 		const tokenDataFactory = await ethers.getContractFactory('TokenDataTest')
 		const tokenData =
