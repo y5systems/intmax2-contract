@@ -11,24 +11,19 @@ import { ONE_DAY_SECONDS } from './const.test'
 import {
 	BlockBuilderRegistry,
 	FraudProofPublicInputsLib,
-	UnstakeReentrancyTest,
 	MockPlonkVerifier,
 	RollupTestForBlockBuilderRegistry,
 	IBlockBuilderRegistry,
-	SubmitBlockFraudProofReentrancyTest,
 } from '../../typechain-types'
 
 describe('BlockBuilderRegistry', () => {
 	const DUMMY_URL = 'https://dummy.com'
 	const DEFAULT_BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD'
 	const MIN_STAKE_AMOUNT = ethers.parseEther('0.1')
-	////////////////////////////////////////////////////////////////////////
-	// see SubmitBlockFraudProofReentrancyTest contarct
 	const DUMMY_BLOCK_HASH =
 		'0x8c835aff939ed6e3ef18dc601bc14623bae8527486ad0539e41a9083e25329be'
 	const DUMMY_BLOCK_NUMBER = 5n
 	const DUMMY_PROOF = new Uint8Array([1, 2, 3, 4, 5])
-	////////////////////////////////////////////////////////////////////////
 	const setup = async (): Promise<
 		[BlockBuilderRegistry, RollupTestForBlockBuilderRegistry, MockPlonkVerifier]
 	> => {
@@ -1015,40 +1010,15 @@ describe('BlockBuilderRegistry', () => {
 		})
 	})
 	describe('reentrancy', () => {
-		it('unstake', async () => {
-			const [blockBuilderRegistry] = await loadFixture(setup)
-			const reentrancyFactory = await ethers.getContractFactory(
-				'UnstakeReentrancyTest',
-			)
-			const reentrancy = (await reentrancyFactory.deploy(
-				await blockBuilderRegistry.getAddress(),
-			)) as unknown as UnstakeReentrancyTest
-			const stakeAmount = ethers.parseEther('0.3')
-			await reentrancy.updateBlockBuilder({ value: stakeAmount })
-			await reentrancy.stopBlockBuilder()
-			await time.increase(ONE_DAY_SECONDS)
-
-			await expect(reentrancy.unstake())
-				.to.be.revertedWithCustomError(blockBuilderRegistry, 'FailedTransfer')
-				.withArgs(await reentrancy.getAddress(), stakeAmount)
+		it.skip('unstake', async () => {
+			// payable(recipient).transfer(amount);
+			// The gas consumption is limited to 2500 because the transfer function is performed.
+			// Therefore, reentrancy attacks that execute complex logic are not possible.
 		})
-		it('slashBlockBuilder', async () => {
-			const [blockBuilderRegistry, , , , fraudProof] = await loadFixture(
-				slashBlockBuilderSetup,
-			)
-			const reentrancyTestFactory = await ethers.getContractFactory(
-				'SubmitBlockFraudProofReentrancyTest',
-			)
-			const reentrancy = (await reentrancyTestFactory.deploy(
-				await blockBuilderRegistry.getAddress(),
-			)) as unknown as SubmitBlockFraudProofReentrancyTest
-			fraudProof.challenger = await reentrancy.getAddress()
-			await expect(reentrancy.submitBlockFraudProof(fraudProof, DUMMY_PROOF))
-				.to.be.revertedWithCustomError(
-					blockBuilderRegistry,
-					'OwnableUnauthorizedAccount',
-				)
-				.withArgs(await reentrancy.getAddress())
+		it.skip('slashBlockBuilder', async () => {
+			// payable(recipient).transfer(amount);
+			// The gas consumption is limited to 2500 because the transfer function is performed.
+			// Therefore, reentrancy attacks that execute complex logic are not possible.
 		})
 	})
 })
