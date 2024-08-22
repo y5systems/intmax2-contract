@@ -48,20 +48,39 @@ interface ILiquidity {
 		bytes32 indexed withdrawalHash
 	);
 
+	/// @notice Deposit native token
+	/// @dev recipientSaltHash is the Poseidon hash of the intmax2 address (32 bytes) and a secret salt
+	/// @param recipientSaltHash The hash of the recipient's address and a secret salt
 	function depositNativeToken(bytes32 recipientSaltHash) external payable;
 
+	/// @notice Deposit a specified amount of ERC20 token
+	/// @dev Requires prior approval for this contract to spend the tokens
+	/// @dev recipientSaltHash is the Poseidon hash of the intmax2 address (32 bytes) and a secret salt
+	/// @param tokenAddress The address of the ERC20 token contract
+	/// @param recipientSaltHash The hash of the recipient's address and a secret salt
+	/// @param amount The amount of tokens to deposit
 	function depositERC20(
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 amount
 	) external;
 
+	/// @notice Deposit an ERC721 token
+	/// @dev Requires prior approval for this contract to transfer the token
+	/// @param tokenAddress The address of the ERC721 token contract
+	/// @param recipientSaltHash The hash of the recipient's address and a secret salt
+	/// @param tokenId The ID of the token to deposit
 	function depositERC721(
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 tokenId
 	) external;
 
+	/// @notice Deposit a specified amount of ERC1155 tokens
+	/// @param tokenAddress The address of the ERC1155 token contract
+	/// @param recipientSaltHash The hash of the recipient's address and a secret salt
+	/// @param tokenId The ID of the token to deposit
+	/// @param amount The amount of tokens to deposit
 	function depositERC1155(
 		address tokenAddress,
 		bytes32 recipientSaltHash,
@@ -69,7 +88,7 @@ interface ILiquidity {
 		uint256 amount
 	) external;
 
-	/// @notice Trusted nodes submit the IDs of deposits that do not meet AML standards by this method.
+	/// @notice Trusted nodes submit the IDs of deposits that do not meet AML standards by this method
 	/// @dev upToDepositId specifies the last deposit id that have been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
 	/// @dev rejectDepositIndices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
 	/// @param upToDepositId The upper limit of the Deposit ID that has been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
@@ -81,11 +100,20 @@ interface ILiquidity {
 		uint256 gasLimit
 	) external payable;
 
+	/// @notice Method to cancel a deposit
+	/// @dev The deposit ID and its content should be included in the calldata
+	/// @param depositId The ID of the deposit to cancel
+	/// @param deposit The deposit data
 	function cancelDeposit(
 		uint256 depositId,
-		DepositLib.Deposit memory deposit
+		DepositLib.Deposit calldata deposit
 	) external;
 
+	/// @notice Process withdrawals, called by the scroll messenger
+	/// @param lastProcessedDirectWithdrawalId The ID of the last processed direct withdrawal
+	/// @param withdrawals Array of withdrawals to process
+	/// @param lastProcessedClaimableWithdrawalId The ID of the last processed claimable withdrawal
+	/// @param withdrawalHahes Array of withdrawal hashes
 	function processWithdrawals(
 		uint256 lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
@@ -93,16 +121,25 @@ interface ILiquidity {
 		bytes32[] calldata withdrawalHahes
 	) external;
 
+	/// @notice Get the ID of the last deposit relayed to L2
+	/// @return The ID of the last relayed deposit
 	function getLastRelayedDepositId() external view returns (uint256);
 
+	/// @notice Get deposit data for a given deposit ID
+	/// @param depositId The ID of the deposit
+	/// @return The deposit data
 	function getDepositData(
 		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory);
 
+	/// @notice Claim withdrawals for tokens that are not direct withdrawals
+	/// @param withdrawals Array of withdrawals to claim
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;
 
+	/// @notice ERC1155 token receiver function
+	/// @return bytes4 The function selector
 	function onERC1155Received(
 		address,
 		address,

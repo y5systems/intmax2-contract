@@ -80,6 +80,12 @@ interface IBlockBuilderRegistry {
 	 */
 	function unstake() external;
 
+	/**
+	 * @notice block builderによって提出されたblockが不正なblockであることを、
+	 * fraud proofによってする。
+	 * @param publicInputs public inputs of fraud proof.
+	 * @param proof fraud proof
+	 */
 	function submitBlockFraudProof(
 		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof

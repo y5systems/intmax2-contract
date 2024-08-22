@@ -81,7 +81,7 @@ contract Contribution is
 
 	function getContributionRate(
 		uint256 periodNumber,
-		address contributor
+		address user
 	) external view returns (UD60x18) {
 		UD60x18 totalContribution = ud(0);
 		UD60x18 userContribution = ud(0);
@@ -94,7 +94,7 @@ contract Contribution is
 				weight;
 			userContribution =
 				userContribution +
-				convert(contributionsInPeriod[periodNumber][tag][contributor]) *
+				convert(contributionsInPeriod[periodNumber][tag][user]) *
 				weight;
 		}
 		return userContribution.div(totalContribution);
