@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-
 library PairingLib {
 	/// @notice Error thrown when the pairing operation fails
 	error PairingOpCodeFailed();
