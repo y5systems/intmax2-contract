@@ -147,7 +147,7 @@ describe('Liquidity', () => {
 		})
 
 		describe('fail', () => {
-			it('revert InvalidValue', async () => {
+			it('revert TriedToDepositZero', async () => {
 				const { liquidity } = await loadFixture(setup)
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
@@ -156,7 +156,7 @@ describe('Liquidity', () => {
 					liquidity
 						.connect(user)
 						.depositNativeToken(recipientSaltHash, { value: 0 }),
-				).to.be.revertedWithCustomError(liquidity, 'InvalidValue')
+				).to.be.revertedWithCustomError(liquidity, 'TriedToDepositZero')
 			})
 		})
 	})
@@ -234,7 +234,7 @@ describe('Liquidity', () => {
 		})
 
 		describe('fail', () => {
-			it('revert InvalidAmount', async () => {
+			it('revert TriedToDepositZero', async () => {
 				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
@@ -243,7 +243,7 @@ describe('Liquidity', () => {
 					liquidity
 						.connect(user)
 						.depositERC20(await testERC20.getAddress(), recipientSaltHash, 0),
-				).to.be.revertedWithCustomError(liquidity, 'InvalidAmount')
+				).to.be.revertedWithCustomError(liquidity, 'TriedToDepositZero')
 			})
 		})
 	})
@@ -418,7 +418,7 @@ describe('Liquidity', () => {
 			})
 		})
 		describe('fail', () => {
-			it('revert InvalidAmount', async () => {
+			it('revert TriedToDepositZero', async () => {
 				const { liquidity, testERC1155 } = await loadFixture(
 					setupForDepositERC1155,
 				)
@@ -440,7 +440,7 @@ describe('Liquidity', () => {
 							tokenId,
 							depositAmount,
 						),
-				).to.be.revertedWithCustomError(liquidity, 'InvalidAmount')
+				).to.be.revertedWithCustomError(liquidity, 'TriedToDepositZero')
 			})
 		})
 	})
@@ -781,7 +781,7 @@ describe('Liquidity', () => {
 			})
 		})
 		describe('fail', () => {
-			it('revert OnlyRecipientCanCancelDeposit', async () => {
+			it('revert OnlySenderCanCancelDeposit', async () => {
 				const { liquidity, depositAmount, recipientSaltHash, depositId } =
 					await loadFixture(setupCancelDeposit)
 				const { analyzer } = await getSigners()
@@ -792,10 +792,7 @@ describe('Liquidity', () => {
 						tokenIndex: 0,
 						amount: depositAmount,
 					}),
-				).to.be.revertedWithCustomError(
-					liquidity,
-					'OnlyRecipientCanCancelDeposit',
-				)
+				).to.be.revertedWithCustomError(liquidity, 'OnlySenderCanCancelDeposit')
 			})
 			it('revert InvalidDepositHash', async () => {
 				const { liquidity, depositAmount, depositId } =
@@ -827,10 +824,7 @@ describe('Liquidity', () => {
 						tokenIndex: 0,
 						amount: depositAmount,
 					}),
-				).to.be.revertedWithCustomError(
-					liquidity,
-					'OnlyRecipientCanCancelDeposit',
-				)
+				).to.be.revertedWithCustomError(liquidity, 'OnlySenderCanCancelDeposit')
 			})
 			it.skip('reentrancy attack', async () => {
 				// payable(recipient).transfer(amount);
