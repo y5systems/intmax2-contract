@@ -1,16 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
+/// @title ChainedWithdrawalLib
+/// @notice Library for handling chained withdrawals in a hash chain
 library ChainedWithdrawalLib {
+	/// @notice Represents a withdrawal linked in a hash chain, used in withdrawal proof public inputs
 	struct ChainedWithdrawal {
-		address recipient;
-		uint32 tokenIndex;
-		uint256 amount;
-		bytes32 nullifier;
-		bytes32 blockHash;
-		uint32 blockNumber;
+		address recipient; // Address of the withdrawal recipient
+		uint32 tokenIndex; // Index of the token being withdrawn
+		uint256 amount; // Amount of tokens being withdrawn
+		bytes32 nullifier; // Nullifier to prevent double-spending
+		bytes32 blockHash; // Hash of the block containing the withdrawal
+		uint32 blockNumber; // Number of the block containing the withdrawal
 	}
 
+	/// @notice Hashes a ChainedWithdrawal with the previous hash in the chain
+	/// @param withdrawal The ChainedWithdrawal to be hashed
+	/// @param prevWithdrawalHash The hash of the previous withdrawal in the chain
+	/// @return bytes32 The resulting hash
 	function hashWithPrevHash(
 		ChainedWithdrawal memory withdrawal,
 		bytes32 prevWithdrawalHash
@@ -29,6 +36,10 @@ library ChainedWithdrawalLib {
 			);
 	}
 
+	/// @notice Verifies the integrity of a withdrawal hash chain
+	/// @param withdrawals Array of ChainedWithdrawals to verify
+	/// @param lastWithdrawalHash The expected hash of the last withdrawal in the chain
+	/// @return bool True if the chain is valid, false otherwise
 	function verifyWithdrawalChain(
 		ChainedWithdrawal[] memory withdrawals,
 		bytes32 lastWithdrawalHash

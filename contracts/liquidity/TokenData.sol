@@ -56,7 +56,7 @@ abstract contract TokenData is Initializable, ITokenData {
 			return tokenIndex;
 		}
 		if (tokenAddress == address(0)) {
-			revert InvalidTokenAddress();
+			revert TokenAddressIsZero();
 		}
 		if (tokenType == TokenType.ERC20) {
 			fungibleTokenIndexMap[tokenAddress] = tokenIndex;
@@ -76,7 +76,7 @@ abstract contract TokenData is Initializable, ITokenData {
 			return (true, fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS]);
 		}
 		if (tokenAddress == address(0)) {
-			revert InvalidTokenAddress();
+			revert TokenAddressIsZero();
 		}
 		if (tokenType == TokenType.ERC20) {
 			uint32 tokenIndex = fungibleTokenIndexMap[tokenAddress];

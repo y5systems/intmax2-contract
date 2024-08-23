@@ -4,33 +4,69 @@ pragma solidity 0.8.24;
 import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
 
 interface IBlockBuilderRegistry {
+	/// @notice Error thrown when trying to register a block builder with an empty URL
 	error URLIsEmpty();
+
+	/// @notice Error thrown when the staked amount is insufficient
 	error InsufficientStakeAmount();
+
+	/// @notice Error thrown when trying to slash a block builder that is not staking
 	error BlockBuilderNotFound();
+
+	/// @notice Error thrown when trying to unstake within the challenge duration
 	error CannotUnstakeWithinChallengeDuration();
+
+	/// @notice Error thrown when ETH transfer fails
+	/// @param to The address to which the transfer was attempted
+	/// @param amount The amount that failed to transfer
+	error FailedTransfer(address to, uint256 amount);
+
+	/// @notice Error thrown when attempting to slash the same block number twice
 	error FraudProofAlreadySubmitted();
+
+	/// @notice Error thrown when fraud proof verification fails
 	error FraudProofVerificationFailed();
+
+	/// @notice Error thrown when the block hash in public input doesn't match the contract's record
+	/// @param given The block hash provided in the public input
+	/// @param expected The block hash expected by the contract
 	error FraudProofBlockHashMismatch(bytes32 given, bytes32 expected);
+
+	/// @notice Error thrown when the challenger in public input doesn't match msg.sender
 	error FraudProofChallengerMismatch();
 
+	/// @notice Event emitted when a fraud proof is submitted
+	/// @param blockNumber The number of the block being challenged
+	/// @param blockBuilder The address of the block builder being challenged
+	/// @param challenger The address of the challenger submitting the fraud proof
 	event BlockFraudProofSubmitted(
 		uint32 indexed blockNumber,
 		address indexed blockBuilder,
 		address indexed challenger
 	);
 
+	/// @notice Event emitted when a block builder is updated
+	/// @param blockBuilder The address of the updated block builder
+	/// @param url The new URL of the block builder
+	/// @param stakeAmount The new stake amount of the block builder
 	event BlockBuilderUpdated(
 		address indexed blockBuilder,
 		string url,
 		uint256 stakeAmount
 	);
 
+	/// @notice Event emitted when a block builder stops operations
+	/// @param blockBuilder The address of the block builder that stopped
 	event BlockBuilderStopped(address indexed blockBuilder);
 
+	/// @notice Event emitted when a block builder is slashed
+	/// @param blockBuilder The address of the slashed block builder
+	/// @param challenger The address of the challenger who submitted the fraud proof
 	event BlockBuilderSlashed(
 		address indexed blockBuilder,
 		address indexed challenger
 	);
+
 	/**
 	 * @notice Block builder information.
 	 * @param blockBuilderUrl The URL or IP address of Block builder.
@@ -79,6 +115,12 @@ interface IBlockBuilderRegistry {
 	 */
 	function unstake() external;
 
+	/**
+	 * @notice block builderによって提出されたblockが不正なblockであることを、
+	 * fraud proofによってする。
+	 * @param publicInputs public inputs of fraud proof.
+	 * @param proof fraud proof
+	 */
 	function submitBlockFraudProof(
 		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
 		bytes calldata proof

@@ -24,9 +24,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs;
 	using Byte32Lib for bytes32;
 
-	uint256 private constant MAX_RELAY_DIRECT_WITHDRAWALS = 20;
-	uint256 private constant MAX_RELAY_CLAIMABLE_WITHDRAWALS = 100;
-
 	IPlonkVerifier private withdrawalVerifier;
 	IL2ScrollMessenger private l2ScrollMessenger;
 	IRollup private rollup;
@@ -65,7 +62,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			calldata publicInputs,
 		bytes calldata proof
 	) external onlyOwner {
-		_validWithdrawalProof(withdrawals, publicInputs, proof);
+		_validateWithdrawalProof(withdrawals, publicInputs, proof);
 		uint256 directWithdrawalCounter = 0;
 		uint256 claimableWithdrawalCounter = 0;
 		bool[] memory isSkippedFlags = new bool[](withdrawals.length);
@@ -182,7 +179,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		return directWithdrawalTokenIndices.contains(tokenIndex);
 	}
 
-	function _validWithdrawalProof(
+	function _validateWithdrawalProof(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
 			calldata publicInputs,

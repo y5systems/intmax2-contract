@@ -73,7 +73,7 @@ contract Liquidity is
 
 	function depositNativeToken(bytes32 recipientSaltHash) external payable {
 		if (msg.value == 0) {
-			revert InvalidValue();
+			revert TriedToDepositZero();
 		}
 		uint32 tokenIndex = _getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
@@ -85,7 +85,7 @@ contract Liquidity is
 		uint256 amount
 	) external {
 		if (amount == 0) {
-			revert InvalidAmount();
+			revert TriedToDepositZero();
 		}
 		IERC20(tokenAddress).safeTransferFrom(
 			_msgSender(),
@@ -125,7 +125,7 @@ contract Liquidity is
 		uint256 amount
 	) external {
 		if (amount == 0) {
-			revert InvalidAmount();
+			revert TriedToDepositZero();
 		}
 		IERC1155(tokenAddress).safeTransferFrom(
 			_msgSender(),
@@ -198,12 +198,12 @@ contract Liquidity is
 
 	function cancelDeposit(
 		uint256 depositId,
-		DepositLib.Deposit memory deposit
+		DepositLib.Deposit calldata deposit
 	) external {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.deleteDeposit(depositId);
 		if (depositData.sender != _msgSender()) {
-			revert OnlyRecipientCanCancelDeposit();
+			revert OnlySenderCanCancelDeposit();
 		}
 		if (depositData.depositHash != deposit.getHash()) {
 			revert InvalidDepositHash(

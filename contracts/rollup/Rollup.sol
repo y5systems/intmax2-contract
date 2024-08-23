@@ -76,9 +76,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		uint256[] calldata senderPublicKeys
 	) external {
 		uint256 length = senderPublicKeys.length;
-		if (length == 0) {
-			revert SenderPublicKeysEmpty();
-		}
 		if (length > NUM_SENDERS_IN_BLOCK) {
 			revert TooManySenderPublicKeys();
 		}
@@ -116,9 +113,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes calldata senderAccountIds
 	) external {
 		uint256 length = senderAccountIds.length;
-		if (length == 0) {
-			revert SenderAccountIdsEmpty();
-		}
 		if (length > FULL_ACCOUNT_IDS_BYTES) {
 			revert TooManyAccountIds();
 		}
