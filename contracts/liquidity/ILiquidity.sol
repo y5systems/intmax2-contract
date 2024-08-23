@@ -6,24 +6,51 @@ import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
 
 interface ILiquidity {
-	error OnlyRecipientCanCancelDeposit();
-	error InvalidDepositHash(bytes32 depositDataHash, bytes32 calculatedHash);
-	error SenderIsNotScrollMessenger();
-	error WithdrawalAddressNotSet();
-	error InvalidWithdrawalAddress();
-	error WithdrawalNotFound(bytes32 withdrawalHash);
-	error InvalidAmount();
-	error InvalidValue();
+	/// @notice Error thrown when someone other than the original depositor tries to cancel a deposit
+	error OnlySenderCanCancelDeposit();
 
+	/// @notice Error thrown when the provided deposit hash doesn't match the calculated hash during cancellation
+	/// @param depositDataHash The hash from the deposit data
+	/// @param calculatedHash The hash calculated from given input
+	error InvalidDepositHash(bytes32 depositDataHash, bytes32 calculatedHash);
+
+	/// @notice Error thrown when the sender is not the Scroll Messenger in onlyWithdrawal context
+	error SenderIsNotScrollMessenger();
+
+	/// @notice Error thrown when the withdrawal contract address is not set
+	error WithdrawalAddressNotSet();
+
+	/// @notice Error thrown when the xDomainMessageSender of the Scroll Messenger doesn't match the withdrawal contract address
+	error InvalidWithdrawalAddress();
+
+	/// @notice Error thrown when trying to claim a non-existent withdrawal
+	/// @param withdrawalHash The hash of the withdrawal that wasn't found
+	error WithdrawalNotFound(bytes32 withdrawalHash);
+
+	/// @notice Error thrown when trying to deposit zero amount of native/ERC20/ERC1155 tokens
+	error TriedToDepositZero();
+
+	/// @notice Event emitted when a deposit is made
+	/// @param depositId The unique identifier for the deposit
+	/// @param sender The address that made the deposit
+	/// @param recipientSaltHash The hash of the recipient's intmax2 address (BLS public key) and a secret salt
+	/// @param tokenIndex The index of the token being deposited
+	/// @param amount The amount of tokens deposited
+	/// @param depositedAt The timestamp of the deposit
 	event Deposited(
 		uint256 indexed depositId,
 		address indexed sender,
 		bytes32 indexed recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,
-		uint256 requestedAt
+		uint256 depositedAt
 	);
 
+	/// @notice Event emitted when deposits are analyzed and relayed
+	/// @param upToDepositId The highest deposit ID that was analyzed
+	/// @param rejectedIndices Array of deposit IDs that were rejected
+	/// @param gasLimit The gas limit for the L2 transaction
+	/// @param message Additional message data
 	event DepositsAnalyzedAndRelayed(
 		uint256 indexed upToDepositId,
 		uint256[] rejectedIndices,
@@ -31,18 +58,29 @@ interface ILiquidity {
 		bytes message
 	);
 
+	/// @notice Event emitted when a deposit is canceled
+	/// @param depositId The ID of the canceled deposit
 	event DepositCanceled(uint256 indexed depositId);
 
+	/// @notice Event emitted when a withdrawal becomes claimable
+	/// @param withdrawalHash The hash of the claimable withdrawal
 	event WithdrawalClaimable(bytes32 indexed withdrawalHash);
 
+	/// @notice Event emitted when direct withdrawals are processed
+	/// @param lastProcessedDirectWithdrawalId The ID of the last processed direct withdrawal
 	event DirectWithdrawalsProcessed(
 		uint256 indexed lastProcessedDirectWithdrawalId
 	);
 
+	/// @notice Event emitted when claimable withdrawals are processed
+	/// @param lastProcessedClaimableWithdrawalId The ID of the last processed claimable withdrawal
 	event ClaimableWithdrawalsProcessed(
 		uint256 indexed lastProcessedClaimableWithdrawalId
 	);
 
+	/// @notice Event emitted when a withdrawal is claimed
+	/// @param recipient The address that claimed the withdrawal
+	/// @param withdrawalHash The hash of the claimed withdrawal
 	event ClaimedWithdrawal(
 		address indexed recipient,
 		bytes32 indexed withdrawalHash

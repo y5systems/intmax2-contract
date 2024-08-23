@@ -10,23 +10,31 @@ contract Contribution is
 	UUPSUpgradeable,
 	AccessControlUpgradeable
 {
+	/// @notice Role identifier for administers who can register weights
 	bytes32 public constant WEIGHT_REGISTRAR = keccak256("WEIGHT_REGISTRAR");
+
+	/// @notice Role identifier for contracts that can record contributions
 	bytes32 public constant CONTRIBUTOR = keccak256("CONTRIBUTOR");
 
+	/// @notice The current active period for contributions
 	uint256 public currentPeriod;
 
-	// period to tag to total contributions
+	/// @notice Maps periods and tags to total contributions
+	/// @dev period => tag => total contribution amount
 	mapping(uint256 => mapping(bytes32 => uint256))
 		public totalContributionsInPeriod;
 
-	// period to tag to user contributions
+	/// @notice Maps periods, tags, and users to their individual contributions
+	/// @dev period => tag => user address => contribution amount
 	mapping(uint256 => mapping(bytes32 => mapping(address => uint256)))
 		public contributionsInPeriod;
 
-	// period to tag to weight
+	/// @notice Maps periods and tags to their assigned weights
+	/// @dev period => tag => weight
 	mapping(uint256 => mapping(bytes32 => uint256)) public allWeights;
 
-	// period to tags
+	/// @notice Stores all tags for each period
+	/// @dev period => array of tags
 	mapping(uint256 => bytes32[]) private allTags;
 
 	function initialize() public initializer {

@@ -4,6 +4,8 @@ pragma solidity 0.8.24;
 import {UD60x18} from "@prb/math/src/UD60x18.sol";
 
 interface IContribution {
+	/// @notice Error thrown when the input lengths of tags and weights do not match in registerWeights function
+	/// @dev This error is raised to ensure data integrity when registering weights for tags
 	error InvalidInputLength();
 
 	/// @notice Get the list of tags registered for a specific period.
