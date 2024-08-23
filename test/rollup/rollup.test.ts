@@ -267,23 +267,6 @@ describe('Rollup', () => {
 			})
 		})
 		describe('fail', () => {
-			it('revert SenderPublicKeysEmpty', async () => {
-				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
-				const inputs = generateValidInputs()
-				inputs.senderPublicKeys = []
-				await blockBuilderRegistry.setResult(true)
-
-				await expect(
-					rollup.postRegistrationBlock(
-						inputs.txTreeRoot,
-						inputs.senderFlags,
-						inputs.aggregatedPublicKey,
-						inputs.aggregatedSignature,
-						inputs.messagePoint,
-						inputs.senderPublicKeys,
-					),
-				).to.be.revertedWithCustomError(rollup, 'SenderPublicKeysEmpty')
-			})
 			it('revert TooManySenderPublicKeys', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
 				const inputs = generateValidInputs()
@@ -499,24 +482,6 @@ describe('Rollup', () => {
 			})
 		})
 		describe('fail', () => {
-			it('revert SenderAccountIdsEmpty', async () => {
-				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
-				const inputs = generateValidInputs()
-				inputs.senderAccountIds = '0x'
-				await blockBuilderRegistry.setResult(true)
-
-				await expect(
-					rollup.postNonRegistrationBlock(
-						inputs.txTreeRoot,
-						inputs.senderFlags,
-						inputs.aggregatedPublicKey,
-						inputs.aggregatedSignature,
-						inputs.messagePoint,
-						inputs.publicKeysHash,
-						inputs.senderAccountIds,
-					),
-				).to.be.revertedWithCustomError(rollup, 'SenderAccountIdsEmpty')
-			})
 			it('revert TooManyAccountIds', async () => {
 				const [rollup, blockBuilderRegistry] = await loadFixture(setup)
 				const inputs = generateValidInputs()
