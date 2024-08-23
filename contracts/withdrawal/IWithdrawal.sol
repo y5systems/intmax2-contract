@@ -6,35 +6,26 @@ import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 
 interface IWithdrawal {
+	/// @notice Error thrown when the verification of the withdrawal proof's public input hash chain fails
 	error WithdrawalChainVerificationFailed();
 
+	/// @notice Error thrown when the aggregator in the withdrawal proof's public input doesn't match the actual contract executor
 	error WithdrawalAggregatorMismatch();
 
-	error WithdrawalBlockHashNotPosted(uint256 requestIndex);
-
-	error WithdrawalsHashMismatch();
-
+	/// @notice Error thrown when the block hash in the withdrawal proof's public input doesn't exist
+	/// @param blockHash The non-existent block hash
 	error BlockHashNotExists(bytes32 blockHash);
 
+	/// @notice Error thrown when the ZKP verification of the withdrawal proof fails
 	error WithdrawalProofVerificationFailed();
 
-	error TooManyRelayDirectWithdrawals(uint256 count);
-
-	error TooManyRelayClaimableWithdrawals(uint256 count);
-
-	error DirectWithdrawalIsTooLarge(uint256 directWithdrawalId, uint256 rear);
-
+	/// @notice Error thrown when attempting to add a token to direct withdrawal tokens that already exists
+	/// @param tokenIndice The index of the token that already exists
 	error TokenAlreadyExist(uint256 tokenIndice);
 
+	/// @notice Error thrown when attempting to remove a non-existent token from direct withdrawal tokens
+	/// @param tokenIndice The index of the non-existent token
 	error TokenNotExist(uint256 tokenIndice);
-
-	/// @notice Thrown when a claimable withdrawal is too large
-	/// @param claimableWithdrawalId The ID of the claimable withdrawal
-	/// @param rear The rear value that caused the error
-	error ClaimableWithdrawalIsTooLarge(
-		uint256 claimableWithdrawalId,
-		uint256 rear
-	);
 
 	/// @notice Emitted when a claimable withdrawal is queued
 	/// @param claimableWithdrawalId The ID of the claimable withdrawal
