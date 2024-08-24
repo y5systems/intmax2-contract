@@ -3,6 +3,7 @@ import '@nomicfoundation/hardhat-toolbox'
 import '@openzeppelin/hardhat-upgrades'
 import 'dotenv/config'
 import { cleanEnv, str } from 'envalid'
+import 'solidity-docgen'
 
 const env = cleanEnv(process.env, {
 	DEPLOYER_PRIVATE_KEY: str(),
@@ -29,6 +30,9 @@ const config: HardhatUserConfig = {
 			url: 'https://scroll-testnet.rpc.grove.city/v1/a7a7c8e2',
 			accounts,
 		},
+	},
+	docgen: {
+		exclude: ['test'],
 	},
 }
 
