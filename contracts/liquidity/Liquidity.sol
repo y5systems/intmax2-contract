@@ -232,6 +232,13 @@ contract Liquidity is
 			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
 		uint256 depositId = depositQueue.enqueue(depositHash, sender);
+		if (tokenIndex == 0) {
+			contribution.recordContribution(
+				keccak256("DEPOSIT_NATIVE"),
+				_msgSender(),
+				amount
+			);
+		}
 		emit Deposited(
 			depositId,
 			sender,
