@@ -77,6 +77,15 @@ contract Liquidity is
 		}
 		uint32 tokenIndex = _getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
+
+		if (msg.value == 1 ether) {
+			// Record contribution only 1 eth.
+			contribution.recordContribution(
+				keccak256("DEPOSIT_1ETH"),
+				_msgSender(),
+				msg.value
+			);
+		}
 	}
 
 	function depositERC20(
@@ -232,13 +241,6 @@ contract Liquidity is
 			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
 		uint256 depositId = depositQueue.enqueue(depositHash, sender);
-		if (tokenIndex == 0) {
-			contribution.recordContribution(
-				keccak256("DEPOSIT_NATIVE"),
-				_msgSender(),
-				amount
-			);
-		}
 		emit Deposited(
 			depositId,
 			sender,

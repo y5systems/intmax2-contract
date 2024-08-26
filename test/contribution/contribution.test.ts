@@ -242,6 +242,28 @@ describe('Contribution', function () {
 			)
 		})
 	})
+	describe('getCurrentContribution', () => {
+		it('get current contribution', async () => {
+			const [contribution] = await loadFixture(setup)
+			const { deployer, contributor, user1 } = await getSigners()
+			const tag1 = ethers.solidityPackedKeccak256(['string'], ['tag1'])
+			const tag2 = ethers.solidityPackedKeccak256(['string'], ['tag2'])
+			await contribution
+				.connect(contributor)
+				.recordContribution(tag1, user1.address, 100n)
+			await contribution
+				.connect(contributor)
+				.recordContribution(tag1, user1.address, 200n)
+			await contribution
+				.connect(contributor)
+				.recordContribution(tag2, deployer.address, 300n)
+			const currentContribution = await contribution.getCurrentContribution(
+				tag1,
+				user1.address,
+			)
+			expect(currentContribution).to.equal(300n)
+		})
+	})
 	describe('upgrade', () => {
 		it('channel contract is upgradable', async () => {
 			const [contribution] = await loadFixture(setup)
