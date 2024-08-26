@@ -87,6 +87,13 @@ contract Contribution is
 		contributionsInPeriod[currentPeriod][tag][user] += amount;
 	}
 
+	function getCurrentContribution(
+		address user,
+		bytes32 tag
+	) external view returns (uint256) {
+		return contributionsInPeriod[currentPeriod][tag][user];
+	}
+
 	function getContributionRate(
 		uint256 periodNumber,
 		address user
