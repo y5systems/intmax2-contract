@@ -44,12 +44,12 @@ interface IContribution {
 
 	/// @notice Returns the current contribution of a user for a specific tag in the current period
 	/// @dev This function does not apply any weighting to the contribution
-	/// @param user The address of the user whose contribution is being queried
 	/// @param tag The tag (as bytes32) for which the contribution is being queried
+	/// @param user The address of the user whose contribution is being queried
 	/// @return The unweighted contribution amount as a uint256
 	function getCurrentContribution(
-		address user,
-		bytes32 tag
+		bytes32 tag,
+		address user
 	) external view returns (uint256);
 
 	/// @notice Get the contribution rate of a specific user for a given period.

@@ -88,8 +88,8 @@ contract Contribution is
 	}
 
 	function getCurrentContribution(
-		address user,
-		bytes32 tag
+		bytes32 tag,
+		address user
 	) external view returns (uint256) {
 		return contributionsInPeriod[currentPeriod][tag][user];
 	}
