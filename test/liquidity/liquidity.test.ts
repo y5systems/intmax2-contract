@@ -147,7 +147,7 @@ describe('Liquidity', () => {
 				const tag = ethers.solidityPackedKeccak256(['string'], ['DEPOSIT_1ETH'])
 				expect(await contribution.latestTag()).to.equal(tag)
 				expect(await contribution.latestUser()).to.equal(user.address)
-				expect(await contribution.latestAmount()).to.equal(depositAmountEther)
+				expect(await contribution.latestAmount()).to.equal(depositAmount)
 			})
 			it('transfer eth and not record contribution', async () => {
 				const { liquidity, contribution } = await loadFixture(setup)

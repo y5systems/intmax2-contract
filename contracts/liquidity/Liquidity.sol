@@ -83,7 +83,7 @@ contract Liquidity is
 			contribution.recordContribution(
 				keccak256("DEPOSIT_1ETH"),
 				_msgSender(),
-				1
+				msg.value
 			);
 		}
 	}
