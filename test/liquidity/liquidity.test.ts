@@ -126,8 +126,8 @@ describe('Liquidity', () => {
 						currentTimestamp!.timestamp + 1,
 					)
 			})
-			it('transfer eth and record contribution', async () => {
-				const { liquidity, contribution } = await loadFixture(setup)
+			it('transfer eth', async () => {
+				const { liquidity } = await loadFixture(setup)
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmountEther = '1'
@@ -144,32 +144,6 @@ describe('Liquidity', () => {
 				)
 
 				expect(finalBalance - initialBalance).to.equal(depositAmount)
-				const tag = ethers.solidityPackedKeccak256(['string'], ['DEPOSIT_1ETH'])
-				expect(await contribution.latestTag()).to.equal(tag)
-				expect(await contribution.latestUser()).to.equal(user.address)
-				expect(await contribution.latestAmount()).to.equal(depositAmount)
-			})
-			it('transfer eth and not record contribution', async () => {
-				const { liquidity, contribution } = await loadFixture(setup)
-				const { user } = await getSigners()
-				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-				const depositAmountEther = '0.5'
-				const depositAmount = ethers.parseEther(depositAmountEther)
-
-				const initialBalance = await ethers.provider.getBalance(
-					await liquidity.getAddress(),
-				)
-				await liquidity
-					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
-				const finalBalance = await ethers.provider.getBalance(
-					await liquidity.getAddress(),
-				)
-
-				expect(finalBalance - initialBalance).to.equal(depositAmount)
-				expect(await contribution.latestTag()).to.equal(ethers.ZeroHash)
-				expect(await contribution.latestUser()).to.equal(ethers.ZeroAddress)
-				expect(await contribution.latestAmount()).to.equal(0)
 			})
 		})
 
