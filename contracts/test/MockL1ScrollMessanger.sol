@@ -15,6 +15,9 @@ contract MockL1ScrollMessenger is IL1ScrollMessenger {
 		bytes memory _message,
 		uint256 _gasLimit
 	) external payable {
+		if (FEE + _value > msg.value) {
+			revert("insufficient msg.value");
+		}
 		_sendMessage(_to, _value, _message, _gasLimit, msg.sender);
 		payable(msg.sender).transfer(msg.value - FEE - _value);
 	}
