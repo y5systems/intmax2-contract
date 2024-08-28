@@ -29,7 +29,7 @@ library DepositTreeLib {
 	function initialize(DepositTree storage depositTree) internal {
 		depositTree.depositCount = 0;
 		depositTree.defaultHash = DepositLib.getHash(
-			DepositLib.Deposit(0, 0, 0)
+			DepositLib.Deposit(0, 0, 0, 0)
 		);
 		for (uint256 i = 0; i < _DEPOSIT_CONTRACT_TREE_DEPTH; i++) {
 			depositTree._branch[i] = 0;

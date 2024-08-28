@@ -8,7 +8,6 @@ contract DepositQueueLibTest {
 
 	DepositQueueLib.DepositQueue private depositQueue;
 	DepositQueueLib.DepositData public deletedData;
-	uint256 public latestDepositId;
 	bytes32[] public latestDepositHashes;
 
 	constructor() {
@@ -16,7 +15,7 @@ contract DepositQueueLibTest {
 	}
 
 	function enqueue(bytes32 depositHash, address sender) external {
-		latestDepositId = depositQueue.enqueue(depositHash, sender);
+		depositQueue.enqueue(depositHash, sender);
 	}
 
 	function deleteDeposit(uint256 depositId) external {
@@ -43,6 +42,10 @@ contract DepositQueueLibTest {
 	}
 
 	function getRear() external view returns (uint256) {
+		return depositQueue.rear;
+	}
+
+	function getNextId() external view returns (uint256) {
 		return depositQueue.rear;
 	}
 

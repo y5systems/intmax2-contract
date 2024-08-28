@@ -236,10 +236,11 @@ contract Liquidity is
 		uint32 tokenIndex,
 		uint256 amount
 	) private {
+		uint256 depositId = depositQueue.getNextId();
 		bytes32 depositHash = DepositLib
-			.Deposit(recipientSaltHash, tokenIndex, amount)
+			.Deposit(depositId, recipientSaltHash, tokenIndex, amount)
 			.getHash();
-		uint256 depositId = depositQueue.enqueue(depositHash, sender);
+		depositQueue.enqueue(depositHash, sender);
 		emit Deposited(
 			depositId,
 			sender,
@@ -300,7 +301,7 @@ contract Liquidity is
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.depositData[depositId];
 		bytes32 depositHash = DepositLib
-			.Deposit(recipientSaltHash, tokenIndex, amount)
+			.Deposit(depositId, recipientSaltHash, tokenIndex, amount)
 			.getHash();
 		if (depositData.depositHash != depositHash) {
 			return false;

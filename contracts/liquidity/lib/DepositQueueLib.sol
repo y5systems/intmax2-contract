@@ -47,14 +47,12 @@ library DepositQueueLib {
 	/// @param depositQueue The storage reference to the DepositQueue struct
 	/// @param depositHash The hash of the deposit
 	/// @param sender The address of the depositor
-	/// @return depositId The ID of the newly added deposit
 	function enqueue(
 		DepositQueue storage depositQueue,
 		bytes32 depositHash,
 		address sender
-	) internal returns (uint256 depositId) {
+	) internal {
 		depositQueue.depositData.push(DepositData(depositHash, sender, false));
-		depositId = depositQueue.rear;
 		depositQueue.rear++;
 	}
 
@@ -132,5 +130,14 @@ library DepositQueueLib {
 		DepositQueue memory depositQueue
 	) internal pure returns (uint256) {
 		return depositQueue.rear - depositQueue.front;
+	}
+
+	/// @notice Returns the next deposit id
+	/// @param depositQueue The memory reference to the DepositQueue struct
+	/// @return next deposit id
+	function getNextId(
+		DepositQueue memory depositQueue
+	) internal pure returns (uint256) {
+		return depositQueue.rear;
 	}
 }

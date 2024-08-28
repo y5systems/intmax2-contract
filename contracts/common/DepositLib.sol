@@ -4,6 +4,8 @@ pragma solidity 0.8.24;
 library DepositLib {
 	/// @dev Represents a leaf in the Deposit tree
 	struct Deposit {
+		/// @notice The ID of the deposit
+		uint256 depositId;
 		/// @notice Hash of the recipient's intmax2 address and a private salt
 		bytes32 recipientSaltHash;
 		/// @notice Index of the token being deposited
@@ -19,6 +21,7 @@ library DepositLib {
 		return
 			keccak256(
 				abi.encodePacked(
+					deposit.depositId,
 					deposit.recipientSaltHash,
 					deposit.tokenIndex,
 					deposit.amount
