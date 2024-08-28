@@ -18,8 +18,6 @@ import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
 
-// console.logをimport
-
 contract Liquidity is
 	TokenData,
 	UUPSUpgradeable,
