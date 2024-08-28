@@ -629,7 +629,8 @@ describe('Liquidity', () => {
 					const { user } = await getSigners()
 					const initialBalance = await ethers.provider.getBalance(user.address)
 
-					const tx = await liquidity.connect(user).cancelDeposit(depositId, {
+					const tx = await liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -671,7 +672,8 @@ describe('Liquidity', () => {
 						await liquidity.getAddress(),
 					)
 
-					await liquidity.connect(user).cancelDeposit(depositId, {
+					await liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 3, // Assuming 1 is the index for the first ERC20 token
 						amount: depositAmount,
@@ -713,7 +715,8 @@ describe('Liquidity', () => {
 
 					const depositId = await liquidity.getLastDepositId()
 
-					await liquidity.connect(user).cancelDeposit(depositId, {
+					await liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 3,
 						amount: 1,
@@ -752,7 +755,8 @@ describe('Liquidity', () => {
 						tokenId,
 					)
 
-					await liquidity.connect(user).cancelDeposit(depositId, {
+					await liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 3, // Assuming 3 is the index for the first ERC1155 token
 						amount: amount,
@@ -771,7 +775,8 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 
 				await expect(
-					liquidity.connect(user).cancelDeposit(depositId, {
+					liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -791,7 +796,8 @@ describe('Liquidity', () => {
 						value: ethers.parseEther('1'),
 					})
 				await expect(
-					liquidity.connect(user).cancelDeposit(depositId, {
+					liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -817,7 +823,8 @@ describe('Liquidity', () => {
 					.depositNativeToken(recipientSaltHash2, { value: depositAmount })
 				const nextDepositId = depositId + 1n
 				await expect(
-					liquidity.connect(user).cancelDeposit(nextDepositId, {
+					liquidity.connect(user).cancelDeposit({
+						depositId: nextDepositId,
 						recipientSaltHash: recipientSaltHash2,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -834,7 +841,8 @@ describe('Liquidity', () => {
 				const { analyzer } = await getSigners()
 
 				await expect(
-					liquidity.connect(analyzer).cancelDeposit(depositId, {
+					liquidity.connect(analyzer).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -847,7 +855,8 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 
 				await expect(
-					liquidity.connect(user).cancelDeposit(depositId, {
+					liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash: ethers.keccak256(ethers.toUtf8Bytes('wrong')),
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -859,14 +868,16 @@ describe('Liquidity', () => {
 					await loadFixture(setupCancelDeposit)
 				const { user } = await getSigners()
 
-				await liquidity.connect(user).cancelDeposit(depositId, {
+				await liquidity.connect(user).cancelDeposit({
+					depositId,
 					recipientSaltHash,
 					tokenIndex: 0,
 					amount: depositAmount,
 				})
 
 				await expect(
-					liquidity.connect(user).cancelDeposit(depositId, {
+					liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -883,7 +894,8 @@ describe('Liquidity', () => {
 						value: ethers.parseEther('1'),
 					})
 				await expect(
-					liquidity.connect(user).cancelDeposit(depositId, {
+					liquidity.connect(user).cancelDeposit({
+						depositId,
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
