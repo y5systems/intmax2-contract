@@ -52,16 +52,17 @@ contract Liquidity is
 		_;
 	}
 
-	modifier canCancelDeposit(uint256 depositId, bytes32 depositHash) {
+	modifier canCancelDeposit(DepositLib.Deposit calldata deposit) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
-			.depositData[depositId];
+			.depositData[deposit.depositId];
 		if (depositData.sender != _msgSender()) {
 			revert OnlySenderCanCancelDeposit();
 		}
+		bytes32 depositHash = deposit.getHash();
 		if (depositData.depositHash != depositHash) {
 			revert InvalidDepositHash(depositData.depositHash, depositHash);
 		}
-		if (depositId <= getLastRelayedDepositId()) {
+		if (deposit.depositId <= getLastRelayedDepositId()) {
 			if (depositData.isRejected == false) {
 				revert AlreadyAnalyzed();
 			}
@@ -214,11 +215,10 @@ contract Liquidity is
 	}
 
 	function cancelDeposit(
-		uint256 depositId,
 		DepositLib.Deposit calldata deposit
-	) external canCancelDeposit(depositId, deposit.getHash()) {
+	) external canCancelDeposit(deposit) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
-			.deleteDeposit(depositId);
+			.deleteDeposit(deposit.depositId);
 		TokenInfo memory tokenInfo = getTokenInfo(deposit.tokenIndex);
 		_sendToken(
 			tokenInfo.tokenType,
@@ -227,7 +227,7 @@ contract Liquidity is
 			deposit.amount,
 			tokenInfo.tokenId
 		);
-		emit DepositCanceled(depositId);
+		emit DepositCanceled(deposit.depositId);
 	}
 
 	function _deposit(

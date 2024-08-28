@@ -143,12 +143,8 @@ interface ILiquidity {
 
 	/// @notice Method to cancel a deposit
 	/// @dev The deposit ID and its content should be included in the calldata
-	/// @param depositId The ID of the deposit to cancel
 	/// @param deposit The deposit data
-	function cancelDeposit(
-		uint256 depositId,
-		DepositLib.Deposit calldata deposit
-	) external;
+	function cancelDeposit(DepositLib.Deposit calldata deposit) external;
 
 	/// @notice Process withdrawals, called by the scroll messenger
 	/// @param lastProcessedDirectWithdrawalId The ID of the last processed direct withdrawal
