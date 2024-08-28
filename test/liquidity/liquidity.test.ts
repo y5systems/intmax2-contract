@@ -780,6 +780,52 @@ describe('Liquidity', () => {
 					.to.emit(liquidity, 'DepositCanceled')
 					.withArgs(depositId)
 			})
+			it('can rejected deposit', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user, analyzer } = await getSigners()
+
+				await liquidity
+					.connect(analyzer)
+					.analyzeAndRelayDeposits(depositId, [depositId], 1000000, {
+						value: ethers.parseEther('1'),
+					})
+				await expect(
+					liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				)
+					.to.emit(liquidity, 'DepositCanceled')
+					.withArgs(depositId)
+			})
+			it('can deposit not analyzed amount', async () => {
+				const { liquidity, depositAmount, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user, analyzer } = await getSigners()
+
+				await liquidity
+					.connect(analyzer)
+					.analyzeAndRelayDeposits(depositId, [depositId], 1000000, {
+						value: ethers.parseEther('1'),
+					})
+
+				const recipientSaltHash2 = ethers.keccak256(ethers.toUtf8Bytes('test2'))
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash2, { value: depositAmount })
+				const nextDepositId = depositId + 1n
+				await expect(
+					liquidity.connect(user).cancelDeposit(nextDepositId, {
+						recipientSaltHash: recipientSaltHash2,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				)
+					.to.emit(liquidity, 'DepositCanceled')
+					.withArgs(nextDepositId)
+			})
 		})
 		describe('fail', () => {
 			it('revert OnlySenderCanCancelDeposit', async () => {
@@ -827,6 +873,24 @@ describe('Liquidity', () => {
 					}),
 				).to.be.revertedWithCustomError(liquidity, 'OnlySenderCanCancelDeposit')
 			})
+			it('cannot not rejected deposit', async () => {
+				const { liquidity, depositAmount, recipientSaltHash, depositId } =
+					await loadFixture(setupCancelDeposit)
+				const { user, analyzer } = await getSigners()
+				await liquidity
+					.connect(analyzer)
+					.analyzeAndRelayDeposits(depositId, [], 1000000, {
+						value: ethers.parseEther('1'),
+					})
+				await expect(
+					liquidity.connect(user).cancelDeposit(depositId, {
+						recipientSaltHash,
+						tokenIndex: 0,
+						amount: depositAmount,
+					}),
+				).to.be.revertedWithCustomError(liquidity, 'AlreadyAnalyzed')
+			})
+
 			it.skip('reentrancy attack', async () => {
 				// payable(recipient).transfer(amount);
 				// The gas consumption is limited to 2500 because the transfer function is performed.
@@ -1655,6 +1719,44 @@ describe('Liquidity', () => {
 			expect(depositData2.isRejected).to.equal(false)
 		})
 	})
+
+	describe('getDepositDataHash', () => {
+		it('get getDepositDataHash', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { user } = await getSigners()
+
+			// Create some deposits using ETH
+			const depositAmount = ethers.parseEther('1')
+
+			for (let i = 0; i < 5; i++) {
+				const recipientSaltHash = ethers.keccak256(
+					ethers.toUtf8Bytes(`test${i}`),
+				)
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			}
+
+			const depositDataHash0 = await liquidity.getDepositDataHash(1)
+			const depositHash0 = ethers.keccak256(
+				ethers.solidityPacked(
+					['bytes32', 'uint32', 'uint256'],
+					[ethers.keccak256(ethers.toUtf8Bytes('test0')), 0, depositAmount],
+				),
+			)
+			expect(depositDataHash0).to.equal(depositHash0)
+
+			const depositDataHash2 = await liquidity.getDepositDataHash(3)
+			const depositHash2 = ethers.keccak256(
+				ethers.solidityPacked(
+					['bytes32', 'uint32', 'uint256'],
+					[ethers.keccak256(ethers.toUtf8Bytes('test2')), 0, depositAmount],
+				),
+			)
+			expect(depositDataHash2).to.equal(depositHash2)
+		})
+	})
+
 	describe('getLastRelayedDepositId, getLastDepositId', () => {
 		it('get DepositId', async () => {
 			const { liquidity } = await loadFixture(setup)
@@ -1682,6 +1784,88 @@ describe('Liquidity', () => {
 
 			expect(await liquidity.getLastRelayedDepositId()).to.equal(3)
 			expect(await liquidity.getLastDepositId()).to.equal(5)
+		})
+	})
+	describe('isDepositOngoing', () => {
+		it('return true', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { user } = await getSigners()
+			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+			const depositAmount = ethers.parseEther('1')
+
+			const currentDepositId = await liquidity.getLastDepositId()
+			await liquidity
+				.connect(user)
+				.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			const result = await liquidity.isDepositOngoing(
+				currentDepositId + 1n,
+				recipientSaltHash,
+				0, // tokenIndex for ETH should be 0
+				depositAmount,
+				user.address,
+			)
+			expect(result).to.equal(true)
+		})
+		it('return false(depositHash)', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { user } = await getSigners()
+			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+			const depositAmount = ethers.parseEther('1')
+
+			const currentDepositId = await liquidity.getLastDepositId()
+			await liquidity
+				.connect(user)
+				.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			const result = await liquidity.isDepositOngoing(
+				currentDepositId + 1n,
+				recipientSaltHash,
+				0, // tokenIndex for ETH should be 0
+				depositAmount + 1n,
+				user.address,
+			)
+			expect(result).to.equal(false)
+		})
+		it('return false(address)', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { user } = await getSigners()
+			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+			const depositAmount = ethers.parseEther('1')
+
+			const currentDepositId = await liquidity.getLastDepositId()
+			await liquidity
+				.connect(user)
+				.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			const result = await liquidity.isDepositOngoing(
+				currentDepositId + 1n,
+				recipientSaltHash,
+				0, // tokenIndex for ETH should be 0
+				depositAmount,
+				ethers.ZeroAddress,
+			)
+			expect(result).to.equal(false)
+		})
+		it('return false(isRejected)', async () => {
+			const { liquidity } = await loadFixture(setup)
+			const { user, analyzer } = await getSigners()
+			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+			const depositAmount = ethers.parseEther('1')
+
+			await liquidity
+				.connect(user)
+				.depositNativeToken(recipientSaltHash, { value: depositAmount })
+			await liquidity
+				.connect(analyzer)
+				.analyzeAndRelayDeposits(1, [1], 1000000, {
+					value: ethers.parseEther('1'),
+				})
+			const result = await liquidity.isDepositOngoing(
+				1,
+				recipientSaltHash,
+				0, // tokenIndex for ETH should be 0
+				depositAmount,
+				user.address,
+			)
+			expect(result).to.equal(false)
 		})
 	})
 	describe('upgrade', () => {
