@@ -5,7 +5,7 @@ library DepositLib {
 	/// @dev Represents a leaf in the Deposit tree
 	struct Deposit {
 		/// @notice The ID of the deposit
-		uint256 depositId;
+		uint32 depositId;
 		/// @notice Hash of the recipient's intmax2 address and a private salt
 		bytes32 recipientSaltHash;
 		/// @notice Index of the token being deposited

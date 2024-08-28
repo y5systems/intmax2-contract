@@ -7,7 +7,7 @@ contract DepositLibTest {
 	using DepositLib for DepositLib.Deposit;
 
 	function getHash(
-		uint256 depositId,
+		uint32 depositId,
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount

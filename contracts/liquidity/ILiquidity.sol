@@ -41,7 +41,7 @@ interface ILiquidity {
 	/// @param amount The amount of tokens deposited
 	/// @param depositedAt The timestamp of the deposit
 	event Deposited(
-		uint256 indexed depositId,
+		uint32 indexed depositId,
 		address indexed sender,
 		bytes32 indexed recipientSaltHash,
 		uint32 tokenIndex,
@@ -55,15 +55,15 @@ interface ILiquidity {
 	/// @param gasLimit The gas limit for the L2 transaction
 	/// @param message Additional message data
 	event DepositsAnalyzedAndRelayed(
-		uint256 indexed upToDepositId,
-		uint256[] rejectedIndices,
+		uint32 indexed upToDepositId,
+		uint32[] rejectedIndices,
 		uint256 gasLimit,
 		bytes message
 	);
 
 	/// @notice Event emitted when a deposit is canceled
 	/// @param depositId The ID of the canceled deposit
-	event DepositCanceled(uint256 indexed depositId);
+	event DepositCanceled(uint32 indexed depositId);
 
 	/// @notice Event emitted when a withdrawal becomes claimable
 	/// @param withdrawalHash The hash of the claimable withdrawal
@@ -136,8 +136,8 @@ interface ILiquidity {
 	/// @param rejectDepositIds An array of ids of deposits to exclude. These indices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
 	/// @param gasLimit The gas limit for the l2 transaction.
 	function analyzeAndRelayDeposits(
-		uint256 upToDepositId,
-		uint256[] memory rejectDepositIds,
+		uint32 upToDepositId,
+		uint32[] memory rejectDepositIds,
 		uint256 gasLimit
 	) external payable;
 
@@ -160,20 +160,24 @@ interface ILiquidity {
 
 	/// @notice Get the ID of the last deposit relayed to L2
 	/// @return The ID of the last relayed deposit
-	function getLastRelayedDepositId() external view returns (uint256);
+	function getLastRelayedDepositId() external view returns (uint32);
+
+	/// @notice Get the ID of the last deposit to L2
+	/// @return The ID of the last deposit
+	function getLastDepositId() external view returns (uint32);
 
 	/// @notice Get deposit data for a given deposit ID
 	/// @param depositId The ID of the deposit
 	/// @return The deposit data
 	function getDepositData(
-		uint256 depositId
+		uint32 depositId
 	) external view returns (DepositQueueLib.DepositData memory);
 
 	/// @notice Get deposit data hash for a given deposit ID
 	/// @param depositId The ID of the deposit
 	/// @return The deposit data hash
 	function getDepositDataHash(
-		uint256 depositId
+		uint32 depositId
 	) external view returns (bytes32);
 
 	/// @notice Claim withdrawals for tokens that are not direct withdrawals
@@ -190,7 +194,7 @@ interface ILiquidity {
 	/// @param sender The address that made the deposit
 	/// @return if deposit is valid, return true
 	function isDepositOngoing(
-		uint256 depositId,
+		uint32 depositId,
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,

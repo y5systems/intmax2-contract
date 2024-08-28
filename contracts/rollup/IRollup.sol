@@ -32,7 +32,7 @@ interface IRollup {
 	/// @param lastProcessedDepositId The ID of the last processed deposit
 	/// @param depositTreeRoot The root of the deposit tree after processing
 	event DepositsProcessed(
-		uint256 indexed lastProcessedDepositId,
+		uint32 indexed lastProcessedDepositId,
 		bytes32 depositTreeRoot
 	);
 
@@ -104,7 +104,7 @@ interface IRollup {
 	/// @param lastProcessedDepositId The ID of the last processed deposit
 	/// @param depositHashes The hashes of the deposits
 	function processDeposits(
-		uint256 lastProcessedDepositId,
+		uint32 lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external;
 

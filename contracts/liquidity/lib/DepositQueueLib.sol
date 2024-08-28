@@ -7,23 +7,23 @@ library DepositQueueLib {
 	/// @notice Error thrown when trying to analyze a non-existent deposit
 	/// @param upToDepositId The requested deposit ID to analyze up to
 	/// @param lastDepositId The last valid deposit ID in the queue
-	error TriedAnalyzeNotExists(uint256 upToDepositId, uint256 lastDepositId);
+	error TriedAnalyzeNotExists(uint32 upToDepositId, uint32 lastDepositId);
 
 	/// @notice Error thrown when trying to reject a deposit outside the analyzed range
 	/// @param rejectIndex The index of the deposit to be rejected
 	/// @param front The front index of the queue
 	/// @param upToDepositId The upper bound of the analyzed range
 	error TriedToRejectOutOfRange(
-		uint256 rejectIndex,
-		uint256 front,
-		uint256 upToDepositId
+		uint32 rejectIndex,
+		uint32 front,
+		uint32 upToDepositId
 	);
 
 	/// @notice Represents a queue of pending deposits
 	struct DepositQueue {
 		DepositData[] depositData; /// Array of deposits that are pending
-		uint256 front; /// Index of the first element in the queue
-		uint256 rear; /// Index of the next position after the last element in the queue
+		uint32 front; /// Index of the first element in the queue
+		uint32 rear; /// Index of the next position after the last element in the queue
 	}
 
 	/// @notice Represents data for a single deposit
@@ -62,7 +62,7 @@ library DepositQueueLib {
 	/// @return depositData The data of the deleted deposit
 	function deleteDeposit(
 		DepositQueue storage depositQueue,
-		uint256 depositId
+		uint32 depositId
 	) internal returns (DepositData memory depositData) {
 		depositData = depositQueue.depositData[depositId];
 		delete depositQueue.depositData[depositId];
@@ -76,14 +76,14 @@ library DepositQueueLib {
 	/// @return An array of deposit hashes that were not rejected
 	function analyze(
 		DepositQueue storage depositQueue,
-		uint256 upToDepositId,
-		uint256[] memory rejectIndices
+		uint32 upToDepositId,
+		uint32[] memory rejectIndices
 	) internal returns (bytes32[] memory) {
 		if (upToDepositId >= depositQueue.rear) {
 			revert TriedAnalyzeNotExists(upToDepositId, depositQueue.rear - 1);
 		}
 		for (uint256 i = 0; i < rejectIndices.length; i++) {
-			uint256 rejectIndex = rejectIndices[i];
+			uint32 rejectIndex = rejectIndices[i];
 			if (
 				rejectIndex > upToDepositId || rejectIndex < depositQueue.front
 			) {
@@ -95,8 +95,8 @@ library DepositQueueLib {
 			}
 			depositQueue.depositData[rejectIndex].isRejected = true;
 		}
-		uint256 counter = 0;
-		for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
+		uint32 counter = 0;
+		for (uint32 i = depositQueue.front; i <= upToDepositId; i++) {
 			if (depositQueue.depositData[i].sender == address(0)) {
 				continue;
 			}
@@ -106,8 +106,8 @@ library DepositQueueLib {
 			counter++;
 		}
 		bytes32[] memory depositHashes = new bytes32[](counter);
-		uint256 depositHashesIndex = 0;
-		for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
+		uint32 depositHashesIndex = 0;
+		for (uint32 i = depositQueue.front; i <= upToDepositId; i++) {
 			if (depositQueue.depositData[i].sender == address(0)) {
 				continue;
 			}
@@ -128,7 +128,7 @@ library DepositQueueLib {
 	/// @return The number of deposits in the queue
 	function size(
 		DepositQueue memory depositQueue
-	) internal pure returns (uint256) {
+	) internal pure returns (uint32) {
 		return depositQueue.rear - depositQueue.front;
 	}
 
@@ -137,7 +137,7 @@ library DepositQueueLib {
 	/// @return next deposit id
 	function getNextId(
 		DepositQueue memory depositQueue
-	) internal pure returns (uint256) {
+	) internal pure returns (uint32) {
 		return depositQueue.rear;
 	}
 }

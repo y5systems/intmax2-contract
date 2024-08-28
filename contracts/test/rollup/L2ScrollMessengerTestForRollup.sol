@@ -16,7 +16,7 @@ contract L2ScrollMessengerTestForRollup {
 
 	function processDeposits(
 		address rollup,
-		uint256 _lastProcessedDepositId,
+		uint32 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external {
 		IRollup(rollup).processDeposits(_lastProcessedDepositId, depositHashes);

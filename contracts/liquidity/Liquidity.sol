@@ -161,8 +161,8 @@ contract Liquidity is
 	}
 
 	function analyzeAndRelayDeposits(
-		uint256 upToDepositId,
-		uint256[] memory rejectDepositIds,
+		uint32 upToDepositId,
+		uint32[] memory rejectDepositIds,
 		uint256 gasLimit
 	) external payable onlyRole(ANALYZER) {
 		bytes32[] memory depositHashes = depositQueue.analyze(
@@ -236,7 +236,7 @@ contract Liquidity is
 		uint32 tokenIndex,
 		uint256 amount
 	) private {
-		uint256 depositId = depositQueue.getNextId();
+		uint32 depositId = depositQueue.getNextId();
 		bytes32 depositHash = DepositLib
 			.Deposit(depositId, recipientSaltHash, tokenIndex, amount)
 			.getHash();
@@ -292,7 +292,7 @@ contract Liquidity is
 	}
 
 	function isDepositOngoing(
-		uint256 depositId,
+		uint32 depositId,
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,
@@ -378,22 +378,22 @@ contract Liquidity is
 	}
 
 	function getDepositData(
-		uint256 depositId
+		uint32 depositId
 	) external view returns (DepositQueueLib.DepositData memory) {
 		return depositQueue.depositData[depositId];
 	}
 
 	function getDepositDataHash(
-		uint256 depositId
+		uint32 depositId
 	) external view returns (bytes32) {
 		return depositQueue.depositData[depositId].depositHash;
 	}
 
-	function getLastRelayedDepositId() public view returns (uint256) {
+	function getLastRelayedDepositId() public view returns (uint32) {
 		return depositQueue.front - 1;
 	}
 
-	function getLastDepositId() external view returns (uint256) {
+	function getLastDepositId() external view returns (uint32) {
 		return depositQueue.rear - 1;
 	}
 
