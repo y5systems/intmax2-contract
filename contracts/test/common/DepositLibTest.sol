@@ -20,19 +20,4 @@ contract DepositLibTest {
 		});
 		return deposit.getHash();
 	}
-
-	function createDeposit(
-		uint256 depositId,
-		bytes32 recipientSaltHash,
-		uint32 tokenIndex,
-		uint256 amount
-	) external pure returns (DepositLib.Deposit memory) {
-		return
-			DepositLib.Deposit({
-				depositId: depositId,
-				recipientSaltHash: recipientSaltHash,
-				tokenIndex: tokenIndex,
-				amount: amount
-			});
-	}
 }
