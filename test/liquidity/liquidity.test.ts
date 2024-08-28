@@ -10,7 +10,7 @@ import {
 	TestNFT,
 	TestERC1155,
 } from '../../typechain-types'
-import { getDepositHash } from '../common'
+import { getDepositHash } from '../common.test'
 import { INITIAL_ERC20_TOKEN_ADDRESSES, TokenType } from './common.test'
 
 describe('Liquidity', () => {
@@ -503,11 +503,11 @@ describe('Liquidity', () => {
 				)
 
 				const funcSelector = ethers
-					.id('processDeposits(uint256,bytes32[])')
+					.id('processDeposits(uint32,bytes32[])')
 					.slice(0, 10)
 
 				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
-					['uint256', 'bytes32[]'],
+					['uint32', 'bytes32[]'],
 					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
 				)
 				const encodedData = funcSelector + encodedParams.slice(2)
@@ -555,11 +555,11 @@ describe('Liquidity', () => {
 				)
 
 				const funcSelector = ethers
-					.id('processDeposits(uint256,bytes32[])')
+					.id('processDeposits(uint32,bytes32[])')
 					.slice(0, 10)
 
 				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
-					['uint256', 'bytes32[]'],
+					['uint32', 'bytes32[]'],
 					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
 				)
 				const expectedEncodedData = funcSelector + encodedParams.slice(2)

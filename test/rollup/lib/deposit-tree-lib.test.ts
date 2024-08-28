@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { DepositTreeLibTest } from '../../../typechain-types'
-import { getDepositHash } from '../../common'
+import { getDepositHash } from '../../common.test'
 
 describe('DepositTreeLibTest', function () {
 	const setup = async (): Promise<DepositTreeLibTest> => {

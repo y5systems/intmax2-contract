@@ -27,9 +27,10 @@ describe('DepositLib', function () {
 			)
 
 			// Calculate expected hash
+			// TODO use getDepositHash from common.test.ts
 			const expectedHash = ethers.keccak256(
 				ethers.solidityPacked(
-					['uint256', 'bytes32', 'uint32', 'uint256'],
+					['uint32', 'bytes32', 'uint32', 'uint256'],
 					[depositId, recipientSaltHash, tokenIndex, amount],
 				),
 			)
@@ -69,7 +70,7 @@ describe('DepositLib', function () {
 		it('should handle extreme values correctly', async function () {
 			const testLibrary = await loadFixture(deployContractFixture)
 
-			const depositId = ethers.MaxUint256
+			const depositId = 4294967295
 			const recipientSaltHash = ethers.ZeroHash
 			const tokenIndex = 0
 			const amount = ethers.MaxUint256
@@ -82,9 +83,10 @@ describe('DepositLib', function () {
 			)
 
 			// Calculate expected hash
+			// TODO use getDepositHash from common.test.ts
 			const expectedHash = ethers.keccak256(
 				ethers.solidityPacked(
-					['uint256', 'bytes32', 'uint32', 'uint256'],
+					['uint32', 'bytes32', 'uint32', 'uint256'],
 					[depositId, recipientSaltHash, tokenIndex, amount],
 				),
 			)

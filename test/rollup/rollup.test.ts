@@ -13,9 +13,9 @@ import block1 from '../../test_data/block1.json'
 
 describe('Rollup', () => {
 	const FIRST_BLOCK_HASH =
-		'0x54170866905274fb988a8ab404923e38bff21d35d3ff6ffe52c0a3e500a691e3'
+		'0x3c27aba6e56bdbf9f0c4d701709aa8288137bf4b294ac9d15da24722b0389082'
 	const FIRST_DEPOSIT_TREE_ROOT =
-		'0x04e6980e7084fde19ce71cfd36ff8fd1647393dc09c14010170d630f520a2be9'
+		'0x9beb9150e6766a4c2c3a2f1c6e3de8305d560082c0713fcd01637e934504e23a'
 	const setup = async (): Promise<
 		[
 			Rollup,
@@ -192,7 +192,7 @@ describe('Rollup', () => {
 
 				const blockHash = await rollup.blockHashes(1)
 				expect(blockHash).to.equal(
-					'0xcbbdaa51c864ab2a12fe5828ac2aa1b2c97d016c8f4dd0c499efb5f0c84f15b1',
+					'0xdfac53b518aaaa5006df8afcddeb06ecddcda8ea627f87c63eb314c16104d2b6',
 				)
 			})
 			it('should add sender address to blockBuilders', async () => {
@@ -404,7 +404,7 @@ describe('Rollup', () => {
 
 				const blockHash = await rollup.blockHashes(1)
 				expect(blockHash).to.equal(
-					'0x937bebebabaa19f117e2ba873dc45bdca03c72eb3a45ea211788bbaa73f0c356',
+					'0x60fbc4766629834999cb257c3509d3b17e3dcb461b1a740380612808601a3892',
 				)
 			})
 			it('should add sender address to blockBuilders', async () => {
