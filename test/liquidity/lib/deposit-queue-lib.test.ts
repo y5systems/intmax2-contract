@@ -19,17 +19,19 @@ describe('DepositQueueLib', function () {
 		})
 	})
 
-	describe('enqueue', function () {
+	describe('enqueue, getNextId', function () {
 		it('should enqueue deposits correctly', async function () {
 			const lib = await loadFixture(setup)
 			const [sender] = await ethers.getSigners()
 
+			let nextDepositId = await lib.getNextId()
 			await lib.enqueue(ethers.keccak256('0x01'), sender.address)
-			expect(await lib.latestDepositId()).to.equal(1)
+			expect(nextDepositId).to.equal(1)
 			expect(await lib.size()).to.equal(1)
 
+			nextDepositId = await lib.getNextId()
 			await lib.enqueue(ethers.keccak256('0x02'), sender.address)
-			expect(await lib.latestDepositId()).to.equal(2)
+			expect(nextDepositId).to.equal(2)
 			expect(await lib.size()).to.equal(2)
 		})
 	})

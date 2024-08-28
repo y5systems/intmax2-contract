@@ -227,6 +227,7 @@ describe('Integration', function () {
 		})
 		const fullBlocks = loadFullBlocks()
 		for (let i = 1; i < 3; i++) {
+			console.log(3)
 			await postBlock(fullBlocks[i], rollup)
 		}
 		// setup: fund liquidity contract for withdrawal liquidity
@@ -235,7 +236,6 @@ describe('Integration', function () {
 			value: ethers.parseEther('100'),
 		})
 		await testToken.transfer(liquidityAddress, ethers.parseEther('100'))
-
 		// withdrawal on L2
 		const withdrawalInfo = loadWithdrawalInfo()
 		await withdrawal.submitWithdrawalProof(
@@ -247,8 +247,7 @@ describe('Integration', function () {
 			withdrawal,
 			0,
 		)
-		const { lastDirectWithdrawalId, lastClaimableWithdrawalId } =
-			withdrawalsQueuedEvent.args
+		const { lastDirectWithdrawalId } = withdrawalsQueuedEvent.args
 		const sentEvent = await getLastSentEvent(
 			await l2ScrollMessenger.getAddress(),
 			await withdrawal.getAddress(),

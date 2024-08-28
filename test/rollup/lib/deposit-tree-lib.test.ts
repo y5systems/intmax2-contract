@@ -2,25 +2,12 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { DepositTreeLibTest } from '../../../typechain-types'
+import { getDepositHash } from '../../common'
 
 describe('DepositTreeLibTest', function () {
 	const setup = async (): Promise<DepositTreeLibTest> => {
 		const factory = await ethers.getContractFactory('DepositTreeLibTest')
 		return await factory.deploy()
-	}
-
-	// Helper function to mimic DepositLib.getHash
-	function getDepositHash(
-		recipientSaltHash: string,
-		tokenIndex: number,
-		amount: bigint,
-	): string {
-		const packed = ethers.solidityPacked(
-			['bytes32', 'uint32', 'uint256'],
-			[recipientSaltHash, tokenIndex, amount],
-		)
-		const hash = ethers.keccak256(packed)
-		return hash
 	}
 
 	it('should initialize with correct values', async function () {
@@ -31,7 +18,7 @@ describe('DepositTreeLibTest', function () {
 
 		// Calculate default hash with all zero values
 		const zeroBytes32 = ethers.zeroPadValue('0x', 32)
-		const calculatedDefaultHash = getDepositHash(zeroBytes32, 0, 0n)
+		const calculatedDefaultHash = getDepositHash(0, zeroBytes32, 0, 0n)
 
 		expect(count).to.equal(0)
 		expect(defaultHash).to.equal(calculatedDefaultHash, 'Default hash mismatch')
@@ -49,11 +36,13 @@ describe('DepositTreeLibTest', function () {
 		)
 
 		const deposit1 = getDepositHash(
+			1,
 			recipientSaltHash1,
 			1,
 			ethers.parseEther('1'),
 		)
 		const deposit2 = getDepositHash(
+			2,
 			recipientSaltHash2,
 			2,
 			ethers.parseEther('2'),
@@ -80,7 +69,7 @@ describe('DepositTreeLibTest', function () {
 
 		const tokenIndex = 1
 		const amount = ethers.parseEther('1')
-		const deposit1 = getDepositHash(recipientSaltHash, tokenIndex, amount)
+		const deposit1 = getDepositHash(1, recipientSaltHash, tokenIndex, amount)
 
 		await lib.deposit(deposit1)
 
@@ -122,7 +111,12 @@ describe('DepositTreeLibTest', function () {
 			const recipientSaltHash = ethers.keccak256(
 				ethers.concat([baseRecipientSaltHash, ethers.toBeHex(i, 32)]),
 			)
-			const deposit = getDepositHash(recipientSaltHash, tokenIndex, amount)
+			const deposit = getDepositHash(
+				i + 1,
+				recipientSaltHash,
+				tokenIndex,
+				amount,
+			)
 
 			await lib.deposit(deposit)
 		}
@@ -134,6 +128,7 @@ describe('DepositTreeLibTest', function () {
 			ethers.toUtf8Bytes('finalRecipient'),
 		)
 		const finalDeposit = getDepositHash(
+			numberOfDeposits,
 			finalRecipientSaltHash,
 			tokenIndex,
 			amount,
@@ -169,6 +164,7 @@ describe('DepositTreeLibTest', function () {
 				ethers.concat([baseRecipientSaltHash, ethers.toBeHex(i, 32)]),
 			)
 			const deposit = getDepositHash(
+				Number(i) + 1,
 				recipientSaltHash,
 				Number(tokenIndex),
 				amount,
@@ -188,6 +184,7 @@ describe('DepositTreeLibTest', function () {
 			ethers.toUtf8Bytes('extraRecipient'),
 		)
 		const extraDeposit = getDepositHash(
+			Number(MAX_DEPOSIT_COUNT),
 			extraRecipientSaltHash,
 			Number(tokenIndex),
 			amount,
