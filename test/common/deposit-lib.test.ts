@@ -2,6 +2,7 @@ import { expect } from 'chai'
 import { ethers } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { DepositLibTest } from '../../typechain-types'
+import { getDepositHash } from '../common.test'
 
 describe('DepositLib', function () {
 	async function deployContractFixture(): Promise<DepositLibTest> {
@@ -15,7 +16,8 @@ describe('DepositLib', function () {
 			const testLibrary = await loadFixture(deployContractFixture)
 
 			const depositId = 1
-			const recipientSaltHash = ethers.randomBytes(32)
+			const recipientSaltHash =
+				'0x0000000000000000000000000000000000000000000000000000000000000123'
 			const tokenIndex = 123
 			const amount = ethers.parseEther('1.5')
 
@@ -27,12 +29,11 @@ describe('DepositLib', function () {
 			)
 
 			// Calculate expected hash
-			// TODO use getDepositHash from common.test.ts
-			const expectedHash = ethers.keccak256(
-				ethers.solidityPacked(
-					['uint32', 'bytes32', 'uint32', 'uint256'],
-					[depositId, recipientSaltHash, tokenIndex, amount],
-				),
+			const expectedHash = getDepositHash(
+				depositId,
+				recipientSaltHash,
+				tokenIndex,
+				amount,
 			)
 
 			expect(hash).to.equal(expectedHash)
@@ -83,12 +84,11 @@ describe('DepositLib', function () {
 			)
 
 			// Calculate expected hash
-			// TODO use getDepositHash from common.test.ts
-			const expectedHash = ethers.keccak256(
-				ethers.solidityPacked(
-					['uint32', 'bytes32', 'uint32', 'uint256'],
-					[depositId, recipientSaltHash, tokenIndex, amount],
-				),
+			const expectedHash = getDepositHash(
+				depositId,
+				recipientSaltHash,
+				tokenIndex,
+				amount,
 			)
 
 			expect(hash).to.equal(expectedHash)
