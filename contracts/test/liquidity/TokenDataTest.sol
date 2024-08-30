@@ -24,8 +24,4 @@ contract TokenDataTest is TokenData {
 		);
 		return latestTokenIndex;
 	}
-
-	function getNativeTokenIndex() public view returns (uint32) {
-		return _getNativeTokenIndex();
-	}
 }

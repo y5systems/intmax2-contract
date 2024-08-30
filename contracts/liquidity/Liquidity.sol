@@ -93,7 +93,7 @@ contract Liquidity is
 		if (msg.value == 0) {
 			revert TriedToDepositZero();
 		}
-		uint32 tokenIndex = _getNativeTokenIndex();
+		uint32 tokenIndex = getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
 	}
 
