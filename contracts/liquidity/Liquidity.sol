@@ -52,9 +52,12 @@ contract Liquidity is
 		_;
 	}
 
-	modifier canCancelDeposit(DepositLib.Deposit calldata deposit) {
+	modifier canCancelDeposit(
+		uint256 depositId,
+		DepositLib.Deposit calldata deposit
+	) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
-			.depositData[deposit.depositId];
+			.depositData[depositId];
 		if (depositData.sender != _msgSender()) {
 			revert OnlySenderCanCancelDeposit();
 		}
@@ -62,7 +65,7 @@ contract Liquidity is
 		if (depositData.depositHash != depositHash) {
 			revert InvalidDepositHash(depositData.depositHash, depositHash);
 		}
-		if (deposit.depositId <= getLastRelayedDepositId()) {
+		if (depositId <= getLastRelayedDepositId()) {
 			if (depositData.isRejected == false) {
 				revert AlreadyAnalyzed();
 			}
@@ -161,8 +164,8 @@ contract Liquidity is
 	}
 
 	function analyzeAndRelayDeposits(
-		uint32 upToDepositId,
-		uint32[] memory rejectDepositIds,
+		uint256 upToDepositId,
+		uint256[] memory rejectDepositIds,
 		uint256 gasLimit
 	) external payable onlyRole(ANALYZER) {
 		bytes32[] memory depositHashes = depositQueue.analyze(
@@ -215,10 +218,11 @@ contract Liquidity is
 	}
 
 	function cancelDeposit(
+		uint256 depositId,
 		DepositLib.Deposit calldata deposit
-	) external canCancelDeposit(deposit) {
+	) external canCancelDeposit(depositId, deposit) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
-			.deleteDeposit(deposit.depositId);
+			.deleteDeposit(depositId);
 		TokenInfo memory tokenInfo = getTokenInfo(deposit.tokenIndex);
 		_sendToken(
 			tokenInfo.tokenType,
@@ -227,7 +231,7 @@ contract Liquidity is
 			deposit.amount,
 			tokenInfo.tokenId
 		);
-		emit DepositCanceled(deposit.depositId);
+		emit DepositCanceled(depositId);
 	}
 
 	function _deposit(
@@ -236,11 +240,10 @@ contract Liquidity is
 		uint32 tokenIndex,
 		uint256 amount
 	) private {
-		uint32 depositId = depositQueue.getNextId();
 		bytes32 depositHash = DepositLib
-			.Deposit(depositId, recipientSaltHash, tokenIndex, amount)
+			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
-		depositQueue.enqueue(depositHash, sender);
+		uint256 depositId = depositQueue.enqueue(depositHash, sender);
 		emit Deposited(
 			depositId,
 			sender,
@@ -292,7 +295,7 @@ contract Liquidity is
 	}
 
 	function isDepositOngoing(
-		uint32 depositId,
+		uint256 depositId,
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,
@@ -301,7 +304,7 @@ contract Liquidity is
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.depositData[depositId];
 		bytes32 depositHash = DepositLib
-			.Deposit(depositId, recipientSaltHash, tokenIndex, amount)
+			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
 		if (depositData.depositHash != depositHash) {
 			return false;
@@ -378,22 +381,22 @@ contract Liquidity is
 	}
 
 	function getDepositData(
-		uint32 depositId
+		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory) {
 		return depositQueue.depositData[depositId];
 	}
 
 	function getDepositDataHash(
-		uint32 depositId
+		uint256 depositId
 	) external view returns (bytes32) {
 		return depositQueue.depositData[depositId].depositHash;
 	}
 
-	function getLastRelayedDepositId() public view returns (uint32) {
+	function getLastRelayedDepositId() public view returns (uint256) {
 		return depositQueue.front - 1;
 	}
 
-	function getLastDepositId() external view returns (uint32) {
+	function getLastDepositId() external view returns (uint256) {
 		return depositQueue.rear - 1;
 	}
 

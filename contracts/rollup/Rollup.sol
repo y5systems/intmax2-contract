@@ -22,7 +22,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 	IBlockBuilderRegistry private blockBuilderRegistry;
 	address private liquidity;
-	uint32 public lastProcessedDepositId;
+	uint256 public lastProcessedDepositId;
 	bytes32[] public blockHashes;
 	address[] public blockBuilders;
 
@@ -144,10 +144,10 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	}
 
 	function processDeposits(
-		uint32 _lastProcessedDepositId,
+		uint256 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external onlyLiquidityContract {
-		for (uint32 i = 0; i < depositHashes.length; i++) {
+		for (uint256 i = 0; i < depositHashes.length; i++) {
 			depositTree.deposit(depositHashes[i]);
 		}
 		lastProcessedDepositId = _lastProcessedDepositId;
