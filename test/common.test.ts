@@ -1,14 +1,13 @@
 import { ethers } from 'hardhat'
 
 export const getDepositHash = (
-	depositId: number,
-	recipientSaltHash: string,
+	recipientSaltHash: string | Uint8Array,
 	tokenIndex: number,
 	amount: bigint,
 ): string => {
 	const packed = ethers.solidityPacked(
-		['uint32', 'bytes32', 'uint32', 'uint256'],
-		[depositId, recipientSaltHash, tokenIndex, amount],
+		['bytes32', 'uint32', 'uint256'],
+		[recipientSaltHash, tokenIndex, amount],
 	)
 	const hash = ethers.keccak256(packed)
 	return hash

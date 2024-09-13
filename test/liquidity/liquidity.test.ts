@@ -482,32 +482,29 @@ describe('Liquidity', () => {
 				)
 
 				const depositHash0 = getDepositHash(
-					1,
 					ethers.keccak256(ethers.toUtf8Bytes('test0')),
 					0,
 					depositAmount,
 				)
 
 				const depositHash2 = getDepositHash(
-					3,
 					ethers.keccak256(ethers.toUtf8Bytes('test2')),
 					0,
 					depositAmount,
 				)
 
 				const depositHash4 = getDepositHash(
-					5,
 					ethers.keccak256(ethers.toUtf8Bytes('test4')),
 					0,
 					depositAmount,
 				)
 
 				const funcSelector = ethers
-					.id('processDeposits(uint32,bytes32[])')
+					.id('processDeposits(uint256,bytes32[])')
 					.slice(0, 10)
 
 				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
-					['uint32', 'bytes32[]'],
+					['uint256', 'bytes32[]'],
 					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
 				)
 				const encodedData = funcSelector + encodedParams.slice(2)
@@ -534,32 +531,29 @@ describe('Liquidity', () => {
 				const gasLimit = 1000000
 
 				const depositHash0 = getDepositHash(
-					1,
 					ethers.keccak256(ethers.toUtf8Bytes('test0')),
 					0,
 					depositAmount,
 				)
 
 				const depositHash2 = getDepositHash(
-					3,
 					ethers.keccak256(ethers.toUtf8Bytes('test2')),
 					0,
 					depositAmount,
 				)
 
 				const depositHash4 = getDepositHash(
-					5,
 					ethers.keccak256(ethers.toUtf8Bytes('test4')),
 					0,
 					depositAmount,
 				)
 
 				const funcSelector = ethers
-					.id('processDeposits(uint32,bytes32[])')
+					.id('processDeposits(uint256,bytes32[])')
 					.slice(0, 10)
 
 				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
-					['uint32', 'bytes32[]'],
+					['uint256', 'bytes32[]'],
 					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
 				)
 				const expectedEncodedData = funcSelector + encodedParams.slice(2)
@@ -635,8 +629,7 @@ describe('Liquidity', () => {
 					const { user } = await getSigners()
 					const initialBalance = await ethers.provider.getBalance(user.address)
 
-					const tx = await liquidity.connect(user).cancelDeposit({
-						depositId,
+					const tx = await liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -678,8 +671,7 @@ describe('Liquidity', () => {
 						await liquidity.getAddress(),
 					)
 
-					await liquidity.connect(user).cancelDeposit({
-						depositId,
+					await liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 3, // Assuming 1 is the index for the first ERC20 token
 						amount: depositAmount,
@@ -721,8 +713,7 @@ describe('Liquidity', () => {
 
 					const depositId = await liquidity.getLastDepositId()
 
-					await liquidity.connect(user).cancelDeposit({
-						depositId,
+					await liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 3,
 						amount: 1,
@@ -761,8 +752,7 @@ describe('Liquidity', () => {
 						tokenId,
 					)
 
-					await liquidity.connect(user).cancelDeposit({
-						depositId,
+					await liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 3, // Assuming 3 is the index for the first ERC1155 token
 						amount: amount,
@@ -781,8 +771,7 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 
 				await expect(
-					liquidity.connect(user).cancelDeposit({
-						depositId,
+					liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -802,8 +791,7 @@ describe('Liquidity', () => {
 						value: ethers.parseEther('1'),
 					})
 				await expect(
-					liquidity.connect(user).cancelDeposit({
-						depositId,
+					liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -829,8 +817,7 @@ describe('Liquidity', () => {
 					.depositNativeToken(recipientSaltHash2, { value: depositAmount })
 				const nextDepositId = depositId + 1n
 				await expect(
-					liquidity.connect(user).cancelDeposit({
-						depositId: nextDepositId,
+					liquidity.connect(user).cancelDeposit(nextDepositId, {
 						recipientSaltHash: recipientSaltHash2,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -847,8 +834,7 @@ describe('Liquidity', () => {
 				const { analyzer } = await getSigners()
 
 				await expect(
-					liquidity.connect(analyzer).cancelDeposit({
-						depositId,
+					liquidity.connect(analyzer).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -862,16 +848,10 @@ describe('Liquidity', () => {
 
 				const wrongHash = ethers.keccak256(ethers.toUtf8Bytes('wrong'))
 				const depositData = await liquidity.getDepositData(depositId)
-				const wrongDepositHash = getDepositHash(
-					Number(depositId),
-					wrongHash,
-					0,
-					depositAmount,
-				)
+				const wrongDepositHash = getDepositHash(wrongHash, 0, depositAmount)
 
 				await expect(
-					liquidity.connect(user).cancelDeposit({
-						depositId,
+					liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash: wrongHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -885,16 +865,14 @@ describe('Liquidity', () => {
 					await loadFixture(setupCancelDeposit)
 				const { user } = await getSigners()
 
-				await liquidity.connect(user).cancelDeposit({
-					depositId,
+				await liquidity.connect(user).cancelDeposit(depositId, {
 					recipientSaltHash,
 					tokenIndex: 0,
 					amount: depositAmount,
 				})
 
 				await expect(
-					liquidity.connect(user).cancelDeposit({
-						depositId,
+					liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -911,8 +889,7 @@ describe('Liquidity', () => {
 						value: ethers.parseEther('1'),
 					})
 				await expect(
-					liquidity.connect(user).cancelDeposit({
-						depositId,
+					liquidity.connect(user).cancelDeposit(depositId, {
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -1727,7 +1704,6 @@ describe('Liquidity', () => {
 
 			const depositData0 = await liquidity.getDepositData(1)
 			const depositHash0 = getDepositHash(
-				1,
 				ethers.keccak256(ethers.toUtf8Bytes('test0')),
 				0,
 				depositAmount,
@@ -1739,7 +1715,6 @@ describe('Liquidity', () => {
 
 			const depositData2 = await liquidity.getDepositData(3)
 			const depositHash2 = getDepositHash(
-				3,
 				ethers.keccak256(ethers.toUtf8Bytes('test2')),
 				0,
 				depositAmount,
@@ -1770,7 +1745,6 @@ describe('Liquidity', () => {
 
 			const depositDataHash0 = await liquidity.getDepositDataHash(1)
 			const depositHash0 = getDepositHash(
-				1,
 				ethers.keccak256(ethers.toUtf8Bytes('test0')),
 				0,
 				depositAmount,
@@ -1780,7 +1754,6 @@ describe('Liquidity', () => {
 
 			const depositDataHash2 = await liquidity.getDepositDataHash(3)
 			const depositHash2 = getDepositHash(
-				3,
 				ethers.keccak256(ethers.toUtf8Bytes('test2')),
 				0,
 				depositAmount,

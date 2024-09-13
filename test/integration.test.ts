@@ -227,7 +227,6 @@ describe('Integration', function () {
 		})
 		const fullBlocks = loadFullBlocks()
 		for (let i = 1; i < 3; i++) {
-			console.log(3)
 			await postBlock(fullBlocks[i], rollup)
 		}
 		// setup: fund liquidity contract for withdrawal liquidity
