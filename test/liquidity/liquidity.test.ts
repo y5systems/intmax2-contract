@@ -148,6 +148,24 @@ describe('Liquidity', () => {
 		})
 
 		describe('fail', () => {
+			it('revert RecipientSaltHashAlreadyUsed', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('1')
+				await liquidity
+					.connect(user)
+					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositNativeToken(recipientSaltHash, { value: depositAmount }),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'RecipientSaltHashAlreadyUsed',
+				)
+			})
 			it('revert TriedToDepositZero', async () => {
 				const { liquidity } = await loadFixture(setup)
 				const { user } = await getSigners()
@@ -235,6 +253,36 @@ describe('Liquidity', () => {
 		})
 
 		describe('fail', () => {
+			it('revert RecipientSaltHashAlreadyUsed', async () => {
+				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('100')
+
+				await testERC20
+					.connect(user)
+					.approve(await liquidity.getAddress(), depositAmount)
+				await liquidity
+					.connect(user)
+					.depositERC20(
+						await testERC20.getAddress(),
+						recipientSaltHash,
+						depositAmount,
+					)
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC20(
+							await testERC20.getAddress(),
+							recipientSaltHash,
+							depositAmount,
+						),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'RecipientSaltHashAlreadyUsed',
+				)
+			})
 			it('revert TriedToDepositZero', async () => {
 				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
 				const { user } = await getSigners()
@@ -264,53 +312,87 @@ describe('Liquidity', () => {
 					testNFT,
 				}
 			}
-		it('emit Deposited event', async () => {
-			const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
-			const { user } = await getSigners()
-			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-			const tokenId = 0
+		describe('success', () => {
+			it('emit Deposited event', async () => {
+				const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
 
-			await testNFT.connect(user).approve(await liquidity.getAddress(), tokenId)
-
-			const currentDepositId = await liquidity.getLastDepositId()
-			const currentTimestamp = await ethers.provider.getBlock('latest')
-
-			await expect(
-				liquidity
+				await testNFT
 					.connect(user)
-					.depositERC721(
-						await testNFT.getAddress(),
-						recipientSaltHash,
-						tokenId,
-					),
-			)
-				.to.emit(liquidity, 'Deposited')
-				.withArgs(
-					currentDepositId + 1n,
-					user.address,
-					recipientSaltHash,
-					3, // new token index
-					1, // amount is always 1 for ERC721
-					currentTimestamp!.timestamp + 1,
+					.approve(await liquidity.getAddress(), tokenId)
+
+				const currentDepositId = await liquidity.getLastDepositId()
+				const currentTimestamp = await ethers.provider.getBlock('latest')
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC721(
+							await testNFT.getAddress(),
+							recipientSaltHash,
+							tokenId,
+						),
 				)
+					.to.emit(liquidity, 'Deposited')
+					.withArgs(
+						currentDepositId + 1n,
+						user.address,
+						recipientSaltHash,
+						3, // new token index
+						1, // amount is always 1 for ERC721
+						currentTimestamp!.timestamp + 1,
+					)
+			})
+			it('transfer NFT', async () => {
+				const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
+
+				await testNFT
+					.connect(user)
+					.approve(await liquidity.getAddress(), tokenId)
+
+				expect(await testNFT.ownerOf(tokenId)).to.equal(user.address)
+
+				await liquidity
+					.connect(user)
+					.depositERC721(await testNFT.getAddress(), recipientSaltHash, tokenId)
+
+				expect(await testNFT.ownerOf(tokenId)).to.equal(
+					await liquidity.getAddress(),
+				)
+			})
 		})
-		it('transfer NFT', async () => {
-			const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
-			const { user } = await getSigners()
-			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-			const tokenId = 0
+		describe('fail', () => {
+			it('revert RecipientSaltHashAlreadyUsed', async () => {
+				const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
 
-			await testNFT.connect(user).approve(await liquidity.getAddress(), tokenId)
+				await testNFT
+					.connect(user)
+					.approve(await liquidity.getAddress(), tokenId)
+				await liquidity
+					.connect(user)
+					.depositERC721(await testNFT.getAddress(), recipientSaltHash, tokenId)
 
-			expect(await testNFT.ownerOf(tokenId)).to.equal(user.address)
-
-			await liquidity
-				.connect(user)
-				.depositERC721(await testNFT.getAddress(), recipientSaltHash, tokenId)
-
-			expect(await testNFT.ownerOf(tokenId)).to.equal(
-				await liquidity.getAddress(),
-			)
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC721(
+							await testNFT.getAddress(),
+							recipientSaltHash,
+							tokenId,
+						),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'RecipientSaltHashAlreadyUsed',
+				)
+			})
 		})
 	})
 	describe('depositERC1155', () => {
@@ -419,6 +501,42 @@ describe('Liquidity', () => {
 			})
 		})
 		describe('fail', () => {
+			it('revert RecipientSaltHashAlreadyUsed', async () => {
+				const { liquidity, testERC1155 } = await loadFixture(
+					setupForDepositERC1155,
+				)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 1
+				const depositAmount = 50
+
+				await testERC1155
+					.connect(user)
+					.setApprovalForAll(await liquidity.getAddress(), true)
+
+				await liquidity
+					.connect(user)
+					.depositERC1155(
+						await testERC1155.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						depositAmount,
+					)
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC1155(
+							await testERC1155.getAddress(),
+							recipientSaltHash,
+							tokenId,
+							depositAmount,
+						),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'RecipientSaltHashAlreadyUsed',
+				)
+			})
 			it('revert TriedToDepositZero', async () => {
 				const { liquidity, testERC1155 } = await loadFixture(
 					setupForDepositERC1155,

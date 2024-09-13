@@ -33,6 +33,9 @@ interface ILiquidity {
 	/// @notice Error thrown when al;ready analyzed deposits
 	error AlreadyAnalyzed();
 
+	/// @notice Error thrown when the recipientSaltHash is already used
+	error RecipientSaltHashAlreadyUsed();
+
 	/// @notice Event emitted when a deposit is made
 	/// @param depositId The unique identifier for the deposit
 	/// @param sender The address that made the deposit
