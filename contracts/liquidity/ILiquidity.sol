@@ -30,6 +30,12 @@ interface ILiquidity {
 	/// @notice Error thrown when trying to deposit zero amount of native/ERC20/ERC1155 tokens
 	error TriedToDepositZero();
 
+	/// @notice Error thrown when already analyzed deposits
+	error AlreadyAnalyzed();
+
+	/// @notice Error thrown when the recipientSaltHash is already used
+	error RecipientSaltHashAlreadyUsed();
+
 	/// @notice Event emitted when a deposit is made
 	/// @param depositId The unique identifier for the deposit
 	/// @param sender The address that made the deposit
@@ -163,6 +169,10 @@ interface ILiquidity {
 	/// @return The ID of the last relayed deposit
 	function getLastRelayedDepositId() external view returns (uint256);
 
+	/// @notice Get the ID of the last deposit to L2
+	/// @return The ID of the last deposit
+	function getLastDepositId() external view returns (uint256);
+
 	/// @notice Get deposit data for a given deposit ID
 	/// @param depositId The ID of the deposit
 	/// @return The deposit data
@@ -170,11 +180,33 @@ interface ILiquidity {
 		uint256 depositId
 	) external view returns (DepositQueueLib.DepositData memory);
 
+	/// @notice Get deposit data hash for a given deposit ID
+	/// @param depositId The ID of the deposit
+	/// @return The deposit data hash
+	function getDepositDataHash(
+		uint256 depositId
+	) external view returns (bytes32);
+
 	/// @notice Claim withdrawals for tokens that are not direct withdrawals
 	/// @param withdrawals Array of withdrawals to claim
 	function claimWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) external;
+
+	/// @notice Check if the deposit is valid
+	/// @param depositId The ID of the deposit
+	/// @param recipientSaltHash The hash of the recipient's intmax2 address (BLS public key) and a secret salt
+	/// @param tokenIndex The index of the token being deposited
+	/// @param amount The amount of tokens deposited
+	/// @param sender The address that made the deposit
+	/// @return if deposit is valid, return true
+	function isDepositOngoing(
+		uint256 depositId,
+		bytes32 recipientSaltHash,
+		uint32 tokenIndex,
+		uint256 amount,
+		address sender
+	) external view returns (bool);
 
 	/// @notice ERC1155 token receiver function
 	/// @return bytes4 The function selector

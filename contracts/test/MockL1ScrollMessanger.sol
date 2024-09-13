@@ -16,6 +16,7 @@ contract MockL1ScrollMessenger is IL1ScrollMessenger {
 		uint256 _gasLimit
 	) external payable {
 		if (FEE + _value > msg.value) {
+			// solhint-disable-next-line gas-custom-errors
 			revert("insufficient msg.value");
 		}
 		_sendMessage(_to, _value, _message, _gasLimit, msg.sender);

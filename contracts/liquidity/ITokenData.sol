@@ -38,4 +38,8 @@ interface ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) external view returns (bool, uint32);
+
+	/// @notice Retrieves the index of the native token
+	/// @return uint32 The index of the native token
+	function getNativeTokenIndex() external view returns (uint32);
 }

@@ -37,6 +37,7 @@ contract Liquidity is
 	address private rollup;
 	address private withdrawal;
 	mapping(bytes32 => uint256) private claimableWithdrawals;
+	mapping(bytes32 => bool) private alreadyUseRecipientSaltHash;
 	DepositQueueLib.DepositQueue private depositQueue;
 
 	modifier onlyWithdrawal() {
@@ -48,6 +49,34 @@ contract Liquidity is
 		}
 		if (withdrawal != l1ScrollMessenger.xDomainMessageSender()) {
 			revert InvalidWithdrawalAddress();
+		}
+		_;
+	}
+
+	modifier canDeposit(bytes32 recipientSaltHash) {
+		if (alreadyUseRecipientSaltHash[recipientSaltHash]) {
+			revert RecipientSaltHashAlreadyUsed();
+		}
+		_;
+	}
+
+	modifier canCancelDeposit(
+		uint256 depositId,
+		DepositLib.Deposit calldata deposit
+	) {
+		DepositQueueLib.DepositData memory depositData = depositQueue
+			.depositData[depositId];
+		if (depositData.sender != _msgSender()) {
+			revert OnlySenderCanCancelDeposit();
+		}
+		bytes32 depositHash = deposit.getHash();
+		if (depositData.depositHash != depositHash) {
+			revert InvalidDepositHash(depositData.depositHash, depositHash);
+		}
+		if (depositId <= getLastRelayedDepositId()) {
+			if (depositData.isRejected == false) {
+				revert AlreadyAnalyzed();
+			}
 		}
 		_;
 	}
@@ -71,31 +100,26 @@ contract Liquidity is
 		withdrawal = _withdrawal;
 	}
 
-	function depositNativeToken(bytes32 recipientSaltHash) external payable {
+	function depositNativeToken(
+		bytes32 recipientSaltHash
+	) external payable canDeposit(recipientSaltHash) {
 		if (msg.value == 0) {
 			revert TriedToDepositZero();
 		}
-		uint32 tokenIndex = _getNativeTokenIndex();
+		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
+		uint32 tokenIndex = getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
-
-		if (msg.value == 1 ether) {
-			// Record contribution only 1 eth.
-			contribution.recordContribution(
-				keccak256("DEPOSIT_1ETH"),
-				_msgSender(),
-				msg.value
-			);
-		}
 	}
 
 	function depositERC20(
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 amount
-	) external {
+	) external canDeposit(recipientSaltHash) {
 		if (amount == 0) {
 			revert TriedToDepositZero();
 		}
+		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
 		IERC20(tokenAddress).safeTransferFrom(
 			_msgSender(),
 			address(this),
@@ -113,7 +137,8 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 tokenId
-	) external {
+	) external canDeposit(recipientSaltHash) {
+		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -132,10 +157,11 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId,
 		uint256 amount
-	) external {
+	) external canDeposit(recipientSaltHash) {
 		if (amount == 0) {
 			revert TriedToDepositZero();
 		}
+		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
 		IERC1155(tokenAddress).safeTransferFrom(
 			_msgSender(),
 			address(this),
@@ -208,18 +234,9 @@ contract Liquidity is
 	function cancelDeposit(
 		uint256 depositId,
 		DepositLib.Deposit calldata deposit
-	) external {
+	) external canCancelDeposit(depositId, deposit) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.deleteDeposit(depositId);
-		if (depositData.sender != _msgSender()) {
-			revert OnlySenderCanCancelDeposit();
-		}
-		if (depositData.depositHash != deposit.getHash()) {
-			revert InvalidDepositHash(
-				depositData.depositHash,
-				deposit.getHash()
-			);
-		}
 		TokenInfo memory tokenInfo = getTokenInfo(deposit.tokenIndex);
 		_sendToken(
 			tokenInfo.tokenType,
@@ -291,6 +308,30 @@ contract Liquidity is
 		);
 	}
 
+	function isDepositOngoing(
+		uint256 depositId,
+		bytes32 recipientSaltHash,
+		uint32 tokenIndex,
+		uint256 amount,
+		address sender
+	) external view returns (bool) {
+		DepositQueueLib.DepositData memory depositData = depositQueue
+			.depositData[depositId];
+		bytes32 depositHash = DepositLib
+			.Deposit(recipientSaltHash, tokenIndex, amount)
+			.getHash();
+		if (depositData.depositHash != depositHash) {
+			return false;
+		}
+		if (depositData.sender != sender) {
+			return false;
+		}
+		if (depositData.isRejected == true) {
+			return false;
+		}
+		return true;
+	}
+
 	function _processDirectWithdrawals(
 		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
@@ -359,7 +400,13 @@ contract Liquidity is
 		return depositQueue.depositData[depositId];
 	}
 
-	function getLastRelayedDepositId() external view returns (uint256) {
+	function getDepositDataHash(
+		uint256 depositId
+	) external view returns (bytes32) {
+		return depositQueue.depositData[depositId].depositHash;
+	}
+
+	function getLastRelayedDepositId() public view returns (uint256) {
 		return depositQueue.front - 1;
 	}
 

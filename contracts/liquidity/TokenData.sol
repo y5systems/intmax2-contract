@@ -39,7 +39,7 @@ abstract contract TokenData is Initializable, ITokenData {
 		return _createTokenIndex(tokenType, tokenAddress, tokenId);
 	}
 
-	function _getNativeTokenIndex() internal view returns (uint32) {
+	function getNativeTokenIndex() public view returns (uint32) {
 		return fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS];
 	}
 
