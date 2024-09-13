@@ -124,13 +124,4 @@ library DepositQueueLib {
 		depositQueue.front = upToDepositId + 1;
 		return depositHashes;
 	}
-
-	/// @notice Returns the size of the deposit queue
-	/// @param depositQueue The memory reference to the DepositQueue struct
-	/// @return The number of deposits in the queue
-	function size(
-		DepositQueue memory depositQueue
-	) internal pure returns (uint256) {
-		return depositQueue.rear - depositQueue.front;
-	}
 }

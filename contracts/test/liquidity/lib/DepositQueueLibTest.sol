@@ -33,10 +33,6 @@ contract DepositQueueLibTest {
 		);
 	}
 
-	function size() external view returns (uint256) {
-		return DepositQueueLib.size(depositQueue);
-	}
-
 	// Helper functions to access internal state for testing
 	function getFront() external view returns (uint256) {
 		return depositQueue.front;

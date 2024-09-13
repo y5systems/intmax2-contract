@@ -16,11 +16,6 @@ interface IBlockBuilderRegistry {
 	/// @notice Error thrown when trying to unstake within the challenge duration
 	error CannotUnstakeWithinChallengeDuration();
 
-	/// @notice Error thrown when ETH transfer fails
-	/// @param to The address to which the transfer was attempted
-	/// @param amount The amount that failed to transfer
-	error FailedTransfer(address to, uint256 amount);
-
 	/// @notice Error thrown when attempting to slash the same block number twice
 	error FraudProofAlreadySubmitted();
 

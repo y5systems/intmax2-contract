@@ -62,7 +62,7 @@ contract Liquidity is
 
 	modifier canCancelDeposit(
 		uint256 depositId,
-		DepositLib.Deposit calldata deposit
+		DepositLib.Deposit memory deposit
 	) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.depositData[depositId];
@@ -233,7 +233,7 @@ contract Liquidity is
 
 	function cancelDeposit(
 		uint256 depositId,
-		DepositLib.Deposit calldata deposit
+		DepositLib.Deposit memory deposit
 	) external canCancelDeposit(depositId, deposit) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.deleteDeposit(depositId);
