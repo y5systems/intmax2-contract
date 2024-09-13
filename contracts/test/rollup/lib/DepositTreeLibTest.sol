@@ -22,14 +22,6 @@ contract DepositTreeLibTest {
 		depositTree.deposit(leafHash);
 	}
 
-	function getBranch()
-		external
-		view
-		returns (bytes32[DEPOSIT_CONTRACT_TREE_DEPTH] memory)
-	{
-		return depositTree.getBranch();
-	}
-
 	function getDepositCount() external view returns (uint256) {
 		return depositTree.depositCount;
 	}

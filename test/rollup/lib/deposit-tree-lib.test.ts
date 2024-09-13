@@ -58,41 +58,6 @@ describe('DepositTreeLibTest', function () {
 		expect(newRoot).to.not.equal(root)
 	})
 
-	it('should return correct branch', async function () {
-		const lib = await loadFixture(setup)
-		// Generate a 32-byte value for recipientSaltHash
-		const recipientSaltHash = ethers.keccak256(
-			ethers.toUtf8Bytes('testRecipient'),
-		)
-
-		const tokenIndex = 1
-		const amount = ethers.parseEther('1')
-		const deposit1 = getDepositHash(recipientSaltHash, tokenIndex, amount)
-
-		await lib.deposit(deposit1)
-
-		const branch = await lib.getBranch()
-
-		const treeDepth = await lib.getTreeDepth()
-
-		expect(branch.length).to.equal(treeDepth)
-		expect(branch[0]).to.equal(deposit1)
-
-		// Additional checks
-		expect(branch[0]).to.equal(
-			deposit1,
-			'First branch element should match deposit hash',
-		)
-
-		// Check other branch elements
-		for (let i = 1; i < branch.length; i++) {
-			expect(branch[i]).to.equal(
-				ethers.ZeroHash,
-				`Branch element ${i} should be zero`,
-			)
-		}
-	})
-
 	it('should revert when tree is full', async function () {
 		const lib = await loadFixture(setup)
 		const baseRecipientSaltHash = ethers.keccak256(

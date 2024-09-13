@@ -32,6 +32,9 @@ interface IContribution {
 		uint256[] memory weights
 	) external;
 
+	/// @notice Increment the current period number.
+	function incrementPeriod() external;
+
 	/// @notice Record a contribution for a specific tag and user.
 	/// @param tag The tag associated with the contribution.
 	/// @param user The address of the user making the contribution.

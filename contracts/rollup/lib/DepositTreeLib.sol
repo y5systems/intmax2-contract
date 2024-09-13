@@ -97,13 +97,4 @@ library DepositTreeLib {
 		// this code should be unreachable. We assert `false` just to be safe.
 		assert(false);
 	}
-
-	/// @notice Retrieves the current branch of the Merkle tree
-	/// @param depositTree The storage reference to the DepositTree struct
-	/// @return The current branch of the Merkle tree
-	function getBranch(
-		DepositTree storage depositTree
-	) internal view returns (bytes32[_DEPOSIT_CONTRACT_TREE_DEPTH] memory) {
-		return depositTree._branch;
-	}
 }
