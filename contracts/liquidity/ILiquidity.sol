@@ -30,7 +30,7 @@ interface ILiquidity {
 	/// @notice Error thrown when trying to deposit zero amount of native/ERC20/ERC1155 tokens
 	error TriedToDepositZero();
 
-	/// @notice Error thrown when al;ready analyzed deposits
+	/// @notice Error thrown when already analyzed deposits
 	error AlreadyAnalyzed();
 
 	/// @notice Error thrown when the recipientSaltHash is already used
