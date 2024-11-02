@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
-import {UD60x18, ud, convert} from "@prb/math/src/UD60x18.sol";
+pragma solidity 0.8.27;
+import {UD60x18, convert} from "@prb/math/src/UD60x18.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {IContribution} from "./IContribution.sol";
@@ -37,31 +37,21 @@ contract Contribution is
 	/// @dev period => array of tags
 	mapping(uint256 => bytes32[]) private allTags;
 
-	function initialize() public initializer {
+	constructor() {
+		_disableInitializers();
+	}
+
+	function initialize() external initializer {
 		__UUPSUpgradeable_init();
 		__AccessControl_init();
 		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_grantRole(WEIGHT_REGISTRAR, _msgSender());
 	}
 
-	function getTags(
-		uint256 periodNumber
-	) external view returns (bytes32[] memory) {
-		return allTags[periodNumber];
-	}
-
-	function getWeights(
-		uint256 periodNumber
-	) external view returns (uint256[] memory) {
-		uint256[] memory weights = new uint256[](allTags[periodNumber].length);
-		for (uint256 i = 0; i < allTags[periodNumber].length; i++) {
-			weights[i] = allWeights[periodNumber][allTags[periodNumber][i]];
-		}
-		return weights;
-	}
-
 	function incrementPeriod() external onlyRole(WEIGHT_REGISTRAR) {
-		currentPeriod++;
+		uint256 nextPeriod = currentPeriod + 1;
+		currentPeriod = nextPeriod;
+		emit PeriodIncremented(nextPeriod);
 	}
 
 	function registerWeights(
@@ -76,6 +66,7 @@ contract Contribution is
 			allWeights[periodNumber][tags[i]] = weights[i];
 		}
 		allTags[periodNumber] = tags;
+		emit WeightRegistered(periodNumber, tags, weights);
 	}
 
 	function recordContribution(
@@ -83,8 +74,27 @@ contract Contribution is
 		address user,
 		uint256 amount
 	) external onlyRole(CONTRIBUTOR) {
-		totalContributionsInPeriod[currentPeriod][tag] += amount;
-		contributionsInPeriod[currentPeriod][tag][user] += amount;
+		uint256 currentPeriodCached = currentPeriod;
+		totalContributionsInPeriod[currentPeriodCached][tag] += amount;
+		contributionsInPeriod[currentPeriodCached][tag][user] += amount;
+		emit ContributionRecorded(currentPeriodCached, tag, user, amount);
+	}
+
+	function getTags(
+		uint256 periodNumber
+	) external view returns (bytes32[] memory) {
+		return allTags[periodNumber];
+	}
+
+	function getWeights(
+		uint256 periodNumber
+	) external view returns (uint256[] memory) {
+		uint256 tagLength = allTags[periodNumber].length;
+		uint256[] memory weights = new uint256[](tagLength);
+		for (uint256 i = 0; i < tagLength; i++) {
+			weights[i] = allWeights[periodNumber][allTags[periodNumber][i]];
+		}
+		return weights;
 	}
 
 	function getCurrentContribution(
@@ -98,21 +108,19 @@ contract Contribution is
 		uint256 periodNumber,
 		address user
 	) external view returns (UD60x18) {
-		UD60x18 totalContribution = ud(0);
-		UD60x18 userContribution = ud(0);
+		uint256 totalContribution = 0;
+		uint256 userContribution = 0;
 		for (uint256 i = 0; i < allTags[periodNumber].length; i++) {
-			bytes32 tag = allTags[currentPeriod][i];
-			UD60x18 weight = convert(allWeights[periodNumber][tag]);
-			totalContribution =
-				totalContribution +
-				convert(totalContributionsInPeriod[periodNumber][tag]) *
+			bytes32 tag = allTags[periodNumber][i];
+			uint256 weight = allWeights[periodNumber][tag];
+			totalContribution +=
+				totalContributionsInPeriod[periodNumber][tag] *
 				weight;
-			userContribution =
-				userContribution +
-				convert(contributionsInPeriod[periodNumber][tag][user]) *
+			userContribution +=
+				contributionsInPeriod[periodNumber][tag][user] *
 				weight;
 		}
-		return userContribution.div(totalContribution);
+		return convert(userContribution).div(convert(totalContribution));
 	}
 
 	function _authorizeUpgrade(

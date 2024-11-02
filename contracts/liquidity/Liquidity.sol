@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/Rollup.sol";
@@ -17,6 +17,7 @@ import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
+import {ERC20CallOptionalLib} from "./lib/ERC20CallOptionalLib.sol";
 
 contract Liquidity is
 	TokenData,
@@ -25,6 +26,7 @@ contract Liquidity is
 	ILiquidity
 {
 	using SafeERC20 for IERC20;
+	using ERC20CallOptionalLib for IERC20;
 	using DepositLib for DepositLib.Deposit;
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
 	using DepositQueueLib for DepositQueueLib.DepositQueue;
@@ -36,26 +38,24 @@ contract Liquidity is
 	IContribution private contribution;
 	address private rollup;
 	address private withdrawal;
-	mapping(bytes32 => uint256) private claimableWithdrawals;
-	mapping(bytes32 => bool) private alreadyUseRecipientSaltHash;
+	mapping(bytes32 => uint256) public claimableWithdrawals;
+	mapping(bytes32 => bool) private doesDepositHashExist;
 	DepositQueueLib.DepositQueue private depositQueue;
 
 	modifier onlyWithdrawal() {
-		if (withdrawal == address(0)) {
+		// Cache the values to avoid multiple storage reads
+		address withdrawalCached = withdrawal;
+		IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
+		if (withdrawalCached == address(0)) {
 			revert WithdrawalAddressNotSet();
 		}
-		if (_msgSender() != address(l1ScrollMessenger)) {
+		if (_msgSender() != address(l1ScrollMessengerCached)) {
 			revert SenderIsNotScrollMessenger();
 		}
-		if (withdrawal != l1ScrollMessenger.xDomainMessageSender()) {
+		if (
+			withdrawalCached != l1ScrollMessengerCached.xDomainMessageSender()
+		) {
 			revert InvalidWithdrawalAddress();
-		}
-		_;
-	}
-
-	modifier canDeposit(bytes32 recipientSaltHash) {
-		if (alreadyUseRecipientSaltHash[recipientSaltHash]) {
-			revert RecipientSaltHashAlreadyUsed();
 		}
 		_;
 	}
@@ -74,11 +74,15 @@ contract Liquidity is
 			revert InvalidDepositHash(depositData.depositHash, depositHash);
 		}
 		if (depositId <= getLastRelayedDepositId()) {
-			if (depositData.isRejected == false) {
+			if (!depositData.isRejected) {
 				revert AlreadyAnalyzed();
 			}
 		}
 		_;
+	}
+
+	constructor() {
+		_disableInitializers();
 	}
 
 	function initialize(
@@ -88,10 +92,26 @@ contract Liquidity is
 		address _analyzer,
 		address _contribution,
 		address[] memory initialERC20Tokens
-	) public initializer {
+	) external initializer {
+		if (_l1ScrollMessenger == address(0)) {
+			revert AddressZero();
+		}
+		if (_rollup == address(0)) {
+			revert AddressZero();
+		}
+		if (_withdrawal == address(0)) {
+			revert AddressZero();
+		}
+		if (_analyzer == address(0)) {
+			revert AddressZero();
+		}
+		if (_contribution == address(0)) {
+			revert AddressZero();
+		}
 		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
 		_grantRole(ANALYZER, _analyzer);
 		__UUPSUpgradeable_init();
+		__AccessControl_init();
 		__TokenData_init(initialERC20Tokens);
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
@@ -100,13 +120,10 @@ contract Liquidity is
 		withdrawal = _withdrawal;
 	}
 
-	function depositNativeToken(
-		bytes32 recipientSaltHash
-	) external payable canDeposit(recipientSaltHash) {
+	function depositNativeToken(bytes32 recipientSaltHash) external payable {
 		if (msg.value == 0) {
 			revert TriedToDepositZero();
 		}
-		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
 		uint32 tokenIndex = getNativeTokenIndex();
 		_deposit(_msgSender(), recipientSaltHash, tokenIndex, msg.value);
 	}
@@ -115,11 +132,10 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 amount
-	) external canDeposit(recipientSaltHash) {
+	) external {
 		if (amount == 0) {
 			revert TriedToDepositZero();
 		}
-		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
 		IERC20(tokenAddress).safeTransferFrom(
 			_msgSender(),
 			address(this),
@@ -137,8 +153,7 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 tokenId
-	) external canDeposit(recipientSaltHash) {
-		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
+	) external {
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -157,11 +172,10 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId,
 		uint256 amount
-	) external canDeposit(recipientSaltHash) {
+	) external {
 		if (amount == 0) {
 			revert TriedToDepositZero();
 		}
-		alreadyUseRecipientSaltHash[recipientSaltHash] = true;
 		IERC1155(tokenAddress).safeTransferFrom(
 			_msgSender(),
 			address(this),
@@ -257,6 +271,10 @@ contract Liquidity is
 		bytes32 depositHash = DepositLib
 			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
+		if (doesDepositHashExist[depositHash]) {
+			revert DepositHashAlreadyExists(depositHash);
+		}
+		doesDepositHashExist[depositHash] = true;
 		uint256 depositId = depositQueue.enqueue(depositHash, sender);
 		emit Deposited(
 			depositId,
@@ -308,7 +326,7 @@ contract Liquidity is
 		);
 	}
 
-	function isDepositOngoing(
+	function isDepositValid(
 		uint256 depositId,
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
@@ -320,13 +338,14 @@ contract Liquidity is
 		bytes32 depositHash = DepositLib
 			.Deposit(recipientSaltHash, tokenIndex, amount)
 			.getHash();
+
 		if (depositData.depositHash != depositHash) {
 			return false;
 		}
 		if (depositData.sender != sender) {
 			return false;
 		}
-		if (depositData.isRejected == true) {
+		if (depositData.isRejected) {
 			return false;
 		}
 		return true;
@@ -337,16 +356,7 @@ contract Liquidity is
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) private {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
-			TokenInfo memory tokenInfo = getTokenInfo(
-				withdrawals[i].tokenIndex
-			);
-			_sendToken(
-				tokenInfo.tokenType,
-				tokenInfo.tokenAddress,
-				withdrawals[i].recipient,
-				withdrawals[i].amount,
-				tokenInfo.tokenId
-			);
+			_processDirectWithdrawal(withdrawals[i]);
 		}
 		if (withdrawals.length > 0) {
 			emit DirectWithdrawalsProcessed(_lastProcessedDirectWithdrawalId);
@@ -360,6 +370,40 @@ contract Liquidity is
 				tx.origin, // msg.sender is ScrollMessenger, so we use tx.origin
 				withdrawals.length
 			);
+		}
+	}
+
+	function _processDirectWithdrawal(
+		WithdrawalLib.Withdrawal memory withdrawal_
+	) internal {
+		TokenInfo memory tokenInfo = getTokenInfo(withdrawal_.tokenIndex);
+
+		bool result = true;
+		if (tokenInfo.tokenType == TokenType.NATIVE) {
+			// solhint-disable-next-line check-send-result
+			bool success = payable(withdrawal_.recipient).send(
+				withdrawal_.amount
+			);
+			result = success;
+		} else if (tokenInfo.tokenType == TokenType.ERC20) {
+			bytes memory transferCall = abi.encodeWithSelector(
+				IERC20(tokenInfo.tokenAddress).transfer.selector,
+				withdrawal_.recipient,
+				withdrawal_.amount
+			);
+			result = IERC20(tokenInfo.tokenAddress).callOptionalReturnBool(
+				transferCall
+			);
+		} else {
+			// ERC721 and ERC1155 tokens are not supported for direct withdrawals
+			result = false;
+		}
+		if (!result) {
+			bytes32 withdrawalHash = withdrawal_.getHash();
+			// solhint-disable-next-line reentrancy
+			claimableWithdrawals[withdrawalHash] = block.timestamp;
+			emit DirectWithdrawalFailed(withdrawalHash, withdrawal_);
+			emit WithdrawalClaimable(withdrawalHash);
 		}
 	}
 
@@ -411,7 +455,7 @@ contract Liquidity is
 	}
 
 	function getLastDepositId() external view returns (uint256) {
-		return depositQueue.rear - 1;
+		return depositQueue.depositData.length - 1;
 	}
 
 	function _authorizeUpgrade(

@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
 
 interface ILiquidity {
+	/// @notice address is zero address
+	error AddressZero();
+
 	/// @notice Error thrown when someone other than the original depositor tries to cancel a deposit
 	error OnlySenderCanCancelDeposit();
 
@@ -33,8 +36,8 @@ interface ILiquidity {
 	/// @notice Error thrown when already analyzed deposits
 	error AlreadyAnalyzed();
 
-	/// @notice Error thrown when the recipientSaltHash is already used
-	error RecipientSaltHashAlreadyUsed();
+	/// @notice Error thrown when the deposit hash already exists
+	error DepositHashAlreadyExists(bytes32 depositHash);
 
 	/// @notice Event emitted when a deposit is made
 	/// @param depositId The unique identifier for the deposit
@@ -71,6 +74,14 @@ interface ILiquidity {
 	/// @notice Event emitted when a withdrawal becomes claimable
 	/// @param withdrawalHash The hash of the claimable withdrawal
 	event WithdrawalClaimable(bytes32 indexed withdrawalHash);
+
+	/// @notice Event emitted when a direct withdrawal fails, and the funds become claimable
+	/// @param withdrawalHash The hash of the failed withdrawal
+	/// @param withdrawal The withdrawal data
+	event DirectWithdrawalFailed(
+		bytes32 indexed withdrawalHash,
+		WithdrawalLib.Withdrawal withdrawal
+	);
 
 	/// @notice Event emitted when direct withdrawals are processed
 	/// @param lastProcessedDirectWithdrawalId The ID of the last processed direct withdrawal
@@ -200,7 +211,7 @@ interface ILiquidity {
 	/// @param amount The amount of tokens deposited
 	/// @param sender The address that made the deposit
 	/// @return if deposit is valid, return true
-	function isDepositOngoing(
+	function isDepositValid(
 		uint256 depositId,
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,

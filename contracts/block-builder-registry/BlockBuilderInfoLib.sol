@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {IBlockBuilderRegistry} from "./IBlockBuilderRegistry.sol";
 import {MIN_STAKE_AMOUNT} from "./BlockBuilderRegistryConst.sol";
@@ -19,7 +19,7 @@ library BlockBuilderInfoLib {
 	/**
 	 * @notice Check if the challenge duration has passed.
 	 */
-	function isChallengeDuration(
+	function hasChallengeDurationPassed(
 		IBlockBuilderRegistry.BlockBuilderInfo memory info
 	) internal view returns (bool) {
 		return block.timestamp - info.stopTime >= CHALLENGE_DURATION;

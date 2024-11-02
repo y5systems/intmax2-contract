@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {BlockBuilderInfoLib} from "../../block-builder-registry/BlockBuilderInfoLib.sol";
 import {IBlockBuilderRegistry} from "../../block-builder-registry/IBlockBuilderRegistry.sol";
@@ -13,10 +13,10 @@ contract BlockBuilderInfoLibTest {
 		return info.isStaking();
 	}
 
-	function isChallengeDuration(
+	function hasChallengeDurationPassed(
 		IBlockBuilderRegistry.BlockBuilderInfo memory info
 	) external view returns (bool) {
-		return info.isChallengeDuration();
+		return info.hasChallengeDurationPassed();
 	}
 
 	function isStakeAmountSufficient(

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {IWithdrawal} from "./IWithdrawal.sol";
 import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
@@ -35,6 +35,10 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	uint256 public lastDirectWithdrawalId;
 	uint256 public lastClaimableWithdrawalId;
 
+	constructor() {
+		_disableInitializers();
+	}
+
 	function initialize(
 		address _scrollMessenger,
 		address _withdrawalVerifier,
@@ -42,7 +46,22 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _rollup,
 		address _contribution,
 		uint256[] memory _directWithdrawalTokenIndices
-	) public initializer {
+	) external initializer {
+		if (_scrollMessenger == address(0)) {
+			revert AddressZero();
+		}
+		if (_withdrawalVerifier == address(0)) {
+			revert AddressZero();
+		}
+		if (_liquidity == address(0)) {
+			revert AddressZero();
+		}
+		if (_rollup == address(0)) {
+			revert AddressZero();
+		}
+		if (_contribution == address(0)) {
+			revert AddressZero();
+		}
 		__Ownable_init(_msgSender());
 		__UUPSUpgradeable_init();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
@@ -50,9 +69,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		rollup = IRollup(_rollup);
 		contribution = IContribution(_contribution);
 		liquidity = _liquidity;
-		for (uint256 i = 0; i < _directWithdrawalTokenIndices.length; i++) {
-			directWithdrawalTokenIndices.add(_directWithdrawalTokenIndices[i]);
-		}
+		innerAddDirectWithdrawalTokenIndices(_directWithdrawalTokenIndices);
 	}
 
 	// added onlyOwner for dummy zkp verification
@@ -69,7 +86,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
-			if (nullifiers[chainedWithdrawal.nullifier] == true) {
+			if (nullifiers[chainedWithdrawal.nullifier]) {
 				isSkippedFlags[i] = true;
 				continue; // already withdrawn
 			}
@@ -98,7 +115,13 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		);
 
 		uint256 directWithdrawalIndex = 0;
+		// load lastDirectWithdrawalId to memory to avoid storage io
+		uint256 lastDirectWithdrawalIdMemory = lastDirectWithdrawalId;
+
 		uint256 claimableWithdrawalIndex = 0;
+		// load lastClaimableWithdrawalId to memory to avoid storage io
+		uint256 lastClaimableWithdrawalIdMemory = lastClaimableWithdrawalId;
+
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			if (isSkippedFlags[i]) {
 				continue; // skipped withdrawal
@@ -113,8 +136,8 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 					0 // set later
 				);
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
-				lastDirectWithdrawalId++;
-				withdrawal.id = lastDirectWithdrawalId;
+				lastDirectWithdrawalIdMemory++;
+				withdrawal.id = lastDirectWithdrawalIdMemory;
 				directWithdrawals[directWithdrawalIndex] = withdrawal;
 				emit DirectWithdrawalQueued(
 					withdrawal.id,
@@ -123,8 +146,8 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 				);
 				directWithdrawalIndex++;
 			} else {
-				lastClaimableWithdrawalId++;
-				withdrawal.id = lastClaimableWithdrawalId;
+				lastClaimableWithdrawalIdMemory++;
+				withdrawal.id = lastClaimableWithdrawalIdMemory;
 				claimableWithdrawals[claimableWithdrawalIndex] = withdrawal
 					.getHash();
 				emit ClaimableWithdrawalQueued(
@@ -135,16 +158,18 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 				claimableWithdrawalIndex++;
 			}
 		}
+		lastDirectWithdrawalId = lastDirectWithdrawalIdMemory;
+		lastClaimableWithdrawalId = lastClaimableWithdrawalIdMemory;
 		emit WithdrawalsQueued(
-			lastDirectWithdrawalId,
-			lastClaimableWithdrawalId
+			lastDirectWithdrawalIdMemory,
+			lastClaimableWithdrawalIdMemory
 		);
 
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
-			lastDirectWithdrawalId,
+			lastDirectWithdrawalIdMemory,
 			directWithdrawals,
-			lastClaimableWithdrawalId,
+			lastClaimableWithdrawalIdMemory,
 			claimableWithdrawals
 		);
 		_relayMessage(message);
@@ -209,12 +234,19 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	function addDirectWithdrawalTokenIndices(
 		uint256[] calldata tokenIndices
 	) external onlyOwner {
+		innerAddDirectWithdrawalTokenIndices(tokenIndices);
+	}
+
+	function innerAddDirectWithdrawalTokenIndices(
+		uint256[] memory tokenIndices
+	) private {
 		for (uint256 i = 0; i < tokenIndices.length; i++) {
 			bool result = directWithdrawalTokenIndices.add(tokenIndices[i]);
-			if (result == false) {
+			if (!result) {
 				revert TokenAlreadyExist(tokenIndices[i]);
 			}
 		}
+		emit DirectWithdrawalTokenIndicesAdded(tokenIndices);
 	}
 
 	function removeDirectWithdrawalTokenIndices(
@@ -222,10 +254,11 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	) external onlyOwner {
 		for (uint256 i = 0; i < tokenIndices.length; i++) {
 			bool result = directWithdrawalTokenIndices.remove(tokenIndices[i]);
-			if (result == false) {
+			if (!result) {
 				revert TokenNotExist(tokenIndices[i]);
 			}
 		}
+		emit DirectWithdrawalTokenIndicesRemoved(tokenIndices);
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

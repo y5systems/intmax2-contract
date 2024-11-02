@@ -4,6 +4,7 @@ import '@openzeppelin/hardhat-upgrades'
 import 'dotenv/config'
 import { cleanEnv, str } from 'envalid'
 import 'solidity-docgen'
+import 'hardhat-gas-reporter'
 
 const env = cleanEnv(process.env, {
 	DEPLOYER_PRIVATE_KEY: str(),
@@ -14,7 +15,11 @@ const env = cleanEnv(process.env, {
 const accounts = [env.DEPLOYER_PRIVATE_KEY, env.ANALYZER_PRIVATE_KEY]
 
 const config: HardhatUserConfig = {
-	solidity: '0.8.24',
+	solidity: '0.8.27',
+	gasReporter: {
+		enabled: true,
+		currency: 'USD',
+	},
 	networks: {
 		sepolia: {
 			// url: "https://1rpc.io/sepolia",

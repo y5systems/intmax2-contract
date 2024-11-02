@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {ITokenData} from "./ITokenData.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 abstract contract TokenData is Initializable, ITokenData {
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
-	uint256 private nextTokenIndex;
 	TokenInfo[] private tokenInfoList;
 	mapping(address => uint32) private fungibleTokenIndexMap;
 	mapping(address => mapping(uint256 => uint32))
@@ -15,7 +14,7 @@ abstract contract TokenData is Initializable, ITokenData {
 	// solhint-disable-next-line func-name-mixedcase
 	function __TokenData_init(
 		address[] memory initialERC20Tokens
-	) public onlyInitializing {
+	) internal onlyInitializing {
 		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
 		for (uint256 i = 0; i < initialERC20Tokens.length; i++) {
 			_createTokenIndex(TokenType.ERC20, initialERC20Tokens[i], 0);
@@ -39,8 +38,9 @@ abstract contract TokenData is Initializable, ITokenData {
 		return _createTokenIndex(tokenType, tokenAddress, tokenId);
 	}
 
-	function getNativeTokenIndex() public view returns (uint32) {
-		return fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS];
+	function getNativeTokenIndex() public pure returns (uint32) {
+		// fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = 0
+		return 0;
 	}
 
 	function _createTokenIndex(
@@ -48,8 +48,7 @@ abstract contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) private returns (uint32) {
-		uint32 tokenIndex = uint32(nextTokenIndex);
-		nextTokenIndex += 1;
+		uint32 tokenIndex = uint32(tokenInfoList.length);
 		tokenInfoList.push(TokenInfo(tokenType, tokenAddress, tokenId));
 		if (tokenType == TokenType.NATIVE) {
 			fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = tokenIndex;
@@ -73,7 +72,8 @@ abstract contract TokenData is Initializable, ITokenData {
 		uint256 tokenId
 	) public view returns (bool, uint32) {
 		if (tokenType == TokenType.NATIVE) {
-			return (true, fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS]);
+			// fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = 0
+			return (true, 0);
 		}
 		if (tokenAddress == address(0)) {
 			revert TokenAddressIsZero();

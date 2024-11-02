@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {WithdrawalProofPublicInputsLib} from "./lib/WithdrawalProofPublicInputsLib.sol";
 import {ChainedWithdrawalLib} from "./lib/ChainedWithdrawalLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 
 interface IWithdrawal {
+	/// @notice address is zero address
+	error AddressZero();
+
 	/// @notice Error thrown when the verification of the withdrawal proof's public input hash chain fails
 	error WithdrawalChainVerificationFailed();
 
@@ -55,6 +58,14 @@ interface IWithdrawal {
 		uint256 lastClaimableWithdrawalId
 	);
 
+	/// @notice Emitted when direct withdrawal token indices are added
+	/// @param tokenIndices The token indices that were added
+	event DirectWithdrawalTokenIndicesAdded(uint256[] tokenIndices);
+
+	/// @notice Emitted when direct withdrawal token indices are removed
+	/// @param tokenIndices The token indices that were removed
+	event DirectWithdrawalTokenIndicesRemoved(uint256[] tokenIndices);
+
 	/// @notice Submit withdrawal proof from intmax2
 	/// @param withdrawals List of chained withdrawals
 	/// @param publicInputs Public inputs for the withdrawal proof
@@ -75,6 +86,8 @@ interface IWithdrawal {
 
 	/// @notice Add token indices to the list of direct withdrawal token indices
 	/// @param tokenIndices The token indices to add
+	/// @notice ERC721 and ERC1155 tokens are not supported for direct withdrawal.
+	/// When transferred to the liquidity contract, they will be converted to claimable withdrawals.
 	function addDirectWithdrawalTokenIndices(
 		uint256[] calldata tokenIndices
 	) external;

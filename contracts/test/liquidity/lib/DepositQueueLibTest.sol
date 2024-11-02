@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 import {DepositQueueLib} from "../../../liquidity/lib/DepositQueueLib.sol";
 
@@ -39,7 +39,7 @@ contract DepositQueueLibTest {
 	}
 
 	function getRear() external view returns (uint256) {
-		return depositQueue.rear;
+		return depositQueue.depositData.length;
 	}
 
 	function getDepositData(

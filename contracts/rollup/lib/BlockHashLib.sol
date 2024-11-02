@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.24;
+pragma solidity 0.8.27;
 
 library BlockHashLib {
 	/// @notice Pushes the genesis block hash to the block hashes array
@@ -16,8 +16,8 @@ library BlockHashLib {
 	/// @param blockHashes The memory array of block hashes
 	/// @return The current block number
 	function getBlockNumber(
-		bytes32[] memory blockHashes
-	) internal pure returns (uint32) {
+		bytes32[] storage blockHashes
+	) internal view returns (uint32) {
 		return uint32(blockHashes.length);
 	}
 
@@ -25,8 +25,8 @@ library BlockHashLib {
 	/// @param blockHashes The memory array of block hashes
 	/// @return The hash of the previous block
 	function getPrevHash(
-		bytes32[] memory blockHashes
-	) internal pure returns (bytes32) {
+		bytes32[] storage blockHashes
+	) internal view returns (bytes32) {
 		return blockHashes[blockHashes.length - 1];
 	}
 

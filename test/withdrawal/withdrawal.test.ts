@@ -56,7 +56,7 @@ describe('Withdrawal', () => {
 				await contribution.getAddress(),
 				DIRECT_WITHDRAWAL_TOKEN_INDICES,
 			],
-			{ kind: 'uups' },
+			{ kind: 'uups', unsafeAllow: ['constructor'] },
 		)) as unknown as Withdrawal
 		return [
 			withdrawal,
@@ -78,6 +78,23 @@ describe('Withdrawal', () => {
 			user,
 		}
 	}
+	describe('constructor', () => {
+		it('should revert if not initialized through proxy', async () => {
+			const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
+			const withdrawal =
+				(await withdrawalFactory.deploy()) as unknown as Withdrawal
+			await expect(
+				withdrawal.initialize(
+					ethers.ZeroAddress,
+					ethers.ZeroAddress,
+					ethers.ZeroAddress,
+					ethers.ZeroAddress,
+					ethers.ZeroAddress,
+					[0],
+				),
+			).to.be.revertedWithCustomError(withdrawal, 'InvalidInitialization')
+		})
+	})
 	describe('initialize', () => {
 		describe('success', () => {
 			it('should set deployer as the owner', async () => {
@@ -85,21 +102,146 @@ describe('Withdrawal', () => {
 				const signers = await getSigners()
 				expect(await withdrawal.owner()).to.equal(signers.deployer.address)
 			})
+			it('generate DirectWithdrawalTokenIndicesAdded event', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				const filter = withdrawal.filters.DirectWithdrawalTokenIndicesAdded()
+				const events = await withdrawal.queryFilter(filter)
+				expect(events.length).to.equal(1)
+				expect(events[0].args?.tokenIndices).to.deep.equal(
+					DIRECT_WITHDRAWAL_TOKEN_INDICES,
+				)
+			})
 		})
 		describe('fail', () => {
 			it('should revert when initializing twice', async () => {
 				const [withdrawal] = await loadFixture(setup)
-
+				const tmpAddress = ethers.Wallet.createRandom().address
 				await expect(
 					withdrawal.initialize(
-						ethers.ZeroAddress,
-						ethers.ZeroAddress,
-						ethers.ZeroAddress,
-						ethers.ZeroAddress,
-						ethers.ZeroAddress,
+						tmpAddress,
+						tmpAddress,
+						tmpAddress,
+						tmpAddress,
+						tmpAddress,
 						[0, 1],
 					),
 				).to.be.revertedWithCustomError(withdrawal, 'InvalidInitialization')
+			})
+			it('scrollMessenger is zero address', async () => {
+				const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
+				const tmpAddress = ethers.Wallet.createRandom().address
+				await expect(
+					upgrades.deployProxy(
+						withdrawalFactory,
+						[
+							ethers.ZeroAddress,
+							tmpAddress,
+							tmpAddress,
+							tmpAddress,
+							tmpAddress,
+							DIRECT_WITHDRAWAL_TOKEN_INDICES,
+						],
+						{ kind: 'uups', unsafeAllow: ['constructor'] },
+					),
+				).to.be.revertedWithCustomError(withdrawalFactory, 'AddressZero')
+			})
+			it('withdrawalVerifier is zero address', async () => {
+				const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
+				const tmpAddress = ethers.Wallet.createRandom().address
+				await expect(
+					upgrades.deployProxy(
+						withdrawalFactory,
+						[
+							tmpAddress,
+							ethers.ZeroAddress,
+							tmpAddress,
+							tmpAddress,
+							tmpAddress,
+							DIRECT_WITHDRAWAL_TOKEN_INDICES,
+						],
+						{ kind: 'uups', unsafeAllow: ['constructor'] },
+					),
+				).to.be.revertedWithCustomError(withdrawalFactory, 'AddressZero')
+			})
+			it('liquidity is zero address', async () => {
+				const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
+				const tmpAddress = ethers.Wallet.createRandom().address
+				await expect(
+					upgrades.deployProxy(
+						withdrawalFactory,
+						[
+							tmpAddress,
+							tmpAddress,
+							ethers.ZeroAddress,
+							tmpAddress,
+							tmpAddress,
+							DIRECT_WITHDRAWAL_TOKEN_INDICES,
+						],
+						{ kind: 'uups', unsafeAllow: ['constructor'] },
+					),
+				).to.be.revertedWithCustomError(withdrawalFactory, 'AddressZero')
+			})
+			it('rollup is zero address', async () => {
+				const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
+				const tmpAddress = ethers.Wallet.createRandom().address
+				await expect(
+					upgrades.deployProxy(
+						withdrawalFactory,
+						[
+							tmpAddress,
+							tmpAddress,
+							tmpAddress,
+							ethers.ZeroAddress,
+							tmpAddress,
+							DIRECT_WITHDRAWAL_TOKEN_INDICES,
+						],
+						{ kind: 'uups', unsafeAllow: ['constructor'] },
+					),
+				).to.be.revertedWithCustomError(withdrawalFactory, 'AddressZero')
+			})
+			it('contribution is zero address', async () => {
+				const withdrawalFactory = await ethers.getContractFactory('Withdrawal')
+				const tmpAddress = ethers.Wallet.createRandom().address
+				await expect(
+					upgrades.deployProxy(
+						withdrawalFactory,
+						[
+							tmpAddress,
+							tmpAddress,
+							tmpAddress,
+							tmpAddress,
+							ethers.ZeroAddress,
+							DIRECT_WITHDRAWAL_TOKEN_INDICES,
+						],
+						{ kind: 'uups', unsafeAllow: ['constructor'] },
+					),
+				).to.be.revertedWithCustomError(withdrawalFactory, 'AddressZero')
+			})
+
+			it('token index is already exist', async () => {
+				const withdrawalFactory =
+					await ethers.getContractFactory('Withdrawal2Test')
+				const withdrawal = await upgrades.deployProxy(withdrawalFactory, {
+					kind: 'uups',
+					unsafeAllow: ['constructor'],
+					initializer: false,
+				})
+				const { deployer } = await getSigners()
+				const tmpAddress = ethers.Wallet.createRandom().address
+				await withdrawal.addOwner(deployer.address)
+				await withdrawal.addDirectWithdrawalTokenIndices([1])
+				await expect(
+					withdrawal.initialize(
+						tmpAddress,
+						tmpAddress,
+						tmpAddress,
+						tmpAddress,
+						tmpAddress,
+						[1],
+					),
+				)
+					.to.be.revertedWithCustomError(withdrawalFactory, 'TokenAlreadyExist')
+					.withArgs(1)
 			})
 		})
 	})
@@ -652,6 +794,18 @@ describe('Withdrawal', () => {
 				const indices = await withdrawal.getDirectWithdrawalTokenIndices()
 				expect(indices).to.deep.equal([2])
 			})
+			it('emit DirectWithdrawalTokenIndicesAdded', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				await expect(withdrawal.addDirectWithdrawalTokenIndices([4, 5]))
+					.to.emit(withdrawal, 'DirectWithdrawalTokenIndicesAdded')
+					.withArgs([4, 5])
+			})
+			it('emit DirectWithdrawalTokenIndicesRemoved', async () => {
+				const [withdrawal] = await loadFixture(setup)
+				await expect(withdrawal.removeDirectWithdrawalTokenIndices([1, 3]))
+					.to.emit(withdrawal, 'DirectWithdrawalTokenIndicesRemoved')
+					.withArgs([1, 3])
+			})
 		})
 		describe('fail', () => {
 			it('duplicate data.', async () => {
@@ -677,6 +831,7 @@ describe('Withdrawal', () => {
 			const next = await upgrades.upgradeProxy(
 				await withdrawal.getAddress(),
 				withdrawal2Factory,
+				{ unsafeAllow: ['constructor'] },
 			)
 			const owner = await withdrawal.owner()
 			expect(owner).to.equal(deployer.address)
@@ -694,6 +849,7 @@ describe('Withdrawal', () => {
 				upgrades.upgradeProxy(
 					await withdrawal.getAddress(),
 					withdrawal2Factory,
+					{ unsafeAllow: ['constructor'] },
 				),
 			)
 				.to.be.revertedWithCustomError(withdrawal, 'OwnableUnauthorizedAccount')
