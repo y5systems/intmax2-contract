@@ -1,84 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {FraudProofPublicInputsLib} from "./lib/FraudProofPublicInputsLib.sol";
-
 interface IBlockBuilderRegistry {
-	/// @notice address is zero address
-	error AddressZero();
-
 	/// @notice Error thrown when trying to register a block builder with an empty URL
 	error URLIsEmpty();
 
-	/// @notice Error thrown when the staked amount is insufficient
-	error InsufficientStakeAmount();
-
-	/// @notice Error thrown when trying to slash a block builder that is not staking
+	/// @notice Error thrown when trying to stop a block builder that is not adding
 	error BlockBuilderNotFound();
-
-	/// @notice Error thrown when trying to unstake within the challenge duration
-	error CannotUnstakeWithinChallengeDuration();
-
-	/// @notice Error thrown when attempting to slash the same block number twice
-	error FraudProofAlreadySubmitted();
-
-	/// @notice Error thrown when fraud proof verification fails
-	error FraudProofVerificationFailed();
-
-	/// @notice Error thrown when the block hash in public input doesn't match the contract's record
-	/// @param given The block hash provided in the public input
-	/// @param expected The block hash expected by the contract
-	error FraudProofBlockHashMismatch(bytes32 given, bytes32 expected);
-
-	/// @notice Error thrown when the challenger in public input doesn't match msg.sender
-	error FraudProofChallengerMismatch();
-
-	/// @notice Event emitted when a fraud proof is submitted
-	/// @param blockNumber The number of the block being challenged
-	/// @param blockBuilder The address of the block builder being challenged
-	/// @param challenger The address of the challenger submitting the fraud proof
-	event BlockFraudProofSubmitted(
-		uint32 indexed blockNumber,
-		address indexed blockBuilder,
-		address indexed challenger
-	);
 
 	/// @notice Event emitted when a block builder is updated
 	/// @param blockBuilder The address of the updated block builder
 	/// @param url The new URL of the block builder
-	/// @param stakeAmount The new stake amount of the block builder
-	event BlockBuilderUpdated(
-		address indexed blockBuilder,
-		string url,
-		uint256 stakeAmount
-	);
+	event BlockBuilderUpdated(address indexed blockBuilder, string url);
 
 	/// @notice Event emitted when a block builder stops operations
 	/// @param blockBuilder The address of the block builder that stopped
 	event BlockBuilderStopped(address indexed blockBuilder);
 
-	/// @notice Event emitted when a block builder is slashed
-	/// @param blockBuilder The address of the slashed block builder
-	/// @param challenger The address of the challenger who submitted the fraud proof
-	event BlockBuilderSlashed(
-		address indexed blockBuilder,
-		address indexed challenger
-	);
-
 	/**
 	 * @notice Block builder information.
 	 * @param blockBuilderUrl The URL or IP address of Block builder.
-	 * @param stakeAmount The stake amount of Block Builder.
-	 * @param stopTime The time when the node declares that it has ceased operations.
-	 * @param numSlashes The number of times the node has been slashed so far.
-	 * @param isValid A flag whether the node is not malicious.
+	 * @param isActive active flag.
 	 */
 	struct BlockBuilderInfo {
 		string blockBuilderUrl;
-		uint256 stakeAmount;
-		uint256 stopTime;
-		uint256 numSlashes;
-		bool isValid;
+		bool isActive;
 	}
 
 	/**
@@ -94,58 +40,30 @@ interface IBlockBuilderRegistry {
 	/**
 	 * @notice Update block builder.
 	 * @dev This method is used to register or update the URL or IP address of the block builder.
-	 * @dev The block builder must send at least 0.1 ETH to this contract to register.
 	 * @param url The URL or IP address of Block builder.
 	 */
-	function updateBlockBuilder(string memory url) external payable;
+	function updateBlockBuilder(string memory url) external;
 
 	/**
 	 * @notice Declare that the block builder has stopped.
-	 * @dev This method must be run before unstake.
 	 */
 	function stopBlockBuilder() external;
 
 	/**
-	 * @notice unstake after stoping block builder.
-	 * @dev You cannot unstake within one day of the Block Builder's last block submission.
-	 *  This is because a fraud proof may be submitted against the posted block, which could result
-	 *  in a reduction of the stake.
-	 */
-	function unstake() external;
-
-	/**
-	 * @notice Submits a fraud proof to demonstrate that a block submitted by a block builder is invalid.
-	 * @param publicInputs Public inputs of the fraud proof.
-	 * @param proof The fraud proof itself.
-	 */
-	function submitBlockFraudProof(
-		FraudProofPublicInputsLib.FraudProofPublicInputs calldata publicInputs,
-		bytes calldata proof
-	) external;
-
-	/**
-	 * @notice Check if the block builder is valid.
+	 * @notice Check if the block builder is active.
 	 * @param blockBuilder The address of the block builder.
-	 * @return True if the block builder is valid.
-	 * @dev The block builder is valid if the stake amount is greater than or equal to 0.1 ETH.
+	 * @return True if the block builder is active.
 	 */
-	function isValidBlockBuilder(
+	function isActiveBlockBuilder(
 		address blockBuilder
 	) external view returns (bool);
 
 	/**
-	 * @notice Get the block builder information of valid block builders.
+	 * @notice Get the block builder information of active block builders.
 	 * @return The block builder information.
 	 */
-	function getValidBlockBuilders()
+	function getActiveBlockBuilders()
 		external
 		view
 		returns (BlockBuilderInfoWithAddress[] memory);
-
-	/**
-	 * @notice Set the burn address.
-	 * @param _burnAddress The burn address.
-	 * @dev The burn address is used to burn the stake amount when the block builder is slashed.
-	 */
-	function setBurnAddress(address _burnAddress) external;
 }
