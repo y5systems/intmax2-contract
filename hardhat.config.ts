@@ -8,11 +8,10 @@ import 'hardhat-gas-reporter'
 
 const env = cleanEnv(process.env, {
 	DEPLOYER_PRIVATE_KEY: str(),
-	ANALYZER_PRIVATE_KEY: str(),
 	ALCHEMY_KEY: str(),
 })
 
-const accounts = [env.DEPLOYER_PRIVATE_KEY, env.ANALYZER_PRIVATE_KEY]
+const accounts = [env.DEPLOYER_PRIVATE_KEY]
 
 const config: HardhatUserConfig = {
 	solidity: '0.8.27',
@@ -22,7 +21,6 @@ const config: HardhatUserConfig = {
 	},
 	networks: {
 		sepolia: {
-			// url: "https://1rpc.io/sepolia",
 			url: `https://eth-sepolia.g.alchemy.com/v2/${env.ALCHEMY_KEY}`,
 			accounts,
 		},
@@ -31,8 +29,7 @@ const config: HardhatUserConfig = {
 			accounts,
 		},
 		scrollSepolia: {
-			// url: 'https://sepolia-rpc.scroll.io/',
-			url: 'https://scroll-testnet.rpc.grove.city/v1/a7a7c8e2',
+			url: `https://scroll-sepolia.g.alchemy.com/v2/${env.ALCHEMY_KEY}`,
 			accounts,
 		},
 	},
