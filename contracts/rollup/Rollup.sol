@@ -31,6 +31,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	DepositTreeLib.DepositTree private depositTree;
 	RateLimiterLib.RateLimitState private rateLimitState;
 	bytes32 public depositTreeRoot;
+	uint32 public depositIndex;
 
 	modifier onlyLiquidityContract() {
 		IL2ScrollMessenger l2ScrollMessengerCached = l2ScrollMessenger;
@@ -94,8 +95,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		if (length > NUM_SENDERS_IN_BLOCK) {
 			revert TooManySenderPublicKeys();
 		}
-		uint32 blockNumber = blockHashes.getBlockNumber();
-		emit PubKeysPosted(blockNumber, senderPublicKeys);
 
 		uint256[NUM_SENDERS_IN_BLOCK] memory paddedKeys;
 		for (uint256 i = 0; i < length; i++) {
@@ -135,8 +134,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		if (length % 5 != 0) {
 			revert SenderAccountIdsInvalidLength();
 		}
-		uint32 blockNumber = blockHashes.getBlockNumber();
-		emit AccountIdsPosted(blockNumber, senderAccountIds);
 		bytes memory paddedAccountIds = new bytes(FULL_ACCOUNT_IDS_BYTES);
 		for (uint256 i = 0; i < length; i++) {
 			paddedAccountIds[i] = senderAccountIds[i];
@@ -163,9 +160,13 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		uint256 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external onlyLiquidityContract {
+		uint32 depositIndexCached = depositIndex;
 		for (uint256 i = 0; i < depositHashes.length; i++) {
 			depositTree.deposit(depositHashes[i]);
+			emit DepositLeafInserted(depositIndexCached, depositHashes[i]);
+			depositIndexCached++;
 		}
+		depositIndex = depositIndexCached;
 		lastProcessedDepositId = _lastProcessedDepositId;
 		bytes32 newDepositTreeRoot = depositTree.getRoot();
 		depositTreeRoot = newDepositTreeRoot;

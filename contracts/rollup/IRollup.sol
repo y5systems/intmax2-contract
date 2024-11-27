@@ -39,6 +39,14 @@ interface IRollup {
 		bytes32 depositTreeRoot
 	);
 
+	/// @notice Event emitted when a deposit is inserted into the deposit tree
+	/// @param depositIndex The index of the deposit
+	/// @param depositHash The hash of the deposit
+	event DepositLeafInserted(
+		uint32 indexed depositIndex,
+		bytes32 indexed depositHash
+	);
+
 	/// @notice Event emitted when a new block is posted
 	/// @param prevBlockHash The hash of the previous block
 	/// @param blockBuilder The address of the block builder
@@ -52,19 +60,6 @@ interface IRollup {
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash
 	);
-
-	/// @notice Event emitted to ensure data availability of posted public keys
-	/// @param blockNumber The block number associated with the public keys
-	/// @param senderPublicKeys The array of sender public keys
-	event PubKeysPosted(
-		uint256 indexed blockNumber,
-		uint256[] senderPublicKeys
-	);
-
-	/// @notice Event emitted to ensure data availability of posted account IDs
-	/// @param blockNumber The block number associated with the account IDs
-	/// @param accountIds The byte sequence of account IDs
-	event AccountIdsPosted(uint256 indexed blockNumber, bytes accountIds);
 
 	/// @notice Posts a registration block (for all senders' first transactions, specified by public keys)
 	/// @dev msg.value must be greater than or equal to the penalty fee of the rate limiter
