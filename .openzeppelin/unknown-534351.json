@@ -90,6 +90,26 @@
       "address": "0xC79BB8DB83950b9c5AE5dF2E56bb502968EE6dB5",
       "txHash": "0x295caa1d5d20eaffa3031a84be2daa32215ca0e946a5e7771db5a5c202a4d9c4",
       "kind": "uups"
+    },
+    {
+      "address": "0x2C35Be11458140e305113d75BABb4Ee88d913E7F",
+      "txHash": "0xc72cd7fcb80ebc048dd1982c5deadb7057b5144816c5a0fd9d15c89f045d8f33",
+      "kind": "uups"
+    },
+    {
+      "address": "0x6cc424557e836e60cE417B3C6719AAeD2FFEc226",
+      "txHash": "0x1941d2a704723f02b5ff2ebb2ed9322083c1c1da57dcd033953de47e887aa908",
+      "kind": "uups"
+    },
+    {
+      "address": "0x2cA408E3abe796726607bD8e66B1faCa851344FF",
+      "txHash": "0xe7bbec7b75bcd7306c0ce126aa3adc20e5e0c7e4596368f41a7cbd7017a942af",
+      "kind": "uups"
+    },
+    {
+      "address": "0xdDE9F931bCDc6a6493808FC8166Ed3592b1E842F",
+      "txHash": "0x6721978383ebaefcc945b5cfa551f295ef79be5f119230c3283652e759afebab",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -2825,6 +2845,248 @@
           "t_uint256": {
             "label": "uint256",
             "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "7bbd204b23605339c7305cb6bdfabaad3518a4c8dddeadde231a17dfc7dc7a0e": {
+      "address": "0xe39a0A17Ee20241A57a7b0336Ec98314e5EfF298",
+      "txHash": "0x3ce71ba5d851d85c515094ed6405bd0362421c0dc984b7f0053f3dcb6cd5be16",
+      "layout": {
+        "solcVersion": "0.8.27",
+        "storage": [
+          {
+            "label": "liquidity",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_address",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:24"
+          },
+          {
+            "label": "lastProcessedDepositId",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:25"
+          },
+          {
+            "label": "blockHashes",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_bytes32)dyn_storage",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:26"
+          },
+          {
+            "label": "blockBuilders",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_array(t_address)dyn_storage",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:27"
+          },
+          {
+            "label": "l2ScrollMessenger",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(IL2ScrollMessenger)10486",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:29"
+          },
+          {
+            "label": "contribution",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_contract(IContribution)11122",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:30"
+          },
+          {
+            "label": "depositTree",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_struct(DepositTree)14371_storage",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:31"
+          },
+          {
+            "label": "rateLimitState",
+            "offset": 0,
+            "slot": "40",
+            "type": "t_struct(RateLimitState)14675_storage",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:32"
+          },
+          {
+            "label": "depositTreeRoot",
+            "offset": 0,
+            "slot": "42",
+            "type": "t_bytes32",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:33"
+          },
+          {
+            "label": "depositIndex",
+            "offset": 0,
+            "slot": "43",
+            "type": "t_uint32",
+            "contract": "Rollup",
+            "src": "contracts/rollup/Rollup.sol:34"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)237_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)165_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]",
+            "numberOfBytes": "32"
+          },
+          "t_array(t_bytes32)32_storage": {
+            "label": "bytes32[32]",
+            "numberOfBytes": "1024"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IContribution)11122": {
+            "label": "contract IContribution",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IL2ScrollMessenger)10486": {
+            "label": "contract IL2ScrollMessenger",
+            "numberOfBytes": "20"
+          },
+          "t_struct(DepositTree)14371_storage": {
+            "label": "struct DepositTreeLib.DepositTree",
+            "members": [
+              {
+                "label": "_branch",
+                "type": "t_array(t_bytes32)32_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "depositCount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "32"
+              },
+              {
+                "label": "defaultHash",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "33"
+              }
+            ],
+            "numberOfBytes": "1088"
+          },
+          "t_struct(RateLimitState)14675_storage": {
+            "label": "struct RateLimiterLib.RateLimitState",
+            "members": [
+              {
+                "label": "lastCallTime",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "emaInterval",
+                "type": "t_userDefinedValueType(UD60x18)10320",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint32": {
+            "label": "uint32",
+            "numberOfBytes": "4"
+          },
+          "t_userDefinedValueType(UD60x18)10320": {
+            "label": "UD60x18",
+            "numberOfBytes": "32",
+            "underlying": "t_uint256"
           }
         },
         "namespaces": {
