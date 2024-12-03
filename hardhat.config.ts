@@ -10,6 +10,7 @@ const env = cleanEnv(process.env, {
 	DEPLOYER_PRIVATE_KEY: str(),
 	ALCHEMY_KEY: str(),
 	ETHERSCAN_API_KEY: str(),
+	SCROLLSCAN_API_KEY: str()
 })
 
 const accounts = [env.DEPLOYER_PRIVATE_KEY]
@@ -38,7 +39,20 @@ const config: HardhatUserConfig = {
 		exclude: ['test'],
 	},
 	etherscan: {
-		apiKey: env.ETHERSCAN_API_KEY,
+		apiKey: {
+			sepolia: env.ETHERSCAN_API_KEY,
+			scrollSepolia: env.SCROLLSCAN_API_KEY
+		},
+		customChains: [
+			{
+				network: 'scrollSepolia',
+				chainId: 534351,
+				urls: {
+					apiURL: 'https://api-sepolia.scrollscan.com/api',
+					browserURL: 'https://sepolia.scrollscan.com/',
+				},
+			},
+		],
 	},
 	sourcify: {
 		enabled: false
