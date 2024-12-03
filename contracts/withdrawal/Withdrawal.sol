@@ -32,15 +32,13 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	mapping(bytes32 => bool) private nullifiers;
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 
-	uint256 public lastDirectWithdrawalId;
-	uint256 public lastClaimableWithdrawalId;
-
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();
 	}
 
 	function initialize(
+		address _admin,
 		address _scrollMessenger,
 		address _withdrawalVerifier,
 		address _liquidity,
@@ -48,6 +46,9 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _contribution,
 		uint256[] memory _directWithdrawalTokenIndices
 	) external initializer {
+		if (_admin == address(0)) {
+			revert AddressZero();
+		}
 		if (_scrollMessenger == address(0)) {
 			revert AddressZero();
 		}
@@ -63,7 +64,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		if (_contribution == address(0)) {
 			revert AddressZero();
 		}
-		__Ownable_init(_msgSender());
+		__Ownable_init(_admin);
 		__UUPSUpgradeable_init();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
@@ -115,12 +116,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		);
 
 		uint256 directWithdrawalIndex = 0;
-		// load lastDirectWithdrawalId to memory to avoid storage io
-		uint256 lastDirectWithdrawalIdMemory = lastDirectWithdrawalId;
-
 		uint256 claimableWithdrawalIndex = 0;
-		// load lastClaimableWithdrawalId to memory to avoid storage io
-		uint256 lastClaimableWithdrawalIdMemory = lastClaimableWithdrawalId;
 
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			if (isSkippedFlags[i]) {
@@ -133,43 +129,31 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 					chainedWithdrawal.recipient,
 					chainedWithdrawal.tokenIndex,
 					chainedWithdrawal.amount,
-					0 // set later
+					chainedWithdrawal.nullifier
 				);
 			if (_isDirectWithdrawalToken(chainedWithdrawal.tokenIndex)) {
-				lastDirectWithdrawalIdMemory++;
-				withdrawal.id = lastDirectWithdrawalIdMemory;
 				directWithdrawals[directWithdrawalIndex] = withdrawal;
 				emit DirectWithdrawalQueued(
-					withdrawal.id,
+					withdrawal.getHash(),
 					withdrawal.recipient,
 					withdrawal
 				);
 				directWithdrawalIndex++;
 			} else {
-				lastClaimableWithdrawalIdMemory++;
-				withdrawal.id = lastClaimableWithdrawalIdMemory;
-				claimableWithdrawals[claimableWithdrawalIndex] = withdrawal
-					.getHash();
+				bytes32 withdrawalHash = withdrawal.getHash();
+				claimableWithdrawals[claimableWithdrawalIndex] = withdrawalHash;
 				emit ClaimableWithdrawalQueued(
-					withdrawal.id,
+					withdrawalHash,
 					withdrawal.recipient,
 					withdrawal
 				);
 				claimableWithdrawalIndex++;
 			}
 		}
-		lastDirectWithdrawalId = lastDirectWithdrawalIdMemory;
-		lastClaimableWithdrawalId = lastClaimableWithdrawalIdMemory;
-		emit WithdrawalsQueued(
-			lastDirectWithdrawalIdMemory,
-			lastClaimableWithdrawalIdMemory
-		);
 
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
-			lastDirectWithdrawalIdMemory,
 			directWithdrawals,
-			lastClaimableWithdrawalIdMemory,
 			claimableWithdrawals
 		);
 		_relayMessage(message);

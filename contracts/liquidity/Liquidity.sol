@@ -87,6 +87,7 @@ contract Liquidity is
 	}
 
 	function initialize(
+		address _admin,
 		address _l1ScrollMessenger,
 		address _rollup,
 		address _withdrawal,
@@ -94,6 +95,9 @@ contract Liquidity is
 		address _contribution,
 		address[] memory initialERC20Tokens
 	) external initializer {
+		if (_admin == address(0)) {
+			revert AddressZero();
+		}
 		if (_l1ScrollMessenger == address(0)) {
 			revert AddressZero();
 		}
@@ -109,7 +113,7 @@ contract Liquidity is
 		if (_contribution == address(0)) {
 			revert AddressZero();
 		}
-		_grantRole(DEFAULT_ADMIN_ROLE, _msgSender());
+		_grantRole(DEFAULT_ADMIN_ROLE, _admin);
 		_grantRole(ANALYZER, _analyzer);
 		__UUPSUpgradeable_init();
 		__AccessControl_init();
@@ -312,19 +316,11 @@ contract Liquidity is
 	}
 
 	function processWithdrawals(
-		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
-		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHashes
 	) external onlyWithdrawal {
-		_processDirectWithdrawals(
-			_lastProcessedDirectWithdrawalId,
-			withdrawals
-		);
-		_processClaimableWithdrawals(
-			_lastProcessedClaimableWithdrawalId,
-			withdrawalHashes
-		);
+		_processDirectWithdrawals(withdrawals);
+		_processClaimableWithdrawals(withdrawalHashes);
 	}
 
 	function isDepositValid(
@@ -353,14 +349,12 @@ contract Liquidity is
 	}
 
 	function _processDirectWithdrawals(
-		uint256 _lastProcessedDirectWithdrawalId,
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) private {
 		for (uint256 i = 0; i < withdrawals.length; i++) {
 			_processDirectWithdrawal(withdrawals[i]);
 		}
 		if (withdrawals.length > 0) {
-			emit DirectWithdrawalsProcessed(_lastProcessedDirectWithdrawalId);
 			// In the ScrollMessenger, it is not possible to identify the person who relayed the message.
 			// Here we consider tx.origin as the gas payer and record their contribution accordingly.
 			// However, this approach can be problematic in cases of sponsored transactions or meta transactions,
@@ -399,7 +393,12 @@ contract Liquidity is
 			// ERC721 and ERC1155 tokens are not supported for direct withdrawals
 			result = false;
 		}
-		if (!result) {
+		if (result) {
+			emit DirectWithdrawalSuccessed(
+				withdrawal_.getHash(),
+				withdrawal_.recipient
+			);
+		} else {
 			bytes32 withdrawalHash = withdrawal_.getHash();
 			// solhint-disable-next-line reentrancy
 			claimableWithdrawals[withdrawalHash] = block.timestamp;
@@ -409,7 +408,6 @@ contract Liquidity is
 	}
 
 	function _processClaimableWithdrawals(
-		uint256 _lastProcessedClaimableWithdrawalId,
 		bytes32[] calldata withdrawalHashes
 	) private {
 		for (uint256 i = 0; i < withdrawalHashes.length; i++) {
@@ -417,9 +415,6 @@ contract Liquidity is
 			emit WithdrawalClaimable(withdrawalHashes[i]);
 		}
 		if (withdrawalHashes.length > 0) {
-			emit ClaimableWithdrawalsProcessed(
-				_lastProcessedClaimableWithdrawalId
-			);
 			contribution.recordContribution(
 				keccak256("PROCESS_CLAIMABLE_WITHDRAWALS"),
 				// solhint-disable-next-line avoid-tx-origin

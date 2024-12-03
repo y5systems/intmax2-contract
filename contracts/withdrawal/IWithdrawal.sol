@@ -31,31 +31,23 @@ interface IWithdrawal {
 	error TokenNotExist(uint256 tokenIndice);
 
 	/// @notice Emitted when a claimable withdrawal is queued
-	/// @param claimableWithdrawalId The ID of the claimable withdrawal
+	/// @param withdrawalHash The hash of the withdrawal
 	/// @param recipient The address of the recipient
 	/// @param withdrawal The withdrawal details
 	event ClaimableWithdrawalQueued(
-		uint256 indexed claimableWithdrawalId,
+		bytes32 indexed withdrawalHash,
 		address indexed recipient,
 		WithdrawalLib.Withdrawal withdrawal
 	);
 
 	/// @notice Emitted when a direct withdrawal is queued
-	/// @param directWithdrawalId The ID of the direct withdrawal
+	/// @param withdrawalHash The hash of the withdrawal
 	/// @param recipient The address of the recipient
 	/// @param withdrawal The withdrawal details
 	event DirectWithdrawalQueued(
-		uint256 indexed directWithdrawalId,
+		bytes32 indexed withdrawalHash,
 		address indexed recipient,
 		WithdrawalLib.Withdrawal withdrawal
-	);
-
-	/// @notice Emitted when withdrawals are queued
-	/// @param lastDirectWithdrawalId The ID of the last direct withdrawal
-	/// @param lastClaimableWithdrawalId The ID of the last claimable withdrawal
-	event WithdrawalsQueued(
-		uint256 lastDirectWithdrawalId,
-		uint256 lastClaimableWithdrawalId
 	);
 
 	/// @notice Emitted when direct withdrawal token indices are added
