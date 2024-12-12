@@ -98,6 +98,12 @@ interface ILiquidity {
 		bytes32 indexed withdrawalHash
 	);
 
+	/// @notice Pause deposits
+	function pauseDeposits() external;
+
+	/// @notice Unpause deposits
+	function unpauseDeposits() external;
+
 	/// @notice Deposit native token
 	/// @dev recipientSaltHash is the Poseidon hash of the intmax2 address (32 bytes) and a secret salt
 	/// @param recipientSaltHash The hash of the recipient's address and a secret salt

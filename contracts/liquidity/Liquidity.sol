@@ -11,6 +11,7 @@ import {IL1ScrollMessenger} from "@scroll-tech/contracts/L1/IL1ScrollMessenger.s
 
 import {TokenData} from "./TokenData.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
@@ -21,6 +22,7 @@ import {ERC20CallOptionalLib} from "./lib/ERC20CallOptionalLib.sol";
 
 contract Liquidity is
 	TokenData,
+	PausableUpgradeable,
 	UUPSUpgradeable,
 	AccessControlUpgradeable,
 	ILiquidity
@@ -115,6 +117,7 @@ contract Liquidity is
 		}
 		_grantRole(DEFAULT_ADMIN_ROLE, _admin);
 		_grantRole(ANALYZER, _analyzer);
+		__Pausable_init();
 		__UUPSUpgradeable_init();
 		__AccessControl_init();
 		__TokenData_init(initialERC20Tokens);
@@ -125,7 +128,17 @@ contract Liquidity is
 		withdrawal = _withdrawal;
 	}
 
-	function depositNativeToken(bytes32 recipientSaltHash) external payable {
+	function pauseDeposits() external onlyRole(DEFAULT_ADMIN_ROLE) {
+		_pause();
+	}
+
+	function unpauseDeposits() external onlyRole(DEFAULT_ADMIN_ROLE) {
+		_unpause();
+	}
+
+	function depositNativeToken(
+		bytes32 recipientSaltHash
+	) external payable whenNotPaused {
 		if (msg.value == 0) {
 			revert TriedToDepositZero();
 		}
@@ -137,7 +150,7 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 amount
-	) external {
+	) external whenNotPaused {
 		if (amount == 0) {
 			revert TriedToDepositZero();
 		}
@@ -158,7 +171,7 @@ contract Liquidity is
 		address tokenAddress,
 		bytes32 recipientSaltHash,
 		uint256 tokenId
-	) external {
+	) external whenNotPaused {
 		IERC721(tokenAddress).transferFrom(
 			_msgSender(),
 			address(this),
@@ -177,7 +190,7 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint256 tokenId,
 		uint256 amount
-	) external {
+	) external whenNotPaused {
 		if (amount == 0) {
 			revert TriedToDepositZero();
 		}
