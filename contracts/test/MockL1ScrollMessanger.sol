@@ -7,7 +7,7 @@ contract MockL1ScrollMessenger is IL1ScrollMessenger {
 	address public xDomainMessageSender;
 	mapping(bytes32 => bool) private isL2MessageExecuted;
 	uint256 private nonce;
-	uint256 private constant FEE = 0.01 ether;
+	uint256 private constant FEE = 1;
 
 	function sendMessage(
 		address _to,
