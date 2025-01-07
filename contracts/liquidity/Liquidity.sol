@@ -42,6 +42,7 @@ contract Liquidity is
 	address private withdrawal;
 	mapping(bytes32 => uint256) public claimableWithdrawals;
 	DepositQueueLib.DepositQueue private depositQueue;
+	mapping(bytes32 => uint32) public depositHashToDepositId;
 
 	modifier onlyWithdrawal() {
 		// Cache the values to avoid multiple storage reads
@@ -285,18 +286,19 @@ contract Liquidity is
 		uint32 tokenIndex,
 		uint256 amount
 	) private {
-		uint32 nonce = uint32(depositQueue.depositData.length);
+		uint32 depositId = uint32(depositQueue.depositData.length);
 		bytes32 depositHash = DepositLib
-			.Deposit(sender, recipientSaltHash, amount, tokenIndex, nonce)
+			.Deposit(sender, recipientSaltHash, amount, tokenIndex, depositId)
 			.getHash();
-		uint256 depositId = depositQueue.enqueue(depositHash, sender);
+		depositQueue.enqueue(depositHash, sender);
+		depositHashToDepositId[depositHash] = depositId;
 		emit Deposited(
 			depositId,
 			sender,
 			recipientSaltHash,
 			amount,
 			tokenIndex,
-			nonce,
+			depositId,
 			block.timestamp
 		);
 	}
@@ -338,13 +340,18 @@ contract Liquidity is
 		address sender,
 		bytes32 recipientSaltHash,
 		uint256 amount,
-		uint32 tokenIndex,
-		uint32 nonce
+		uint32 tokenIndex
 	) external view returns (bool) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.depositData[depositId];
 		bytes32 depositHash = DepositLib
-			.Deposit(sender, recipientSaltHash, amount, tokenIndex, nonce)
+			.Deposit(
+				sender,
+				recipientSaltHash,
+				amount,
+				tokenIndex,
+				uint32(depositId)
+			)
 			.getHash();
 
 		if (depositData.depositHash != depositHash) {

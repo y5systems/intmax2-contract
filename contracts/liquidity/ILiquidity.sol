@@ -213,15 +213,13 @@ interface ILiquidity {
 	/// @param recipientSaltHash The hash of the recipient's intmax2 address (BLS public key) and a secret salt
 	/// @param amount The amount of tokens deposited
 	/// @param tokenIndex The index of the token being deposited
-	/// @param nonce The nonce of the deposit
-	/// @return if deposit is valid, return true
+	/// @return True if the deposit is valid
 	function isDepositValid(
 		uint256 depositId,
 		address sender,
 		bytes32 recipientSaltHash,
 		uint256 amount,
-		uint32 tokenIndex,
-		uint32 nonce
+		uint32 tokenIndex
 	) external view returns (bool);
 
 	/// @notice ERC1155 token receiver function
