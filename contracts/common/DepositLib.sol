@@ -4,12 +4,16 @@ pragma solidity 0.8.27;
 library DepositLib {
 	/// @dev Represents a leaf in the Deposit tree
 	struct Deposit {
+		/// @notice Address of the depositor
+		address depositor;
 		/// @notice Hash of the recipient's intmax2 address and a private salt
 		bytes32 recipientSaltHash;
-		/// @notice Index of the token being deposited
-		uint32 tokenIndex;
 		/// @notice Amount of tokens being deposited
 		uint256 amount;
+		/// @notice Index of the token being deposited
+		uint32 tokenIndex;
+		/// @notice The nonce of the deposit to make deposits unique
+		uint32 nonce;
 	}
 
 	/// @notice Calculates the hash of a Deposit struct
@@ -19,9 +23,11 @@ library DepositLib {
 		return
 			keccak256(
 				abi.encodePacked(
+					deposit.depositor,
 					deposit.recipientSaltHash,
+					deposit.amount,
 					deposit.tokenIndex,
-					deposit.amount
+					deposit.nonce
 				)
 			);
 	}

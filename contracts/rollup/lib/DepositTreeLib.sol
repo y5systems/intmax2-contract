@@ -28,7 +28,13 @@ library DepositTreeLib {
 	/// @param depositTree The storage reference to the DepositTree struct
 	function initialize(DepositTree storage depositTree) internal {
 		depositTree.defaultHash = DepositLib.getHash(
-			DepositLib.Deposit(0, 0, 0)
+			DepositLib.Deposit(
+				0x0000000000000000000000000000000000000000,
+				0,
+				0,
+				0,
+				0
+			)
 		);
 	}
 

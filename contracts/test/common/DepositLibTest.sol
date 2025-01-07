@@ -7,14 +7,18 @@ contract DepositLibTest {
 	using DepositLib for DepositLib.Deposit;
 
 	function getHash(
+		address depositor,
 		bytes32 recipientSaltHash,
+		uint256 amount,
 		uint32 tokenIndex,
-		uint256 amount
+		uint32 nonce
 	) external pure returns (bytes32) {
 		DepositLib.Deposit memory deposit = DepositLib.Deposit({
+			depositor: depositor,
 			recipientSaltHash: recipientSaltHash,
+			amount: amount,
 			tokenIndex: tokenIndex,
-			amount: amount
+			nonce: nonce
 		});
 		return deposit.getHash();
 	}

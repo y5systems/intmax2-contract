@@ -41,7 +41,6 @@ contract Liquidity is
 	address private rollup;
 	address private withdrawal;
 	mapping(bytes32 => uint256) public claimableWithdrawals;
-	mapping(bytes32 => bool) private doesDepositHashExist;
 	DepositQueueLib.DepositQueue private depositQueue;
 
 	modifier onlyWithdrawal() {
@@ -286,20 +285,18 @@ contract Liquidity is
 		uint32 tokenIndex,
 		uint256 amount
 	) private {
+		uint32 nonce = uint32(depositQueue.depositData.length);
 		bytes32 depositHash = DepositLib
-			.Deposit(recipientSaltHash, tokenIndex, amount)
+			.Deposit(sender, recipientSaltHash, amount, tokenIndex, nonce)
 			.getHash();
-		if (doesDepositHashExist[depositHash]) {
-			revert DepositHashAlreadyExists(depositHash);
-		}
-		doesDepositHashExist[depositHash] = true;
 		uint256 depositId = depositQueue.enqueue(depositHash, sender);
 		emit Deposited(
 			depositId,
 			sender,
 			recipientSaltHash,
-			tokenIndex,
 			amount,
+			tokenIndex,
+			nonce,
 			block.timestamp
 		);
 	}
@@ -338,15 +335,16 @@ contract Liquidity is
 
 	function isDepositValid(
 		uint256 depositId,
+		address sender,
 		bytes32 recipientSaltHash,
-		uint32 tokenIndex,
 		uint256 amount,
-		address sender
+		uint32 tokenIndex,
+		uint32 nonce
 	) external view returns (bool) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.depositData[depositId];
 		bytes32 depositHash = DepositLib
-			.Deposit(recipientSaltHash, tokenIndex, amount)
+			.Deposit(sender, recipientSaltHash, amount, tokenIndex, nonce)
 			.getHash();
 
 		if (depositData.depositHash != depositHash) {
