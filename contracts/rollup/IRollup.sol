@@ -53,12 +53,14 @@ interface IRollup {
 	/// @notice Event emitted when a new block is posted
 	/// @param prevBlockHash The hash of the previous block
 	/// @param blockBuilder The address of the block builder
+	/// @param timestamp The timestamp of the posted block
 	/// @param blockNumber The number of the posted block
 	/// @param depositTreeRoot The root of the deposit tree
 	/// @param signatureHash The hash of the signature
 	event BlockPosted(
 		bytes32 indexed prevBlockHash,
 		address indexed blockBuilder,
+		uint64 timestamp,
 		uint256 blockNumber,
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash

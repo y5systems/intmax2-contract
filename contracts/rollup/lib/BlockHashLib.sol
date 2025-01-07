@@ -9,7 +9,7 @@ library BlockHashLib {
 		bytes32[] storage blockHashes,
 		bytes32 initialDepositTreeRoot
 	) internal {
-		blockHashes.push(_calcBlockHash(0, initialDepositTreeRoot, 0, 0));
+		blockHashes.push(_calcBlockHash(0, initialDepositTreeRoot, 0, 0, 0));
 	}
 
 	/// @notice Gets the current block number based on the number of block hashes
@@ -38,12 +38,14 @@ library BlockHashLib {
 	function pushBlockHash(
 		bytes32[] storage blockHashes,
 		bytes32 depositTreeRoot,
-		bytes32 signatureHash
+		bytes32 signatureHash,
+		uint64 timestamp
 	) internal returns (bytes32 blockHash) {
 		blockHash = _calcBlockHash(
 			getPrevHash(blockHashes),
 			depositTreeRoot,
 			signatureHash,
+			timestamp,
 			getBlockNumber(blockHashes)
 		);
 		blockHashes.push(blockHash);
@@ -53,12 +55,14 @@ library BlockHashLib {
 	/// @param prevBlockHash The hash of the previous block
 	/// @param depositTreeRoot The deposit tree root for the current block
 	/// @param signatureHash The signature hash for the current block
+	/// @param timestamp The timestamp of the current block
 	/// @param blockNumber The current block number
 	/// @return The calculated block hash
 	function _calcBlockHash(
 		bytes32 prevBlockHash,
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash,
+		uint64 timestamp,
 		uint32 blockNumber
 	) private pure returns (bytes32) {
 		return
@@ -67,6 +71,7 @@ library BlockHashLib {
 					prevBlockHash,
 					depositTreeRoot,
 					signatureHash,
+					timestamp,
 					blockNumber
 				)
 			);

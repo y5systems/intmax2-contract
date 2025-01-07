@@ -24,11 +24,13 @@ contract BlockHashLibTest {
 
 	function pushBlockHash(
 		bytes32 depositTreeRoot,
-		bytes32 signatureHash
+		bytes32 signatureHash,
+		uint64 timestamp
 	) external returns (bytes32) {
 		bytes32 newBlockHash = blockHashes.pushBlockHash(
 			depositTreeRoot,
-			signatureHash
+			signatureHash,
+			timestamp
 		);
 		latestBlockHash = newBlockHash;
 		return newBlockHash;
