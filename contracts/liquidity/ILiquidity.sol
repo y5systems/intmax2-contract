@@ -36,21 +36,22 @@ interface ILiquidity {
 	/// @notice Error thrown when already analyzed deposits
 	error AlreadyAnalyzed();
 
+	/// @notice Error thrown when the deposit hash already exists
+	error DepositHashAlreadyExists(bytes32 depositHash);
+
 	/// @notice Event emitted when a deposit is made
 	/// @param depositId The unique identifier for the deposit
 	/// @param sender The address that made the deposit
 	/// @param recipientSaltHash The hash of the recipient's intmax2 address (BLS public key) and a secret salt
-	/// @param amount The amount of tokens deposited
 	/// @param tokenIndex The index of the token being deposited
-	/// @param nonce The nonce of the deposit
+	/// @param amount The amount of tokens deposited
 	/// @param depositedAt The timestamp of the deposit
 	event Deposited(
 		uint256 indexed depositId,
 		address indexed sender,
 		bytes32 indexed recipientSaltHash,
-		uint256 amount,
 		uint32 tokenIndex,
-		uint32 nonce,
+		uint256 amount,
 		uint256 depositedAt
 	);
 
@@ -209,17 +210,17 @@ interface ILiquidity {
 
 	/// @notice Check if the deposit is valid
 	/// @param depositId The ID of the deposit
-	/// @param sender The address that made the deposit
 	/// @param recipientSaltHash The hash of the recipient's intmax2 address (BLS public key) and a secret salt
-	/// @param amount The amount of tokens deposited
 	/// @param tokenIndex The index of the token being deposited
+	/// @param amount The amount of tokens deposited
+	/// @param sender The address that made the deposit
 	/// @return True if the deposit is valid
 	function isDepositValid(
 		uint256 depositId,
-		address sender,
 		bytes32 recipientSaltHash,
+		uint32 tokenIndex,
 		uint256 amount,
-		uint32 tokenIndex
+		address sender
 	) external view returns (bool);
 
 	/// @notice ERC1155 token receiver function

@@ -10,15 +10,13 @@ contract DepositLibTest {
 		address depositor,
 		bytes32 recipientSaltHash,
 		uint256 amount,
-		uint32 tokenIndex,
-		uint32 nonce
+		uint32 tokenIndex
 	) external pure returns (bytes32) {
 		DepositLib.Deposit memory deposit = DepositLib.Deposit({
 			depositor: depositor,
 			recipientSaltHash: recipientSaltHash,
 			amount: amount,
-			tokenIndex: tokenIndex,
-			nonce: nonce
+			tokenIndex: tokenIndex
 		});
 		return deposit.getHash();
 	}

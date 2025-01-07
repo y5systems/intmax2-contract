@@ -12,8 +12,6 @@ library DepositLib {
 		uint256 amount;
 		/// @notice Index of the token being deposited
 		uint32 tokenIndex;
-		/// @notice The nonce of the deposit to make deposits unique
-		uint32 nonce;
 	}
 
 	/// @notice Calculates the hash of a Deposit struct
@@ -26,8 +24,7 @@ library DepositLib {
 					deposit.depositor,
 					deposit.recipientSaltHash,
 					deposit.amount,
-					deposit.tokenIndex,
-					deposit.nonce
+					deposit.tokenIndex
 				)
 			);
 	}
