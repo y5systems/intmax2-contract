@@ -224,7 +224,11 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32 prevBlockHash = blockHashes.getPrevHash();
 		bytes32 depositTreeRootCached = depositTreeRoot;
 		uint64 timestamp = uint64(block.timestamp);
-		blockHashes.pushBlockHash(depositTreeRootCached, signatureHash, timestamp);
+		blockHashes.pushBlockHash(
+			depositTreeRootCached,
+			signatureHash,
+			timestamp
+		);
 		blockBuilders.push(_msgSender());
 		emit BlockPosted(
 			prevBlockHash,
