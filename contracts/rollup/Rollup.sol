@@ -88,12 +88,16 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
+		uint64 expiry,
 		bytes16 senderFlags,
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint,
 		uint256[] calldata senderPublicKeys
 	) external payable {
+		if (expiry != 0 && expiry <= block.timestamp) {
+			revert Expired();
+		}
 		collectPenaltyFee();
 		uint256 length = senderPublicKeys.length;
 		if (length > NUM_SENDERS_IN_BLOCK) {
@@ -112,6 +116,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		_postBlock(
 			true,
 			txTreeRoot,
+			expiry,
 			senderFlags,
 			publicKeysHash,
 			accountIdsHash,
@@ -123,6 +128,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
+		uint64 expiry,
 		bytes16 senderFlags,
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
@@ -130,6 +136,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32 publicKeysHash,
 		bytes calldata senderAccountIds
 	) external payable {
+		if (expiry != 0 && expiry <= block.timestamp) {
+			revert Expired();
+		}
 		collectPenaltyFee();
 		uint256 length = senderAccountIds.length;
 		if (length > FULL_ACCOUNT_IDS_BYTES) {
@@ -147,10 +156,10 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			paddedAccountIds[i + 4] = 0x01;
 		}
 		bytes32 accountIdsHash = keccak256(paddedAccountIds);
-
 		_postBlock(
 			false,
 			txTreeRoot,
+			expiry,
 			senderFlags,
 			publicKeysHash,
 			accountIdsHash,
@@ -180,6 +189,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	function _postBlock(
 		bool isRegistrationBlock,
 		bytes32 txTreeRoot,
+		uint64 expiry,
 		bytes16 senderFlags,
 		bytes32 publicKeysHash,
 		bytes32 accountIdsHash,
@@ -200,6 +210,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			abi.encodePacked(
 				uint32(isRegistrationBlock ? 1 : 0),
 				txTreeRoot,
+				expiry,
 				senderFlags,
 				publicKeysHash,
 				accountIdsHash,

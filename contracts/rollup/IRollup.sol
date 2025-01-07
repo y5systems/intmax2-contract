@@ -31,6 +31,9 @@ interface IRollup {
 	/// @notice Error thrown when the fee for the rate limiter is insufficient
 	error InsufficientPenaltyFee();
 
+	/// @notice Error thrown when the expiry timestamp is in the past
+	error Expired();
+
 	/// @notice Event emitted when deposits bridged from the liquidity contract are processed
 	/// @param lastProcessedDepositId The ID of the last processed deposit
 	/// @param depositTreeRoot The root of the deposit tree after processing
@@ -64,6 +67,7 @@ interface IRollup {
 	/// @notice Posts a registration block (for all senders' first transactions, specified by public keys)
 	/// @dev msg.value must be greater than or equal to the penalty fee of the rate limiter
 	/// @param txTreeRoot The root of the transaction tree
+	/// @param expiry The expiry timestamp of the tx tree root. Zero means no expiry.
 	/// @param senderFlags Flags indicating whether senders' signatures are included in the aggregated signature
 	/// @param aggregatedPublicKey The aggregated public key
 	/// @param aggregatedSignature The aggregated signature
@@ -71,6 +75,7 @@ interface IRollup {
 	/// @param senderPublicKeys The public keys of the senders
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
+		uint64 expiry,
 		bytes16 senderFlags,
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
@@ -81,6 +86,7 @@ interface IRollup {
 	/// @notice Posts a non-registration block (for all senders' subsequent transactions, specified by account IDs)
 	/// @dev msg.value must be greater than or equal to the penalty fee of the rate limiter
 	/// @param txTreeRoot The root of the transaction tree
+	/// @param expiry The expiry timestamp of the tx tree root. Zero means no expiry.
 	/// @param senderFlags Sender flags
 	/// @param aggregatedPublicKey The aggregated public key
 	/// @param aggregatedSignature The aggregated signature
@@ -89,6 +95,7 @@ interface IRollup {
 	/// @param senderAccountIds The account IDs arranged in a byte sequence
 	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
+		uint64 expiry,
 		bytes16 senderFlags,
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
