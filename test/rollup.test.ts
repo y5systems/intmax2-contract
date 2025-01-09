@@ -5,7 +5,6 @@ import type {
 	MockL2ScrollMessenger,
 	Rollup,
 } from '../typechain-types'
-import { expect } from 'chai'
 import { loadFullBlocks, postBlock } from '../utils/rollup'
 import { getRandomSalt } from '../utils/rand'
 
@@ -66,20 +65,12 @@ describe('Rollup', function () {
 		await registry.updateBlockBuilder('http://example.com')
 		const fullBlocks = loadFullBlocks()
 		console.log('fullBlocks:', fullBlocks)
-		await postBlock(fullBlocks[0], rollup)
-		await postBlock(fullBlocks[1], rollup)
-		await postBlock(fullBlocks[2], rollup)
-		// for (let i = 0; i < 3; i++) {
-		// 	await postBlock(fullBlocks[i], rollup)
-		// }
-		// let blockHashes = []
-		// for (let i = 0; i < 3; i++) {
-		// 	const blockHash = await rollup.blockHashes(i)
-		// 	blockHashes.push(blockHash)
-		// }
-		// expect(blockHashes[0]).to.equal(fullBlocks[0].blockHash)
-		// expect(blockHashes[1]).to.equal(fullBlocks[1].blockHash)
-		// expect(blockHashes[2]).to.equal(fullBlocks[2].blockHash)
+		for (let i = 0; i < 3; i++) {
+			await postBlock(fullBlocks[i], rollup)
+		}
+		for (let i = 0; i < 3; i++) {
+			const blockHash = await rollup.blockHashes(i)
+		}
 	})
 
 	const calcProcessDepositsGas = async (

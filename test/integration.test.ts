@@ -27,7 +27,6 @@ describe('Integration', function () {
 	let l1Contribution: Contribution
 	let l2Contribution: Contribution
 	let withdrawalVerifier: MockPlonkVerifier
-	let fraudVerifier: MockPlonkVerifier
 
 	let rollup: Rollup
 	let withdrawal: Withdrawal
@@ -80,7 +79,6 @@ describe('Integration', function () {
 			await ethers.getContractFactory('MockPlonkVerifier')
 		withdrawalVerifier =
 			(await MockPlonkVerifier_.deploy()) as MockPlonkVerifier
-		fraudVerifier = (await MockPlonkVerifier_.deploy()) as MockPlonkVerifier
 
 		// L2 deployments. Initialize later.
 		const rollupFactory = await ethers.getContractFactory('Rollup')

@@ -39,6 +39,9 @@ interface ILiquidity {
 	/// @notice Error thrown when the deposit hash already exists
 	error DepositHashAlreadyExists(bytes32 depositHash);
 
+	/// @notice Error thrown when the deposit amount exceeds the limit
+	error DepositAmountExceedsLimit(uint256 depositAmount, uint256 limit);
+
 	/// @notice Event emitted when a deposit is made
 	/// @param depositId The unique identifier for the deposit
 	/// @param sender The address that made the deposit

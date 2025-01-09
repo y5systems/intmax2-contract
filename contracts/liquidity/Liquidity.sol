@@ -19,6 +19,7 @@ import {DepositLib} from "../common/DepositLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
 import {ERC20CallOptionalLib} from "./lib/ERC20CallOptionalLib.sol";
+import {DepositLimit} from "./lib/DepositLimit.sol";
 
 contract Liquidity is
 	TokenData,
@@ -35,6 +36,8 @@ contract Liquidity is
 
 	/// @notice Analyzer role constant
 	bytes32 public constant ANALYZER = keccak256("ANALYZER");
+	/// @notice Deployment time which is used to calculate the deposit limit
+	uint256 deploymentTime;
 
 	IL1ScrollMessenger private l1ScrollMessenger;
 	IContribution private contribution;
@@ -86,6 +89,8 @@ contract Liquidity is
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
 		_disableInitializers();
+		// Set deployment time to the next day
+		deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
 	}
 
 	function initialize(
@@ -286,6 +291,14 @@ contract Liquidity is
 		uint32 tokenIndex,
 		uint256 amount
 	) private {
+		uint256 depositLimit = DepositLimit.getDepositLimit(
+			tokenIndex,
+			block.timestamp
+		);
+		if (amount > depositLimit) {
+			revert DepositAmountExceedsLimit(amount, depositLimit);
+		}
+
 		bytes32 depositHash = DepositLib
 			.Deposit(sender, recipientSaltHash, amount, tokenIndex)
 			.getHash();
