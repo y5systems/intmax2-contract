@@ -36,29 +36,28 @@ contract Liquidity is
 
 	/// @notice Analyzer role constant
 	bytes32 public constant ANALYZER = keccak256("ANALYZER");
+
+	/// @notice Withdrawal role constant
+	bytes32 public constant WITHDRAWAL = keccak256("WITHDRAWAL");
+
 	/// @notice Deployment time which is used to calculate the deposit limit
 	uint256 deploymentTime;
 
 	IL1ScrollMessenger private l1ScrollMessenger;
 	IContribution private contribution;
 	address private rollup;
-	address private withdrawal;
 	mapping(bytes32 => uint256) public claimableWithdrawals;
 	mapping(bytes32 => bool) private doesDepositHashExist;
 	DepositQueueLib.DepositQueue private depositQueue;
 
 	modifier onlyWithdrawal() {
 		// Cache the values to avoid multiple storage reads
-		address withdrawalCached = withdrawal;
 		IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
-		if (withdrawalCached == address(0)) {
-			revert WithdrawalAddressNotSet();
-		}
 		if (_msgSender() != address(l1ScrollMessengerCached)) {
 			revert SenderIsNotScrollMessenger();
 		}
 		if (
-			withdrawalCached != l1ScrollMessengerCached.xDomainMessageSender()
+			hasRole(WITHDRAWAL, l1ScrollMessengerCached.xDomainMessageSender())
 		) {
 			revert InvalidWithdrawalAddress();
 		}
@@ -97,7 +96,6 @@ contract Liquidity is
 		address _admin,
 		address _l1ScrollMessenger,
 		address _rollup,
-		address _withdrawal,
 		address _analyzer,
 		address _contribution,
 		address[] memory initialERC20Tokens
@@ -109,9 +107,6 @@ contract Liquidity is
 			revert AddressZero();
 		}
 		if (_rollup == address(0)) {
-			revert AddressZero();
-		}
-		if (_withdrawal == address(0)) {
 			revert AddressZero();
 		}
 		if (_analyzer == address(0)) {
@@ -130,7 +125,6 @@ contract Liquidity is
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
 		contribution = IContribution(_contribution);
 		rollup = _rollup;
-		withdrawal = _withdrawal;
 	}
 
 	function pauseDeposits() external onlyRole(DEFAULT_ADMIN_ROLE) {
