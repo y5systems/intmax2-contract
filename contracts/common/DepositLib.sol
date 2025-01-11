@@ -27,7 +27,7 @@ library DepositLib {
 					deposit.recipientSaltHash,
 					deposit.amount,
 					deposit.tokenIndex,
-					deposit.isEligible
+					uint32(deposit.isEligible ? 1 : 0)
 				)
 			);
 	}
