@@ -172,7 +172,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	function processDeposits(
 		uint256 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
-	) external {
+	) external onlyLiquidityContract {
 		uint32 depositIndexCached = depositIndex;
 		for (uint256 i = 0; i < depositHashes.length; i++) {
 			depositTree.deposit(depositHashes[i]);
@@ -239,11 +239,11 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			signatureHash
 		);
 
-		// contribution.recordContribution(
-		// 	keccak256("POST_BLOCK"),
-		// 	_msgSender(),
-		// 	1
-		// );
+		contribution.recordContribution(
+			keccak256("POST_BLOCK"),
+			_msgSender(),
+			1
+		);
 	}
 
 	function collectPenaltyFee() private {
