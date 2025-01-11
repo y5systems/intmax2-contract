@@ -239,11 +239,11 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			signatureHash
 		);
 
-		contribution.recordContribution(
-			keccak256("POST_BLOCK"),
-			_msgSender(),
-			1
-		);
+		// contribution.recordContribution(
+		// 	keccak256("POST_BLOCK"),
+		// 	_msgSender(),
+		// 	1
+		// );
 	}
 
 	function collectPenaltyFee() private {
