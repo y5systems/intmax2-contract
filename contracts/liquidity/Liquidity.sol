@@ -96,6 +96,7 @@ contract Liquidity is
 		address _admin,
 		address _l1ScrollMessenger,
 		address _rollup,
+		address _withdrawal,
 		address _analyzer,
 		address _contribution,
 		address[] memory initialERC20Tokens
@@ -109,6 +110,9 @@ contract Liquidity is
 		if (_rollup == address(0)) {
 			revert AddressZero();
 		}
+		if (_withdrawal == address(0)) {
+			revert AddressZero();
+		}
 		if (_analyzer == address(0)) {
 			revert AddressZero();
 		}
@@ -117,7 +121,7 @@ contract Liquidity is
 		}
 		_grantRole(DEFAULT_ADMIN_ROLE, _admin);
 		_grantRole(ANALYZER, _analyzer);
-		__Pausable_init();
+		_grantRole(WITHDRAWAL, _withdrawal);
 		__UUPSUpgradeable_init();
 		__AccessControl_init();
 		__TokenData_init(initialERC20Tokens);
