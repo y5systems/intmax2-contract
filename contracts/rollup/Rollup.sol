@@ -172,7 +172,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	function processDeposits(
 		uint256 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
-	) external onlyLiquidityContract {
+	) external {
 		uint32 depositIndexCached = depositIndex;
 		for (uint256 i = 0; i < depositHashes.length; i++) {
 			depositTree.deposit(depositHashes[i]);
