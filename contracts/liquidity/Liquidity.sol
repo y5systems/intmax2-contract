@@ -50,14 +50,14 @@ contract Liquidity is
 	mapping(bytes32 => bool) private doesDepositHashExist;
 	DepositQueueLib.DepositQueue private depositQueue;
 
-	modifier onlyWithdrawal() {
+	modifier onlyWithdrawalRole() {
 		// Cache the values to avoid multiple storage reads
 		IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
 		if (_msgSender() != address(l1ScrollMessengerCached)) {
 			revert SenderIsNotScrollMessenger();
 		}
 		if (
-			hasRole(WITHDRAWAL, l1ScrollMessengerCached.xDomainMessageSender())
+			!hasRole(WITHDRAWAL, l1ScrollMessengerCached.xDomainMessageSender())
 		) {
 			revert InvalidWithdrawalAddress();
 		}
@@ -292,9 +292,9 @@ contract Liquidity is
 		if (amount > depositLimit) {
 			revert DepositAmountExceedsLimit(amount, depositLimit);
 		}
-
+		bool isEligible = true; // TODO: Implement eligibility check
 		bytes32 depositHash = DepositLib
-			.Deposit(sender, recipientSaltHash, amount, tokenIndex)
+			.Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible)
 			.getHash();
 		if (doesDepositHashExist[depositHash]) {
 			revert DepositHashAlreadyExists(depositHash);
@@ -338,7 +338,7 @@ contract Liquidity is
 	function processWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
 		bytes32[] calldata withdrawalHashes
-	) external onlyWithdrawal {
+	) external onlyWithdrawalRole {
 		_processDirectWithdrawals(withdrawals);
 		_processClaimableWithdrawals(withdrawalHashes);
 	}
@@ -348,12 +348,13 @@ contract Liquidity is
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,
+		bool isEligible,
 		address sender
 	) external view returns (bool) {
 		DepositQueueLib.DepositData memory depositData = depositQueue
 			.depositData[depositId];
 		bytes32 depositHash = DepositLib
-			.Deposit(sender, recipientSaltHash, amount, tokenIndex)
+			.Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible)
 			.getHash();
 
 		if (depositData.depositHash != depositHash) {

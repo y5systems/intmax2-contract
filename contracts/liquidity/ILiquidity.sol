@@ -216,6 +216,7 @@ interface ILiquidity {
 	/// @param recipientSaltHash The hash of the recipient's intmax2 address (BLS public key) and a secret salt
 	/// @param tokenIndex The index of the token being deposited
 	/// @param amount The amount of tokens deposited
+	/// @param isEligible Whether the deposit is eligible for mining rewards
 	/// @param sender The address that made the deposit
 	/// @return True if the deposit is valid
 	function isDepositValid(
@@ -223,6 +224,7 @@ interface ILiquidity {
 		bytes32 recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,
+		bool isEligible,
 		address sender
 	) external view returns (bool);
 

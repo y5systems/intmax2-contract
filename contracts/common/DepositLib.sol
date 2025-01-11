@@ -12,6 +12,8 @@ library DepositLib {
 		uint256 amount;
 		/// @notice Index of the token being deposited
 		uint32 tokenIndex;
+		/// @notice Whether the deposit is eligible for mining rewards
+		bool isEligible;
 	}
 
 	/// @notice Calculates the hash of a Deposit struct
@@ -24,7 +26,8 @@ library DepositLib {
 					deposit.depositor,
 					deposit.recipientSaltHash,
 					deposit.amount,
-					deposit.tokenIndex
+					deposit.tokenIndex,
+					deposit.isEligible
 				)
 			);
 	}
