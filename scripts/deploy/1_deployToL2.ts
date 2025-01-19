@@ -83,12 +83,12 @@ async function main() {
 		await sleep(30)
 	}
 
-	const MockPlonkVerifier_ =
-		await ethers.getContractFactory('MockPlonkVerifier')
+	const WithdrawalPlonkVerifier_ =
+		await ethers.getContractFactory('WithdrawalPlonkVerifier')
 
 	if (!deployedContracts.withdrawalPlonkVerifier) {
 		console.log('deploying withdrawalPlonkVerifier')
-		const withdrawalVerifier = await MockPlonkVerifier_.deploy()
+		const withdrawalVerifier = await WithdrawalPlonkVerifier_.deploy()
 		const deployedContracts = await readDeployedContracts()
 		const newContractAddresses = {
 			withdrawalPlonkVerifier: await withdrawalVerifier.getAddress(),
