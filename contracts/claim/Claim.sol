@@ -10,7 +10,6 @@ import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.s
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {ClaimProofPublicInputsLib} from "./lib/ClaimProofPublicInputsLib.sol";
 import {ChainedClaimLib} from "./lib/ChainedClaimLib.sol";
@@ -18,7 +17,6 @@ import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
 
 contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
-	using EnumerableSet for EnumerableSet.UintSet;
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
 	using ChainedClaimLib for ChainedClaimLib.ChainedClaim[];
 	using ClaimProofPublicInputsLib for ClaimProofPublicInputsLib.ClaimProofPublicInputs;
