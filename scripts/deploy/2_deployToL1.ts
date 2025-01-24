@@ -71,6 +71,7 @@ async function main() {
 				await getL1MessengerAddress(),
 				deployedL2Contracts.rollup,
 				deployedL2Contracts.withdrawal,
+				deployedL2Contracts.claim,
 				env.ANALYZER_ADDRESS,
 				deployedContracts.l1Contribution,
 				initialERC20Tokens,

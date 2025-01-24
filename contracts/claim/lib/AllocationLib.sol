@@ -47,7 +47,7 @@ library AllocationLib {
 		mapping(uint256 => mapping(address => uint256)) userContributions;
 	}
 
-	function __AllocationLib_init(State storage state) public {
+	function __AllocationLib_init(State storage state) internal {
 		state.startTimestamp =
 			(block.timestamp / PERIOD_INTERVAL) *
 			PERIOD_INTERVAL;
@@ -57,7 +57,7 @@ library AllocationLib {
 		State storage state,
 		address recipient,
 		uint256 depositAmount
-	) public {
+	) internal {
 		uint256 period = getCurrentPeriod(state);
 		uint256 contribution = calculateContribution(depositAmount);
 		state.totalContributions[period] += contribution;
@@ -70,6 +70,20 @@ library AllocationLib {
 		);
 	}
 
+	function getUserAllocation(
+		State storage state,
+		uint256 periodNumber,
+		address user
+	) internal view returns (uint256) {
+		if (state.totalContributions[periodNumber] == 0) {
+			return 0;
+		}
+		return
+			(getAllocationPerDay(periodNumber) *
+				state.userContributions[periodNumber][user]) /
+			state.totalContributions[periodNumber];
+	}
+
 	function consumeUserAllocation(
 		State storage state,
 		uint256 periodNumber,
@@ -78,19 +92,14 @@ library AllocationLib {
 		if (periodNumber >= getCurrentPeriod(state)) {
 			revert NotFinishedPeriod();
 		}
-		if (state.totalContributions[periodNumber] == 0) {
-			return 0;
-		}
-		uint256 userAllocation = (getRewardPerDay(periodNumber) *
-			state.userContributions[periodNumber][user]) /
-			state.totalContributions[periodNumber];
+		uint256 userAllocation = getUserAllocation(state, periodNumber, user);
 		state.userContributions[periodNumber][user] = 0;
 		return userAllocation;
 	}
 
-	function getRewardPerDay(
+	function getAllocationPerDay(
 		uint256 periodNumber
-	) public pure returns (uint256) {
+	) internal pure returns (uint256) {
 		uint256 elapsedDays = (periodNumber * 1 days - GENESIS_TIMESTAMP) /
 			1 days;
 		uint256 rewardPerDay = PHASE0_REWARD_PER_DAY;
@@ -113,7 +122,7 @@ library AllocationLib {
 	 */
 	function calculateContribution(
 		uint256 amount
-	) public pure returns (uint256) {
+	) internal pure returns (uint256) {
 		// First, check if `amount` is a multiple of 0.1 ETH
 		if (amount == 0 || amount % BASE != 0) {
 			revert InvalidMultipleOfBase();
@@ -138,7 +147,7 @@ library AllocationLib {
 
 	function getCurrentPeriod(
 		State storage state
-	) public view returns (uint256) {
+	) internal view returns (uint256) {
 		return (block.timestamp - state.startTimestamp) / PERIOD_INTERVAL;
 	}
 }

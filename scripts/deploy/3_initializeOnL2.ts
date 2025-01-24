@@ -14,6 +14,7 @@ async function main() {
 	if (
 		!deployedL2Contracts.rollup ||
 		!deployedL2Contracts.withdrawal ||
+		!deployedL2Contracts.claim ||
 		!deployedL2Contracts.blockBuilderRegistry ||
 		!deployedL2Contracts.withdrawalPlonkVerifier ||
 		!deployedL2Contracts.l2Contribution
@@ -43,6 +44,10 @@ async function main() {
 	const withdrawal = await ethers.getContractAt(
 		'Withdrawal',
 		deployedL2Contracts.withdrawal,
+	)
+	const claim = await ethers.getContractAt(
+		'Claim',
+		deployedL2Contracts.claim,
 	)
 	const registry = await ethers.getContractAt(
 		'BlockBuilderRegistry',
@@ -75,12 +80,29 @@ async function main() {
 			deployedL1Contracts.liquidity,
 			deployedL2Contracts.rollup,
 			deployedL2Contracts.l2Contribution,
-			[0, 1, 2], // 0: eth, 1: usdc, 2: wbtc
+			[0, 1, 2], // 0: eth, 1: itx, 2: usdc
 		)
 		await tx.wait()
 		console.log('Withdrawal initialized')
 		await sleep(10)
 		await l2Contribution.grantRole(contributorRole, withdrawal)
+		await sleep(20)
+	}
+	if ((await claim.owner()) === ethers.ZeroAddress) {
+		await sleep(10)
+		console.log('Initializing Claim')
+		const tx = await claim.initialize(
+			env.ADMIN_ADDRESS,
+			await getL2MessengerAddress(),
+			deployedL2Contracts.withdrawalPlonkVerifier,
+			deployedL1Contracts.liquidity,
+			deployedL2Contracts.rollup,
+			deployedL2Contracts.l2Contribution
+		)
+		await tx.wait()
+		console.log('Claim initialized')
+		await sleep(10)
+		await l2Contribution.grantRole(contributorRole, claim)
 		await sleep(20)
 	}
 	if ((await registry.owner()) === ethers.ZeroAddress) {

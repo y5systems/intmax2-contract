@@ -1,8 +1,3 @@
 {
-    "mockL2ScrollMessenger": "0xddad114031FA9180B6968475A756b28601bc095f",
-    "l2Contribution": "0x6f8050e58cF2e0f9Eae9e43F31Fd92883d07C676",
-    "withdrawalPlonkVerifier": "0xfdCbfb90a715D0E4cbfF18437Ad30cA96dcDd78B",
-    "rollup": "0xC0Ff8D532586Fab4b8235D83d0F30AD66F639C4a",
-    "withdrawal": "0x2e14c08Fcdfa0fcBf7557598cDe780D8C0F15dc0",
-    "blockBuilderRegistry": "0x316C08F80082289bD75C69A0b4Bae0F11B8FFE49"
+    "rollup": "0x9cd864Df84235C32Cc8F656813850e113D1A92f8"
 }
