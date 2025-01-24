@@ -37,7 +37,7 @@ library AllocationLib {
 	error NotPowerOfTen();
 	error NotFinishedPeriod();
 
-	struct AllocationState {
+	struct State {
 		// The timestamp of the start of the allocation
 		uint256 startTimestamp;
 		// Maps period => total contributions in period
@@ -46,14 +46,14 @@ library AllocationLib {
 		mapping(uint256 => mapping(address => uint256)) userContributions;
 	}
 
-	function __AllocationLib_init(AllocationState storage state) public {
+	function __AllocationLib_init(State storage state) public {
 		state.startTimestamp =
 			(block.timestamp / PERIOD_INTERVAL) *
 			PERIOD_INTERVAL;
 	}
 
 	function recordContribution(
-		AllocationState storage state,
+		State storage state,
 		address recipient,
 		uint256 depositAmount
 	) public {
@@ -70,7 +70,7 @@ library AllocationLib {
 	}
 
 	function consumeUserAllocation(
-		AllocationState storage state,
+		State storage state,
 		uint256 periodNumber,
 		address user
 	) internal returns (uint256) {
@@ -136,7 +136,7 @@ library AllocationLib {
 	}
 
 	function getCurrentPeriod(
-		AllocationState storage state
+		State storage state
 	) public view returns (uint256) {
 		return (block.timestamp - state.startTimestamp) / PERIOD_INTERVAL;
 	}

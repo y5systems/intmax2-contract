@@ -15,19 +15,24 @@ import {ClaimProofPublicInputsLib} from "./lib/ClaimProofPublicInputsLib.sol";
 import {ChainedClaimLib} from "./lib/ChainedClaimLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
 import {Byte32Lib} from "../common/Byte32Lib.sol";
+import {AllocationLib} from "./lib/AllocationLib.sol";
 
 contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
 	using ChainedClaimLib for ChainedClaimLib.ChainedClaim[];
 	using ClaimProofPublicInputsLib for ClaimProofPublicInputsLib.ClaimProofPublicInputs;
 	using Byte32Lib for bytes32;
+	using AllocationLib for AllocationLib.State;
 
 	IPlonkVerifier private claimVerifier;
 	IL2ScrollMessenger private l2ScrollMessenger;
 	IRollup private rollup;
 	address private liquidity;
 	IContribution private contribution;
+	AllocationLib.State private allocationState;
 	mapping(bytes32 => bool) private nullifiers;
+
+	uint32 constant REWARD_TOKEN_INDEX = 1;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
@@ -75,62 +80,64 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 		bytes calldata proof
 	) external {
 		_validateClaimProof(claims, publicInputs, proof);
-		uint256 counter = 0;
 		bool[] memory isSkippedFlags = new bool[](claims.length);
+		uint256 counter = 0;
 		for (uint256 i = 0; i < claims.length; i++) {
-			ChainedClaimLib.ChainedClaim memory chainedWithdrawal = claims[i];
-			if (nullifiers[chainedWithdrawal.nullifier]) {
+			ChainedClaimLib.ChainedClaim memory chainedClaim = claims[i];
+			if (nullifiers[chainedClaim.nullifier]) {
 				isSkippedFlags[i] = true;
 				continue; // already withdrawn
 			}
-			nullifiers[chainedWithdrawal.nullifier] = true;
+			nullifiers[chainedClaim.nullifier] = true;
 			bytes32 expectedBlockHash = rollup.getBlockHash(
-				chainedWithdrawal.blockNumber
+				chainedClaim.blockNumber
 			);
-			if (expectedBlockHash != chainedWithdrawal.blockHash) {
-				revert BlockHashNotExists(chainedWithdrawal.blockHash);
+			if (expectedBlockHash != chainedClaim.blockHash) {
+				revert BlockHashNotExists(chainedClaim.blockHash);
 			}
+			// record contribution
+			allocationState.recordContribution(
+				chainedClaim.recipient,
+				chainedClaim.amount
+			);
 			counter++;
 		}
-		if (counter == 0) {
-			return;
-		}
-		WithdrawalLib.Withdrawal[]
-			memory directWithdrawals = new WithdrawalLib.Withdrawal[](counter);
-
-		uint256 index = 0;
-		for (uint256 i = 0; i < claims.length; i++) {
-			if (isSkippedFlags[i]) {
-				continue; // skipped claim
-			}
-			ChainedClaimLib.ChainedClaim memory chainedClaim = claims[i];
-			WithdrawalLib.Withdrawal memory withdrawal = WithdrawalLib
-				.Withdrawal(
-					chainedClaim.recipient,
-					1,
-					chainedClaim.amount,
-					chainedClaim.nullifier
-				);
-			emit DirectWithdrawalQueued(
-				withdrawal.getHash(),
-				withdrawal.recipient,
-				withdrawal
-			);
-			index++;
-		}
-
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processWithdrawals.selector,
-			directWithdrawals,
-			new WithdrawalLib.Withdrawal[](0)
-		);
-		_relayMessage(message);
-
 		contribution.recordContribution(
 			keccak256("CLAIM"),
 			_msgSender(),
 			counter
 		);
+	}
+
+	function relayClaims(uint256 period, address[] calldata users) external {
+		WithdrawalLib.Withdrawal[]
+			memory directWithdrawals = new WithdrawalLib.Withdrawal[](
+				users.length
+			);
+		for (uint256 i = 0; i < directWithdrawals.length; i++) {
+			address user = users[i];
+			uint256 allocation = allocationState.consumeUserAllocation(
+				period,
+				user
+			);
+			// this can be anything
+			bytes32 nullifier = keccak256(
+				abi.encodePacked(period, block.timestamp, user)
+			);
+			WithdrawalLib.Withdrawal memory withdrawal = WithdrawalLib
+				.Withdrawal(user, REWARD_TOKEN_INDEX, allocation, nullifier);
+			emit DirectWithdrawalQueued(
+				withdrawal.getHash(),
+				withdrawal.recipient,
+				withdrawal
+			);
+		}
+		bytes memory message = abi.encodeWithSelector(
+			ILiquidity.processWithdrawals.selector,
+			directWithdrawals,
+			new bytes32[](0)
+		);
+		_relayMessage(message);
 	}
 
 	// The specification of ScrollMessenger may change in the future.
