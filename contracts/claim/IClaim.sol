@@ -22,7 +22,7 @@ interface IClaim {
 	/// @notice Error thrown when the ZKP verification of the claim proof fails
 	error ClaimProofVerificationFailed();
 
-	/// @notice Emitted when a direct claim is queued
+	/// @notice Emitted when a direct withdrawal is queued
 	/// @param withdrawalHash The hash of the withdrawal
 	/// @param recipient The address of the recipient
 	/// @param withdrawal The withdrawal details
@@ -41,4 +41,7 @@ interface IClaim {
 		ClaimProofPublicInputsLib.ClaimProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external;
+
+	/// @notice relay claims to the liquidity contract as withdrawals
+	function relayClaims(uint256 period, address[] calldata users) external;
 }

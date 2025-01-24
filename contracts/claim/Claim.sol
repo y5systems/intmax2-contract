@@ -138,6 +138,12 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 			new bytes32[](0)
 		);
 		_relayMessage(message);
+
+		contribution.recordContribution(
+			keccak256("RELAY_CLAIM"),
+			_msgSender(),
+			users.length
+		);
 	}
 
 	// The specification of ScrollMessenger may change in the future.
