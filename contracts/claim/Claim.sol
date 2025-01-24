@@ -67,6 +67,7 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 		}
 		__Ownable_init(_admin);
 		__UUPSUpgradeable_init();
+		AllocationLib.__AllocationLib_init(allocationState);
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		claimVerifier = IPlonkVerifier(_claimVerifier);
 		rollup = IRollup(_rollup);
@@ -110,6 +111,10 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 	}
 
 	function relayClaims(uint256 period, address[] calldata users) external {
+		if (allocationState.getCurrentPeriod() <= period) {
+			revert AllocationLib.NotFinishedPeriod();
+		}
+
 		WithdrawalLib.Withdrawal[]
 			memory directWithdrawals = new WithdrawalLib.Withdrawal[](
 				users.length
@@ -120,7 +125,7 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 				period,
 				user
 			);
-			// this can be anything
+			// nullifier can be anything if it's unique
 			bytes32 nullifier = keccak256(
 				abi.encodePacked(period, block.timestamp, user)
 			);

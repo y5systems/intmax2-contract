@@ -21,6 +21,7 @@ library AllocationLib {
 	uint256 public constant PHASE0_PERIOD = 16;
 
 	uint256 constant PERIOD_INTERVAL = 1 days;
+
 	uint256 constant BASE = 1e17;
 
 	event ContributionRecorded(
