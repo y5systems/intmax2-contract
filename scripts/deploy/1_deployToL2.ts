@@ -64,6 +64,22 @@ async function main() {
 		await sleep(30)
 	}
 
+	if (!deployedContracts.claim) {
+		console.log('deploying claim')
+		const claimFactory = await ethers.getContractFactory('Claim')
+		const claim = await upgrades.deployProxy(claimFactory, [], {
+			initializer: false,
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claim: await claim.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
+	}
+
 	if (!deployedContracts.l2Contribution) {
 		console.log('deploying l2Contribution')
 		const contributionFactory = await ethers.getContractFactory('Contribution')
@@ -85,6 +101,7 @@ async function main() {
 
 	const WithdrawalPlonkVerifier_ =
 		await ethers.getContractFactory('WithdrawalPlonkVerifier')
+	const ClaimPlonkVerifier_ = await ethers.getContractFactory('WithdrawalPlonkVerifier')
 
 	if (!deployedContracts.withdrawalPlonkVerifier) {
 		console.log('deploying withdrawalPlonkVerifier')
@@ -92,6 +109,18 @@ async function main() {
 		const deployedContracts = await readDeployedContracts()
 		const newContractAddresses = {
 			withdrawalPlonkVerifier: await withdrawalVerifier.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(30)
+	}
+
+	if (!deployedContracts.claimPlonkVerifier) {
+		console.log('deploying claimPlonkVerifier')
+		const claimVerifier = await ClaimPlonkVerifier_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claimPlonkVerifier: await claimVerifier.getAddress(),
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
