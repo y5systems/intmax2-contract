@@ -26,36 +26,25 @@ export const getWBTCAddress = () => {
 }
 
 export const getL1MessengerAddress = async () => {
-	if (network.name === 'sepolia') {
-		const deployedContracts = await readDeployedContracts()
-		if (!deployedContracts.mockL1ScrollMessenger) {
-			return '0x50c7d3e7f7c656493D1D76aaa1a836CedfCBB16A' // real address
-		} else {
-			return deployedContracts.mockL1ScrollMessenger
-		}
+	const deployedContracts = await readDeployedContracts()
+	if (deployedContracts.mockL1ScrollMessenger) {
+		return deployedContracts.mockL1ScrollMessenger
 	}
-	if (network.name === 'localhost') {
-		// provisional measures
-		return ethers.ZeroAddress
+	if (network.name === 'sepolia') {
+		return '0x50c7d3e7f7c656493D1D76aaa1a836CedfCBB16A' // real address
 	}
 	//TODO mainnet messenger address
 	throw new Error('Unsupported network')
 }
 
 export const getL2MessengerAddress = async () => {
+	const deployedContracts = await readDeployedContracts()
+	if (deployedContracts.mockL2ScrollMessenger) {
+		return deployedContracts.mockL2ScrollMessenger
+	}
 	if (network.name === 'scrollSepolia') {
-		const deployedContracts = await readDeployedContracts()
-		if (!deployedContracts.mockL2ScrollMessenger) {
-			return '0xBa50f5340FB9F3Bd074bD638c9BE13eCB36E603d' // real address
-		} else {
-			return deployedContracts.mockL2ScrollMessenger // mock address
-		}
+		return '0xBa50f5340FB9F3Bd074bD638c9BE13eCB36E603d' // real address
 	}
-	if (network.name === 'localhost') {
-		// provisional measures
-		return ethers.ZeroAddress
-	}
-
 	//TODO scroll messenger address
 	throw new Error('Unsupported network')
 }

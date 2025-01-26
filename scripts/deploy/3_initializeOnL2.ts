@@ -1,15 +1,23 @@
-import { ethers } from 'hardhat'
+import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 import { getL2MessengerAddress } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
-import { cleanEnv, str } from 'envalid'
+import { cleanEnv, num, str } from 'envalid'
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
+	SLEEP_TIME: num({
+		default: 10
+	})
 })
 
 async function main() {
+	let admin = env.ADMIN_ADDRESS
+	if (network.name === 'localhost') {
+		admin = (await ethers.getSigners())[0].address
+	}
+
 	const deployedL2Contracts = await readDeployedContracts()
 	if (
 		!deployedL2Contracts.rollup ||
@@ -56,25 +64,25 @@ async function main() {
 
 	// Initialize contracts
 	if ((await rollup.owner()) === ethers.ZeroAddress) {
-		await sleep(10)
+		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Rollup')
 		const tx = await rollup.initialize(
-			env.ADMIN_ADDRESS,
+			admin,
 			await getL2MessengerAddress(),
 			deployedL1Contracts.liquidity,
 			deployedL2Contracts.l2Contribution,
 		)
 		await tx.wait()
 		console.log('Rollup initialized')
-		await sleep(10)
+		await sleep(env.SLEEP_TIME)
 		await l2Contribution.grantRole(contributorRole, rollup)
-		await sleep(20)
+		await sleep(env.SLEEP_TIME)
 	}
 	if ((await withdrawal.owner()) === ethers.ZeroAddress) {
-		await sleep(10)
+		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Withdrawal')
 		const tx = await withdrawal.initialize(
-			env.ADMIN_ADDRESS,
+			admin,
 			await getL2MessengerAddress(),
 			deployedL2Contracts.withdrawalPlonkVerifier,
 			deployedL1Contracts.liquidity,
@@ -84,15 +92,15 @@ async function main() {
 		)
 		await tx.wait()
 		console.log('Withdrawal initialized')
-		await sleep(10)
+		await sleep(env.SLEEP_TIME)
 		await l2Contribution.grantRole(contributorRole, withdrawal)
-		await sleep(20)
+		await sleep(env.SLEEP_TIME)
 	}
 	if ((await claim.owner()) === ethers.ZeroAddress) {
-		await sleep(10)
+		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Claim')
 		const tx = await claim.initialize(
-			env.ADMIN_ADDRESS,
+			admin,
 			await getL2MessengerAddress(),
 			deployedL2Contracts.withdrawalPlonkVerifier,
 			deployedL1Contracts.liquidity,
@@ -101,14 +109,14 @@ async function main() {
 		)
 		await tx.wait()
 		console.log('Claim initialized')
-		await sleep(10)
+		await sleep(env.SLEEP_TIME)
 		await l2Contribution.grantRole(contributorRole, claim)
-		await sleep(20)
+		await sleep(env.SLEEP_TIME)
 	}
 	if ((await registry.owner()) === ethers.ZeroAddress) {
-		await sleep(10)
+		await sleep(env.SLEEP_TIME)
 		console.log('Initializing BlockBuilderRegistry')
-		const tx = await registry.initialize(env.ADMIN_ADDRESS)
+		const tx = await registry.initialize(admin)
 		await tx.wait()
 		console.log('BlockBuilderRegistry initialized')
 	}

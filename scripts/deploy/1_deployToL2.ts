@@ -1,13 +1,22 @@
 import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import { sleep } from '../../utils/sleep'
-import { cleanEnv, str } from 'envalid'
+import { cleanEnv, num, str } from 'envalid'
+
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
+	SLEEP_TIME: num({
+		default: 30,
+	})
 })
 
 async function main() {
+	let admin = env.ADMIN_ADDRESS
+	if (network.name === 'localhost') {
+		admin = (await ethers.getSigners())[0].address
+	}
+
 	const deployedContracts = await readDeployedContracts()
 
 	if (!deployedContracts.rollup) {
@@ -23,7 +32,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.blockBuilderRegistry) {
@@ -45,7 +54,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.withdrawal) {
@@ -61,7 +70,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.claim) {
@@ -77,7 +86,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.l2Contribution) {
@@ -85,7 +94,7 @@ async function main() {
 		const contributionFactory = await ethers.getContractFactory('Contribution')
 		const l2Contribution = await upgrades.deployProxy(
 			contributionFactory,
-			[env.ADMIN_ADDRESS],
+			[admin],
 			{
 				kind: 'uups',
 			},
@@ -96,7 +105,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	const WithdrawalPlonkVerifier_ =
@@ -112,7 +121,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.claimPlonkVerifier) {
@@ -124,7 +133,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.mockL2ScrollMessenger) {

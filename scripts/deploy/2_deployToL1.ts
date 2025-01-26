@@ -7,14 +7,23 @@ import {
 } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
-import { cleanEnv, str } from 'envalid'
+import { cleanEnv, num, str } from 'envalid'
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
 	ANALYZER_ADDRESS: str(),
+	SLEEP_TIME: num({
+		default: 30,
+	})
 })
 
 async function main() {
+	let admin = env.ADMIN_ADDRESS
+	if (network.name === 'localhost') {
+		admin = (await ethers.getSigners())[0].address
+	}
+
+
 	let deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.mockL1ScrollMessenger) {
 		console.log('deploying mockL1ScrollMessenger')
@@ -27,7 +36,7 @@ async function main() {
 			mockL1ScrollMessenger: await l1ScrollMessenger.getAddress(),
 			...deployedContracts,
 		})
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.l1Contribution) {
@@ -35,7 +44,7 @@ async function main() {
 		const contributionFactory = await ethers.getContractFactory('Contribution')
 		const l1Contribution = await upgrades.deployProxy(
 			contributionFactory,
-			[env.ADMIN_ADDRESS],
+			[admin],
 			{
 				kind: 'uups',
 			},
@@ -58,6 +67,9 @@ async function main() {
 		if (!deployedL2Contracts.withdrawal) {
 			throw new Error('withdrawal address is not set')
 		}
+		if (!deployedL2Contracts.claim) {
+			throw new Error('claim address is not set')
+		}
 		if (!deployedContracts.l1Contribution) {
 			throw new Error('l1Contribution address is not set')
 		}
@@ -67,7 +79,7 @@ async function main() {
 		const liquidity = await upgrades.deployProxy(
 			liquidityFactory,
 			[
-				env.ADMIN_ADDRESS,
+				admin,
 				await getL1MessengerAddress(),
 				deployedL2Contracts.rollup,
 				deployedL2Contracts.withdrawal,
