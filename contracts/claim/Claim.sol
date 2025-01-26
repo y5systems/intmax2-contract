@@ -81,12 +81,10 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 		bytes calldata proof
 	) external {
 		_validateClaimProof(claims, publicInputs, proof);
-		bool[] memory isSkippedFlags = new bool[](claims.length);
 		uint256 counter = 0;
 		for (uint256 i = 0; i < claims.length; i++) {
 			ChainedClaimLib.ChainedClaim memory chainedClaim = claims[i];
 			if (nullifiers[chainedClaim.nullifier]) {
-				isSkippedFlags[i] = true;
 				continue; // already withdrawn
 			}
 			nullifiers[chainedClaim.nullifier] = true;
