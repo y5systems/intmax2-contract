@@ -109,7 +109,7 @@ async function main() {
 	}
 
 	const WithdrawalPlonkVerifier_ =
-		await ethers.getContractFactory('WithdrawalPlonkVerifier')
+		await ethers.getContractFactory('MockPlonkVerifier')
 	const ClaimPlonkVerifier_ = await ethers.getContractFactory('MockPlonkVerifier')
 
 	if (!deployedContracts.withdrawalPlonkVerifier) {

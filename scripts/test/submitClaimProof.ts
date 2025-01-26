@@ -1,7 +1,6 @@
 import { ethers } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 import { getRandomSalt } from '../../utils/rand'
-import { makeWithdrawalInfo } from '../../utils/withdrawal'
 import { makeClaimInfo } from '../../utils/claim'
 
 async function main() {
@@ -16,7 +15,7 @@ async function main() {
 		deployedContracts.claim,
 	)
 
-	const blockNumber = 1 // block number of public input of withdrawal
+	const blockNumber = 1 // block number of public input of claim
 	const blockHash = await rollup.blockHashes(blockNumber)
 
 	const recipient = (await ethers.getSigners())[0].address
@@ -34,7 +33,7 @@ async function main() {
 		claimInfo.claimProofPublicInputs,
 		'0x',
 	)
-	console.log('submit withdrawal proof tx hash:', tx.hash)
+	console.log('submit claim proof tx hash:', tx.hash)
 	await tx.wait()
 }
 
