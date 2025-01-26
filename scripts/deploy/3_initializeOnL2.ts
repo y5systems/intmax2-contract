@@ -114,6 +114,23 @@ async function main() {
 		await l2Contribution.grantRole(contributorRole, claim)
 		await sleep(env.SLEEP_TIME)
 	}
+	if ((await claim.owner()) === ethers.ZeroAddress) {
+		await sleep(10)
+		console.log('Initializing Claim')
+		const tx = await claim.initialize(
+			env.ADMIN_ADDRESS,
+			await getL2MessengerAddress(),
+			deployedL2Contracts.withdrawalPlonkVerifier,
+			deployedL1Contracts.liquidity,
+			deployedL2Contracts.rollup,
+			deployedL2Contracts.l2Contribution
+		)
+		await tx.wait()
+		console.log('Claim initialized')
+		await sleep(10)
+		await l2Contribution.grantRole(contributorRole, claim)
+		await sleep(20)
+	}
 	if ((await registry.owner()) === ethers.ZeroAddress) {
 		await sleep(env.SLEEP_TIME)
 		console.log('Initializing BlockBuilderRegistry')

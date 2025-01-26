@@ -89,6 +89,38 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 
+	if (!deployedContracts.claim) {
+		console.log('deploying claim')
+		const claimFactory = await ethers.getContractFactory('Claim')
+		const claim = await upgrades.deployProxy(claimFactory, [], {
+			initializer: false,
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claim: await claim.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.claim) {
+		console.log('deploying claim')
+		const claimFactory = await ethers.getContractFactory('Claim')
+		const claim = await upgrades.deployProxy(claimFactory, [], {
+			initializer: false,
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claim: await claim.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
+	}
+
 	if (!deployedContracts.l2Contribution) {
 		console.log('deploying l2Contribution')
 		const contributionFactory = await ethers.getContractFactory('Contribution')
@@ -118,6 +150,30 @@ async function main() {
 		const deployedContracts = await readDeployedContracts()
 		const newContractAddresses = {
 			withdrawalPlonkVerifier: await withdrawalVerifier.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.claimPlonkVerifier) {
+		console.log('deploying claimPlonkVerifier')
+		const claimVerifier = await ClaimPlonkVerifier_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claimPlonkVerifier: await claimVerifier.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.claimPlonkVerifier) {
+		console.log('deploying claimPlonkVerifier')
+		const claimVerifier = await ClaimPlonkVerifier_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claimPlonkVerifier: await claimVerifier.getAddress(),
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
