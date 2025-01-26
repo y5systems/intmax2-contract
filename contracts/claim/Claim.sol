@@ -197,8 +197,8 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 
 	function getAllocationPerDay(
 		uint256 period
-	) external pure returns (uint256) {
-		return AllocationLib.getAllocationPerDay(period);
+	) external view returns (uint256) {
+		return allocationState.getAllocationPerDay(period);
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

@@ -1,13 +1,22 @@
 import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import { sleep } from '../../utils/sleep'
-import { cleanEnv, str } from 'envalid'
+import { cleanEnv, num, str } from 'envalid'
+
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
+	SLEEP_TIME: num({
+		default: 30,
+	})
 })
 
 async function main() {
+	let admin = env.ADMIN_ADDRESS
+	if (network.name === 'localhost') {
+		admin = (await ethers.getSigners())[0].address
+	}
+
 	const deployedContracts = await readDeployedContracts()
 
 	if (!deployedContracts.rollup) {
@@ -23,7 +32,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.blockBuilderRegistry) {
@@ -45,7 +54,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.withdrawal) {
@@ -61,7 +70,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.claim) {
@@ -77,7 +86,39 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.claim) {
+		console.log('deploying claim')
+		const claimFactory = await ethers.getContractFactory('Claim')
+		const claim = await upgrades.deployProxy(claimFactory, [], {
+			initializer: false,
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claim: await claim.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.claim) {
+		console.log('deploying claim')
+		const claimFactory = await ethers.getContractFactory('Claim')
+		const claim = await upgrades.deployProxy(claimFactory, [], {
+			initializer: false,
+			kind: 'uups',
+		})
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claim: await claim.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.l2Contribution) {
@@ -85,7 +126,7 @@ async function main() {
 		const contributionFactory = await ethers.getContractFactory('Contribution')
 		const l2Contribution = await upgrades.deployProxy(
 			contributionFactory,
-			[env.ADMIN_ADDRESS],
+			[admin],
 			{
 				kind: 'uups',
 			},
@@ -96,12 +137,12 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	const WithdrawalPlonkVerifier_ =
-		await ethers.getContractFactory('WithdrawalPlonkVerifier')
-	const ClaimPlonkVerifier_ = await ethers.getContractFactory('WithdrawalPlonkVerifier')
+		await ethers.getContractFactory('MockPlonkVerifier')
+	const ClaimPlonkVerifier_ = await ethers.getContractFactory('MockPlonkVerifier')
 
 	if (!deployedContracts.withdrawalPlonkVerifier) {
 		console.log('deploying withdrawalPlonkVerifier')
@@ -112,7 +153,7 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.claimPlonkVerifier) {
@@ -124,7 +165,31 @@ async function main() {
 			...deployedContracts,
 		}
 		await writeDeployedContracts(newContractAddresses)
-		await sleep(30)
+		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.claimPlonkVerifier) {
+		console.log('deploying claimPlonkVerifier')
+		const claimVerifier = await ClaimPlonkVerifier_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claimPlonkVerifier: await claimVerifier.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.claimPlonkVerifier) {
+		console.log('deploying claimPlonkVerifier')
+		const claimVerifier = await ClaimPlonkVerifier_.deploy()
+		const deployedContracts = await readDeployedContracts()
+		const newContractAddresses = {
+			claimPlonkVerifier: await claimVerifier.getAddress(),
+			...deployedContracts,
+		}
+		await writeDeployedContracts(newContractAddresses)
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (!deployedContracts.mockL2ScrollMessenger) {
