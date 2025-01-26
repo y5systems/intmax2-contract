@@ -79,7 +79,7 @@ library AllocationLib {
 			return 0;
 		}
 		return
-			(getAllocationPerDay(periodNumber) *
+			(getAllocationPerDay(state, periodNumber) *
 				state.userContributions[periodNumber][user]) /
 			state.totalContributions[periodNumber];
 	}
@@ -98,10 +98,13 @@ library AllocationLib {
 	}
 
 	function getAllocationPerDay(
+		State storage state,
 		uint256 periodNumber
-	) internal pure returns (uint256) {
-		uint256 elapsedDays = (periodNumber * 1 days - GENESIS_TIMESTAMP) /
-			1 days;
+	) internal view returns (uint256) {
+		uint256 elapsedDays = (state.startTimestamp +
+			periodNumber *
+			1 days -
+			GENESIS_TIMESTAMP) / 1 days;
 		uint256 rewardPerDay = PHASE0_REWARD_PER_DAY;
 		for (uint256 i = 0; i < NUM_PHASES; i++) {
 			uint256 phaseDays = PHASE0_PERIOD << i;

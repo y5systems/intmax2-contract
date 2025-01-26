@@ -1,37 +1,35 @@
 import { ethers } from 'hardhat'
 
-import { type ChainedClaimLib } from '../../typechain-types/contracts/claim/lib/ChainedClaimLib'
+import { type ChainedClaimLib } from '../../typechain-types/contracts/test/claim/lib/ChainedClaimLibTest'
 
-export const getChainedWithdrawals = (
+export const getChainedClaims = (
 	count: number,
-): ChainedWithdrawalLib.ChainedWithdrawalStruct[] => {
-	return Array.from({ length: count }, (_, i) => getChainedWithdrawal(i))
+): ChainedClaimLib.ChainedClaimStruct[] => {
+	return Array.from({ length: count }, (_, i) => getChainedClaim(i))
 }
 
 const getChainedClaim = (
 	num: number,
-): ChainedWithdrawalLib.ChainedWithdrawalStruct => {
+): ChainedClaimLib.ChainedClaimStruct => {
 	return {
 		recipient: ethers.Wallet.createRandom().address,
-		tokenIndex: num,
-		amount: ethers.parseEther(String(num)),
+		amount: ethers.parseEther("1"),
 		nullifier: ethers.randomBytes(32),
 		blockHash: ethers.randomBytes(32),
 		blockNumber: Math.floor(Math.random() * 100000000),
 	}
 }
 
-export const getPrevHashFromWithdrawals = (
-	withdrawals: ChainedWithdrawalLib.ChainedWithdrawalStruct[],
+export const getPrevHashFromClaims = (
+	claims: ChainedClaimLib.ChainedClaimStruct[],
 ): string => {
 	let prevHash = ethers.ZeroHash
-	for (const withdrawal of withdrawals) {
+	for (const claim of claims) {
 		prevHash = ethers.keccak256(
 			ethers.solidityPacked(
 				[
 					'bytes32',
 					'address',
-					'uint32',
 					'uint256',
 					'bytes32',
 					'bytes32',
@@ -39,12 +37,11 @@ export const getPrevHashFromWithdrawals = (
 				],
 				[
 					prevHash,
-					withdrawal.recipient,
-					withdrawal.tokenIndex,
-					withdrawal.amount,
-					withdrawal.nullifier,
-					withdrawal.blockHash,
-					withdrawal.blockNumber,
+					claim.recipient,
+					claim.amount,
+					claim.nullifier,
+					claim.blockHash,
+					claim.blockNumber,
 				],
 			),
 		)
