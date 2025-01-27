@@ -2,27 +2,19 @@
 pragma solidity 0.8.27;
 
 library AllocationLib {
-	/**
-	 * @notice The token genesis timestamp.
-	 */
+	uint256 constant PERIOD_INTERVAL = 1 hours;
+
+	uint256 constant MIN_DEPOSIT = 1e17;
+
+	// constants for the token minting curve
 	uint256 public constant GENESIS_TIMESTAMP = 1722999120;
-
 	uint256 public constant PHASE0_REWARD_PER_DAY = 8937500 * (10 ** 18);
-
-	/**
-	 * @notice The total number of phases.
-	 * @dev From phase0 to phase6.
-	 */
 	uint256 public constant NUM_PHASES = 7;
-
-	/**
-	 * @notice The duration of phase 0 in days.
-	 */
 	uint256 public constant PHASE0_PERIOD = 16;
 
-	uint256 constant PERIOD_INTERVAL = 1 days;
-
-	uint256 constant BASE = 1e17;
+	error InvalidMultipleOfBase();
+	error NotPowerOfTen();
+	error NotFinishedPeriod();
 
 	event ContributionRecorded(
 		uint256 indexed period,
@@ -30,13 +22,6 @@ library AllocationLib {
 		uint256 depositAmount,
 		uint256 contribution
 	);
-
-	/**
-	 * @dev Custom errors for more descriptive revert messages.
-	 */
-	error InvalidMultipleOfBase();
-	error NotPowerOfTen();
-	error NotFinishedPeriod();
 
 	struct State {
 		// The timestamp of the start of the allocation
@@ -79,7 +64,7 @@ library AllocationLib {
 			return 0;
 		}
 		return
-			(getAllocationPerDay(state, periodNumber) *
+			(getAllocationPerPeriod(state, periodNumber) *
 				state.userContributions[periodNumber][user]) /
 			state.totalContributions[periodNumber];
 	}
@@ -97,7 +82,15 @@ library AllocationLib {
 		return userAllocation;
 	}
 
-	function getAllocationPerDay(
+	function getAllocationPerPeriod(
+		State storage state,
+		uint256 periodNumber
+	) internal view returns (uint256) {
+		uint256 rewardPerDay = _getAllocationPerDay(state, periodNumber);
+		return (rewardPerDay * PERIOD_INTERVAL) / 1 days;
+	}
+
+	function _getAllocationPerDay(
 		State storage state,
 		uint256 periodNumber
 	) internal view returns (uint256) {
@@ -127,11 +120,11 @@ library AllocationLib {
 		uint256 amount
 	) internal pure returns (uint256) {
 		// First, check if `amount` is a multiple of 0.1 ETH
-		if (amount == 0 || amount % BASE != 0) {
+		if (amount == 0 || amount % MIN_DEPOSIT != 0) {
 			revert InvalidMultipleOfBase();
 		}
 
-		uint256 ratio = amount / BASE;
+		uint256 ratio = amount / MIN_DEPOSIT;
 
 		// Verify that ratio is 10^n (for n >= 0) while determining log10
 		uint256 exponent = 0;

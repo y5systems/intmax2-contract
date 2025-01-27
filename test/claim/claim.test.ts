@@ -108,7 +108,7 @@ describe('Claim', () => {
 				'0x',
 			)
 
-			const allocationPerDay = await claim.getAllocationPerDay(0)
+			const allocationPerDay = await claim.getAllocationPerPeriod(0)
 			console.log(allocationPerDay.toString())
 
 			await time.increase(60 * 60 * 24)
