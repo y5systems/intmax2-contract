@@ -1,9 +1,0 @@
-{
-    "l2Contribution": "0xB4D40dAaC3c1E48546955424Bc8F4581EA0733eB",
-    "withdrawalPlonkVerifier": "0xce78D4365dC8e9BF8eD1DdB32A77A9073254961b",
-    "claimPlonkVerifier": "0x9AddC5588400A201f204855D61BDe9d12C472cdf",
-    "rollup": "0x9cd864Df84235C32Cc8F656813850e113D1A92f8",
-    "withdrawal": "0x0D18d95b729E9c26e37a5e66b03a83A90D725489",
-    "claim": "0x2726b049aEC471D9aC2458cf4E62a5DA78aEE6e8",
-    "blockBuilderRegistry": "0x273f286e9fC43e3C614286f94CE64a7802B22E39"
-}
