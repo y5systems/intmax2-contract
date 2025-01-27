@@ -174,30 +174,6 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 
-	if (!deployedContracts.claimPlonkVerifier) {
-		console.log('deploying claimPlonkVerifier')
-		const claimVerifier = await ClaimPlonkVerifier_.deploy()
-		const deployedContracts = await readDeployedContracts()
-		const newContractAddresses = {
-			claimPlonkVerifier: await claimVerifier.getAddress(),
-			...deployedContracts,
-		}
-		await writeDeployedContracts(newContractAddresses)
-		await sleep(env.SLEEP_TIME)
-	}
-
-	if (!deployedContracts.claimPlonkVerifier) {
-		console.log('deploying claimPlonkVerifier')
-		const claimVerifier = await ClaimPlonkVerifier_.deploy()
-		const deployedContracts = await readDeployedContracts()
-		const newContractAddresses = {
-			claimPlonkVerifier: await claimVerifier.getAddress(),
-			...deployedContracts,
-		}
-		await writeDeployedContracts(newContractAddresses)
-		await sleep(env.SLEEP_TIME)
-	}
-
 	if (!deployedContracts.mockL2ScrollMessenger) {
 		console.log('deploying mockL2ScrollMessenger')
 		const MockL2ScrollMessenger_ = await ethers.getContractFactory(

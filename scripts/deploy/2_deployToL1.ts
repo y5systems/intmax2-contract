@@ -2,8 +2,6 @@ import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import {
 	getL1MessengerAddress,
-	getUSDCAddress,
-	getWBTCAddress,
 } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
@@ -24,6 +22,7 @@ async function main() {
 	}
 
 
+
 	let deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.mockL1ScrollMessenger) {
 		console.log('deploying mockL1ScrollMessenger')
@@ -37,6 +36,18 @@ async function main() {
 			...deployedContracts,
 		})
 		await sleep(env.SLEEP_TIME)
+	}
+
+	if (!deployedContracts.testErc20) {
+		console.log('deploying testErc20')
+		const TestERC20 = await ethers.getContractFactory('TestERC20')
+		const owner = (await ethers.getSigners())[0]
+		const testErc20 = await TestERC20.deploy(owner.address)
+		const deployedContracts = await readDeployedContracts()
+		await writeDeployedContracts({
+			testErc20: await testErc20.getAddress(),
+			...deployedContracts,
+		})
 	}
 
 	if (!deployedContracts.l1Contribution) {
@@ -73,9 +84,12 @@ async function main() {
 		if (!deployedContracts.l1Contribution) {
 			throw new Error('l1Contribution address is not set')
 		}
+		if (!deployedContracts.testErc20) {
+			throw new Error('testErc20 address is not set')
+		}
 
 		const liquidityFactory = await ethers.getContractFactory('Liquidity')
-		const initialERC20Tokens = [getUSDCAddress(), getWBTCAddress()]
+		const initialERC20Tokens = [deployedContracts.testErc20]
 		const liquidity = await upgrades.deployProxy(
 			liquidityFactory,
 			[
@@ -110,18 +124,6 @@ async function main() {
 		deployedContracts = await readDeployedContracts()
 		await writeDeployedContracts({
 			liquidity: await liquidity.getAddress(),
-			...deployedContracts,
-		})
-	}
-
-	if (!deployedContracts.testErc20) {
-		console.log('deploying testErc20')
-		const TestERC20 = await ethers.getContractFactory('TestERC20')
-		const owner = (await ethers.getSigners())[0]
-		const testErc20 = await TestERC20.deploy(owner.address)
-		const deployedContracts = await readDeployedContracts()
-		await writeDeployedContracts({
-			testErc20: await testErc20.getAddress(),
 			...deployedContracts,
 		})
 	}
