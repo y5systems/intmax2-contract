@@ -140,9 +140,15 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 
-	const WithdrawalPlonkVerifier_ =
-		await ethers.getContractFactory('MockPlonkVerifier')
-	const ClaimPlonkVerifier_ = await ethers.getContractFactory('MockPlonkVerifier')
+	let WithdrawalPlonkVerifier_;
+	let ClaimPlonkVerifier_;
+	if (network.name === 'localhost') {
+		WithdrawalPlonkVerifier_ = await ethers.getContractFactory('MockPlonkVerifier')
+		ClaimPlonkVerifier_ = await ethers.getContractFactory('MockPlonkVerifier')
+	} else {
+		WithdrawalPlonkVerifier_ = await ethers.getContractFactory('WithdrawalPlonkVerifier')
+		ClaimPlonkVerifier_ = await ethers.getContractFactory('ClaimPlonkVerifier')
+	}
 
 	if (!deployedContracts.withdrawalPlonkVerifier) {
 		console.log('deploying withdrawalPlonkVerifier')
