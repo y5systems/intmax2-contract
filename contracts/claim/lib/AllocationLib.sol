@@ -13,7 +13,6 @@ library AllocationLib {
 	uint256 public constant PHASE0_PERIOD = 16;
 
 	error InvalidDepositAmount();
-	error NotPowerOfTen();
 	error NotFinishedPeriod();
 
 	event ContributionRecorded(
@@ -110,25 +109,19 @@ library AllocationLib {
 		return 0;
 	}
 
-	/**
-	 * @notice Checks if `amount` is a multiple of 0.1 ETH that can be expressed
-	 *         as 0.1 ETH * 10^n. Then returns 4 * n^2 + 1.
-	 * @param amount The amount in Wei to check.
-	 * @return result 4 * log10(amount / 0.1 ETH) ^ 2 + 1.
-	 */
 	function calculateContribution(
 		uint256 amount
 	) internal pure returns (uint256) {
-		if (amount == MIN_DEPOSIT) {
+		if (amount == 0.1 ether) {
 			return 1;
-		} else if (amount == MIN_DEPOSIT * 10) {
+		} else if (amount == 1 ether) {
 			return 4;
-		} else if (amount == MIN_DEPOSIT * 100) {
+		} else if (amount == 10 ether) {
 			return 9;
-		} else if (amount == MIN_DEPOSIT * 1000) {
+		} else if (amount == 100 ether) {
 			return 16;
 		} else {
-			revert NotPowerOfTen();
+			revert InvalidDepositAmount();
 		}
 	}
 
