@@ -12,7 +12,7 @@ library AllocationLib {
 	uint256 public constant NUM_PHASES = 7;
 	uint256 public constant PHASE0_PERIOD = 16;
 
-	error InvalidMultipleOfBase();
+	error InvalidDepositAmount();
 	error NotPowerOfTen();
 	error NotFinishedPeriod();
 
@@ -119,26 +119,17 @@ library AllocationLib {
 	function calculateContribution(
 		uint256 amount
 	) internal pure returns (uint256) {
-		// First, check if `amount` is a multiple of 0.1 ETH
-		if (amount == 0 || amount % MIN_DEPOSIT != 0) {
-			revert InvalidMultipleOfBase();
+		if (amount == MIN_DEPOSIT) {
+			return 1;
+		} else if (amount == MIN_DEPOSIT * 10) {
+			return 4;
+		} else if (amount == MIN_DEPOSIT * 100) {
+			return 9;
+		} else if (amount == MIN_DEPOSIT * 1000) {
+			return 16;
+		} else {
+			revert NotPowerOfTen();
 		}
-
-		uint256 ratio = amount / MIN_DEPOSIT;
-
-		// Verify that ratio is 10^n (for n >= 0) while determining log10
-		uint256 exponent = 0;
-		uint256 temp = ratio;
-		while (temp > 1) {
-			// If temp is not divisible by 10, ratio is not 10^n
-			if (temp % 10 != 0) {
-				revert NotPowerOfTen();
-			}
-			temp /= 10;
-			exponent++;
-		}
-
-		return (exponent + 1) * (exponent + 1);
 	}
 
 	function getCurrentPeriod(
