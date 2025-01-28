@@ -1,0 +1,10 @@
+{
+    "mockL2ScrollMessenger": "0x10fF7b429fDc90aeF8154A9FC4b2cCc3D788f8Df",
+    "l2Contribution": "0x58AAAad4Ba9e0B65C6030695eAebeF49C0F339BC",
+    "withdrawalPlonkVerifier": "0xa3599AB6bebD4068458d994a6E72d16c4E0f3b78",
+    "claimPlonkVerifier": "0x838593F0BB2052363fd4A2d183Fc62611e4C0241",
+    "rollup": "0x600ace41d9c427C50BaB2CEdF1ae3Bf04bB72a50",
+    "withdrawal": "0xff426f03C72Ddb0b815454483Fd43840FAe41f00",
+    "claim": "0x367B1738839da5b948e7d942BcCB90313091a937",
+    "blockBuilderRegistry": "0xbF90eE8Ea66d0107a3965894603551a3bfe93Ae5"
+}
