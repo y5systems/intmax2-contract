@@ -38,7 +38,11 @@ library DepositLimit {
 		uint32 tokenIndex,
 		uint256 deploymentTime
 	) internal view returns (uint256 limit) {
-		if (tokenIndex > 2) {
+		if (
+			tokenIndex != ETH_INDEX &&
+			tokenIndex != WBTC_INDEX &&
+			tokenIndex != USDC_INDEX
+		) {
 			return type(uint256).max;
 		}
 
