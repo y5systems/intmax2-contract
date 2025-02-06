@@ -2455,7 +2455,7 @@
             "label": "tokenInfoList",
             "offset": 0,
             "slot": "0",
-            "type": "t_array(t_struct(TokenInfo)11606_storage)dyn_storage",
+            "type": "t_array(t_struct(TokenInfo)21337_storage)dyn_storage",
             "contract": "TokenData",
             "src": "contracts/liquidity/TokenData.sol:9"
           },
@@ -2487,7 +2487,7 @@
             "label": "l1ScrollMessenger",
             "offset": 0,
             "slot": "4",
-            "type": "t_contract(IL1ScrollMessenger)10634",
+            "type": "t_contract(IL1ScrollMessenger)19115",
             "contract": "Liquidity",
             "src": "contracts/liquidity/Liquidity.sol:46"
           },
@@ -2495,7 +2495,7 @@
             "label": "contribution",
             "offset": 0,
             "slot": "5",
-            "type": "t_contract(IContribution)11314",
+            "type": "t_contract(IContribution)21045",
             "contract": "Liquidity",
             "src": "contracts/liquidity/Liquidity.sol:47"
           },
@@ -2527,7 +2527,7 @@
             "label": "depositQueue",
             "offset": 0,
             "slot": "9",
-            "type": "t_struct(DepositQueue)13567_storage",
+            "type": "t_struct(DepositQueue)23298_storage",
             "contract": "Liquidity",
             "src": "contracts/liquidity/Liquidity.sol:51"
           }
@@ -2617,23 +2617,23 @@
             "label": "uint64",
             "numberOfBytes": "8"
           },
-          "t_array(t_struct(DepositData)13575_storage)dyn_storage": {
+          "t_array(t_struct(DepositData)23306_storage)dyn_storage": {
             "label": "struct DepositQueueLib.DepositData[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(TokenInfo)11606_storage)dyn_storage": {
+          "t_array(t_struct(TokenInfo)21337_storage)dyn_storage": {
             "label": "struct ITokenData.TokenInfo[]",
             "numberOfBytes": "32"
           },
-          "t_contract(IContribution)11314": {
+          "t_contract(IContribution)21045": {
             "label": "contract IContribution",
             "numberOfBytes": "20"
           },
-          "t_contract(IL1ScrollMessenger)10634": {
+          "t_contract(IL1ScrollMessenger)19115": {
             "label": "contract IL1ScrollMessenger",
             "numberOfBytes": "20"
           },
-          "t_enum(TokenType)11597": {
+          "t_enum(TokenType)21328": {
             "label": "enum ITokenData.TokenType",
             "members": [
               "NATIVE",
@@ -2663,7 +2663,7 @@
             "label": "mapping(uint256 => uint32)",
             "numberOfBytes": "32"
           },
-          "t_struct(DepositData)13575_storage": {
+          "t_struct(DepositData)23306_storage": {
             "label": "struct DepositQueueLib.DepositData",
             "members": [
               {
@@ -2687,12 +2687,12 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(DepositQueue)13567_storage": {
+          "t_struct(DepositQueue)23298_storage": {
             "label": "struct DepositQueueLib.DepositQueue",
             "members": [
               {
                 "label": "depositData",
-                "type": "t_array(t_struct(DepositData)13575_storage)dyn_storage",
+                "type": "t_array(t_struct(DepositData)23306_storage)dyn_storage",
                 "offset": 0,
                 "slot": "0"
               },
@@ -2705,12 +2705,12 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(TokenInfo)11606_storage": {
+          "t_struct(TokenInfo)21337_storage": {
             "label": "struct ITokenData.TokenInfo",
             "members": [
               {
                 "label": "tokenType",
-                "type": "t_enum(TokenType)11597",
+                "type": "t_enum(TokenType)21328",
                 "offset": 0,
                 "slot": "0"
               },

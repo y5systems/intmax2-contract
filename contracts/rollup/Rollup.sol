@@ -282,5 +282,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		return blockHashes[blockNumber];
 	}
 
+	function getPenalty() external view returns (uint256) {
+		return rateLimitState.getPenalty();
+	}
+
 	function _authorizeUpgrade(address) internal override onlyOwner {}
 }
