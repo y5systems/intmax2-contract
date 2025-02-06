@@ -131,6 +131,10 @@ interface IRollup {
 		uint32 blockNumber
 	) external view returns (address);
 
+	/// @notice Get current penalty fee for rate limiter
+	/// @return The penalty fee for next block
+	function getPenalty() external view returns (uint256);
+
 	/// @notice Get the block hash for a specific block number
 	/// @param blockNumber The block number to query
 	/// @return The hash of the specified block
