@@ -31,6 +31,13 @@ library AllocationLib {
 		mapping(uint256 => mapping(address => uint256)) userContributions;
 	}
 
+	struct AllocationInfo {
+		uint256 totalContribution;
+		uint256 allocationPerPeriod;
+		uint256 userContribution;
+		uint256 userAllocation;
+	}
+
 	function __AllocationLib_init(State storage state) internal {
 		state.startTimestamp =
 			(block.timestamp / PERIOD_INTERVAL) *
@@ -129,5 +136,26 @@ library AllocationLib {
 		State storage state
 	) internal view returns (uint256) {
 		return (block.timestamp - state.startTimestamp) / PERIOD_INTERVAL;
+	}
+
+	function getAllocationInfo(
+		State storage state,
+		uint256 periodNumber,
+		address user
+	) internal view returns (AllocationInfo memory) {
+		uint256 totalContribution = state.totalContributions[periodNumber];
+		uint256 allocationPerPeriod = getAllocationPerPeriod(
+			state,
+			periodNumber
+		);
+		uint256 userContribution = state.userContributions[periodNumber][user];
+		uint256 userAllocation = getUserAllocation(state, periodNumber, user);
+		return
+			AllocationInfo({
+				totalContribution: totalContribution,
+				allocationPerPeriod: allocationPerPeriod,
+				userContribution: userContribution,
+				userAllocation: userAllocation
+			});
 	}
 }
