@@ -190,6 +190,10 @@
       "address": "0xB4D40dAaC3c1E48546955424Bc8F4581EA0733eB",
       "txHash": "0xd55d10795a28ed005279094490f4a716c72037a3d32ef3d1f29ae3e19b247eb0",
       "kind": "uups"
+    },
+    {
+      "address": "0x367B1738839da5b948e7d942BcCB90313091a937",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -5087,6 +5091,208 @@
             "label": "UD60x18",
             "numberOfBytes": "32",
             "underlying": "t_uint256"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "6496261b26976c52b4169a91fbf3113b38944d9bd40c2b862e8a28d9847324c2": {
+      "address": "0x41DE4ec0e609F47Db0733D99f6c7157153aA17e5",
+      "layout": {
+        "solcVersion": "0.8.27",
+        "storage": [
+          {
+            "label": "claimVerifier",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IPlonkVerifier)12002",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:27"
+          },
+          {
+            "label": "l2ScrollMessenger",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IL2ScrollMessenger)10662",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:28"
+          },
+          {
+            "label": "rollup",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IRollup)15295",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:29"
+          },
+          {
+            "label": "liquidity",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:30"
+          },
+          {
+            "label": "contribution",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(IContribution)12539",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:31"
+          },
+          {
+            "label": "allocationState",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_struct(State)11391_storage",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:32"
+          },
+          {
+            "label": "nullifiers",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_bytes32,t_bool)",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:33"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)237_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)165_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IContribution)12539": {
+            "label": "contract IContribution",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IL2ScrollMessenger)10662": {
+            "label": "contract IL2ScrollMessenger",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IPlonkVerifier)12002": {
+            "label": "contract IPlonkVerifier",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IRollup)15295": {
+            "label": "contract IRollup",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_bool)": {
+            "label": "mapping(bytes32 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(uint256 => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(State)11391_storage": {
+            "label": "struct AllocationLib.State",
+            "members": [
+              {
+                "label": "startTimestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalContributions",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "userContributions",
+                "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
           }
         },
         "namespaces": {
