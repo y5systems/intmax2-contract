@@ -5134,7 +5134,7 @@
             "label": "claimVerifier",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(IPlonkVerifier)12002",
+            "type": "t_contract(IPlonkVerifier)20570",
             "contract": "Claim",
             "src": "contracts/claim/Claim.sol:27"
           },
@@ -5142,7 +5142,7 @@
             "label": "l2ScrollMessenger",
             "offset": 0,
             "slot": "1",
-            "type": "t_contract(IL2ScrollMessenger)10662",
+            "type": "t_contract(IL2ScrollMessenger)19143",
             "contract": "Claim",
             "src": "contracts/claim/Claim.sol:28"
           },
@@ -5150,7 +5150,7 @@
             "label": "rollup",
             "offset": 0,
             "slot": "2",
-            "type": "t_contract(IRollup)15295",
+            "type": "t_contract(IRollup)23863",
             "contract": "Claim",
             "src": "contracts/claim/Claim.sol:29"
           },
@@ -5166,7 +5166,7 @@
             "label": "contribution",
             "offset": 0,
             "slot": "4",
-            "type": "t_contract(IContribution)12539",
+            "type": "t_contract(IContribution)21107",
             "contract": "Claim",
             "src": "contracts/claim/Claim.sol:31"
           },
@@ -5174,7 +5174,7 @@
             "label": "allocationState",
             "offset": 0,
             "slot": "5",
-            "type": "t_struct(State)11391_storage",
+            "type": "t_struct(State)19959_storage",
             "contract": "Claim",
             "src": "contracts/claim/Claim.sol:32"
           },
@@ -5234,19 +5234,19 @@
             "label": "bytes32",
             "numberOfBytes": "32"
           },
-          "t_contract(IContribution)12539": {
+          "t_contract(IContribution)21107": {
             "label": "contract IContribution",
             "numberOfBytes": "20"
           },
-          "t_contract(IL2ScrollMessenger)10662": {
+          "t_contract(IL2ScrollMessenger)19143": {
             "label": "contract IL2ScrollMessenger",
             "numberOfBytes": "20"
           },
-          "t_contract(IPlonkVerifier)12002": {
+          "t_contract(IPlonkVerifier)20570": {
             "label": "contract IPlonkVerifier",
             "numberOfBytes": "20"
           },
-          "t_contract(IRollup)15295": {
+          "t_contract(IRollup)23863": {
             "label": "contract IRollup",
             "numberOfBytes": "20"
           },
@@ -5266,7 +5266,7 @@
             "label": "mapping(uint256 => uint256)",
             "numberOfBytes": "32"
           },
-          "t_struct(State)11391_storage": {
+          "t_struct(State)19959_storage": {
             "label": "struct AllocationLib.State",
             "members": [
               {
@@ -5325,7 +5325,10 @@
             }
           ]
         }
-      }
+      },
+      "allAddresses": [
+        "0x41DE4ec0e609F47Db0733D99f6c7157153aA17e5"
+      ]
     }
   }
 }

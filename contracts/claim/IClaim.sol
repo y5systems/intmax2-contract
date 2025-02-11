@@ -4,6 +4,7 @@ pragma solidity 0.8.27;
 import {ClaimProofPublicInputsLib} from "./lib/ClaimProofPublicInputsLib.sol";
 import {ChainedClaimLib} from "./lib/ChainedClaimLib.sol";
 import {WithdrawalLib} from "../common/WithdrawalLib.sol";
+import {AllocationLib} from "./lib/AllocationLib.sol";
 
 interface IClaim {
 	/// @notice address is zero address
@@ -41,6 +42,15 @@ interface IClaim {
 		ClaimProofPublicInputsLib.ClaimProofPublicInputs calldata publicInputs,
 		bytes calldata proof
 	) external;
+
+	/// @notice Get the allocation info for a user in a period
+	/// @param periodNumber The period number
+	/// @param user The user address
+	/// @return The allocation info
+	function getAllocationInfo(
+		uint256 periodNumber,
+		address user
+	) external view returns (AllocationLib.AllocationInfo memory);
 
 	/// @notice relay claims to the liquidity contract as withdrawals
 	function relayClaims(uint256 period, address[] calldata users) external;
