@@ -4,8 +4,6 @@ pragma solidity 0.8.27;
 library AllocationLib {
 	uint256 constant PERIOD_INTERVAL = 1 hours;
 
-	uint256 constant MIN_DEPOSIT = 1e17;
-
 	// constants for the token minting curve
 	uint256 public constant GENESIS_TIMESTAMP = 1722999120;
 	uint256 public constant PHASE0_REWARD_PER_DAY = 8937500 * (10 ** 18);
@@ -29,6 +27,15 @@ library AllocationLib {
 		mapping(uint256 => uint256) totalContributions;
 		// Map period => user address => user contributions in period
 		mapping(uint256 => mapping(address => uint256)) userContributions;
+	}
+
+	struct AllocationConstants {
+		uint256 startTimestamp;
+		uint256 periodInterval;
+		uint256 genesisTimestamp;
+		uint256 phase0RewardPerDay;
+		uint256 numPhases;
+		uint256 phase0Period;
 	}
 
 	struct AllocationInfo {
@@ -156,6 +163,22 @@ library AllocationLib {
 				allocationPerPeriod: allocationPerPeriod,
 				userContribution: userContribution,
 				userAllocation: userAllocation
+			});
+	}
+
+	function getAllocationConstants(State storage state)
+		internal
+		view
+		returns (AllocationConstants memory)
+	{
+		return
+			AllocationConstants({
+				startTimestamp: state.startTimestamp,
+				periodInterval: PERIOD_INTERVAL,
+				genesisTimestamp: GENESIS_TIMESTAMP,
+				phase0RewardPerDay: PHASE0_REWARD_PER_DAY,
+				numPhases: NUM_PHASES,
+				phase0Period: PHASE0_PERIOD
 			});
 	}
 }

@@ -14,7 +14,7 @@ async function main() {
 	const newImplementationFactory = await ethers.getContractFactory('Claim')
 	await newImplementationFactory.deploy()
 
-	await upgrades.forceImport(deployedContracts.claim, newImplementationFactory)
+	// await upgrades.forceImport(deployedContracts.claim, newImplementationFactory)
 
 	await upgrades.upgradeProxy(
 		deployedContracts.claim,
