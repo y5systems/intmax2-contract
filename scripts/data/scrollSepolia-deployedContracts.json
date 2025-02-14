@@ -1,10 +1,10 @@
 {
-    "mockL2ScrollMessenger": "0x10fF7b429fDc90aeF8154A9FC4b2cCc3D788f8Df",
-    "l2Contribution": "0x58AAAad4Ba9e0B65C6030695eAebeF49C0F339BC",
-    "withdrawalPlonkVerifier": "0xa3599AB6bebD4068458d994a6E72d16c4E0f3b78",
-    "claimPlonkVerifier": "0x838593F0BB2052363fd4A2d183Fc62611e4C0241",
-    "rollup": "0x600ace41d9c427C50BaB2CEdF1ae3Bf04bB72a50",
-    "withdrawal": "0xff426f03C72Ddb0b815454483Fd43840FAe41f00",
-    "claim": "0x367B1738839da5b948e7d942BcCB90313091a937",
-    "blockBuilderRegistry": "0xbF90eE8Ea66d0107a3965894603551a3bfe93Ae5"
+    "mockL2ScrollMessenger": "0xEFcf0F3451eeC05a57D45C455c7bF7a9B8Efe62c",
+    "l2Contribution": "0x15315a107b7CbfC532156FEbd682412a997Ff4dA",
+    "withdrawalPlonkVerifier": "0x974E93f2F78AE4386714d743c70252e8a16f5E30",
+    "claimPlonkVerifier": "0x7E147F4cDc0f85cF63A30820368A8ca43973A5F8",
+    "rollup": "0x9BfC82dc33b88e5aD89C7815Cb97207a09bf67e0",
+    "withdrawal": "0x468e215De60D214000AcCF83900a724b25b6eB47",
+    "claim": "0x7E9881EAE1Dd8018A4797ae8517726A84bCe964E",
+    "blockBuilderRegistry": "0x4B3c2AbeC1eEDf3B525C957D9AA64eA119aD0169"
 }
