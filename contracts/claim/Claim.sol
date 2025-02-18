@@ -134,6 +134,7 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 				withdrawal.recipient,
 				withdrawal
 			);
+			directWithdrawals[i] = withdrawal;
 		}
 		bytes memory message = abi.encodeWithSelector(
 			ILiquidity.processWithdrawals.selector,
