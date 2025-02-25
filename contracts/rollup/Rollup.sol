@@ -18,19 +18,39 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	using DepositTreeLib for DepositTreeLib.DepositTree;
 	using RateLimiterLib for RateLimiterLib.RateLimitState;
 
+	/// @notice The number of senders in a block
 	uint256 private constant NUM_SENDERS_IN_BLOCK = 128;
+	/// @notice The number of bytes required to represent the account IDs of all senders in a block
 	uint256 private constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
 
+	/// @notice liquidity contract address
 	address private liquidity;
+
+	/// @notice The ID of the last processed deposit
 	uint256 public lastProcessedDepositId;
+
+	/// @notice block hashes
 	bytes32[] public blockHashes;
+
+	/// @notice block builders
 	address[] public blockBuilders;
 
+	/// @notice L2 ScrollMessenger contract
 	IL2ScrollMessenger private l2ScrollMessenger;
+
+	/// @notice contribution contract
 	IContribution private contribution;
+
+	/// @notice deposit tree
 	DepositTreeLib.DepositTree private depositTree;
+
+	/// @notice rate limiter state
 	RateLimiterLib.RateLimitState private rateLimitState;
+
+	/// @notice deposit tree root
 	bytes32 public depositTreeRoot;
+
+	/// @notice deposit index
 	uint32 public depositIndex;
 
 	modifier onlyLiquidityContract() {

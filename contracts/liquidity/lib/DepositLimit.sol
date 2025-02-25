@@ -34,6 +34,10 @@ library DepositLimit {
 	uint256 internal constant USDC_LIMIT_3 = 10000000000000; // 10M USDC
 	uint256 internal constant USDC_LIMIT_4 = 50000000000000; // 50M USDC
 
+	/// @notice Returns the deposit limit for a token at a given deployment time
+	/// @param tokenIndex The index of the token
+	/// @param deploymentTime The timestamp of the deployment
+	/// @return limit The deposit limit for the token
 	function getDepositLimit(
 		uint32 tokenIndex,
 		uint256 deploymentTime

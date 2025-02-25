@@ -14,6 +14,9 @@ interface ITokenData {
 	}
 
 	/// @notice Struct containing information about a token
+	/// @param tokenType The type of the token (NATIVE, ERC20, ERC721, ERC1155)
+	/// @param tokenAddress The address of the token contract (zero address for native tokens)
+	/// @param tokenId The ID of the token (used for ERC721 and ERC1155)
 	struct TokenInfo {
 		TokenType tokenType;
 		address tokenAddress;

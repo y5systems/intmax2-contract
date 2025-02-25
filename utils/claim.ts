@@ -1,11 +1,7 @@
 import fs from 'fs'
 import { ethers } from 'hardhat'
 
-
-export function makeClaimInfo(
-	aggregator: string,
-	claims: Claim[],
-): ClaimInfo {
+export function makeClaimInfo(aggregator: string, claims: Claim[]): ClaimInfo {
 	let hash = ethers.ZeroHash
 	for (const claim of claims) {
 		hash = hashClaimWithPrevHash(hash, claim)
@@ -22,10 +18,7 @@ export function makeClaimInfo(
 	}
 }
 
-function hashClaimWithPrevHash(
-	prevHash: string,
-	claim: Claim,
-): string {
+function hashClaimWithPrevHash(prevHash: string, claim: Claim): string {
 	return ethers.solidityPackedKeccak256(
 		['bytes32', 'address', 'uint256', 'bytes32', 'bytes32', 'uint32'],
 		[

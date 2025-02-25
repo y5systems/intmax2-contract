@@ -1,6 +1,9 @@
 import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
-import { loadFixture, time } from '@nomicfoundation/hardhat-toolbox/network-helpers'
+import {
+	loadFixture,
+	time,
+} from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
 import {
 	Claim,
@@ -9,10 +12,7 @@ import {
 	RollupTestForClaim,
 	ContributionTest,
 } from '../../typechain-types'
-import {
-	getPrevHashFromClaims,
-	getChainedClaims,
-} from './common.test'
+import { getPrevHashFromClaims, getChainedClaims } from './common.test'
 
 describe('Claim', () => {
 	type TestObjects = {
@@ -31,11 +31,9 @@ describe('Claim', () => {
 		const mockPlonkVerifierFactory =
 			await ethers.getContractFactory('MockPlonkVerifier')
 		const mockPlonkVerifier = await mockPlonkVerifierFactory.deploy()
-		const rollupTestForClaimFactory = await ethers.getContractFactory(
-			'RollupTestForClaim',
-		)
-		const rollupTestForClaim =
-			await rollupTestForClaimFactory.deploy()
+		const rollupTestForClaimFactory =
+			await ethers.getContractFactory('RollupTestForClaim')
+		const rollupTestForClaim = await rollupTestForClaimFactory.deploy()
 		const liquidityAddress = ethers.Wallet.createRandom().address
 		const contributionTestFactory =
 			await ethers.getContractFactory('ContributionTest')
@@ -89,7 +87,7 @@ describe('Claim', () => {
 			const { deployer } = await getSigners()
 
 			// Create claims for direct claim tokens
-			const claims = getChainedClaims(2);
+			const claims = getChainedClaims(2)
 			const lastClaimHash = getPrevHashFromClaims(claims)
 
 			const validPublicInputs = {
@@ -102,11 +100,7 @@ describe('Claim', () => {
 			for (const w of claims) {
 				await rollupTestForClaim.setTestData(w.blockNumber, w.blockHash)
 			}
-			await claim.submitClaimProof(
-				claims,
-				validPublicInputs,
-				'0x',
-			)
+			await claim.submitClaimProof(claims, validPublicInputs, '0x')
 
 			const allocationPerDay = await claim.getAllocationPerPeriod(0)
 			console.log(allocationPerDay.toString())
@@ -123,6 +117,5 @@ describe('Claim', () => {
 			const allocation0After = await claim.getUserAllocation(0, claimer0)
 			console.log(allocation0After.toString())
 		})
-
 	})
 })

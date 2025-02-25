@@ -7,10 +7,7 @@ async function main() {
 	if (!deployedContracts.claim) {
 		throw new Error('claim contracts should be deployed')
 	}
-	const claim = await ethers.getContractAt(
-		'Claim',
-		deployedContracts.claim,
-	)
+	const claim = await ethers.getContractAt('Claim', deployedContracts.claim)
 
 	const allocationPerDay = await claim.getAllocationPerDay(0)
 	console.log('allocation per day:', allocationPerDay.toString())

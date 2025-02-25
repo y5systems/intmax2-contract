@@ -5,12 +5,17 @@ pragma solidity 0.8.27;
 /// @notice Library for handling chained claims in a hash chain
 library ChainedClaimLib {
 	/// @notice Represents a claim linked in a hash chain, used in claim proof public inputs
+	/// @param recipient The address of the claim recipient
+	/// @param amount The amount of tokens being withdrawn
+	/// @param nullifier The nullifier of the claim
+	/// @param blockHash The hash of the block containing the claim
+	/// @param blockNumber The number of the block containing the claim
 	struct ChainedClaim {
-		address recipient; // Address of the claim recipient
-		uint256 amount; // Amount of tokens being withdrawn
-		bytes32 nullifier; // Nullifier to prevent double-spending
-		bytes32 blockHash; // Hash of the block containing the claim
-		uint32 blockNumber; // Number of the block containing the claim
+		address recipient;
+		uint256 amount;
+		bytes32 nullifier;
+		bytes32 blockHash;
+		uint32 blockNumber;
 	}
 
 	/// @notice Hashes a ChainedClaim with the previous hash in the chain

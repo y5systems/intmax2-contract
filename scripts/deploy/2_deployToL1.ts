@@ -1,8 +1,6 @@
 import { ethers, network, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
-import {
-	getL1MessengerAddress,
-} from '../utils/addressBook'
+import { getL1MessengerAddress } from '../utils/addressBook'
 import { sleep } from '../../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
 import { cleanEnv, num, str } from 'envalid'
@@ -12,7 +10,7 @@ const env = cleanEnv(process.env, {
 	ANALYZER_ADDRESS: str(),
 	SLEEP_TIME: num({
 		default: 30,
-	})
+	}),
 })
 
 async function main() {
@@ -20,8 +18,6 @@ async function main() {
 	if (network.name === 'localhost') {
 		admin = (await ethers.getSigners())[0].address
 	}
-
-
 
 	let deployedContracts = await readDeployedContracts()
 	if (!deployedContracts.mockL1ScrollMessenger) {
@@ -90,7 +86,11 @@ async function main() {
 
 		const liquidityFactory = await ethers.getContractFactory('Liquidity')
 		// todo fix
-		const initialERC20Tokens = [deployedContracts.testErc20, "0x779877A7B0D9E8603169DdbD7836e478b4624789", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"]
+		const initialERC20Tokens = [
+			deployedContracts.testErc20,
+			'0x779877A7B0D9E8603169DdbD7836e478b4624789',
+			'0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+		]
 		const liquidity = await upgrades.deployProxy(
 			liquidityFactory,
 			[

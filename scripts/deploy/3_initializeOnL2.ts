@@ -8,8 +8,8 @@ import { cleanEnv, num, str } from 'envalid'
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
 	SLEEP_TIME: num({
-		default: 10
-	})
+		default: 10,
+	}),
 })
 
 async function main() {
@@ -54,10 +54,7 @@ async function main() {
 		'Withdrawal',
 		deployedL2Contracts.withdrawal,
 	)
-	const claim = await ethers.getContractAt(
-		'Claim',
-		deployedL2Contracts.claim,
-	)
+	const claim = await ethers.getContractAt('Claim', deployedL2Contracts.claim)
 	const registry = await ethers.getContractAt(
 		'BlockBuilderRegistry',
 		deployedL2Contracts.blockBuilderRegistry,
@@ -106,7 +103,7 @@ async function main() {
 			deployedL2Contracts.claimPlonkVerifier,
 			deployedL1Contracts.liquidity,
 			deployedL2Contracts.rollup,
-			deployedL2Contracts.l2Contribution
+			deployedL2Contracts.l2Contribution,
 		)
 		await tx.wait()
 		console.log('Claim initialized')
@@ -123,7 +120,7 @@ async function main() {
 			deployedL2Contracts.withdrawalPlonkVerifier,
 			deployedL1Contracts.liquidity,
 			deployedL2Contracts.rollup,
-			deployedL2Contracts.l2Contribution
+			deployedL2Contracts.l2Contribution,
 		)
 		await tx.wait()
 		console.log('Claim initialized')

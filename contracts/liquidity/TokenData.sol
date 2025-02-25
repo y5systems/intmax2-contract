@@ -5,9 +5,16 @@ import {ITokenData} from "./ITokenData.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 abstract contract TokenData is Initializable, ITokenData {
+	/// @notice native currency address
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
+
+	/// @notice token information
 	TokenInfo[] private tokenInfoList;
+
+	/// @notice token index mappings
 	mapping(address => uint32) private fungibleTokenIndexMap;
+
+	/// @notice nft token index mappings
 	mapping(address => mapping(uint256 => uint32))
 		private nonFungibleTokenIndexMap;
 

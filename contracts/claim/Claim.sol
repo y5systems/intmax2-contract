@@ -24,15 +24,28 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 	using Byte32Lib for bytes32;
 	using AllocationLib for AllocationLib.State;
 
+	/// @notice verifies the claim proof
 	IPlonkVerifier private claimVerifier;
+
+	/// @notice ScrollMessenger contract
 	IL2ScrollMessenger private l2ScrollMessenger;
+
+	/// @notice Rollup contract
 	IRollup private rollup;
+
+	/// @notice Liquidity contract
 	address private liquidity;
+
+	/// @notice Contribution contract
 	IContribution private contribution;
+
+	/// @notice allocation state
 	AllocationLib.State private allocationState;
+
+	/// @notice nullifiers
 	mapping(bytes32 => bool) private nullifiers;
 
-	uint32 constant REWARD_TOKEN_INDEX = 1;
+	uint32 private constant REWARD_TOKEN_INDEX = 1;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor
 	constructor() {
@@ -67,7 +80,7 @@ contract Claim is IClaim, UUPSUpgradeable, OwnableUpgradeable {
 		}
 		__Ownable_init(_admin);
 		__UUPSUpgradeable_init();
-		AllocationLib.__AllocationLib_init(allocationState);
+		AllocationLib.setStartTimeStamp(allocationState);
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		claimVerifier = IPlonkVerifier(_claimVerifier);
 		rollup = IRollup(_rollup);

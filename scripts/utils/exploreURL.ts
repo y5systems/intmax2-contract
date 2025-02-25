@@ -4,10 +4,7 @@ import { readDeployedContracts } from './io'
 
 async function main() {
 	const deployedL1Contracts = await readDeployedContracts()
-	if (
-		!deployedL1Contracts.testErc20 ||
-		!deployedL1Contracts.liquidity
-	) {
+	if (!deployedL1Contracts.testErc20 || !deployedL1Contracts.liquidity) {
 		throw new Error('all l1 contracts should be deployed')
 	}
 

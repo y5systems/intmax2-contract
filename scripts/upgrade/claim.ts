@@ -16,10 +16,7 @@ async function main() {
 
 	// await upgrades.forceImport(deployedContracts.claim, newImplementationFactory)
 
-	await upgrades.upgradeProxy(
-		deployedContracts.claim,
-		newImplementationFactory,
-	)
+	await upgrades.upgradeProxy(deployedContracts.claim, newImplementationFactory)
 }
 
 main().catch((error) => {

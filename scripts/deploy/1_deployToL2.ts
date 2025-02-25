@@ -3,12 +3,11 @@ import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import { sleep } from '../../utils/sleep'
 import { cleanEnv, num, str } from 'envalid'
 
-
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
 	SLEEP_TIME: num({
 		default: 30,
-	})
+	}),
 })
 
 async function main() {
@@ -108,13 +107,16 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 
-	let WithdrawalPlonkVerifier_;
-	let ClaimPlonkVerifier_;
+	let WithdrawalPlonkVerifier_
+	let ClaimPlonkVerifier_
 	if (network.name === 'localhost') {
-		WithdrawalPlonkVerifier_ = await ethers.getContractFactory('MockPlonkVerifier')
+		WithdrawalPlonkVerifier_ =
+			await ethers.getContractFactory('MockPlonkVerifier')
 		ClaimPlonkVerifier_ = await ethers.getContractFactory('MockPlonkVerifier')
 	} else {
-		WithdrawalPlonkVerifier_ = await ethers.getContractFactory('WithdrawalPlonkVerifier')
+		WithdrawalPlonkVerifier_ = await ethers.getContractFactory(
+			'WithdrawalPlonkVerifier',
+		)
 		ClaimPlonkVerifier_ = await ethers.getContractFactory('ClaimPlonkVerifier')
 	}
 

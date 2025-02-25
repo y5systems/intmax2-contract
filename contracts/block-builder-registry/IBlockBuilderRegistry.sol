@@ -7,5 +7,7 @@ interface IBlockBuilderRegistry {
 	/// @param url The URL of the block builder
 	event BlockBuilderHeartbeat(address indexed blockBuilder, string url);
 
+	/// @notice Emits a heartbeat for the block builder
+	/// @param url The URL of the block builder
 	function emitHeartbeat(string calldata url) external;
 }

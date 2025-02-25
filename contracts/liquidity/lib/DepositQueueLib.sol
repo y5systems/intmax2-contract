@@ -25,13 +25,18 @@ library DepositQueueLib {
 	);
 
 	/// @notice Represents a queue of pending deposits
+	/// @param depositData Array of deposits that are pending
+	/// @param front Index of the first element in the queue
 	struct DepositQueue {
-		DepositData[] depositData; /// Array of deposits that are pending
-		uint256 front; /// Index of the first element in the queue
+		DepositData[] depositData;
+		uint256 front;
 	}
 
 	/// @notice Represents data for a single deposit
 	/// @dev Includes deposit hash, sender address, and rejection status
+	/// @param depositHash The hash of the deposit
+	/// @param sender The address of the depositor
+	/// @param isRejected Whether the deposit has been rejected
 	struct DepositData {
 		bytes32 depositHash;
 		address sender;
