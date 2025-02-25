@@ -89,7 +89,8 @@ async function main() {
 		}
 
 		const liquidityFactory = await ethers.getContractFactory('Liquidity')
-		const initialERC20Tokens = [deployedContracts.testErc20]
+		// todo fix
+		const initialERC20Tokens = [deployedContracts.testErc20, "0x779877A7B0D9E8603169DdbD7836e478b4624789", "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"]
 		const liquidity = await upgrades.deployProxy(
 			liquidityFactory,
 			[

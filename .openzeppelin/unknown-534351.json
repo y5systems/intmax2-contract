@@ -25,6 +25,31 @@
       "address": "0x15315a107b7CbfC532156FEbd682412a997Ff4dA",
       "txHash": "0xafc29e22bf6b8fdd16189be0552f4b47242e9c3e167c2b076c788e6ed1a9460d",
       "kind": "uups"
+    },
+    {
+      "address": "0x860AE2Fb3bAa580c992E2aFf047E96741aD9E3e3",
+      "txHash": "0x28a17229aae2361267350a32f5f51706c2ce33d668be02550ca6107af26ee68f",
+      "kind": "uups"
+    },
+    {
+      "address": "0x6bf46F616561FaCEFedF54A6b654384122D89445",
+      "txHash": "0xd06f693e7d23a83fc0a7f85a2b03290a0fe6aabfb1d9eed1c532042cba5b773a",
+      "kind": "uups"
+    },
+    {
+      "address": "0x2801BE131c514ec30C37b202b230CBFAEB561167",
+      "txHash": "0x6bfe5f3a3a0b56001d87b602430d67dcfc5576a6c6865801d102add52aa7903d",
+      "kind": "uups"
+    },
+    {
+      "address": "0xF3F0Ca20b931F657fDf79b4F6a36F0a6f0126B7F",
+      "txHash": "0x5e8293e195b807cd64bbdc922ad7f70def6122fa368b5bf4438ea910466a6a39",
+      "kind": "uups"
+    },
+    {
+      "address": "0x375382293f8B349917273ef2f405c3dD355d31b9",
+      "txHash": "0x85719aa35b8c394065df2fc3dd8eb3c83bd4523fafcb1cf54ec6aa12a08345ba",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -920,6 +945,209 @@
               "label": "_roles",
               "type": "t_mapping(t_bytes32,t_struct(RoleData)25_storage)",
               "src": "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol:61",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "cf51de37122d5ea030b3fb834ffb40d3eff603b87418a52bfe43e3ad4326ec49": {
+      "address": "0x33ceB9F8Dbe60F121A2a4e3283d958D41F8cAfF3",
+      "txHash": "0x172b8613ae2c3d62de8bc495ec116a5da9faac232f3bdf63af2506cf93ec3a88",
+      "layout": {
+        "solcVersion": "0.8.27",
+        "storage": [
+          {
+            "label": "claimVerifier",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IPlonkVerifier)10501",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:27"
+          },
+          {
+            "label": "l2ScrollMessenger",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IL2ScrollMessenger)9101",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:28"
+          },
+          {
+            "label": "rollup",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_contract(IRollup)11393",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:29"
+          },
+          {
+            "label": "liquidity",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:30"
+          },
+          {
+            "label": "contribution",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_contract(IContribution)10642",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:31"
+          },
+          {
+            "label": "allocationState",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_struct(State)9857_storage",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:32"
+          },
+          {
+            "label": "nullifiers",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_mapping(t_bytes32,t_bool)",
+            "contract": "Claim",
+            "src": "contracts/claim/Claim.sol:33"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_struct(InitializableStorage)86_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(OwnableStorage)14_storage": {
+            "label": "struct OwnableUpgradeable.OwnableStorage",
+            "members": [
+              {
+                "label": "_owner",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_contract(IContribution)10642": {
+            "label": "contract IContribution",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IL2ScrollMessenger)9101": {
+            "label": "contract IL2ScrollMessenger",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IPlonkVerifier)10501": {
+            "label": "contract IPlonkVerifier",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IRollup)11393": {
+            "label": "contract IRollup",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_bool)": {
+            "label": "mapping(bytes32 => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_mapping(t_address,t_uint256))": {
+            "label": "mapping(uint256 => mapping(address => uint256))",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_uint256,t_uint256)": {
+            "label": "mapping(uint256 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(State)9857_storage": {
+            "label": "struct AllocationLib.State",
+            "members": [
+              {
+                "label": "startTimestamp",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "totalContributions",
+                "type": "t_mapping(t_uint256,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "userContributions",
+                "type": "t_mapping(t_uint256,t_mapping(t_address,t_uint256))",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.Ownable": [
+            {
+              "contract": "OwnableUpgradeable",
+              "label": "_owner",
+              "type": "t_address",
+              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
               "offset": 0,
               "slot": "0"
             }
