@@ -50,7 +50,7 @@ export async function postBlock(
 			fullBlock.signature.aggSignature,
 			fullBlock.signature.messagePoint,
 			fullBlock.signature.pubkeyHash,
-			"0x",
+			'0x',
 			{ value: ethers.parseEther('1') },
 		)
 		return tx

@@ -41,13 +41,24 @@ contract Liquidity is
 	bytes32 public constant WITHDRAWAL = keccak256("WITHDRAWAL");
 
 	/// @notice Deployment time which is used to calculate the deposit limit
-	uint256 deploymentTime;
+	uint256 private deploymentTime;
 
+	/// @notice Address of the L1 ScrollMessenger contract
 	IL1ScrollMessenger private l1ScrollMessenger;
+
+	/// @notice Address of the Contribution contract
 	IContribution private contribution;
+
+	/// @notice Address of the Rollup contract
 	address private rollup;
+
+	/// @notice Mapping of deposit hashes to a boolean indicating whether the deposit hash exists
 	mapping(bytes32 => uint256) public claimableWithdrawals;
+
+	/// @notice Mapping of deposit hashes to a boolean indicating whether the deposit hash exists
 	mapping(bytes32 => bool) private doesDepositHashExist;
+
+	/// @notice deposit information queue
 	DepositQueueLib.DepositQueue private depositQueue;
 
 	modifier onlyWithdrawalRole() {

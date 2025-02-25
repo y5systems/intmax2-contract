@@ -5,13 +5,19 @@ pragma solidity 0.8.27;
 /// @notice Library for handling chained withdrawals in a hash chain
 library ChainedWithdrawalLib {
 	/// @notice Represents a withdrawal linked in a hash chain, used in withdrawal proof public inputs
+	/// @param recipient The address of the recipient of the withdrawal
+	/// @param tokenIndex The index of the token being withdrawn
+	/// @param amount The amount of tokens being withdrawn
+	/// @param nullifier The nullifier of the withdrawal
+	/// @param blockHash The hash of the block containing the withdrawal
+	/// @param blockNumber The number of the block containing the withdrawal
 	struct ChainedWithdrawal {
-		address recipient; // Address of the withdrawal recipient
-		uint32 tokenIndex; // Index of the token being withdrawn
-		uint256 amount; // Amount of tokens being withdrawn
-		bytes32 nullifier; // Nullifier to prevent double-spending
-		bytes32 blockHash; // Hash of the block containing the withdrawal
-		uint32 blockNumber; // Number of the block containing the withdrawal
+		address recipient;
+		uint32 tokenIndex;
+		uint256 amount;
+		bytes32 nullifier;
+		bytes32 blockHash;
+		uint32 blockNumber;
 	}
 
 	/// @notice Hashes a ChainedWithdrawal with the previous hash in the chain

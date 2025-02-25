@@ -3,16 +3,17 @@ pragma solidity 0.8.27;
 
 library DepositLib {
 	/// @dev Represents a leaf in the Deposit tree
+	/// @notice This struct is used to represent a deposit in the Deposit tree
+	/// @param depositor The address of the depositor
+	/// @param recipientSaltHash The hash of the recipient's intmax2 address and a private salt
+	/// @param amount The amount of tokens being deposited
+	/// @param tokenIndex The index of the token being deposited
+	/// @param isEligible Whether the deposit is eligible for mining rewards
 	struct Deposit {
-		/// @notice Address of the depositor
 		address depositor;
-		/// @notice Hash of the recipient's intmax2 address and a private salt
 		bytes32 recipientSaltHash;
-		/// @notice Amount of tokens being deposited
 		uint256 amount;
-		/// @notice Index of the token being deposited
 		uint32 tokenIndex;
-		/// @notice Whether the deposit is eligible for mining rewards
 		bool isEligible;
 	}
 

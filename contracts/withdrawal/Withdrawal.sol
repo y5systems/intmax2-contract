@@ -24,12 +24,25 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	using WithdrawalProofPublicInputsLib for WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs;
 	using Byte32Lib for bytes32;
 
+	/// @notice withdrawal verifier contract
 	IPlonkVerifier private withdrawalVerifier;
+
+	/// @notice L2 ScrollMessenger contract
 	IL2ScrollMessenger private l2ScrollMessenger;
+
+	/// @notice rollup contract
 	IRollup private rollup;
+
+	/// @notice liquidity contract address
 	address private liquidity;
+
+	/// @notice direct withdrawal token indices
 	IContribution private contribution;
+
+	/// @notice nullifiers
 	mapping(bytes32 => bool) private nullifiers;
+
+	/// @notice direct withdrawal token indices
 	EnumerableSet.UintSet internal directWithdrawalTokenIndices;
 
 	/// @custom:oz-upgrades-unsafe-allow constructor

@@ -16,8 +16,11 @@ async function main() {
 	if (!deployedContracts.liquidity) {
 		throw new Error('liquidity contract should be deployed')
 	}
-	const liquidity = await ethers.getContractAt('Liquidity', deployedContracts.liquidity)
-	const tx = await liquidity.upgradeToAndCall(newImplAddress, '0x',)
+	const liquidity = await ethers.getContractAt(
+		'Liquidity',
+		deployedContracts.liquidity,
+	)
+	const tx = await liquidity.upgradeToAndCall(newImplAddress, '0x')
 	console.log('Upgrade tx:', tx.hash)
 }
 

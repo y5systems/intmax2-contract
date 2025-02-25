@@ -10,10 +10,7 @@ async function main() {
 		throw new Error('rollup and claim contracts should be deployed')
 	}
 	const rollup = await ethers.getContractAt('Rollup', deployedContracts.rollup)
-	const claim = await ethers.getContractAt(
-		'Claim',
-		deployedContracts.claim,
-	)
+	const claim = await ethers.getContractAt('Claim', deployedContracts.claim)
 
 	const blockNumber = 1 // block number of public input of claim
 	const blockHash = await rollup.blockHashes(blockNumber)

@@ -1,7 +1,6 @@
 import { ethers, network } from 'hardhat'
 import { readDeployedContracts } from './io'
 
-
 export const getL1MessengerAddress = async () => {
 	if (network.name === 'sepolia') {
 		return '0x50c7d3e7f7c656493D1D76aaa1a836CedfCBB16A' // real address

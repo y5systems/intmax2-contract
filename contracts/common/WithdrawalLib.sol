@@ -3,15 +3,15 @@ pragma solidity 0.8.27;
 
 library WithdrawalLib {
 	/// @dev Represents the information for a withdrawal operation
+	/// @notice This struct is used to represent a withdrawal operation
+	/// @param recipient The address of the recipient of the withdrawal
+	/// @param tokenIndex The index of the token being withdrawn
+	/// @param amount The amount of tokens being withdrawn
+	/// @param nullifier The nullifier of the withdrawal
 	struct Withdrawal {
-		/// @notice The address of the recipient of the withdrawal
 		address recipient;
-		/// @notice The index of the token being withdrawn
 		uint32 tokenIndex;
-		/// @notice The amount of tokens being withdrawn
 		uint256 amount;
-		/// @notice The nullifier of the withdrawal,
-		/// which is used to ensure the uniqueness of the withdrawal
 		bytes32 nullifier;
 	}
 

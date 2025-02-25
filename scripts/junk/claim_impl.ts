@@ -1,7 +1,6 @@
 import { ethers, upgrades, network } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 
-
 async function main() {
 	const newImplementationFactory = await ethers.getContractFactory('Claim')
 	const _claim = await newImplementationFactory.deploy()
@@ -17,7 +16,7 @@ async function main() {
 		throw new Error('claim contract should be deployed')
 	}
 	const claim = await ethers.getContractAt('Claim', deployedContracts.claim)
-	const tx = await claim.upgradeToAndCall(newImplAddress, '0x',)
+	const tx = await claim.upgradeToAndCall(newImplAddress, '0x')
 	console.log('Upgrade tx:', tx.hash)
 }
 

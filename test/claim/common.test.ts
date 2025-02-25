@@ -8,12 +8,10 @@ export const getChainedClaims = (
 	return Array.from({ length: count }, (_, i) => getChainedClaim(i))
 }
 
-const getChainedClaim = (
-	num: number,
-): ChainedClaimLib.ChainedClaimStruct => {
+const getChainedClaim = (num: number): ChainedClaimLib.ChainedClaimStruct => {
 	return {
 		recipient: ethers.Wallet.createRandom().address,
-		amount: ethers.parseEther("1"),
+		amount: ethers.parseEther('1'),
 		nullifier: ethers.randomBytes(32),
 		blockHash: ethers.randomBytes(32),
 		blockNumber: Math.floor(Math.random() * 100000000),
@@ -27,14 +25,7 @@ export const getPrevHashFromClaims = (
 	for (const claim of claims) {
 		prevHash = ethers.keccak256(
 			ethers.solidityPacked(
-				[
-					'bytes32',
-					'address',
-					'uint256',
-					'bytes32',
-					'bytes32',
-					'uint32',
-				],
+				['bytes32', 'address', 'uint256', 'bytes32', 'bytes32', 'uint32'],
 				[
 					prevHash,
 					claim.recipient,
