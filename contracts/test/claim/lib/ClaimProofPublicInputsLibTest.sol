@@ -16,19 +16,4 @@ contract ClaimProofPublicInputsLibTest {
 
 		return ClaimProofPublicInputsLib.getHash(inputs);
 	}
-
-	function createInputs(
-		bytes32 lastClaimHash,
-		address claimAggregator
-	)
-		external
-		pure
-		returns (ClaimProofPublicInputsLib.ClaimProofPublicInputs memory)
-	{
-		return
-			ClaimProofPublicInputsLib.ClaimProofPublicInputs({
-				lastClaimHash: lastClaimHash,
-				claimAggregator: claimAggregator
-			});
-	}
 }
