@@ -58,11 +58,6 @@ library DepositLimit {
 
 		uint256 daysElapsed = (block.timestamp - deploymentTime) / 1 days;
 
-		// Return maximum limit after Period 7
-		if (daysElapsed >= PERIOD_4) {
-			return type(uint256).max;
-		}
-
 		// Determine period index
 		uint8 periodIndex;
 		if (daysElapsed >= PERIOD_4) periodIndex = 4;
