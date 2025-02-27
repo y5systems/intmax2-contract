@@ -65,8 +65,7 @@ library DepositLimit {
 
 		// Determine period index
 		uint8 periodIndex;
-		if (daysElapsed >= PERIOD_4) periodIndex = 4;
-		else if (daysElapsed >= PERIOD_3) periodIndex = 3;
+		if (daysElapsed >= PERIOD_3) periodIndex = 3;
 		else if (daysElapsed >= PERIOD_2) periodIndex = 2;
 		else if (daysElapsed >= PERIOD_1) periodIndex = 1;
 		else periodIndex = 0;
@@ -77,19 +76,19 @@ library DepositLimit {
 			if (periodIndex == 1) return ETH_LIMIT_1;
 			if (periodIndex == 2) return ETH_LIMIT_2;
 			if (periodIndex == 3) return ETH_LIMIT_3;
-			return ETH_LIMIT_4;
+			return ETH_LIMIT_4; // Unreachable codes
 		} else if (tokenIndex == WBTC_INDEX) {
 			if (periodIndex == 0) return WBTC_LIMIT_0;
 			if (periodIndex == 1) return WBTC_LIMIT_1;
 			if (periodIndex == 2) return WBTC_LIMIT_2;
 			if (periodIndex == 3) return WBTC_LIMIT_3;
-			return WBTC_LIMIT_4;
+			return WBTC_LIMIT_4; // Unreachable codes
 		} else {
 			if (periodIndex == 0) return USDC_LIMIT_0;
 			if (periodIndex == 1) return USDC_LIMIT_1;
 			if (periodIndex == 2) return USDC_LIMIT_2;
 			if (periodIndex == 3) return USDC_LIMIT_3;
-			return USDC_LIMIT_4;
+			return USDC_LIMIT_4; // Unreachable codes
 		}
 	}
 }
