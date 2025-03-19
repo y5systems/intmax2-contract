@@ -111,25 +111,15 @@ contract Liquidity is
 		address _contribution,
 		address[] memory initialERC20Tokens
 	) external initializer {
-		if (_admin == address(0)) {
-			revert AddressZero();
-		}
-		if (_l1ScrollMessenger == address(0)) {
-			revert AddressZero();
-		}
-		if (_rollup == address(0)) {
-			revert AddressZero();
-		}
-		if (_withdrawal == address(0)) {
-			revert AddressZero();
-		}
-		if (_claim == address(0)) {
-			revert AddressZero();
-		}
-		if (_analyzer == address(0)) {
-			revert AddressZero();
-		}
-		if (_contribution == address(0)) {
+		if (
+			_admin == address(0) ||
+			_l1ScrollMessenger == address(0) ||
+			_rollup == address(0) ||
+			_withdrawal == address(0) ||
+			_claim == address(0) ||
+			_analyzer == address(0) ||
+			_contribution == address(0)
+		) {
 			revert AddressZero();
 		}
 		_grantRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -143,6 +133,7 @@ contract Liquidity is
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);
 		contribution = IContribution(_contribution);
+		
 		rollup = _rollup;
 		// Set deployment time to the next day
 		deploymentTime = (block.timestamp / 1 days + 1) * 1 days;

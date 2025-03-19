@@ -2,8 +2,6 @@
 pragma solidity 0.8.27;
 
 library AllocationLib {
-	uint256 private constant PERIOD_INTERVAL = 1 hours;
-
 	// constants for the token minting curve
 	uint256 public constant GENESIS_TIMESTAMP = 1722999120;
 	uint256 public constant PHASE0_REWARD_PER_DAY = 8937500 * (10 ** 18);
@@ -15,6 +13,9 @@ library AllocationLib {
 
 	/// @notice Emitted when an attempt is made to consume allocations for the current period
 	error NotFinishedPeriod();
+
+	/// @notice Emitted when the period interval is zero
+	error periodIntervalZero();
 
 	/// @notice Emitted when a contribution is recorded
 	/// @param period current period
@@ -30,10 +31,12 @@ library AllocationLib {
 
 	/// @notice Represents the state of the allocation
 	/// @param startTimestamp The timestamp of the start of the allocation
+	/// @param periodInterval The interval between periods
 	/// @param totalContributions Maps period => total contributions in period
 	/// @param userContributions Maps period => user address => user contributions in period
 	struct State {
 		uint256 startTimestamp;
+		uint256 periodInterval;
 		mapping(uint256 => uint256) totalContributions;
 		mapping(uint256 => mapping(address => uint256)) userContributions;
 	}
@@ -68,10 +71,20 @@ library AllocationLib {
 
 	/// @notice Initializes the allocation state
 	/// @param state The allocation state
-	function setStartTimeStamp(State storage state) internal {
-		state.startTimestamp =
-			(block.timestamp / PERIOD_INTERVAL) *
-			PERIOD_INTERVAL;
+	function initialize(State storage state, uint256 periodInterval) internal {
+		if (periodInterval == 0) {
+			revert periodIntervalZero();
+		}
+		state.periodInterval = periodInterval;
+		if (periodInterval > 1 days) {
+			// align the start timestamp to the start of the day
+			state.startTimestamp = (block.timestamp / 1 days) * 1 days;
+		} else {
+			// align the start timestamp to the start of the period
+			state.startTimestamp =
+				(block.timestamp / periodInterval) *
+				periodInterval;
+		}
 	}
 
 	/// @notice Records a user's contribution
@@ -140,30 +153,37 @@ library AllocationLib {
 		State storage state,
 		uint256 periodNumber
 	) internal view returns (uint256) {
-		uint256 rewardPerDay = _getAllocationPerDay(state, periodNumber);
-		return (rewardPerDay * PERIOD_INTERVAL) / 1 days;
+		uint256 rewardPerDay = getAllocationPerDay(
+			state.startTimestamp,
+			state.periodInterval,
+			periodNumber
+		);
+		return (rewardPerDay * state.periodInterval) / 1 days;
 	}
 
-	/// @notice Gets the allocation per day
-	/// @param state The allocation state
+	/// @notice Gets the allocation per period
+	/// @param startTimestamp The start timestamp
 	/// @param periodNumber The period number
-	/// @return The allocation per day
-	function _getAllocationPerDay(
-		State storage state,
+	/// @return The allocation per period
+	function getAllocationPerDay(
+		uint256 startTimestamp,
+		uint256 periodInterval,
 		uint256 periodNumber
-	) private view returns (uint256) {
-		uint256 elapsedDays = (state.startTimestamp +
+	) private pure returns (uint256) {
+		uint256 elapsedDays = (startTimestamp +
 			periodNumber *
-			1 days -
+			periodInterval -
 			GENESIS_TIMESTAMP) / 1 days;
 		uint256 rewardPerDay = PHASE0_REWARD_PER_DAY;
-		for (uint256 i = 0; i < NUM_PHASES; i++) {
-			uint256 phaseDays = PHASE0_PERIOD << i;
-			if (elapsedDays < phaseDays) {
-				return rewardPerDay;
+		unchecked {
+			for (uint256 i = 0; i < NUM_PHASES; i++) {
+				uint256 phaseDays = PHASE0_PERIOD << i;
+				if (elapsedDays < phaseDays) {
+					return rewardPerDay;
+				}
+				elapsedDays -= phaseDays;
+				rewardPerDay >>= 1;
 			}
-			elapsedDays -= phaseDays;
-			rewardPerDay >>= 1;
 		}
 		return 0;
 	}
@@ -193,10 +213,12 @@ library AllocationLib {
 	function getCurrentPeriod(
 		State storage state
 	) internal view returns (uint256) {
-		return (block.timestamp - state.startTimestamp) / PERIOD_INTERVAL;
+		return (block.timestamp - state.startTimestamp) / state.periodInterval;
 	}
 
 	/// @notice Gets the allocation information for a user
+	/// @dev This function is not called by the contract,
+	/// so gas optimization is not necessary
 	/// @param state The allocation state
 	/// @param periodNumber The period number
 	/// @param user The user's address
@@ -231,7 +253,7 @@ library AllocationLib {
 		return
 			AllocationConstants({
 				startTimestamp: state.startTimestamp,
-				periodInterval: PERIOD_INTERVAL,
+				periodInterval: state.periodInterval,
 				genesisTimestamp: GENESIS_TIMESTAMP,
 				phase0RewardPerDay: PHASE0_REWARD_PER_DAY,
 				numPhases: NUM_PHASES,
