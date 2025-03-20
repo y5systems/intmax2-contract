@@ -14,9 +14,28 @@ contract PredicatePermitter is
 	OwnableUpgradeable,
 	IPermitter
 {
-	function initialize(address _admin) external initializer {
+	/// @notice Emitted when the policy is set
+	event PolicySet(string policyID);
+
+	/// @notice Emitted when the predicate manager is set
+	event PredicateManagerSet(address predicateManager);
+
+	/// @custom:oz-upgrades-unsafe-allow constructor
+	constructor() {
+		_disableInitializers();
+	}
+
+	function initialize(
+		address _admin,
+		address predicateManager,
+		string calldata policyID
+	) external initializer {
 		__Ownable_init(_admin);
 		__UUPSUpgradeable_init();
+		_setPredicateManager(predicateManager);
+		_setPolicy(policyID);
+		emit PolicySet(policyID);
+		emit PredicateManagerSet(predicateManager);
 	}
 
 	function permit(
@@ -33,12 +52,20 @@ contract PredicatePermitter is
 			_authorizeTransaction(predicateMessage, encodedData, user, value);
 	}
 
-	function setPolicy(string memory policyID) external onlyOwner {
+	/// @notice Set the policy ID of Predicate
+	/// @dev Only the owner can call this function
+	/// @param policyID The policy ID to set
+	function setPolicy(string calldata policyID) external onlyOwner {
 		_setPolicy(policyID);
+		emit PolicySet(policyID);
 	}
 
+	/// @notice Set the Predicate Manager
+	/// @dev Only the owner can call this function
+	/// @param serviceManager The Predicate Manager address to set
 	function setPredicateManager(address serviceManager) external onlyOwner {
 		_setPredicateManager(serviceManager);
+		emit PredicateManagerSet(serviceManager);
 	}
 
 	function _authorizeUpgrade(address) internal override onlyOwner {}

@@ -32,9 +32,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	/// @notice block hashes
 	bytes32[] public blockHashes;
 
-	/// @notice block builders
-	address[] public blockBuilders;
-
 	/// @notice L2 ScrollMessenger contract
 	IL2ScrollMessenger private l2ScrollMessenger;
 
@@ -55,13 +52,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 	modifier onlyLiquidityContract() {
 		IL2ScrollMessenger l2ScrollMessengerCached = l2ScrollMessenger;
-		// note
-		// The specification of ScrollMessenger may change in the future.
-		// https://docs.scroll.io/en/developers/l1-and-l2-bridging/the-scroll-messenger/
-
-		// The L2 scrollMessenger is now the sender,
-		// but the sendMessage executor of the L1 scrollMessenger will eventually
-		// be set as the sender, so the following source needs to be modified at that time
 		if (_msgSender() != address(l2ScrollMessengerCached)) {
 			revert OnlyScrollMessenger();
 		}
@@ -99,7 +89,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 		depositTreeRoot = depositTree.getRoot();
 		blockHashes.pushGenesisBlockHash(depositTreeRoot);
-		blockBuilders.push(address(0));
 	}
 
 	function postRegistrationBlock(
@@ -245,7 +234,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			signatureHash,
 			timestamp
 		);
-		blockBuilders.push(_msgSender());
 		emit BlockPosted(
 			prevBlockHash,
 			_msgSender(),
@@ -280,15 +268,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 	function getLatestBlockNumber() external view returns (uint32) {
 		return blockHashes.getBlockNumber() - 1;
-	}
-
-	function getBlockBuilder(
-		uint32 blockNumber
-	) external view returns (address) {
-		if (blockNumber >= blockHashes.getBlockNumber()) {
-			revert BlockNumberOutOfRange();
-		}
-		return blockBuilders[blockNumber];
 	}
 
 	function getBlockHash(uint32 blockNumber) external view returns (bytes32) {
