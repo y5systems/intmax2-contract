@@ -21,11 +21,11 @@ library DepositLimit {
 	uint256 internal constant ETH_LIMIT_4 = 10000 ether; // 2y-
 
 	// WBTC limits (in satoshi)
-	uint256 internal constant WBTC_LIMIT_0 = 500000000; // 0.5 BTC
-	uint256 internal constant WBTC_LIMIT_1 = 1000000000; // 1 BTC
-	uint256 internal constant WBTC_LIMIT_2 = 5000000000; // 5 BTC
-	uint256 internal constant WBTC_LIMIT_3 = 10000000000; // 10 BTC
-	uint256 internal constant WBTC_LIMIT_4 = 50000000000; // 50 BTC
+	uint256 internal constant WBTC_LIMIT_0 = 500000000; // 5 BTC
+	uint256 internal constant WBTC_LIMIT_1 = 1000000000; // 10 BTC
+	uint256 internal constant WBTC_LIMIT_2 = 5000000000; // 50 BTC
+	uint256 internal constant WBTC_LIMIT_3 = 10000000000; // 100 BTC
+	uint256 internal constant WBTC_LIMIT_4 = 50000000000; // 500 BTC
 
 	// USDC limits
 	uint256 internal constant USDC_LIMIT_0 = 500000000000; // 500k USDC
