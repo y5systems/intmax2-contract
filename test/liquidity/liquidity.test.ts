@@ -13,6 +13,7 @@ import {
 	TestNFT,
 	TestERC1155,
 	WithdrawalLibTest,
+	PermitterTest,
 } from '../../typechain-types'
 import { getDepositHash } from '../common.test'
 import { INITIAL_ERC20_TOKEN_ADDRESSES, TokenType } from './common.test'
@@ -26,6 +27,8 @@ describe('Liquidity', () => {
 		claim: string
 		contribution: ContributionTest
 		withdrawalLibTest: WithdrawalLibTest
+		amlPermitterTest: PermitterTest
+		eligibilityPermitterTest: PermitterTest
 	}
 	async function setup(): Promise<TestObjects> {
 		const l1ScrollMessengerFactory = await ethers.getContractFactory(
@@ -42,7 +45,13 @@ describe('Liquidity', () => {
 		const withdrawalLibTestFactory =
 			await ethers.getContractFactory('WithdrawalLibTest')
 		const withdrawalLibTest = await withdrawalLibTestFactory.deploy()
-		const { admin, analyzer } = await getSigners()
+
+		const permitterTestFactory =
+			await ethers.getContractFactory('PermitterTest')
+		const amlPermitterTest = await permitterTestFactory.deploy()
+		const eligibilityPermitterTest = await permitterTestFactory.deploy()
+
+		const { admin, relayer } = await getSigners()
 		const liquidityFactory = await ethers.getContractFactory('Liquidity')
 		const liquidity = (await upgrades.deployProxy(
 			liquidityFactory,
@@ -52,12 +61,18 @@ describe('Liquidity', () => {
 				rollup,
 				withdrawal,
 				claim,
-				analyzer.address,
+				relayer.address,
 				await contribution.getAddress(),
 				INITIAL_ERC20_TOKEN_ADDRESSES,
 			],
 			{ kind: 'uups', unsafeAllow: ['constructor'] },
 		)) as unknown as Liquidity
+		await liquidity
+			.connect(admin)
+			.setPermitter(
+				await amlPermitterTest.getAddress(),
+				await eligibilityPermitterTest.getAddress(),
+			)
 		await l1ScrollMessenger.setLiquidity(await liquidity.getAddress())
 		return {
 			liquidity,
@@ -67,20 +82,22 @@ describe('Liquidity', () => {
 			claim,
 			contribution,
 			withdrawalLibTest,
+			amlPermitterTest,
+			eligibilityPermitterTest,
 		}
 	}
 	type Signers = {
 		deployer: HardhatEthersSigner
 		admin: HardhatEthersSigner
-		analyzer: HardhatEthersSigner
+		relayer: HardhatEthersSigner
 		user: HardhatEthersSigner
 	}
 	const getSigners = async (): Promise<Signers> => {
-		const [deployer, admin, analyzer, user] = await ethers.getSigners()
+		const [deployer, admin, relayer, user] = await ethers.getSigners()
 		return {
 			deployer,
 			admin,
-			analyzer,
+			relayer,
 			user,
 		}
 	}
@@ -111,11 +128,11 @@ describe('Liquidity', () => {
 				const role = await liquidity.DEFAULT_ADMIN_ROLE()
 				expect(await liquidity.hasRole(role, admin.address)).to.be.true
 			})
-			it('analyzer has analyzer role', async () => {
+			it('relayer has relayer role', async () => {
 				const { liquidity } = await loadFixture(setup)
-				const { analyzer } = await getSigners()
-				const role = await liquidity.ANALYZER()
-				expect(await liquidity.hasRole(role, analyzer.address)).to.be.true
+				const { relayer } = await getSigners()
+				const role = await liquidity.RELAYER()
+				expect(await liquidity.hasRole(role, relayer.address)).to.be.true
 			})
 			it('withdrawal has withdrawal role', async () => {
 				const { liquidity, withdrawal } = await loadFixture(setup)
@@ -245,7 +262,7 @@ describe('Liquidity', () => {
 					),
 				).to.be.revertedWithCustomError(liquidityFactory, 'AddressZero')
 			})
-			it('analyzer is zero address', async () => {
+			it('relayer is zero address', async () => {
 				const liquidityFactory = await ethers.getContractFactory('Liquidity')
 				const tmpAddress = ethers.Wallet.createRandom().address
 				await expect(
@@ -322,6 +339,47 @@ describe('Liquidity', () => {
 			})
 		})
 	})
+
+	describe('setPermitter', () => {
+		describe('success', () => {
+			it('set permitter addresses', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const nextAmlPermitter = ethers.Wallet.createRandom().address
+				const nextEligibilityPermitter = ethers.Wallet.createRandom().address
+
+				let currentAmlPermitter = await liquidity.amlPermitter()
+				let currentEligibilityPermitter = await liquidity.eligibilityPermitter()
+				expect(currentAmlPermitter).to.be.not.equal(ethers.ZeroAddress)
+				expect(currentEligibilityPermitter).to.be.not.equal(ethers.ZeroAddress)
+
+				const { admin } = await getSigners()
+				await liquidity
+					.connect(admin)
+					.setPermitter(nextAmlPermitter, nextEligibilityPermitter)
+
+				currentAmlPermitter = await liquidity.amlPermitter()
+				currentEligibilityPermitter = await liquidity.eligibilityPermitter()
+				expect(currentAmlPermitter).to.be.equal(nextAmlPermitter)
+				expect(currentEligibilityPermitter).to.be.equal(
+					nextEligibilityPermitter,
+				)
+			})
+		})
+		describe('fail', () => {
+			it('only admin(pause)', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { user } = await getSigners()
+				await expect(
+					liquidity
+						.connect(user)
+						.setPermitter(ethers.ZeroAddress, ethers.ZeroAddress),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'AccessControlUnauthorizedAccount',
+				)
+			})
+		})
+	})
 	describe('depositNativeToken', () => {
 		describe('success', () => {
 			it('emit Deposited event', async () => {
@@ -332,11 +390,18 @@ describe('Liquidity', () => {
 
 				const currentDepositId = await liquidity.getLastDepositId()
 				const currentTimestamp = await ethers.provider.getBlock('latest')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await expect(
 					liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: depositAmount }),
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						),
 				)
 					.to.emit(liquidity, 'Deposited')
 					.withArgs(
@@ -345,6 +410,7 @@ describe('Liquidity', () => {
 						recipientSaltHash,
 						0, // tokenIndex for ETH should be 0
 						depositAmount,
+						true,
 						currentTimestamp!.timestamp + 1,
 					)
 			})
@@ -354,18 +420,84 @@ describe('Liquidity', () => {
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmountEther = '1'
 				const depositAmount = ethers.parseEther(depositAmountEther)
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				const initialBalance = await ethers.provider.getBalance(
 					await liquidity.getAddress(),
 				)
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 				const finalBalance = await ethers.provider.getBalance(
 					await liquidity.getAddress(),
 				)
 
 				expect(finalBalance - initialBalance).to.equal(depositAmount)
+			})
+			it('amlPermitter is not set', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('1')
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const tmp = await liquidity.eligibilityPermitter()
+				await liquidity.connect(admin).setPermitter(ethers.ZeroAddress, tmp)
+				await liquidity
+					.connect(user)
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
+			})
+			it('eligibilityPermitter is not set', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('1')
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const tmp = await liquidity.amlPermitter()
+				await liquidity.connect(admin).setPermitter(tmp, ethers.ZeroAddress)
+				await liquidity
+					.connect(user)
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
+			})
+			it('eligibilityPermission length is 0', async () => {
+				const { liquidity } = await loadFixture(setup)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('1')
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.getBytes('0x')
+				await liquidity
+					.connect(user)
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
+				const filter = liquidity.filters.Deposited()
+				const events = await liquidity.queryFilter(filter)
+				const isEligible = events[0].args.isEligible
+				expect(isEligible).to.be.false
 			})
 		})
 
@@ -375,11 +507,18 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmount = ethers.parseEther('1000')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await expect(
 					liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: depositAmount }),
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						),
 				)
 					.to.be.revertedWithCustomError(liquidity, 'DepositAmountExceedsLimit')
 					.withArgs(depositAmount, ethers.parseEther('100'))
@@ -389,25 +528,43 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmount = ethers.parseEther('1')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 
 				await expect(
 					liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: depositAmount }),
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						),
 				).to.be.revertedWithCustomError(liquidity, 'DepositHashAlreadyExists')
 			})
 			it('revert TriedToDepositZero', async () => {
 				const { liquidity } = await loadFixture(setup)
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 				await expect(
 					liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: 0 }),
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: 0 },
+						),
 				).to.be.revertedWithCustomError(liquidity, 'TriedToDepositZero')
 			})
 			it('pause', async () => {
@@ -415,12 +572,63 @@ describe('Liquidity', () => {
 				const { admin, user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmount = ethers.parseEther('1')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 				await liquidity.connect(admin).pauseDeposits()
-				await await expect(
+				await expect(
 					liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: depositAmount }),
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						),
 				).to.be.revertedWithCustomError(liquidity, 'EnforcedPause')
+			})
+			it('amlPermitter permit return false', async () => {
+				const { liquidity, amlPermitterTest } = await loadFixture(setup)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('1')
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await amlPermitterTest.setPermitResult(false)
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						),
+				).to.be.revertedWithCustomError(liquidity, 'AmlValidationFailed')
+			})
+			it('eligibilityPermitter permit return false', async () => {
+				const { liquidity, eligibilityPermitterTest } = await loadFixture(setup)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('1')
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await eligibilityPermitterTest.setPermitResult(false)
+				await expect(
+					liquidity
+						.connect(user)
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'EligibilityValidationFailed',
+				)
 			})
 		})
 	})
@@ -453,6 +661,8 @@ describe('Liquidity', () => {
 
 				const currentDepositId = await liquidity.getLastDepositId()
 				const currentTimestamp = await ethers.provider.getBlock('latest')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await expect(
 					liquidity
@@ -461,6 +671,8 @@ describe('Liquidity', () => {
 							await testERC20.getAddress(),
 							recipientSaltHash,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						),
 				)
 					.to.emit(liquidity, 'Deposited')
@@ -470,6 +682,7 @@ describe('Liquidity', () => {
 						recipientSaltHash,
 						3, // new token index
 						depositAmount,
+						true,
 						currentTimestamp!.timestamp + 1,
 					)
 			})
@@ -478,7 +691,8 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmount = ethers.parseEther('0.00000001')
-
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 				await testERC20
 					.connect(user)
 					.approve(await liquidity.getAddress(), depositAmount)
@@ -488,12 +702,92 @@ describe('Liquidity', () => {
 				await expect(() =>
 					liquidity
 						.connect(user)
-						.depositERC20(erc20Address, recipientSaltHash, depositAmount),
+						.depositERC20(
+							erc20Address,
+							recipientSaltHash,
+							depositAmount,
+							amlPermission,
+							eligibilityPermission,
+						),
 				).to.changeTokenBalances(
 					testERC20,
 					[user, liquidity],
 					[-depositAmount, depositAmount],
 				)
+			})
+			it('amlPermitter is not set', async () => {
+				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('0.00000001')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await testERC20
+					.connect(user)
+					.approve(await liquidity.getAddress(), depositAmount)
+
+				const erc20Address = await testERC20.getAddress()
+				const tmp = await liquidity.eligibilityPermitter()
+				await liquidity.connect(admin).setPermitter(ethers.ZeroAddress, tmp)
+				await liquidity
+					.connect(user)
+					.depositERC20(
+						erc20Address,
+						recipientSaltHash,
+						depositAmount,
+						amlPermission,
+						eligibilityPermission,
+					)
+			})
+			it('eligibilityPermitter is not set', async () => {
+				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('0.00000001')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await testERC20
+					.connect(user)
+					.approve(await liquidity.getAddress(), depositAmount)
+
+				const erc20Address = await testERC20.getAddress()
+				const tmp = await liquidity.amlPermitter()
+				await liquidity.connect(admin).setPermitter(tmp, ethers.ZeroAddress)
+				await liquidity
+					.connect(user)
+					.depositERC20(
+						erc20Address,
+						recipientSaltHash,
+						depositAmount,
+						amlPermission,
+						eligibilityPermission,
+					)
+			})
+			it('eligibilityPermitter is not set', async () => {
+				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const depositAmount = ethers.parseEther('0.00000001')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.getBytes('0x')
+				await testERC20
+					.connect(user)
+					.approve(await liquidity.getAddress(), depositAmount)
+
+				const erc20Address = await testERC20.getAddress()
+				await liquidity
+					.connect(user)
+					.depositERC20(
+						erc20Address,
+						recipientSaltHash,
+						depositAmount,
+						amlPermission,
+						eligibilityPermission,
+					)
+				const filter = liquidity.filters.Deposited()
+				const events = await liquidity.queryFilter(filter)
+				const isEligible = events[0].args.isEligible
+				expect(isEligible).to.be.false
 			})
 		})
 
@@ -503,7 +797,8 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmount = ethers.parseEther('1')
-
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 				await testERC20
 					.connect(user)
 					.approve(await liquidity.getAddress(), depositAmount)
@@ -515,6 +810,8 @@ describe('Liquidity', () => {
 							await testERC20.getAddress(),
 							recipientSaltHash,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						),
 				)
 					.to.be.revertedWithCustomError(liquidity, 'DepositAmountExceedsLimit')
@@ -525,7 +822,8 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const depositAmount = ethers.parseEther('0.00000001')
-
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 				await testERC20
 					.connect(user)
 					.approve(await liquidity.getAddress(), 2n * depositAmount)
@@ -535,6 +833,8 @@ describe('Liquidity', () => {
 						await testERC20.getAddress(),
 						recipientSaltHash,
 						depositAmount,
+						amlPermission,
+						eligibilityPermission,
 					)
 
 				await expect(
@@ -544,6 +844,8 @@ describe('Liquidity', () => {
 							await testERC20.getAddress(),
 							recipientSaltHash,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						),
 				).to.be.revertedWithCustomError(liquidity, 'DepositHashAlreadyExists')
 			})
@@ -551,23 +853,90 @@ describe('Liquidity', () => {
 				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 				await expect(
 					liquidity
 						.connect(user)
-						.depositERC20(await testERC20.getAddress(), recipientSaltHash, 0),
+						.depositERC20(
+							await testERC20.getAddress(),
+							recipientSaltHash,
+							0,
+							amlPermission,
+							eligibilityPermission,
+						),
 				).to.be.revertedWithCustomError(liquidity, 'TriedToDepositZero')
 			})
 			it('pause', async () => {
 				const { liquidity, testERC20 } = await loadFixture(setupForDepositERC20)
 				const { admin, user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
 				await liquidity.connect(admin).pauseDeposits()
 				await expect(
 					liquidity
 						.connect(user)
-						.depositERC20(await testERC20.getAddress(), recipientSaltHash, 0),
+						.depositERC20(
+							await testERC20.getAddress(),
+							recipientSaltHash,
+							0,
+							amlPermission,
+							eligibilityPermission,
+						),
 				).to.be.revertedWithCustomError(liquidity, 'EnforcedPause')
+			})
+			it('amlPermitter permit return false', async () => {
+				const { liquidity, testERC20, amlPermitterTest } =
+					await loadFixture(setupForDepositERC20)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const depositAmount = ethers.parseEther('1')
+				await amlPermitterTest.setPermitResult(false)
+				await testERC20
+					.connect(user)
+					.approve(await liquidity.getAddress(), depositAmount)
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC20(
+							await testERC20.getAddress(),
+							recipientSaltHash,
+							depositAmount,
+							amlPermission,
+							eligibilityPermission,
+						),
+				).to.be.revertedWithCustomError(liquidity, 'AmlValidationFailed')
+			})
+			it('eligibilityPermitter permit return false', async () => {
+				const { liquidity, testERC20, eligibilityPermitterTest } =
+					await loadFixture(setupForDepositERC20)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const depositAmount = ethers.parseEther('1')
+				await eligibilityPermitterTest.setPermitResult(false)
+				await testERC20
+					.connect(user)
+					.approve(await liquidity.getAddress(), depositAmount)
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC20(
+							await testERC20.getAddress(),
+							recipientSaltHash,
+							depositAmount,
+							amlPermission,
+							eligibilityPermission,
+						),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'EligibilityValidationFailed',
+				)
 			})
 		})
 	})
@@ -600,6 +969,8 @@ describe('Liquidity', () => {
 
 				const currentDepositId = await liquidity.getLastDepositId()
 				const currentTimestamp = await ethers.provider.getBlock('latest')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await expect(
 					liquidity
@@ -608,6 +979,8 @@ describe('Liquidity', () => {
 							await testNFT.getAddress(),
 							recipientSaltHash,
 							tokenId,
+							amlPermission,
+							eligibilityPermission,
 						),
 				)
 					.to.emit(liquidity, 'Deposited')
@@ -617,6 +990,7 @@ describe('Liquidity', () => {
 						recipientSaltHash,
 						3, // new token index
 						1, // amount is always 1 for ERC721
+						true,
 						currentTimestamp!.timestamp + 1,
 					)
 			})
@@ -625,6 +999,8 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const tokenId = 0
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await testNFT
 					.connect(user)
@@ -634,11 +1010,92 @@ describe('Liquidity', () => {
 
 				await liquidity
 					.connect(user)
-					.depositERC721(await testNFT.getAddress(), recipientSaltHash, tokenId)
+					.depositERC721(
+						await testNFT.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						amlPermission,
+						eligibilityPermission,
+					)
 
 				expect(await testNFT.ownerOf(tokenId)).to.equal(
 					await liquidity.getAddress(),
 				)
+			})
+			it('amlPermitter is not set', async () => {
+				const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
+
+				await testNFT
+					.connect(user)
+					.approve(await liquidity.getAddress(), tokenId)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const tmp = await liquidity.eligibilityPermitter()
+				await liquidity.connect(admin).setPermitter(ethers.ZeroAddress, tmp)
+				await liquidity
+					.connect(user)
+					.depositERC721(
+						await testNFT.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						amlPermission,
+						eligibilityPermission,
+					)
+			})
+			it('eligibilityPermitter is not set', async () => {
+				const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
+
+				await testNFT
+					.connect(user)
+					.approve(await liquidity.getAddress(), tokenId)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const tmp = await liquidity.amlPermitter()
+				await liquidity.connect(admin).setPermitter(tmp, ethers.ZeroAddress)
+				await liquidity
+					.connect(user)
+					.depositERC721(
+						await testNFT.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						amlPermission,
+						eligibilityPermission,
+					)
+			})
+			it('eligibilityPermitter is not set', async () => {
+				const { liquidity, testNFT } = await loadFixture(setupForDepositERC721)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
+
+				await testNFT
+					.connect(user)
+					.approve(await liquidity.getAddress(), tokenId)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.getBytes('0x')
+
+				await liquidity
+					.connect(user)
+					.depositERC721(
+						await testNFT.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						amlPermission,
+						eligibilityPermission,
+					)
+				const filter = liquidity.filters.Deposited()
+				const events = await liquidity.queryFilter(filter)
+				const isEligible = events[0].args.isEligible
+				expect(isEligible).to.be.false
 			})
 		})
 		describe('fail', () => {
@@ -648,6 +1105,8 @@ describe('Liquidity', () => {
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const tokenId = 0
 				const isEligible = true
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await testNFT
 					.connect(user)
@@ -657,7 +1116,13 @@ describe('Liquidity', () => {
 
 				await liquidity
 					.connect(user)
-					.depositERC721(await testNFT.getAddress(), recipientSaltHash, tokenId)
+					.depositERC721(
+						await testNFT.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						amlPermission,
+						eligibilityPermission,
+					)
 				const filter = liquidity.filters.Deposited()
 				const events = await liquidity.queryFilter(filter)
 				const depositId = events[0].args.depositId
@@ -681,6 +1146,8 @@ describe('Liquidity', () => {
 							await testNFT.getAddress(),
 							recipientSaltHash,
 							tokenId,
+							amlPermission,
+							eligibilityPermission,
 						),
 				).to.be.revertedWithCustomError(liquidity, 'DepositHashAlreadyExists')
 			})
@@ -690,6 +1157,8 @@ describe('Liquidity', () => {
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const tokenId = 0
 				const isEligible = true
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await testNFT
 					.connect(user)
@@ -699,7 +1168,13 @@ describe('Liquidity', () => {
 
 				await liquidity
 					.connect(user)
-					.depositERC721(await testNFT.getAddress(), recipientSaltHash, tokenId)
+					.depositERC721(
+						await testNFT.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						amlPermission,
+						eligibilityPermission,
+					)
 				const filter = liquidity.filters.Deposited()
 				const events = await liquidity.queryFilter(filter)
 				const depositId = events[0].args.depositId
@@ -724,8 +1199,68 @@ describe('Liquidity', () => {
 							await testNFT.getAddress(),
 							recipientSaltHash,
 							tokenId,
+							amlPermission,
+							eligibilityPermission,
 						),
 				).to.be.revertedWithCustomError(liquidity, 'EnforcedPause')
+			})
+			it('amlPermitter permit return false', async () => {
+				const { liquidity, testNFT, amlPermitterTest } = await loadFixture(
+					setupForDepositERC721,
+				)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
+
+				await testNFT
+					.connect(user)
+					.approve(await liquidity.getAddress(), tokenId)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await amlPermitterTest.setPermitResult(false)
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC721(
+							await testNFT.getAddress(),
+							recipientSaltHash,
+							tokenId,
+							amlPermission,
+							eligibilityPermission,
+						),
+				).to.be.revertedWithCustomError(liquidity, 'AmlValidationFailed')
+			})
+			it('eligibilityPermitter permit return false', async () => {
+				const { liquidity, testNFT, eligibilityPermitterTest } =
+					await loadFixture(setupForDepositERC721)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 0
+
+				await testNFT
+					.connect(user)
+					.approve(await liquidity.getAddress(), tokenId)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await eligibilityPermitterTest.setPermitResult(false)
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC721(
+							await testNFT.getAddress(),
+							recipientSaltHash,
+							tokenId,
+							amlPermission,
+							eligibilityPermission,
+						),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'EligibilityValidationFailed',
+				)
 			})
 		})
 	})
@@ -765,6 +1300,8 @@ describe('Liquidity', () => {
 
 				const currentDepositId = await liquidity.getLastDepositId()
 				const currentTimestamp = await ethers.provider.getBlock('latest')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await expect(
 					liquidity
@@ -774,6 +1311,8 @@ describe('Liquidity', () => {
 							recipientSaltHash,
 							tokenId,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						),
 				)
 					.to.emit(liquidity, 'Deposited')
@@ -783,6 +1322,7 @@ describe('Liquidity', () => {
 						recipientSaltHash,
 						3, // new token index for the first ERC1155
 						depositAmount,
+						true,
 						currentTimestamp!.timestamp + 1,
 					)
 			})
@@ -794,6 +1334,8 @@ describe('Liquidity', () => {
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const tokenId = 1
 				const depositAmount = 50
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await testERC1155
 					.connect(user)
@@ -815,6 +1357,8 @@ describe('Liquidity', () => {
 						recipientSaltHash,
 						tokenId,
 						depositAmount,
+						amlPermission,
+						eligibilityPermission,
 					)
 
 				const userFinalBalance = await testERC1155.balanceOf(
@@ -833,9 +1377,63 @@ describe('Liquidity', () => {
 					liquidityInitialBalance + BigInt(depositAmount),
 				)
 			})
-		})
-		describe('fail', () => {
-			it('revert DepositHashAlreadyExists', async () => {
+			it('amlPermitter is not set', async () => {
+				const { liquidity, testERC1155 } = await loadFixture(
+					setupForDepositERC1155,
+				)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 1
+				const depositAmount = 50
+
+				await testERC1155
+					.connect(user)
+					.setApprovalForAll(await liquidity.getAddress(), true)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const tmp = await liquidity.eligibilityPermitter()
+				await liquidity.connect(admin).setPermitter(ethers.ZeroAddress, tmp)
+				await liquidity
+					.connect(user)
+					.depositERC1155(
+						await testERC1155.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						depositAmount,
+						amlPermission,
+						eligibilityPermission,
+					)
+			})
+			it('eligibilityPermitter is not set', async () => {
+				const { liquidity, testERC1155 } = await loadFixture(
+					setupForDepositERC1155,
+				)
+				const { admin, user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 1
+				const depositAmount = 50
+
+				await testERC1155
+					.connect(user)
+					.setApprovalForAll(await liquidity.getAddress(), true)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				const tmp = await liquidity.amlPermitter()
+				await liquidity.connect(admin).setPermitter(tmp, ethers.ZeroAddress)
+				await liquidity
+					.connect(user)
+					.depositERC1155(
+						await testERC1155.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						depositAmount,
+						amlPermission,
+						eligibilityPermission,
+					)
+			})
+			it('eligibilityPermission length is 0', async () => {
 				const { liquidity, testERC1155 } = await loadFixture(
 					setupForDepositERC1155,
 				)
@@ -848,6 +1446,8 @@ describe('Liquidity', () => {
 					.connect(user)
 					.setApprovalForAll(await liquidity.getAddress(), true)
 
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.getBytes('0x')
 				await liquidity
 					.connect(user)
 					.depositERC1155(
@@ -855,6 +1455,40 @@ describe('Liquidity', () => {
 						recipientSaltHash,
 						tokenId,
 						depositAmount,
+						amlPermission,
+						eligibilityPermission,
+					)
+				const filter = liquidity.filters.Deposited()
+				const events = await liquidity.queryFilter(filter)
+				const isEligible = events[0].args.isEligible
+				expect(isEligible).to.be.false
+			})
+		})
+		describe('fail', () => {
+			it('revert DepositHashAlreadyExists', async () => {
+				const { liquidity, testERC1155 } = await loadFixture(
+					setupForDepositERC1155,
+				)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 1
+				const depositAmount = 50
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
+				await testERC1155
+					.connect(user)
+					.setApprovalForAll(await liquidity.getAddress(), true)
+
+				await liquidity
+					.connect(user)
+					.depositERC1155(
+						await testERC1155.getAddress(),
+						recipientSaltHash,
+						tokenId,
+						depositAmount,
+						amlPermission,
+						eligibilityPermission,
 					)
 
 				await expect(
@@ -865,6 +1499,8 @@ describe('Liquidity', () => {
 							recipientSaltHash,
 							tokenId,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						),
 				).to.be.revertedWithCustomError(liquidity, 'DepositHashAlreadyExists')
 			})
@@ -876,6 +1512,8 @@ describe('Liquidity', () => {
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const tokenId = 1
 				const depositAmount = 0
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await testERC1155
 					.connect(user)
@@ -889,6 +1527,8 @@ describe('Liquidity', () => {
 							recipientSaltHash,
 							tokenId,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						),
 				).to.be.revertedWithCustomError(liquidity, 'TriedToDepositZero')
 			})
@@ -900,6 +1540,8 @@ describe('Liquidity', () => {
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 				const tokenId = 1
 				const depositAmount = 0
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await testERC1155
 					.connect(user)
@@ -913,19 +1555,85 @@ describe('Liquidity', () => {
 							recipientSaltHash,
 							tokenId,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						),
 				).to.be.revertedWithCustomError(liquidity, 'EnforcedPause')
 			})
+			it('amlPermitter permit return false', async () => {
+				const { liquidity, testERC1155, amlPermitterTest } = await loadFixture(
+					setupForDepositERC1155,
+				)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 1
+				const depositAmount = 50
+
+				await testERC1155
+					.connect(user)
+					.setApprovalForAll(await liquidity.getAddress(), true)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await amlPermitterTest.setPermitResult(false)
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC1155(
+							await testERC1155.getAddress(),
+							recipientSaltHash,
+							tokenId,
+							depositAmount,
+							amlPermission,
+							eligibilityPermission,
+						),
+				).to.be.revertedWithCustomError(liquidity, 'AmlValidationFailed')
+			})
+			it('eligibilityPermitter permit return false', async () => {
+				const { liquidity, testERC1155, eligibilityPermitterTest } =
+					await loadFixture(setupForDepositERC1155)
+				const { user } = await getSigners()
+				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const tokenId = 1
+				const depositAmount = 50
+
+				await testERC1155
+					.connect(user)
+					.setApprovalForAll(await liquidity.getAddress(), true)
+
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+				await eligibilityPermitterTest.setPermitResult(false)
+
+				await expect(
+					liquidity
+						.connect(user)
+						.depositERC1155(
+							await testERC1155.getAddress(),
+							recipientSaltHash,
+							tokenId,
+							depositAmount,
+							amlPermission,
+							eligibilityPermission,
+						),
+				).to.be.revertedWithCustomError(
+					liquidity,
+					'EligibilityValidationFailed',
+				)
+			})
 		})
 	})
-	describe('analyzeAndRelayDeposits', () => {
+	describe('relayDeposits', () => {
 		describe('success', () => {
 			it('send scroll messenger', async () => {
 				const { liquidity, scrollMessenger, rollup } = await loadFixture(setup)
-				const { analyzer, user } = await getSigners()
+				const { relayer, user } = await getSigners()
 
 				// Create some deposits using ETH
 				const depositAmount = ethers.parseEther('1')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				for (let i = 0; i < 5; i++) {
 					const recipientSaltHash = ethers.keccak256(
@@ -933,23 +1641,27 @@ describe('Liquidity', () => {
 					)
 					await liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: depositAmount })
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						)
 				}
 
 				const upToDepositId = 5
-				const rejectDepositIds: number[] = [2, 4]
 				const gasLimit = 1000000
 
 				await liquidity
-					.connect(analyzer)
-					.analyzeAndRelayDeposits(upToDepositId, rejectDepositIds, gasLimit, {
+					.connect(relayer)
+					.relayDeposits(upToDepositId, gasLimit, {
 						value: ethers.parseEther('1'),
 					})
 
 				expect(await scrollMessenger.to()).to.equal(rollup)
 				expect(await scrollMessenger.value()).to.equal(0)
 				expect(await scrollMessenger.gasLimit()).to.equal(gasLimit)
-				expect(await scrollMessenger.sender()).to.equal(analyzer.address)
+				expect(await scrollMessenger.sender()).to.equal(relayer.address)
 				expect(await scrollMessenger.msgValue()).to.equal(
 					ethers.parseEther('1'),
 				)
@@ -962,9 +1674,25 @@ describe('Liquidity', () => {
 					true,
 				)
 
+				const depositHash1 = getDepositHash(
+					user.address,
+					ethers.keccak256(ethers.toUtf8Bytes('test1')),
+					depositAmount,
+					0,
+					true,
+				)
+
 				const depositHash2 = getDepositHash(
 					user.address,
 					ethers.keccak256(ethers.toUtf8Bytes('test2')),
+					depositAmount,
+					0,
+					true,
+				)
+
+				const depositHash3 = getDepositHash(
+					user.address,
+					ethers.keccak256(ethers.toUtf8Bytes('test3')),
 					depositAmount,
 					0,
 					true,
@@ -984,17 +1712,28 @@ describe('Liquidity', () => {
 
 				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
 					['uint256', 'bytes32[]'],
-					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
+					[
+						upToDepositId,
+						[
+							depositHash0,
+							depositHash1,
+							depositHash2,
+							depositHash3,
+							depositHash4,
+						],
+					],
 				)
 				const encodedData = funcSelector + encodedParams.slice(2)
 				expect(await scrollMessenger.message()).to.equal(encodedData)
 			})
-			it('emit DepositsAnalyzedAndRelayed event', async () => {
+			it('emit DepositsRelayed event', async () => {
 				const { liquidity } = await loadFixture(setup)
-				const { analyzer, user } = await getSigners()
+				const { relayer, user } = await getSigners()
 
 				// Create some deposits using ETH
 				const depositAmount = ethers.parseEther('1')
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				for (let i = 0; i < 5; i++) {
 					const recipientSaltHash = ethers.keccak256(
@@ -1002,11 +1741,15 @@ describe('Liquidity', () => {
 					)
 					await liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: depositAmount })
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						)
 				}
 
 				const upToDepositId = 5
-				const rejectDepositIds: number[] = [2, 4]
 				const gasLimit = 1000000
 
 				const depositHash0 = getDepositHash(
@@ -1016,7 +1759,13 @@ describe('Liquidity', () => {
 					0,
 					true,
 				)
-
+				const depositHash1 = getDepositHash(
+					user.address,
+					ethers.keccak256(ethers.toUtf8Bytes('test1')),
+					depositAmount,
+					0,
+					true,
+				)
 				const depositHash2 = getDepositHash(
 					user.address,
 					ethers.keccak256(ethers.toUtf8Bytes('test2')),
@@ -1024,7 +1773,13 @@ describe('Liquidity', () => {
 					0,
 					true,
 				)
-
+				const depositHash3 = getDepositHash(
+					user.address,
+					ethers.keccak256(ethers.toUtf8Bytes('test3')),
+					depositAmount,
+					0,
+					true,
+				)
 				const depositHash4 = getDepositHash(
 					user.address,
 					ethers.keccak256(ethers.toUtf8Bytes('test4')),
@@ -1039,47 +1794,43 @@ describe('Liquidity', () => {
 
 				const encodedParams = ethers.AbiCoder.defaultAbiCoder().encode(
 					['uint256', 'bytes32[]'],
-					[upToDepositId, [depositHash0, depositHash2, depositHash4]],
+					[
+						upToDepositId,
+						[
+							depositHash0,
+							depositHash1,
+							depositHash2,
+							depositHash3,
+							depositHash4,
+						],
+					],
 				)
 				const expectedEncodedData = funcSelector + encodedParams.slice(2)
 
 				await expect(
-					liquidity
-						.connect(analyzer)
-						.analyzeAndRelayDeposits(
-							upToDepositId,
-							rejectDepositIds,
-							gasLimit,
-							{ value: ethers.parseEther('1') },
-						),
+					liquidity.connect(relayer).relayDeposits(upToDepositId, gasLimit, {
+						value: ethers.parseEther('1'),
+					}),
 				)
-					.to.emit(liquidity, 'DepositsAnalyzedAndRelayed')
-					.withArgs(
-						upToDepositId,
-						rejectDepositIds,
-						gasLimit,
-						expectedEncodedData,
-					)
+					.to.emit(liquidity, 'DepositsRelayed')
+					.withArgs(upToDepositId, gasLimit, expectedEncodedData)
 			})
 		})
 		describe('fail', () => {
-			it('only analyzer', async () => {
+			it('only relayer', async () => {
 				const { liquidity } = await loadFixture(setup)
 				const { user } = await getSigners()
 				const upToDepositId = 5
-				const rejectDepositIds: number[] = [2, 4]
 				const gasLimit = 1000000
 
 				await expect(
-					liquidity
-						.connect(user)
-						.analyzeAndRelayDeposits(upToDepositId, rejectDepositIds, gasLimit),
+					liquidity.connect(user).relayDeposits(upToDepositId, gasLimit),
 				)
 					.to.be.revertedWithCustomError(
 						liquidity,
 						'AccessControlUnauthorizedAccount',
 					)
-					.withArgs(user.address, await liquidity.ANALYZER())
+					.withArgs(user.address, await liquidity.RELAYER())
 			})
 		})
 	})
@@ -1095,9 +1846,17 @@ describe('Liquidity', () => {
 				const { user } = await getSigners()
 				const depositAmount = ethers.parseEther('1')
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
 				await testObjects.liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 				const depositId = await testObjects.liquidity.getLastDepositId()
 				return {
 					...testObjects,
@@ -1138,6 +1897,8 @@ describe('Liquidity', () => {
 
 					const depositAmount = ethers.parseEther('0.00000001')
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 					await testERC20
 						.connect(user)
@@ -1148,6 +1909,8 @@ describe('Liquidity', () => {
 							await testERC20.getAddress(),
 							recipientSaltHash,
 							depositAmount,
+							amlPermission,
+							eligibilityPermission,
 						)
 
 					const depositId = await liquidity.getLastDepositId()
@@ -1188,6 +1951,8 @@ describe('Liquidity', () => {
 					const tokenId = 1
 					await testNFT.transferFrom(deployer.address, user.address, tokenId)
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 					await testNFT
 						.connect(user)
@@ -1198,6 +1963,8 @@ describe('Liquidity', () => {
 							await testNFT.getAddress(),
 							recipientSaltHash,
 							tokenId,
+							amlPermission,
+							eligibilityPermission,
 						)
 
 					const depositId = await liquidity.getLastDepositId()
@@ -1224,6 +1991,8 @@ describe('Liquidity', () => {
 					const amount = 100
 					await testERC1155.mint(user.address, tokenId, amount, '0x')
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 					await testERC1155
 						.connect(user)
@@ -1235,6 +2004,8 @@ describe('Liquidity', () => {
 							recipientSaltHash,
 							tokenId,
 							amount,
+							amlPermission,
+							eligibilityPermission,
 						)
 
 					const depositId = await liquidity.getLastDepositId()
@@ -1275,43 +2046,27 @@ describe('Liquidity', () => {
 					.to.emit(liquidity, 'DepositCanceled')
 					.withArgs(depositId)
 			})
-			it('can rejected deposit', async () => {
-				const { liquidity, depositAmount, recipientSaltHash, depositId } =
-					await loadFixture(setupCancelDeposit)
-				const { user, analyzer } = await getSigners()
-
-				await liquidity
-					.connect(analyzer)
-					.analyzeAndRelayDeposits(depositId, [depositId], 1000000, {
-						value: ethers.parseEther('1'),
-					})
-				await expect(
-					liquidity.connect(user).cancelDeposit(depositId, {
-						depositor: user.address,
-						recipientSaltHash,
-						tokenIndex: 0,
-						amount: depositAmount,
-						isEligible: true,
-					}),
-				)
-					.to.emit(liquidity, 'DepositCanceled')
-					.withArgs(depositId)
-			})
-			it('can deposit not analyzed amount', async () => {
+			it('can deposit not amount', async () => {
 				const { liquidity, depositAmount, depositId } =
 					await loadFixture(setupCancelDeposit)
-				const { user, analyzer } = await getSigners()
+				const { user, relayer } = await getSigners()
 
-				await liquidity
-					.connect(analyzer)
-					.analyzeAndRelayDeposits(depositId, [depositId], 1000000, {
-						value: ethers.parseEther('1'),
-					})
+				await liquidity.connect(relayer).relayDeposits(depositId, 1000000, {
+					value: ethers.parseEther('1'),
+				})
 
 				const recipientSaltHash2 = ethers.keccak256(ethers.toUtf8Bytes('test2'))
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash2, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash2,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 				const nextDepositId = depositId + 1n
 				await expect(
 					liquidity.connect(user).cancelDeposit(nextDepositId, {
@@ -1330,11 +2085,11 @@ describe('Liquidity', () => {
 			it('revert OnlySenderCanCancelDeposit', async () => {
 				const { liquidity, depositAmount, recipientSaltHash, depositId } =
 					await loadFixture(setupCancelDeposit)
-				const { analyzer } = await getSigners()
+				const { relayer } = await getSigners()
 
 				await expect(
-					liquidity.connect(analyzer).cancelDeposit(depositId, {
-						depositor: analyzer.address,
+					liquidity.connect(relayer).cancelDeposit(depositId, {
+						depositor: relayer.address,
 						recipientSaltHash,
 						tokenIndex: 0,
 						amount: depositAmount,
@@ -1395,12 +2150,10 @@ describe('Liquidity', () => {
 			it('cannot not rejected deposit', async () => {
 				const { liquidity, depositAmount, recipientSaltHash, depositId } =
 					await loadFixture(setupCancelDeposit)
-				const { user, analyzer } = await getSigners()
-				await liquidity
-					.connect(analyzer)
-					.analyzeAndRelayDeposits(depositId, [], 1000000, {
-						value: ethers.parseEther('1'),
-					})
+				const { user, relayer } = await getSigners()
+				await liquidity.connect(relayer).relayDeposits(depositId, 1000000, {
+					value: ethers.parseEther('1'),
+				})
 				await expect(
 					liquidity.connect(user).cancelDeposit(depositId, {
 						depositor: user.address,
@@ -1409,7 +2162,7 @@ describe('Liquidity', () => {
 						amount: depositAmount,
 						isEligible: true,
 					}),
-				).to.be.revertedWithCustomError(liquidity, 'AlreadyAnalyzed')
+				).to.be.revertedWithCustomError(liquidity, 'AlreadyRelayed')
 			})
 
 			it.skip('reentrancy attack', async () => {
@@ -1430,9 +2183,16 @@ describe('Liquidity', () => {
 							ethers.toUtf8Bytes('test'),
 						)
 						const depositAmount = ethers.parseEther('1')
-						await liquidity.depositNativeToken(recipientSaltHash, {
-							value: depositAmount,
-						})
+						const amlPermission = ethers.toUtf8Bytes('AML')
+						const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+						await liquidity.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{
+								value: depositAmount,
+							},
+						)
 						const initialBalance = await ethers.provider.getBalance(
 							await liquidity.getAddress(),
 						)
@@ -1479,7 +2239,8 @@ describe('Liquidity', () => {
 						const recipientSaltHash = ethers.keccak256(
 							ethers.toUtf8Bytes('test'),
 						)
-
+						const amlPermission = ethers.toUtf8Bytes('AML')
+						const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 						await testERC20
 							.connect(user)
 							.approve(await liquidity.getAddress(), depositAmount)
@@ -1489,6 +2250,8 @@ describe('Liquidity', () => {
 								testERC20.getAddress(),
 								recipientSaltHash,
 								depositAmount,
+								amlPermission,
+								eligibilityPermission,
 							)
 
 						const recipient = ethers.Wallet.createRandom().address
@@ -1543,9 +2306,17 @@ describe('Liquidity', () => {
 							ethers.toUtf8Bytes('test'),
 						)
 						const depositAmount = ethers.parseEther('1')
-						await liquidity.depositNativeToken(recipientSaltHash, {
-							value: depositAmount,
-						})
+						const amlPermission = ethers.toUtf8Bytes('AML')
+						const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
+						await liquidity.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{
+								value: depositAmount,
+							},
+						)
 						const recipient = ethers.Wallet.createRandom().address
 						const tokenIndex = 0
 						const testDepositAmount = depositAmount + 1n
@@ -1595,6 +2366,8 @@ describe('Liquidity', () => {
 						const recipientSaltHash = ethers.keccak256(
 							ethers.toUtf8Bytes('test'),
 						)
+						const amlPermission = ethers.toUtf8Bytes('AML')
+						const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 						await testERC20
 							.connect(user)
@@ -1605,6 +2378,8 @@ describe('Liquidity', () => {
 								testERC20.getAddress(),
 								recipientSaltHash,
 								depositAmount,
+								amlPermission,
+								eligibilityPermission,
 							)
 
 						const recipient = ethers.Wallet.createRandom().address
@@ -1659,13 +2434,21 @@ describe('Liquidity', () => {
 						const recipientSaltHash = ethers.keccak256(
 							ethers.toUtf8Bytes('test'),
 						)
+						const amlPermission = ethers.toUtf8Bytes('AML')
+						const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 						await testNFT
 							.connect(user)
 							.approve(await liquidity.getAddress(), tokenId)
 						await liquidity
 							.connect(user)
-							.depositERC721(testNFT.getAddress(), recipientSaltHash, tokenId)
+							.depositERC721(
+								testNFT.getAddress(),
+								recipientSaltHash,
+								tokenId,
+								amlPermission,
+								eligibilityPermission,
+							)
 
 						const recipient = ethers.ZeroAddress
 						const [, tokenIndex] = await liquidity.getTokenIndex(
@@ -1727,6 +2510,8 @@ describe('Liquidity', () => {
 						const recipientSaltHash = ethers.keccak256(
 							ethers.toUtf8Bytes('test'),
 						)
+						const amlPermission = ethers.toUtf8Bytes('AML')
+						const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 						await testERC1155.mint(user.address, tokenId, amount, '0x')
 						await testERC1155
@@ -1739,6 +2524,8 @@ describe('Liquidity', () => {
 								recipientSaltHash,
 								tokenId,
 								amount,
+								amlPermission,
+								eligibilityPermission,
 							)
 
 						const recipient = ethers.ZeroAddress
@@ -1795,9 +2582,17 @@ describe('Liquidity', () => {
 					// Setup a deposit to ensure there's something to withdraw
 					const depositAmount = ethers.parseEther('1')
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
 					await liquidity
 						.connect(user)
-						.depositNativeToken(recipientSaltHash, { value: depositAmount })
+						.depositNativeToken(
+							recipientSaltHash,
+							amlPermission,
+							eligibilityPermission,
+							{ value: depositAmount },
+						)
 
 					const recipient = ethers.Wallet.createRandom().address
 					await scrollMessenger.processWithdrawals(
@@ -1899,9 +2694,17 @@ describe('Liquidity', () => {
 					// Create a claimable withdrawal
 					const withdrawalAmount = ethers.parseEther('1')
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-					await liquidity.depositNativeToken(recipientSaltHash, {
-						value: withdrawalAmount,
-					})
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
+					await liquidity.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{
+							value: withdrawalAmount,
+						},
+					)
 
 					const withdrawal = {
 						recipient: user.address,
@@ -1961,6 +2764,8 @@ describe('Liquidity', () => {
 
 					const withdrawalAmount = ethers.parseEther('0.000000001')
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 					// Approve and deposit ERC20 tokens
 					await testERC20
@@ -1972,6 +2777,8 @@ describe('Liquidity', () => {
 							await testERC20.getAddress(),
 							recipientSaltHash,
 							withdrawalAmount,
+							amlPermission,
+							eligibilityPermission,
 						)
 
 					const [, tokenIndex] = await liquidity.getTokenIndex(
@@ -2029,6 +2836,8 @@ describe('Liquidity', () => {
 					const tokenId = 1
 					await testNFT.transferFrom(deployer.address, user.address, tokenId)
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 					// Approve and deposit ERC721 token
 					await testNFT
@@ -2040,6 +2849,8 @@ describe('Liquidity', () => {
 							await testNFT.getAddress(),
 							recipientSaltHash,
 							tokenId,
+							amlPermission,
+							eligibilityPermission,
 						)
 
 					const [, tokenIndex] = await liquidity.getTokenIndex(
@@ -2087,6 +2898,8 @@ describe('Liquidity', () => {
 					const amount = 100
 					await testERC1155.mint(user.address, tokenId, amount, '0x')
 					const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+					const amlPermission = ethers.toUtf8Bytes('AML')
+					const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 					// Approve and deposit ERC1155 tokens
 					await testERC1155
@@ -2099,6 +2912,8 @@ describe('Liquidity', () => {
 							recipientSaltHash,
 							tokenId,
 							amount,
+							amlPermission,
+							eligibilityPermission,
 						)
 
 					const [, tokenIndex] = await liquidity.getTokenIndex(
@@ -2160,9 +2975,17 @@ describe('Liquidity', () => {
 				// First, create a claimable withdrawal
 				const withdrawalAmount = ethers.parseEther('1')
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: withdrawalAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: withdrawalAmount },
+					)
 
 				const withdrawal = {
 					recipient: user.address,
@@ -2196,13 +3019,25 @@ describe('Liquidity', () => {
 				const withdrawalAmount2 = ethers.parseEther('2')
 				const recipientSaltHash1 = ethers.keccak256(ethers.toUtf8Bytes('test1'))
 				const recipientSaltHash2 = ethers.keccak256(ethers.toUtf8Bytes('test2'))
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash1, { value: withdrawalAmount1 })
+					.depositNativeToken(
+						recipientSaltHash1,
+						amlPermission,
+						eligibilityPermission,
+						{ value: withdrawalAmount1 },
+					)
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash2, { value: withdrawalAmount2 })
+					.depositNativeToken(
+						recipientSaltHash2,
+						amlPermission,
+						eligibilityPermission,
+						{ value: withdrawalAmount2 },
+					)
 
 				const withdrawal1 = {
 					recipient: user.address,
@@ -2293,9 +3128,17 @@ describe('Liquidity', () => {
 				// Create a claimable withdrawal
 				const withdrawalAmount = ethers.parseEther('1')
 				const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-				await liquidity.depositNativeToken(recipientSaltHash, {
-					value: withdrawalAmount,
-				})
+				const amlPermission = ethers.toUtf8Bytes('AML')
+				const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
+
+				await liquidity.depositNativeToken(
+					recipientSaltHash,
+					amlPermission,
+					eligibilityPermission,
+					{
+						value: withdrawalAmount,
+					},
+				)
 
 				const withdrawal = {
 					recipient: user.address,
@@ -2345,6 +3188,8 @@ describe('Liquidity', () => {
 
 			// Create some deposits using ETH
 			const depositAmount = ethers.parseEther('1')
+			const amlPermission = ethers.toUtf8Bytes('AML')
+			const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 			for (let i = 0; i < 5; i++) {
 				const recipientSaltHash = ethers.keccak256(
@@ -2352,7 +3197,12 @@ describe('Liquidity', () => {
 				)
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 			}
 
 			const depositData0 = await liquidity.getDepositData(1)
@@ -2366,7 +3216,6 @@ describe('Liquidity', () => {
 
 			expect(depositData0.depositHash).to.equal(depositHash0)
 			expect(depositData0.sender).to.equal(user.address)
-			expect(depositData0.isRejected).to.equal(false)
 
 			const depositData2 = await liquidity.getDepositData(3)
 			const depositHash2 = getDepositHash(
@@ -2379,7 +3228,6 @@ describe('Liquidity', () => {
 
 			expect(depositData2.depositHash).to.equal(depositHash2)
 			expect(depositData2.sender).to.equal(user.address)
-			expect(depositData2.isRejected).to.equal(false)
 		})
 	})
 	describe('getDepositDataBatch', () => {
@@ -2389,6 +3237,8 @@ describe('Liquidity', () => {
 
 			// Create some deposits using ETH
 			const depositAmount = ethers.parseEther('1')
+			const amlPermission = ethers.toUtf8Bytes('AML')
+			const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 			for (let i = 0; i < 5; i++) {
 				const recipientSaltHash = ethers.keccak256(
@@ -2396,7 +3246,12 @@ describe('Liquidity', () => {
 				)
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 			}
 
 			const depositDataList = await liquidity.getDepositDataBatch([1, 3])
@@ -2418,11 +3273,9 @@ describe('Liquidity', () => {
 
 			expect(depositDataList[0].depositHash).to.equal(depositHash0)
 			expect(depositDataList[0].sender).to.equal(user.address)
-			expect(depositDataList[0].isRejected).to.equal(false)
 
 			expect(depositDataList[1].depositHash).to.equal(depositHash2)
 			expect(depositDataList[1].sender).to.equal(user.address)
-			expect(depositDataList[1].isRejected).to.equal(false)
 		})
 	})
 	describe('getDepositDataHash', () => {
@@ -2432,6 +3285,8 @@ describe('Liquidity', () => {
 
 			// Create some deposits using ETH
 			const depositAmount = ethers.parseEther('1')
+			const amlPermission = ethers.toUtf8Bytes('AML')
+			const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 			for (let i = 0; i < 5; i++) {
 				const recipientSaltHash = ethers.keccak256(
@@ -2439,7 +3294,12 @@ describe('Liquidity', () => {
 				)
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 			}
 
 			const depositDataHash0 = await liquidity.getDepositDataHash(1)
@@ -2469,13 +3329,15 @@ describe('Liquidity', () => {
 	describe('getLastRelayedDepositId, getLastDepositId', () => {
 		it('get DepositId', async () => {
 			const { liquidity } = await loadFixture(setup)
-			const { analyzer, user } = await getSigners()
+			const { relayer, user } = await getSigners()
 
 			expect(await liquidity.getLastRelayedDepositId()).to.equal(0)
 			expect(await liquidity.getLastDepositId()).to.equal(0)
 
 			// Create some deposits using ETH
 			const depositAmount = ethers.parseEther('1')
+			const amlPermission = ethers.toUtf8Bytes('AML')
+			const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 			for (let i = 0; i < 5; i++) {
 				const recipientSaltHash = ethers.keccak256(
@@ -2483,13 +3345,18 @@ describe('Liquidity', () => {
 				)
 				await liquidity
 					.connect(user)
-					.depositNativeToken(recipientSaltHash, { value: depositAmount })
+					.depositNativeToken(
+						recipientSaltHash,
+						amlPermission,
+						eligibilityPermission,
+						{ value: depositAmount },
+					)
 			}
 
 			expect(await liquidity.getLastRelayedDepositId()).to.equal(0)
 			expect(await liquidity.getLastDepositId()).to.equal(5)
 
-			await liquidity.connect(analyzer).analyzeAndRelayDeposits(3, [], 1000000)
+			await liquidity.connect(relayer).relayDeposits(3, 1000000)
 
 			expect(await liquidity.getLastRelayedDepositId()).to.equal(3)
 			expect(await liquidity.getLastDepositId()).to.equal(5)
@@ -2501,11 +3368,18 @@ describe('Liquidity', () => {
 			const { user } = await getSigners()
 			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 			const depositAmount = ethers.parseEther('1')
+			const amlPermission = ethers.toUtf8Bytes('AML')
+			const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 			const currentDepositId = await liquidity.getLastDepositId()
 			await liquidity
 				.connect(user)
-				.depositNativeToken(recipientSaltHash, { value: depositAmount })
+				.depositNativeToken(
+					recipientSaltHash,
+					amlPermission,
+					eligibilityPermission,
+					{ value: depositAmount },
+				)
 			const result = await liquidity.isDepositValid(
 				currentDepositId + 1n,
 				recipientSaltHash,
@@ -2521,11 +3395,18 @@ describe('Liquidity', () => {
 			const { user } = await getSigners()
 			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 			const depositAmount = ethers.parseEther('1')
+			const amlPermission = ethers.toUtf8Bytes('AML')
+			const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 			const currentDepositId = await liquidity.getLastDepositId()
 			await liquidity
 				.connect(user)
-				.depositNativeToken(recipientSaltHash, { value: depositAmount })
+				.depositNativeToken(
+					recipientSaltHash,
+					amlPermission,
+					eligibilityPermission,
+					{ value: depositAmount },
+				)
 			const result = await liquidity.isDepositValid(
 				currentDepositId + 1n,
 				recipientSaltHash,
@@ -2541,11 +3422,18 @@ describe('Liquidity', () => {
 			const { user } = await getSigners()
 			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
 			const depositAmount = ethers.parseEther('1')
+			const amlPermission = ethers.toUtf8Bytes('AML')
+			const eligibilityPermission = ethers.toUtf8Bytes('Eligibility')
 
 			const currentDepositId = await liquidity.getLastDepositId()
 			await liquidity
 				.connect(user)
-				.depositNativeToken(recipientSaltHash, { value: depositAmount })
+				.depositNativeToken(
+					recipientSaltHash,
+					amlPermission,
+					eligibilityPermission,
+					{ value: depositAmount },
+				)
 			const result = await liquidity.isDepositValid(
 				currentDepositId + 1n,
 				recipientSaltHash,
@@ -2553,30 +3441,6 @@ describe('Liquidity', () => {
 				depositAmount,
 				true,
 				ethers.ZeroAddress,
-			)
-			expect(result).to.equal(false)
-		})
-		it('return false(isRejected)', async () => {
-			const { liquidity } = await loadFixture(setup)
-			const { user, analyzer } = await getSigners()
-			const recipientSaltHash = ethers.keccak256(ethers.toUtf8Bytes('test'))
-			const depositAmount = ethers.parseEther('1')
-
-			await liquidity
-				.connect(user)
-				.depositNativeToken(recipientSaltHash, { value: depositAmount })
-			await liquidity
-				.connect(analyzer)
-				.analyzeAndRelayDeposits(1, [1], 1000000, {
-					value: ethers.parseEther('1'),
-				})
-			const result = await liquidity.isDepositValid(
-				1,
-				recipientSaltHash,
-				0, // tokenIndex for ETH should be 0
-				depositAmount,
-				true,
-				user.address,
 			)
 			expect(result).to.equal(false)
 		})
@@ -2594,9 +3458,9 @@ describe('Liquidity', () => {
 				liquidity2Factory,
 				{ unsafeAllow: ['constructor'] },
 			)
-			const beforeRole = await liquidity.ANALYZER()
+			const beforeRole = await liquidity.RELAYER()
 
-			const afterRole = await next.ANALYZER()
+			const afterRole = await next.RELAYER()
 			expect(afterRole).to.equal(beforeRole)
 			const val = await next.getVal()
 			expect(val).to.equal(7)

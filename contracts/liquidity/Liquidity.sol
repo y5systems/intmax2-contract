@@ -35,8 +35,8 @@ contract Liquidity is
 	using WithdrawalLib for WithdrawalLib.Withdrawal;
 	using DepositQueueLib for DepositQueueLib.DepositQueue;
 
-	/// @notice Analyzer role constant
-	bytes32 public constant ANALYZER = keccak256("ANALYZER");
+	/// @notice Relayer role constant
+	bytes32 public constant RELAYER = keccak256("RELAYER");
 
 	/// @notice Withdrawal role constant
 	bytes32 public constant WITHDRAWAL = keccak256("WITHDRAWAL");
@@ -97,9 +97,7 @@ contract Liquidity is
 			revert InvalidDepositHash(depositData.depositHash, depositHash);
 		}
 		if (depositId <= getLastRelayedDepositId()) {
-			if (!depositData.isRejected) {
-				revert AlreadyAnalyzed();
-			}
+			revert AlreadyRelayed();
 		}
 		_;
 	}
@@ -115,7 +113,7 @@ contract Liquidity is
 		address _rollup,
 		address _withdrawal,
 		address _claim,
-		address _analyzer,
+		address _relayer,
 		address _contribution,
 		address[] memory initialERC20Tokens
 	) external initializer {
@@ -125,13 +123,13 @@ contract Liquidity is
 			_rollup == address(0) ||
 			_withdrawal == address(0) ||
 			_claim == address(0) ||
-			_analyzer == address(0) ||
+			_relayer == address(0) ||
 			_contribution == address(0)
 		) {
 			revert AddressZero();
 		}
 		_grantRole(DEFAULT_ADMIN_ROLE, _admin);
-		_grantRole(ANALYZER, _analyzer);
+		_grantRole(RELAYER, _relayer);
 		_grantRole(WITHDRAWAL, _withdrawal);
 		_grantRole(WITHDRAWAL, _claim);
 		__UUPSUpgradeable_init();
@@ -213,6 +211,7 @@ contract Liquidity is
 			recipientSaltHash,
 			amount
 		);
+
 		_deposit(
 			_msgSender(),
 			recipientSaltHash,
@@ -299,14 +298,12 @@ contract Liquidity is
 		);
 	}
 
-	function analyzeAndRelayDeposits(
+	function relayDeposits(
 		uint256 upToDepositId,
-		uint256[] memory rejectDepositIds,
 		uint256 gasLimit
-	) external payable onlyRole(ANALYZER) {
-		bytes32[] memory depositHashes = depositQueue.analyze(
-			upToDepositId,
-			rejectDepositIds
+	) external payable onlyRole(RELAYER) {
+		bytes32[] memory depositHashes = depositQueue.batchDequeue(
+			upToDepositId
 		);
 		bytes memory message = abi.encodeWithSelector(
 			IRollup.processDeposits.selector,
@@ -320,12 +317,7 @@ contract Liquidity is
 			gasLimit,
 			_msgSender()
 		);
-		emit DepositsAnalyzedAndRelayed(
-			upToDepositId,
-			rejectDepositIds,
-			gasLimit,
-			message
-		);
+		emit DepositsRelayed(upToDepositId, gasLimit, message);
 	}
 
 	function claimWithdrawals(
@@ -376,8 +368,8 @@ contract Liquidity is
 		bytes memory amlPermission,
 		bytes memory eligibilityPermission
 	) private {
-		validateAmlPermission(encodedData, amlPermission);
-		bool isEligible = validateEligibilityPermission(
+		_validateAmlPermission(encodedData, amlPermission);
+		bool isEligible = _validateEligibilityPermission(
 			encodedData,
 			eligibilityPermission
 		);
@@ -402,6 +394,7 @@ contract Liquidity is
 			recipientSaltHash,
 			tokenIndex,
 			amount,
+			isEligible,
 			block.timestamp
 		);
 	}
@@ -456,9 +449,6 @@ contract Liquidity is
 			return false;
 		}
 		if (depositData.sender != sender) {
-			return false;
-		}
-		if (depositData.isRejected) {
 			return false;
 		}
 		return true;
@@ -550,10 +540,10 @@ contract Liquidity is
 		return this.onERC1155Received.selector;
 	}
 
-	function validateAmlPermission(
+	function _validateAmlPermission(
 		bytes memory encodedData,
 		bytes memory amlPermission
-	) internal {
+	) private {
 		if (address(amlPermitter) == address(0)) {
 			// if aml permitter is not set, skip aml check
 			return;
@@ -570,10 +560,10 @@ contract Liquidity is
 		return;
 	}
 
-	function validateEligibilityPermission(
+	function _validateEligibilityPermission(
 		bytes memory encodedData,
 		bytes memory eligibilityPermission
-	) internal returns (bool) {
+	) private returns (bool) {
 		if (address(eligibilityPermitter) == address(0)) {
 			// if eligibility permitter is not set, skip eligibility check
 			return true;

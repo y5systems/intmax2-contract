@@ -4,24 +4,14 @@ pragma solidity 0.8.27;
 /// @title Deposit Queue Library
 /// @notice A library for managing a queue of pending deposits
 library DepositQueueLib {
-	/// @notice Error thrown when trying to analyze deposits outside the queue range
-	/// @param upToDepositId The requested deposit ID to analyze up to
+	/// @notice Error thrown when trying to deposits outside the queue range
+	/// @param upToDepositId The requested deposit ID
 	/// @param firstDepositId The first deposit ID in the queue
 	/// @param lastDepositId The last deposit ID in the queue
-	error TriedAnalyzeOutOfRange(
+	error OutOfRange(
 		uint256 upToDepositId,
 		uint256 firstDepositId,
 		uint256 lastDepositId
-	);
-
-	/// @notice Error thrown when trying to reject a deposit outside the analyzed range
-	/// @param rejectIndex The index of the deposit to be rejected
-	/// @param front The front index of the queue
-	/// @param upToDepositId The upper bound of the analyzed range
-	error TriedToRejectOutOfRange(
-		uint256 rejectIndex,
-		uint256 front,
-		uint256 upToDepositId
 	);
 
 	/// @notice Represents a queue of pending deposits
@@ -33,21 +23,19 @@ library DepositQueueLib {
 	}
 
 	/// @notice Represents data for a single deposit
-	/// @dev Includes deposit hash, sender address, and rejection status
+	/// @dev Includes deposit hash, sender address
 	/// @param depositHash The hash of the deposit
 	/// @param sender The address of the depositor
-	/// @param isRejected Whether the deposit has been rejected
 	struct DepositData {
 		bytes32 depositHash;
 		address sender;
-		bool isRejected;
 	}
 
 	/// @notice Initializes the deposit queue
 	/// @dev Pushes a dummy element to make the queue 1-indexed
 	/// @param depositQueue The storage reference to the DepositQueue struct
 	function initialize(DepositQueue storage depositQueue) internal {
-		depositQueue.depositData.push(DepositData(0, address(0), false));
+		depositQueue.depositData.push(DepositData(0, address(0)));
 		depositQueue.front = 1;
 	}
 
@@ -62,7 +50,7 @@ library DepositQueueLib {
 		address sender
 	) internal returns (uint256 depositId) {
 		depositId = depositQueue.depositData.length;
-		depositQueue.depositData.push(DepositData(depositHash, sender, false));
+		depositQueue.depositData.push(DepositData(depositHash, sender));
 	}
 
 	/// @notice Deletes a deposit from the queue
@@ -77,45 +65,29 @@ library DepositQueueLib {
 		delete depositQueue.depositData[depositId];
 	}
 
-	/// @notice Analyzes deposits in the queue, marking some as rejected
-	/// @dev Collects deposit hashes from front to upToDepositId, skipping rejected ones
+	/// @notice relayed deposits in the queue
+	/// @dev Collects deposit hashes from front to upToDepositId
 	/// @param depositQueue The storage reference to the DepositQueue struct
-	/// @param upToDepositId The upper bound deposit ID for analysis
-	/// @param rejectIndices Array of deposit IDs to be marked as rejected
-	/// @return An array of deposit hashes that were not rejected
-	function analyze(
+	/// @param upToDepositId The upper bound deposit ID
+	/// @return An array of deposit hashes
+	function batchDequeue(
 		DepositQueue storage depositQueue,
-		uint256 upToDepositId,
-		uint256[] memory rejectIndices
+		uint256 upToDepositId
 	) internal returns (bytes32[] memory) {
 		uint256 front = depositQueue.front;
 		if (
 			upToDepositId >= depositQueue.depositData.length ||
 			upToDepositId < front
 		) {
-			revert TriedAnalyzeOutOfRange(
+			revert OutOfRange(
 				upToDepositId,
 				front,
 				depositQueue.depositData.length - 1
 			);
 		}
-		for (uint256 i = 0; i < rejectIndices.length; i++) {
-			uint256 rejectIndex = rejectIndices[i];
-			if (rejectIndex > upToDepositId || rejectIndex < front) {
-				revert TriedToRejectOutOfRange(
-					rejectIndex,
-					front,
-					upToDepositId
-				);
-			}
-			depositQueue.depositData[rejectIndex].isRejected = true;
-		}
 		uint256 counter = 0;
 		for (uint256 i = front; i <= upToDepositId; i++) {
 			if (depositQueue.depositData[i].sender == address(0)) {
-				continue;
-			}
-			if (depositQueue.depositData[i].isRejected) {
 				continue;
 			}
 			counter++;
@@ -124,9 +96,6 @@ library DepositQueueLib {
 		uint256 depositHashesIndex = 0;
 		for (uint256 i = front; i <= upToDepositId; i++) {
 			if (depositQueue.depositData[i].sender == address(0)) {
-				continue;
-			}
-			if (depositQueue.depositData[i].isRejected) {
 				continue;
 			}
 			depositHashes[depositHashesIndex] = depositQueue

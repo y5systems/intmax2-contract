@@ -33,8 +33,8 @@ interface ILiquidity {
 	/// @notice Error thrown when trying to deposit zero amount of native/ERC20/ERC1155 tokens
 	error TriedToDepositZero();
 
-	/// @notice Error thrown when already analyzed deposits
-	error AlreadyAnalyzed();
+	/// @notice Error thrown when already relayed deposits
+	error AlreadyRelayed();
 
 	/// @notice Error thrown when the deposit hash already exists
 	error DepositHashAlreadyExists(bytes32 depositHash);
@@ -54,6 +54,7 @@ interface ILiquidity {
 	/// @param recipientSaltHash The hash of the recipient's intmax2 address (BLS public key) and a secret salt
 	/// @param tokenIndex The index of the token being deposited
 	/// @param amount The amount of tokens deposited
+	/// @param isEligible if true, the deposit is eligible
 	/// @param depositedAt The timestamp of the deposit
 	event Deposited(
 		uint256 indexed depositId,
@@ -61,17 +62,16 @@ interface ILiquidity {
 		bytes32 indexed recipientSaltHash,
 		uint32 tokenIndex,
 		uint256 amount,
+		bool isEligible,
 		uint256 depositedAt
 	);
 
-	/// @notice Event emitted when deposits are analyzed and relayed
-	/// @param upToDepositId The highest deposit ID that was analyzed
-	/// @param rejectedIndices Array of deposit IDs that were rejected
+	/// @notice Event emitted when deposits are relayed
+	/// @param upToDepositId The highest deposit ID that was relayed
 	/// @param gasLimit The gas limit for the L2 transaction
 	/// @param message Additional message data
-	event DepositsAnalyzedAndRelayed(
+	event DepositsRelayed(
 		uint256 indexed upToDepositId,
-		uint256[] rejectedIndices,
 		uint256 gasLimit,
 		bytes message
 	);
@@ -172,14 +172,11 @@ interface ILiquidity {
 	) external;
 
 	/// @notice Trusted nodes submit the IDs of deposits that do not meet AML standards by this method
-	/// @dev upToDepositId specifies the last deposit id that have been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
-	/// @dev rejectDepositIndices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
-	/// @param upToDepositId The upper limit of the Deposit ID that has been analyzed. It must be greater than lastAnalyzedDeposit and less than or equal to the latest Deposit ID.
-	/// @param rejectDepositIds An array of ids of deposits to exclude. These indices must be greater than lastAnalyzedDeposit and less than or equal to upToDepositId.
+	/// @dev upToDepositId specifies the last deposit id that have been relayed. It must be greater than lastRelayedDeposit and less than or equal to the latest Deposit ID.
+	/// @param upToDepositId The upper limit of the Deposit ID that has been relayed. It must be greater than lastRelayedDeposit and less than or equal to the latest Deposit ID.
 	/// @param gasLimit The gas limit for the l2 transaction.
-	function analyzeAndRelayDeposits(
+	function relayDeposits(
 		uint256 upToDepositId,
-		uint256[] memory rejectDepositIds,
 		uint256 gasLimit
 	) external payable;
 
