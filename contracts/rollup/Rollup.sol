@@ -32,6 +32,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	/// @notice block hashes
 	bytes32[] public blockHashes;
 
+	/// @notice block builder's nonce for registration block
+	mapping(address => uint32) public builderRegistrationNonce;
+
+	/// @notice block builder's nonce for non-registration block
+	mapping(address => uint32) public builderNonRegistrationNonce;
+
 	/// @notice L2 ScrollMessenger contract
 	IL2ScrollMessenger private l2ScrollMessenger;
 
@@ -94,6 +100,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
 		uint64 expiry,
+		uint32 builderNonce,
 		bytes16 senderFlags,
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
@@ -104,6 +111,17 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			revert Expired();
 		}
 		collectPenaltyFee();
+		BlockPostData memory block_post_data = BlockPostData({
+			isRegistrationBlock: true,
+			txTreeRoot: txTreeRoot,
+			expiry: expiry,
+			builderAddress: _msgSender(),
+			builderNonce: builderNonce,
+			senderFlags: senderFlags,
+			aggregatedPublicKey: aggregatedPublicKey,
+			aggregatedSignature: aggregatedSignature,
+			messagePoint: messagePoint
+		});
 		uint256 length = senderPublicKeys.length;
 		if (length > NUM_SENDERS_IN_BLOCK) {
 			revert TooManySenderPublicKeys();
@@ -119,10 +137,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32 publicKeysHash = keccak256(abi.encodePacked(paddedKeys));
 		bytes32 accountIdsHash = 0;
 		_postBlock(
-			true,
-			txTreeRoot,
-			expiry,
-			senderFlags,
+			block_post_data,
 			publicKeysHash,
 			accountIdsHash,
 			aggregatedPublicKey,
@@ -134,6 +149,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	function postNonRegistrationBlock(
 		bytes32 txTreeRoot,
 		uint64 expiry,
+		uint32 builderNonce,
 		bytes16 senderFlags,
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
@@ -145,6 +161,17 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			revert Expired();
 		}
 		collectPenaltyFee();
+		BlockPostData memory block_post_data = BlockPostData({
+			isRegistrationBlock: false,
+			txTreeRoot: txTreeRoot,
+			expiry: expiry,
+			builderAddress: _msgSender(),
+			builderNonce: builderNonce,
+			senderFlags: senderFlags,
+			aggregatedPublicKey: aggregatedPublicKey,
+			aggregatedSignature: aggregatedSignature,
+			messagePoint: messagePoint
+		});
 		uint256 length = senderAccountIds.length;
 		if (length > FULL_ACCOUNT_IDS_BYTES) {
 			revert TooManyAccountIds();
@@ -162,10 +189,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		}
 		bytes32 accountIdsHash = keccak256(paddedAccountIds);
 		_postBlock(
-			false,
-			txTreeRoot,
-			expiry,
-			senderFlags,
+			block_post_data,
 			publicKeysHash,
 			accountIdsHash,
 			aggregatedPublicKey,
@@ -192,16 +216,37 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	}
 
 	function _postBlock(
-		bool isRegistrationBlock,
-		bytes32 txTreeRoot,
-		uint64 expiry,
-		bytes16 senderFlags,
+		BlockPostData memory block_post_data,
 		bytes32 publicKeysHash,
 		bytes32 accountIdsHash,
 		bytes32[2] calldata aggregatedPublicKey,
 		bytes32[4] calldata aggregatedSignature,
 		bytes32[4] calldata messagePoint
 	) private {
+		// Bypass nonce check if nonce is 0
+		if (block_post_data.builderNonce != 0) {
+			if (block_post_data.isRegistrationBlock) {
+				uint32 previousNonce = builderRegistrationNonce[
+					block_post_data.builderAddress
+				];
+				if (block_post_data.builderNonce < previousNonce) {
+					revert InvalidNonce();
+				}
+				builderRegistrationNonce[block_post_data.builderAddress] =
+					block_post_data.builderNonce +
+					1;
+			} else {
+				uint32 previousNonce = builderNonRegistrationNonce[
+					block_post_data.builderAddress
+				];
+				if (block_post_data.builderNonce < previousNonce) {
+					revert InvalidNonce();
+				}
+				builderNonRegistrationNonce[block_post_data.builderAddress] =
+					block_post_data.builderNonce +
+					1;
+			}
+		}
 		bool success = PairingLib.pairing(
 			aggregatedPublicKey,
 			aggregatedSignature,
@@ -213,10 +258,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 		bytes32 signatureHash = keccak256(
 			abi.encodePacked(
-				uint32(isRegistrationBlock ? 1 : 0),
-				txTreeRoot,
-				expiry,
-				senderFlags,
+				uint32(block_post_data.isRegistrationBlock ? 1 : 0),
+				block_post_data.txTreeRoot,
+				block_post_data.expiry,
+				block_post_data.builderAddress,
+				block_post_data.builderNonce,
+				block_post_data.senderFlags,
 				publicKeysHash,
 				accountIdsHash,
 				aggregatedPublicKey,
@@ -224,7 +271,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 				messagePoint
 			)
 		);
-
 		uint32 blockNumber = blockHashes.getBlockNumber();
 		bytes32 prevBlockHash = blockHashes.getPrevHash();
 		bytes32 depositTreeRootCached = depositTreeRoot;
