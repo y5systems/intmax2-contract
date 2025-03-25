@@ -67,6 +67,11 @@ contract Liquidity is
 	/// @notice Mapping of deposit hashes to a boolean indicating whether the deposit hash exists
 	mapping(bytes32 => bool) private doesDepositHashExist;
 
+	/// @notice Withdrawal fee ratio for each token index (denominated in basis points, 1bp = 0.01%, range: 0-10000)
+	/// @dev The admin is responsible for ensuring appropriate fee settings and bears the responsibility
+	///      of maintaining fair fee structures, especially for NFT withdrawals which should be set to 0.
+	mapping(uint32 => uint256) public withdrawalFeeRatio;
+
 	/// @notice deposit information queue
 	DepositQueueLib.DepositQueue private depositQueue;
 
@@ -160,6 +165,15 @@ contract Liquidity is
 	) external onlyRole(DEFAULT_ADMIN_ROLE) {
 		amlPermitter = IPermitter(_amlPermitter);
 		eligibilityPermitter = IPermitter(_eligibilityPermitter);
+		emit PermitterSet(_amlPermitter, _eligibilityPermitter);
+	}
+
+	function setWithdrawalFeeRatio(
+		uint32 tokenIndex,
+		uint256 feeRatio
+	) external onlyRole(DEFAULT_ADMIN_ROLE) {
+		withdrawalFeeRatio[tokenIndex] = feeRatio;
+		emit WithdrawalFeeRatioSet(tokenIndex, feeRatio);
 	}
 
 	function pauseDeposits() external onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -338,16 +352,21 @@ contract Liquidity is
 			if (claimableWithdrawals[withdrawalHash] == 0) {
 				revert WithdrawalNotFound(withdrawalHash);
 			}
+			uint256 fee = _getWithdrawalFee(w.tokenIndex, w.amount);
+			uint256 amountAfterFee = w.amount - fee;
 			TokenInfo memory tokenInfo = getTokenInfo(w.tokenIndex);
 			delete claimableWithdrawals[withdrawalHash];
 			_sendToken(
 				tokenInfo.tokenType,
 				tokenInfo.tokenAddress,
 				w.recipient,
-				w.amount,
+				amountAfterFee,
 				tokenInfo.tokenId
 			);
 			emit ClaimedWithdrawal(w.recipient, withdrawalHash);
+			if (fee > 0) {
+				emit WithdrawalFeeCollected(w.tokenIndex, fee);
+			}
 		}
 	}
 
@@ -440,29 +459,6 @@ contract Liquidity is
 		_processClaimableWithdrawals(withdrawalHashes);
 	}
 
-	function isDepositValid(
-		uint256 depositId,
-		bytes32 recipientSaltHash,
-		uint32 tokenIndex,
-		uint256 amount,
-		bool isEligible,
-		address sender
-	) external view returns (bool) {
-		DepositQueueLib.DepositData memory depositData = depositQueue
-			.depositData[depositId];
-		bytes32 depositHash = DepositLib
-			.Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible)
-			.getHash();
-
-		if (depositData.depositHash != depositHash) {
-			return false;
-		}
-		if (depositData.sender != sender) {
-			return false;
-		}
-		return true;
-	}
-
 	function _processDirectWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) private {
@@ -487,19 +483,21 @@ contract Liquidity is
 		WithdrawalLib.Withdrawal memory withdrawal_
 	) internal {
 		TokenInfo memory tokenInfo = getTokenInfo(withdrawal_.tokenIndex);
-
+		uint256 fee = _getWithdrawalFee(
+			withdrawal_.tokenIndex,
+			withdrawal_.amount
+		);
+		uint256 amountAfterFee = withdrawal_.amount - fee;
 		bool result = true;
 		if (tokenInfo.tokenType == TokenType.NATIVE) {
 			// solhint-disable-next-line check-send-result
-			bool success = payable(withdrawal_.recipient).send(
-				withdrawal_.amount
-			);
+			bool success = payable(withdrawal_.recipient).send(amountAfterFee);
 			result = success;
 		} else if (tokenInfo.tokenType == TokenType.ERC20) {
 			bytes memory transferCall = abi.encodeWithSelector(
 				IERC20(tokenInfo.tokenAddress).transfer.selector,
 				withdrawal_.recipient,
-				withdrawal_.amount
+				amountAfterFee
 			);
 			result = IERC20(tokenInfo.tokenAddress).callOptionalReturnBool(
 				transferCall
@@ -513,6 +511,9 @@ contract Liquidity is
 				withdrawal_.getHash(),
 				withdrawal_.recipient
 			);
+			if (fee > 0) {
+				emit WithdrawalFeeCollected(withdrawal_.tokenIndex, fee);
+			}
 		} else {
 			bytes32 withdrawalHash = withdrawal_.getHash();
 			// solhint-disable-next-line reentrancy
@@ -589,6 +590,37 @@ contract Liquidity is
 		);
 		if (!result) {
 			revert EligibilityValidationFailed();
+		}
+		return true;
+	}
+
+	function _getWithdrawalFee(
+		uint32 tokenIndex,
+		uint256 amount
+	) internal view returns (uint256) {
+		uint256 feeRatio = withdrawalFeeRatio[tokenIndex];
+		return (amount * feeRatio) / 10000;
+	}
+
+	function isDepositValid(
+		uint256 depositId,
+		bytes32 recipientSaltHash,
+		uint32 tokenIndex,
+		uint256 amount,
+		bool isEligible,
+		address sender
+	) external view returns (bool) {
+		DepositQueueLib.DepositData memory depositData = depositQueue
+			.depositData[depositId];
+		bytes32 depositHash = DepositLib
+			.Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible)
+			.getHash();
+
+		if (depositData.depositHash != depositHash) {
+			return false;
+		}
+		if (depositData.sender != sender) {
+			return false;
 		}
 		return true;
 	}

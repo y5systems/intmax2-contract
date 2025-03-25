@@ -107,6 +107,24 @@ interface ILiquidity {
 		bytes32 indexed withdrawalHash
 	);
 
+	/// @notice Event emitted when withdrawal fee is collected
+	/// @param token The index of the token
+	/// @param amount The amount of tokens collected
+	event WithdrawalFeeCollected(uint32 indexed token, uint256 amount);
+
+	/// @notice Event emitted when permitter addresses are set
+	/// @param amlPermitter The address of the AML permitter contract
+	/// @param eligibilityPermitter The address of the eligibility permitter contract
+	event PermitterSet(
+		address indexed amlPermitter,
+		address indexed eligibilityPermitter
+	);
+
+	/// @notice Event emitted when the withdrawal fee ratio is set
+	/// @param tokenIndex The index of the token
+	/// @param feeRatio The withdrawal fee ratio for the token
+	event WithdrawalFeeRatioSet(uint32 indexed tokenIndex, uint256 feeRatio);
+
 	/// @notice Pause deposits
 	function pauseDeposits() external;
 
@@ -119,6 +137,14 @@ interface ILiquidity {
 	function setPermitter(
 		address _amlPermitter,
 		address _eligibilityPermitter
+	) external;
+
+	/// @notice Sets the withdrawal fee ratio for a token
+	/// @param tokenIndex The index of the token
+	/// @param feeRatio The withdrawal fee ratio for the token
+	function setWithdrawalFeeRatio(
+		uint32 tokenIndex,
+		uint256 feeRatio
 	) external;
 
 	/// @notice Deposit native token
