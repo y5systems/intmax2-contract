@@ -28,7 +28,7 @@ async function main() {
 	const tx = await claim.submitClaimProof(
 		claimInfo.claims,
 		claimInfo.claimProofPublicInputs,
-		'0x',
+		'0x', // dummy proof
 	)
 	console.log('submit claim proof tx hash:', tx.hash)
 	await tx.wait()

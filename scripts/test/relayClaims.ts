@@ -9,15 +9,17 @@ async function main() {
 	}
 	const claim = await ethers.getContractAt('Claim', deployedContracts.claim)
 
-	const allocationPerDay = await claim.getAllocationPerDay(0)
-	console.log('allocation per day:', allocationPerDay.toString())
+	const user = (await ethers.getSigners())[0]
+	const period = 0
+	const allocationPerPeriod = await claim.getAllocationInfo(period, user.address)
+	console.log('allocation per period:', allocationPerPeriod.toString())
 
-	// const tx = await claim.relayClaims(
-	// 	0,
-	// 	[ethers.ZeroAddress]
-	// )
-	// console.log('relay claims tx hash:', tx.hash)
-	// await tx.wait()
+	const tx = await claim.relayClaims(
+		period,
+		[user.address],
+	)
+	console.log('relay claims tx hash:', tx.hash)
+	await tx.wait()
 }
 
 main().catch((error) => {

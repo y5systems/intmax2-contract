@@ -33,7 +33,7 @@ async function main() {
 	const tx = await withdrawal.submitWithdrawalProof(
 		withdrawalInfo.withdrawals,
 		withdrawalInfo.withdrawalProofPublicInputs,
-		'0x',
+		'0x', // dummy proof
 	)
 	console.log('submit withdrawal proof tx hash:', tx.hash)
 	await tx.wait()

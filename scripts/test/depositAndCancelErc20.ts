@@ -40,7 +40,7 @@ async function main() {
 
 	tx = await liquidity
 		.connect(user)
-		.depositERC20(await testErc20.getAddress(), recipientSaltHash, amount)
+		.depositERC20(await testErc20.getAddress(), recipientSaltHash, amount, "0x", "0x")
 	console.log('deposit tx hash:', tx.hash)
 	const res = await tx.wait()
 	if (!res?.blockNumber) {
@@ -52,25 +52,28 @@ async function main() {
 		user.address,
 		depositedBlockNumber,
 	)
-	const { depositId, tokenIndex } = depositEvent.args
+	const { sender, depositId, tokenIndex, isEligible } = depositEvent.args
 	console.log('depositId:', depositId)
 	console.log('tokenIndex:', tokenIndex)
+	console.log('isEligible:', isEligible)
 
 	const depositData = await liquidity.getDepositData(depositId)
 	console.log('deposit data:', depositData)
 
 	const deposit = {
+		depositor: sender,
 		recipientSaltHash,
 		tokenIndex,
 		amount,
+		isEligible,
 	}
 
-	// // cancel the deposit
-	// tx = await liquidity.connect(user).cancelDeposit(depositId, deposit)
-	// console.log('cancel tx hash:', tx.hash)
-	// await tx.wait()
+	// cancel the deposit
+	tx = await liquidity.connect(user).cancelDeposit(depositId, deposit)
+	console.log('cancel tx hash:', tx.hash)
+	await tx.wait()
 
-	// console.log('after balance', await testErc20.balanceOf(user.address))
+	console.log('after balance', await testErc20.balanceOf(user.address))
 }
 
 main().catch((error) => {

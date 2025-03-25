@@ -21,13 +21,13 @@ async function main() {
 	const analyzer = (await ethers.getSigners())[1]
 	console.log('analyzer address:', analyzer.address)
 
-	// The estimated gas limit is about 220k + 20k * numDeposits. For details, see scripts/test/rollup.ts
+	// The estimated gas limit is about 220k + 20k * numDeposits.
 	const buffer = 100_000n
 	const gasLimit = 220_000n + 20_000n * numDepositsToRelay + buffer
 	try {
 		const tx = await liquidity
 			.connect(analyzer)
-			.analyzeAndRelayDeposits(lastDepositId, [], gasLimit, {
+			.relayDeposits(lastDepositId, gasLimit, {
 				value: ethers.parseEther('0.1'), // will be refunded
 			})
 		console.log('relayDeposits tx hash:', tx.hash)
