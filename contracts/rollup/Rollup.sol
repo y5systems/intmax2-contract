@@ -111,7 +111,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			revert Expired();
 		}
 		collectPenaltyFee();
-		BlockPostData memory block_post_data = BlockPostData({
+		BlockPostData memory blockPostData = BlockPostData({
 			isRegistrationBlock: true,
 			txTreeRoot: txTreeRoot,
 			expiry: expiry,
@@ -137,7 +137,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32 publicKeysHash = keccak256(abi.encodePacked(paddedKeys));
 		bytes32 accountIdsHash = 0;
 		_postBlock(
-			block_post_data,
+			blockPostData,
 			publicKeysHash,
 			accountIdsHash,
 			aggregatedPublicKey,
@@ -161,7 +161,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			revert Expired();
 		}
 		collectPenaltyFee();
-		BlockPostData memory block_post_data = BlockPostData({
+		BlockPostData memory blockPostData = BlockPostData({
 			isRegistrationBlock: false,
 			txTreeRoot: txTreeRoot,
 			expiry: expiry,
@@ -189,7 +189,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		}
 		bytes32 accountIdsHash = keccak256(paddedAccountIds);
 		_postBlock(
-			block_post_data,
+			blockPostData,
 			publicKeysHash,
 			accountIdsHash,
 			aggregatedPublicKey,
@@ -216,7 +216,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	}
 
 	function _postBlock(
-		BlockPostData memory block_post_data,
+		BlockPostData memory blockPostData,
 		bytes32 publicKeysHash,
 		bytes32 accountIdsHash,
 		bytes32[2] calldata aggregatedPublicKey,
@@ -224,26 +224,26 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32[4] calldata messagePoint
 	) private {
 		// Bypass nonce check if nonce is 0
-		if (block_post_data.builderNonce != 0) {
-			if (block_post_data.isRegistrationBlock) {
+		if (blockPostData.builderNonce != 0) {
+			if (blockPostData.isRegistrationBlock) {
 				uint32 previousNonce = builderRegistrationNonce[
-					block_post_data.builderAddress
+					blockPostData.builderAddress
 				];
-				if (block_post_data.builderNonce < previousNonce) {
+				if (blockPostData.builderNonce < previousNonce) {
 					revert InvalidNonce();
 				}
-				builderRegistrationNonce[block_post_data.builderAddress] =
-					block_post_data.builderNonce +
+				builderRegistrationNonce[blockPostData.builderAddress] =
+					blockPostData.builderNonce +
 					1;
 			} else {
 				uint32 previousNonce = builderNonRegistrationNonce[
-					block_post_data.builderAddress
+					blockPostData.builderAddress
 				];
-				if (block_post_data.builderNonce < previousNonce) {
+				if (blockPostData.builderNonce < previousNonce) {
 					revert InvalidNonce();
 				}
-				builderNonRegistrationNonce[block_post_data.builderAddress] =
-					block_post_data.builderNonce +
+				builderNonRegistrationNonce[blockPostData.builderAddress] =
+					blockPostData.builderNonce +
 					1;
 			}
 		}
@@ -258,12 +258,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 
 		bytes32 signatureHash = keccak256(
 			abi.encodePacked(
-				uint32(block_post_data.isRegistrationBlock ? 1 : 0),
-				block_post_data.txTreeRoot,
-				block_post_data.expiry,
-				block_post_data.builderAddress,
-				block_post_data.builderNonce,
-				block_post_data.senderFlags,
+				uint32(blockPostData.isRegistrationBlock ? 1 : 0),
+				blockPostData.txTreeRoot,
+				blockPostData.expiry,
+				blockPostData.builderAddress,
+				blockPostData.builderNonce,
+				blockPostData.senderFlags,
 				publicKeysHash,
 				accountIdsHash,
 				aggregatedPublicKey,

@@ -1,5 +1,9 @@
 # INTMAX2 Contract
 
+## For developer
+
+## Generate contract docs from NatSpecs
+
 ## Environment Variables
 
 - `DEPLOYER_PRIVATE_KEY`: Deployer's private key

@@ -14,7 +14,6 @@ const env = cleanEnv(process.env, {
 	SLEEP_TIME: num({
 		default: 30,
 	}),
-
 })
 
 async function main() {

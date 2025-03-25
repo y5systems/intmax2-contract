@@ -21,6 +21,5 @@ export const getL2MessengerAddress = async () => {
 	if (deployedContracts.mockL2ScrollMessenger) {
 		return deployedContracts.mockL2ScrollMessenger
 	}
-	//TODO scroll messenger address
 	throw new Error('Unsupported network')
 }

@@ -647,12 +647,11 @@ describe('Rollup', () => {
 		})
 	})
 
-
 	describe('postNonRegistrationBlock', () => {
 		type validInputs = {
 			txTreeRoot: string
-			expiry: number,
-			builderNonce: number,
+			expiry: number
+			builderNonce: number
 			senderFlags: string
 			aggregatedPublicKey: [string, string]
 			aggregatedSignature: [string, string, string, string]
