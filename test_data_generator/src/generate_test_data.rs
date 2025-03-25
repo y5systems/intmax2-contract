@@ -10,7 +10,6 @@ use intmax2_zkp::{
     circuits::{
         test_utils::witness_generator::{construct_validity_and_tx_witness, MockTxRequest},
         validity::validity_pis::ValidityPublicInputs,
-        withdrawal::withdrawal_wrapper_circuit::WithdrawalProofPublicInputs,
     },
     common::{
         signature::{
@@ -25,6 +24,7 @@ use intmax2_zkp::{
         witness::{block_witness::BlockWitness, full_block::FullBlock},
     },
     ethereum_types::{address::Address, bytes32::Bytes32, u32limb_trait::U32LimbTrait},
+    utils::hash_chain::chain_end_circuit::ChainEndProofPublicInputs,
 };
 use rand::{rngs::StdRng, Rng as _, SeedableRng};
 use serde::{Deserialize, Serialize};
@@ -32,7 +32,6 @@ use serde::{Deserialize, Serialize};
 // Save test data for contract
 #[test]
 fn generate_test_data() {
-    // init rng with seed
     let mut rng = StdRng::seed_from_u64(0);
 
     let mut account_tree = AccountTree::initialize();
@@ -55,6 +54,7 @@ fn generate_test_data() {
         &deposit_tree,
         true,
         &[tx_request.clone()],
+        chrono::Utc::now().timestamp() as u64,
     )
     .unwrap();
 
@@ -68,6 +68,7 @@ fn generate_test_data() {
         &deposit_tree,
         false,
         &[tx_request.clone()],
+        chrono::Utc::now().timestamp() as u64,
     )
     .unwrap();
 
@@ -81,6 +82,7 @@ fn generate_test_data() {
         &deposit_tree,
         false,
         &[],
+        chrono::Utc::now().timestamp() as u64,
     )
     .unwrap();
 
@@ -88,7 +90,7 @@ fn generate_test_data() {
         .into_iter()
         .map(|w| block_witness_to_full_block(&w.block_witness))
         .collect::<Vec<_>>();
-    save_full_blocks("test_data", &full_blocks).unwrap();
+    save_full_blocks("../test_data", &full_blocks).unwrap();
 
     let withdrawal_block = full_blocks.last().unwrap();
     let withdrawals = (0..3)
@@ -108,9 +110,9 @@ fn generate_test_data() {
     }
     let withdrawal_aggregator =
         Address::from_hex("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266").unwrap();
-    let pis = WithdrawalProofPublicInputs {
-        last_withdrawal_hash: withdrawal_hash,
-        withdrawal_aggregator,
+    let pis = ChainEndProofPublicInputs {
+        last_hash: withdrawal_hash,
+        aggregator: withdrawal_aggregator,
     };
     let withdrawal_info = WithdrawalInfo {
         withdrawals,
@@ -121,7 +123,10 @@ fn generate_test_data() {
 }
 
 fn block_witness_to_full_block(block_witness: &BlockWitness) -> FullBlock {
-    let is_registration_block = block_witness.signature.is_registration_block;
+    let is_registration_block = block_witness
+        .signature
+        .block_sign_payload
+        .is_registration_block;
     let block = block_witness.block.clone();
     let signature = block_witness.signature.clone();
     let pubkeys = block_witness.pubkeys.clone();
@@ -165,9 +170,9 @@ fn save_full_blocks<P: AsRef<Path>>(dir_path: P, full_blocks: &[FullBlock]) -> a
         fs::create_dir(dir_path.as_ref())?;
     }
     for full_block in full_blocks.iter() {
-        let block_bumber = full_block.block.block_number;
+        let block_number = full_block.block.block_number;
         let block_str = serde_json::to_string_pretty(full_block)?;
-        let file_path = format!("{}/block{}.json", dir_path.as_ref().display(), block_bumber);
+        let file_path = format!("{}/block{}.json", dir_path.as_ref().display(), block_number);
         let mut file = File::create(file_path)?;
         file.write_all(block_str.as_bytes())?;
     }
@@ -206,7 +211,7 @@ fn save_pairing_test_data<P: AsRef<Path>>(
 #[serde(rename_all = "camelCase")]
 struct WithdrawalInfo {
     withdrawals: Vec<Withdrawal>,
-    withdrawal_proof_public_inputs: WithdrawalProofPublicInputs,
+    withdrawal_proof_public_inputs: ChainEndProofPublicInputs,
     pis_hash: Bytes32,
 }
 

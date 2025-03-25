@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0.86"
 ark-bn254 = "0.4.0"
 ark-std = "0.4.0"
+chrono = "0.4.40"
 intmax2-zkp = { git = "https://github.com/InternetMaximalism/intmax2-zkp.git", branch = "cli", features = [
     "dummy_validity_proof",
 ] }
