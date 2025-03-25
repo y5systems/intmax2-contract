@@ -5,20 +5,22 @@ import {
 } from '../schema/deployedContractsSchema'
 import fs from 'fs-extra'
 import { network } from 'hardhat'
+import path from 'path'
 
-const deployedContractPath = 'scripts/data/{networkName}-deployedContracts.json'
+const deployedContractPath = 'deployment-data/{networkName}-deployedContracts.json'
 
 export async function readDeployedContracts(
 	networkName: string = network.name,
 ): Promise<DeployedContracts> {
-	const path = deployedContractPath.replace('{networkName}', networkName)
+	const filePath = deployedContractPath.replace('{networkName}', networkName)
 	try {
-		const exists = await fs.pathExists(path)
+		const exists = await fs.pathExists(filePath)
 		if (!exists) {
-			await fs.writeJson(path, {}, { spaces: 2 })
+			await fs.ensureDir(path.dirname(filePath))
+			await fs.writeJson(filePath, {}, { spaces: 2 })
 			return {}
 		}
-		const data = await fs.readJson(path)
+		const data = await fs.readJson(filePath)
 		return DeployedContractsSchema.parse(data)
 	} catch (error) {
 		if (error instanceof z.ZodError) {
@@ -34,10 +36,11 @@ export async function writeDeployedContracts(
 	data: DeployedContracts,
 	networkName: string = network.name,
 ): Promise<void> {
-	const path = deployedContractPath.replace('{networkName}', networkName)
+	const filePath = deployedContractPath.replace('{networkName}', networkName)
 	try {
+		await fs.ensureDir(path.dirname(filePath))
 		const validatedUsers = DeployedContractsSchema.parse(data)
-		await fs.writeJson(path, validatedUsers, { spaces: 4 })
+		await fs.writeJson(filePath, validatedUsers, { spaces: 4 })
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			console.error('Validation error:', error.errors)

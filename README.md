@@ -16,10 +16,26 @@ Create a `.env` file with the following:
 
 ## Deployment
 
+Deployは3段階に分かれます。以下のスクリプトを順次実行してください。
+
+localhost環境では
+L1_NETWORK=localhost
+L2_NETWORK=localhost
+
+testnet環境では
+L1_NETWORK=sepolia
+L2_NETWORK=scrollSepolia
+
+mainnet環境では
+L1_NETWORK=mainnet
+L2_NETWORK=scroll
+
+を指定してください。
+
 ```sh
-npx hardhat run ./scripts/deploy/1_deployToL2.ts --network scrollSepolia
-npx hardhat run ./scripts/deploy/2_deployToL1.ts --network sepolia
-npx hardhat run ./scripts/deploy/3_initializeOnL2.ts --network scrollSepolia
+npx hardhat run ./scripts/deploy/1_deployToL2.ts --network $L2_NETWORK
+npx hardhat run ./scripts/deploy/2_deployToL1.ts --network $L1_NETWORK
+npx hardhat run ./scripts/deploy/3_initializeOnL2.ts --network $L2_NETWORK
 ```
 
 ## How run scripts
