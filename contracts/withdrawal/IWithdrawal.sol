@@ -23,12 +23,12 @@ interface IWithdrawal {
 	error WithdrawalProofVerificationFailed();
 
 	/// @notice Error thrown when attempting to add a token to direct withdrawal tokens that already exists
-	/// @param tokenIndice The index of the token that already exists
-	error TokenAlreadyExist(uint256 tokenIndice);
+	/// @param tokenIndex The index of the token that already exists
+	error TokenAlreadyExist(uint256 tokenIndex);
 
 	/// @notice Error thrown when attempting to remove a non-existent token from direct withdrawal tokens
-	/// @param tokenIndice The index of the non-existent token
-	error TokenNotExist(uint256 tokenIndice);
+	/// @param tokenIndex The index of the non-existent token
+	error TokenNotExist(uint256 tokenIndex);
 
 	/// @notice Emitted when a claimable withdrawal is queued
 	/// @param withdrawalHash The hash of the withdrawal

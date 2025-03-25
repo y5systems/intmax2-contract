@@ -3,7 +3,7 @@ import type { SentMessageEvent } from '../typechain-types/@scroll-tech/contracts
 import { IScrollMessenger__factory, Liquidity } from '../typechain-types'
 import {
 	DepositedEvent,
-	DepositsAnalyzedAndRelayedEvent,
+	DepositsRelayedEvent,
 } from '../typechain-types/contracts/liquidity/Liquidity'
 
 const scrollMessengerAbi = IScrollMessenger__factory.abi
@@ -21,17 +21,17 @@ export async function getLastDepositedEvent(
 	return latestEvent
 }
 
-export async function getLastDepositsAnalyzedAndRelayedEvent(
+export async function getLastRelayedEvent(
 	liquidity: Liquidity,
 	fromBlock: number,
-): Promise<DepositsAnalyzedAndRelayedEvent.Log> {
+): Promise<DepositsRelayedEvent.Log> {
 	const events = await liquidity.queryFilter(
-		liquidity.filters.DepositsAnalyzedAndRelayed(),
+		liquidity.filters.DepositsRelayed(),
 		fromBlock,
 	)
 	const latestEvent = events[
 		events.length - 1
-	] as unknown as DepositsAnalyzedAndRelayedEvent.Log
+	] as unknown as DepositsRelayedEvent.Log
 	return latestEvent
 }
 

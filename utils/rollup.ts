@@ -30,6 +30,7 @@ export async function postBlock(
 		const tx = await rollup.postRegistrationBlock(
 			fullBlock.signature.txTreeRoot,
 			fullBlock.signature.expiry,
+			fullBlock.signature.builderNonce,
 			fullBlock.signature.senderFlag,
 			fullBlock.signature.aggPubkey,
 			fullBlock.signature.aggSignature,
@@ -45,6 +46,7 @@ export async function postBlock(
 		const tx = await rollup.postNonRegistrationBlock(
 			fullBlock.signature.txTreeRoot,
 			fullBlock.signature.expiry,
+			fullBlock.signature.builderNonce,
 			fullBlock.signature.senderFlag,
 			fullBlock.signature.aggPubkey,
 			fullBlock.signature.aggSignature,

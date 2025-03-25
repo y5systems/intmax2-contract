@@ -17,6 +17,8 @@ interface Signature {
 	isRegistrationBlock: boolean
 	txTreeRoot: string
 	expiry: string
+	builderAddress: string
+	builderNonce: number
 	senderFlag: string
 	pubkeyHash: string
 	accountIdHash: string
