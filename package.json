@@ -1,5 +1,5 @@
 {
-	"name": "hardhat-project",
+	"name": "intmax2-contract",
 	"devDependencies": {
 		"@nomicfoundation/hardhat-toolbox": "5.0.0",
 		"@openzeppelin/hardhat-upgrades": "3.2.1",
@@ -22,7 +22,8 @@
 		"test": "hardhat test",
 		"lint": "npm run format && npm run solhint",
 		"solhint": "solhint --fix --noPrompt --max-warnings 0 \"contracts/**/*.sol\"",
-		"format": "prettier --write '**/*.{sol,ts,json,md,yml}'"
+		"format": "prettier --write '**/*.{sol,ts,json,md,yml}'",
+		"docgen": "hardhat docgen"
 	},
 	"dependencies": {
 		"@openzeppelin/contracts": "5.1.0",
