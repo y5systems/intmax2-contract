@@ -7,7 +7,7 @@ import fs from 'fs-extra'
 import { network } from 'hardhat'
 import path from 'path'
 
-const deployedContractPath = 'deployment-data/{networkName}-deployedContracts.json'
+const deployedContractPath = 'deployments/{networkName}-deployedContracts.json'
 
 export async function readDeployedContracts(
 	networkName: string = network.name,
