@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
+/**
+ * @title Liquidity Contract
+ * @notice This contract manages deposits and withdrawals of various token types (Native, ERC20, ERC721, ERC1155).
+ * @dev Handles deposit queuing, withdrawal processing, fee collection, and AML/eligibility checks.
+ */
 import {ILiquidity} from "./ILiquidity.sol";
 import {IRollup} from "../rollup/IRollup.sol";
 import {IContribution} from "../contribution/IContribution.sol";
@@ -41,7 +46,7 @@ contract Liquidity is
 	/// @notice Withdrawal role constant
 	bytes32 public constant WITHDRAWAL = keccak256("WITHDRAWAL");
 
-	/// @notice Max withdrawal fee ratio limit
+	/// @notice Withdrawal fee ratio limit
 	/// @dev 1bp = 0.01%
 	uint256 public constant WITHDRAWAL_FEE_RATIO_LIMIT = 1500;
 
@@ -65,7 +70,8 @@ contract Liquidity is
 	/// @dev If not set, we skip eligibility permission check
 	IPermitter public eligibilityPermitter;
 
-	/// @notice Mapping of deposit hashes to a boolean indicating whether the deposit hash exists
+	/// @notice Mapping of withdrawal hashes to their timestamp when they became claimable
+	/// @dev A value of 0 means the withdrawal is not claimable
 	mapping(bytes32 => uint256) public claimableWithdrawals;
 
 	/// @notice Withdrawal fee ratio for each token index
@@ -73,14 +79,21 @@ contract Liquidity is
 	mapping(uint32 => uint256) public withdrawalFeeRatio;
 
 	/// @notice Mapping of token index to the total amount of withdrawal fees collected
+	/// @dev Used to track fees that can be withdrawn by the admin
 	mapping(uint32 => uint256) public collectedWithdrawalFees;
 
 	/// @notice Mapping of deposit hashes to a boolean indicating whether the deposit hash exists
+	/// @dev Used to prevent duplicate deposits with the same parameters
 	mapping(bytes32 => bool) private doesDepositHashExist;
 
-	/// @notice deposit information queue
+	/// @notice Deposit information queue that tracks all deposits
+	/// @dev Used to manage the order and state of deposits
 	DepositQueueLib.DepositQueue private depositQueue;
 
+	/**
+	 * @notice Modifier to restrict access to only the withdrawal role through the L1ScrollMessenger
+	 * @dev Ensures the function is called via the L1ScrollMessenger and the cross-domain sender has the WITHDRAWAL role
+	 */
 	modifier onlyWithdrawalRole() {
 		IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
 		if (_msgSender() != address(l1ScrollMessengerCached)) {
@@ -94,6 +107,12 @@ contract Liquidity is
 		_;
 	}
 
+	/**
+	 * @notice Modifier to check if a deposit can be canceled
+	 * @dev Verifies the caller is the original sender, the deposit hash matches, and the deposit hasn't been relayed
+	 * @param depositId The ID of the deposit to cancel
+	 * @param deposit The deposit data structure
+	 */
 	modifier canCancelDeposit(
 		uint256 depositId,
 		DepositLib.Deposit memory deposit
@@ -165,6 +184,12 @@ contract Liquidity is
 		deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
 	}
 
+	/**
+	 * @notice Sets the AML and eligibility permitter contract addresses
+	 * @dev Only callable by the admin role
+	 * @param _amlPermitter The address of the AML permitter contract
+	 * @param _eligibilityPermitter The address of the eligibility permitter contract
+	 */
 	function setPermitter(
 		address _amlPermitter,
 		address _eligibilityPermitter
@@ -174,6 +199,12 @@ contract Liquidity is
 		emit PermitterSet(_amlPermitter, _eligibilityPermitter);
 	}
 
+	/**
+	 * @notice Sets the withdrawal fee ratio for a specific token
+	 * @dev Only callable by the admin role. Fee ratio is in basis points (1bp = 0.01%)
+	 * @param tokenIndex The index of the token to set the fee ratio for
+	 * @param feeRatio The fee ratio to set (in basis points, max 1500 = 15%)
+	 */
 	function setWithdrawalFeeRatio(
 		uint32 tokenIndex,
 		uint256 feeRatio
@@ -185,6 +216,12 @@ contract Liquidity is
 		emit WithdrawalFeeRatioSet(tokenIndex, feeRatio);
 	}
 
+	/**
+	 * @notice Withdraws collected fees for specified tokens to a recipient address
+	 * @dev Only callable by the admin role. Skips tokens with zero fees
+	 * @param recipient The address to receive the withdrawn fees
+	 * @param tokenIndices Array of token indices to withdraw fees for
+	 */
 	function withdrawCollectedFees(
 		address recipient,
 		uint32[] calldata tokenIndices
@@ -208,10 +245,18 @@ contract Liquidity is
 		}
 	}
 
+	/**
+	 * @notice Pauses all deposit operations
+	 * @dev Only callable by the admin role
+	 */
 	function pauseDeposits() external onlyRole(DEFAULT_ADMIN_ROLE) {
 		_pause();
 	}
 
+	/**
+	 * @notice Unpauses all deposit operations
+	 * @dev Only callable by the admin role
+	 */
 	function unpauseDeposits() external onlyRole(DEFAULT_ADMIN_ROLE) {
 		_unpause();
 	}
@@ -366,8 +411,8 @@ contract Liquidity is
 			depositHashes
 		);
 		l1ScrollMessenger.sendMessage{value: msg.value}(
-			rollup, // to
-			0, // value
+			rollup,
+			0,
 			message,
 			gasLimit,
 			_msgSender()
@@ -420,6 +465,17 @@ contract Liquidity is
 		emit DepositCanceled(depositId);
 	}
 
+	/**
+	 * @notice Internal function to handle the deposit process for all token types
+	 * @dev Validates permissions, checks deposit limits, creates deposit hash, and enqueues the deposit
+	 * @param sender The address making the deposit
+	 * @param recipientSaltHash The hash of the recipient's address and a secret salt
+	 * @param tokenIndex The index of the token being deposited
+	 * @param amount The amount of tokens being deposited
+	 * @param encodedData The encoded function call data for permission validation
+	 * @param amlPermission The data to verify AML check
+	 * @param eligibilityPermission The data to verify eligibility check
+	 */
 	function _deposit(
 		address sender,
 		bytes32 recipientSaltHash,
@@ -460,6 +516,15 @@ contract Liquidity is
 		);
 	}
 
+	/**
+	 * @notice Internal function to send tokens to a recipient
+	 * @dev Handles different token types (Native, ERC20, ERC721, ERC1155)
+	 * @param tokenType The type of token to send
+	 * @param token The token contract address (not used for native tokens)
+	 * @param recipient The address to receive the tokens
+	 * @param amount The amount of tokens to send
+	 * @param tokenId The token ID (used for ERC721 and ERC1155)
+	 */
 	function _sendToken(
 		TokenType tokenType,
 		address token,
@@ -484,6 +549,12 @@ contract Liquidity is
 		}
 	}
 
+	/**
+	 * @notice Processes both direct withdrawals and claimable withdrawals
+	 * @dev Only callable by addresses with the WITHDRAWAL role through the L1ScrollMessenger
+	 * @param withdrawals Array of direct withdrawals to process
+	 * @param withdrawalHashes Array of withdrawal hashes to mark as claimable
+	 */
 	function processWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals,
 		bytes32[] calldata withdrawalHashes
@@ -492,6 +563,11 @@ contract Liquidity is
 		_processClaimableWithdrawals(withdrawalHashes);
 	}
 
+	/**
+	 * @notice Processes direct withdrawals that can be sent directly to recipients
+	 * @dev Attempts to send tokens directly to recipients, records contributions for gas payers
+	 * @param withdrawals Array of withdrawals to process directly
+	 */
 	function _processDirectWithdrawals(
 		WithdrawalLib.Withdrawal[] calldata withdrawals
 	) private {
@@ -512,6 +588,11 @@ contract Liquidity is
 		}
 	}
 
+	/**
+	 * @notice Processes a single direct withdrawal
+	 * @dev Attempts to send tokens directly to the recipient, collects fees, and handles failures
+	 * @param withdrawal_ The withdrawal to process
+	 */
 	function _processDirectWithdrawal(
 		WithdrawalLib.Withdrawal memory withdrawal_
 	) internal {
@@ -558,6 +639,11 @@ contract Liquidity is
 		}
 	}
 
+	/**
+	 * @notice Marks withdrawals as claimable
+	 * @dev Sets the timestamp when withdrawals became claimable and records contributions
+	 * @param withdrawalHashes Array of withdrawal hashes to mark as claimable
+	 */
 	function _processClaimableWithdrawals(
 		bytes32[] calldata withdrawalHashes
 	) private {
@@ -585,6 +671,12 @@ contract Liquidity is
 		return this.onERC1155Received.selector;
 	}
 
+	/**
+	 * @notice Validates the AML permission for a deposit
+	 * @dev Skips validation if no AML permitter is set
+	 * @param encodedData The encoded function call data
+	 * @param amlPermission The data to verify AML check
+	 */
 	function _validateAmlPermission(
 		bytes memory encodedData,
 		bytes memory amlPermission
@@ -605,6 +697,13 @@ contract Liquidity is
 		return;
 	}
 
+	/**
+	 * @notice Validates the eligibility permission for a deposit
+	 * @dev Skips validation if no eligibility permitter is set
+	 * @param encodedData The encoded function call data
+	 * @param eligibilityPermission The data to verify eligibility check
+	 * @return bool True if the deposit is eligible, false otherwise
+	 */
 	function _validateEligibilityPermission(
 		bytes memory encodedData,
 		bytes memory eligibilityPermission
@@ -629,6 +728,13 @@ contract Liquidity is
 		return true;
 	}
 
+	/**
+	 * @notice Calculates the withdrawal fee for a given token and amount
+	 * @dev Fee is calculated as (amount * feeRatio) / 10000
+	 * @param tokenIndex The index of the token
+	 * @param amount The amount being withdrawn
+	 * @return uint256 The calculated fee amount
+	 */
 	function _getWithdrawalFee(
 		uint32 tokenIndex,
 		uint256 amount
@@ -693,7 +799,12 @@ contract Liquidity is
 		return depositQueue.depositData.length - 1;
 	}
 
+	/**
+	 * @notice Authorizes an upgrade to the implementation
+	 * @dev Only callable by the admin role
+	 * @param newImplementation The address of the new implementation
+	 */
 	function _authorizeUpgrade(
-		address
+		address newImplementation
 	) internal override onlyRole(DEFAULT_ADMIN_ROLE) {}
 }
