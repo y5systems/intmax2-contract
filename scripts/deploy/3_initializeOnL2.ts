@@ -1,23 +1,24 @@
-import { ethers, network } from 'hardhat'
+import { ethers } from 'hardhat'
 import { readDeployedContracts } from '../utils/io'
 import { getL2MessengerAddress } from '../utils/addressBook'
-import { sleep } from '../../utils/sleep'
+import { sleep } from '../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
-import { cleanEnv, num, str } from 'envalid'
+import { bool, cleanEnv, num, str } from 'envalid'
 
 // default values for late limiter
-const fixedPointOne = 10n ** 18n;
+const fixedPointOne = 10n ** 18n
 const defaultRateLimitTargetInterval = fixedPointOne * 30n // 30 seconds
 const defaultRateLimitAlpha = fixedPointOne / 3n // 1/3
 const defaultRateLimitK = fixedPointOne / 1000n // 0.001
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
-	SLEEP_TIME: num({
-		default: 10,
+	CLAIM_PERIOD_INTERVAL: num(),
+	ADMIN_PRIVATE_KEY: str({
+		default: '',
 	}),
-	PERIOD_INTERVAL: num({
-		default: 60 * 60, // 1 hour
+	SLEEP_TIME: num({
+		default: 30,
 	}),
 	RATELIMIT_THRESHOLD_INTERVAL: str({
 		default: defaultRateLimitTargetInterval.toString(),
@@ -28,14 +29,12 @@ const env = cleanEnv(process.env, {
 	RATELIMIT_K: str({
 		default: defaultRateLimitK.toString(),
 	}),
+	GRANT_ROLE: bool({
+		default: false,
+	}),
 })
 
 async function main() {
-	let admin = env.ADMIN_ADDRESS
-	if (network.name === 'localhost') {
-		admin = (await ethers.getSigners())[0].address
-	}
-
 	const deployedL2Contracts = await readDeployedContracts()
 	if (
 		!deployedL2Contracts.rollup ||
@@ -83,7 +82,7 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Rollup')
 		const tx = await rollup.initialize(
-			admin,
+			env.ADMIN_ADDRESS,
 			await getL2MessengerAddress(),
 			deployedL1Contracts.liquidity,
 			deployedL2Contracts.l2Contribution,
@@ -94,14 +93,12 @@ async function main() {
 		await tx.wait()
 		console.log('Rollup initialized')
 		await sleep(env.SLEEP_TIME)
-		await l2Contribution.grantRole(contributorRole, rollup)
-		await sleep(env.SLEEP_TIME)
 	}
 	if ((await withdrawal.owner()) === ethers.ZeroAddress) {
 		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Withdrawal')
 		const tx = await withdrawal.initialize(
-			admin,
+			env.ADMIN_ADDRESS,
 			await getL2MessengerAddress(),
 			deployedL2Contracts.withdrawalPlonkVerifier,
 			deployedL1Contracts.liquidity,
@@ -112,38 +109,59 @@ async function main() {
 		await tx.wait()
 		console.log('Withdrawal initialized')
 		await sleep(env.SLEEP_TIME)
-		await l2Contribution.grantRole(contributorRole, withdrawal)
-		await sleep(env.SLEEP_TIME)
 	}
 	if ((await claim.owner()) === ethers.ZeroAddress) {
 		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Claim')
 		const tx = await claim.initialize(
-			admin,
+			env.ADMIN_ADDRESS,
 			await getL2MessengerAddress(),
 			deployedL2Contracts.claimPlonkVerifier,
 			deployedL1Contracts.liquidity,
 			deployedL2Contracts.rollup,
 			deployedL2Contracts.l2Contribution,
-			env.PERIOD_INTERVAL,
+			env.CLAIM_PERIOD_INTERVAL,
 		)
 		await tx.wait()
 		console.log('Claim initialized')
-		await sleep(env.SLEEP_TIME)
-		await l2Contribution.grantRole(contributorRole, claim)
 		await sleep(env.SLEEP_TIME)
 	}
 	if ((await registry.owner()) === ethers.ZeroAddress) {
 		await sleep(env.SLEEP_TIME)
 		console.log('Initializing BlockBuilderRegistry')
-		const tx = await registry.initialize(admin)
+		const tx = await registry.initialize(env.ADMIN_ADDRESS)
 		await tx.wait()
 		console.log('BlockBuilderRegistry initialized')
 	}
+
+	if (env.GRANT_ROLE) {
+		console.log('Granting role to l2Contribution')
+		if (env.ADMIN_PRIVATE_KEY === '') {
+			throw new Error('ADMIN_PRIVATE_KEY is required')
+		}
+		const admin = new ethers.Wallet(env.ADMIN_PRIVATE_KEY, ethers.provider)
+		if (admin.address !== env.ADMIN_ADDRESS) {
+			throw new Error('ADMIN_ADDRESS and ADMIN_PRIVATE_KEY do not match')
+		}
+		if (!(await l2Contribution.hasRole(contributorRole, rollup))) {
+			await l2Contribution.connect(admin).grantRole(contributorRole, rollup)
+			console.log('for rollup')
+		}
+		if (!(await l2Contribution.hasRole(contributorRole, withdrawal))) {
+			await l2Contribution.connect(admin).grantRole(contributorRole, withdrawal)
+			console.log('for withdrawal')
+		}
+		if (!(await l2Contribution.hasRole(contributorRole, claim))) {
+			await l2Contribution.connect(admin).grantRole(contributorRole, claim)
+			console.log('for claim')
+		}
+		if (!(await l2Contribution.hasRole(contributorRole, registry))) {
+			await l2Contribution.connect(admin).grantRole(contributorRole, registry)
+			console.log('for registry')
+		}
+	}
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
 	console.error(error)
 	process.exitCode = 1
