@@ -4,6 +4,8 @@
 
 ## Installation
 
+### As a Git Repository
+
 ```sh
 # Clone the repository
 git clone https://github.com/your-org/intmax2-contract.git
@@ -11,6 +13,32 @@ cd intmax2-contract
 
 # Install dependencies
 npm install
+```
+
+### As an NPM Package
+
+```sh
+# Install from npm
+npm install intmax2-contract
+```
+
+### For Foundry Projects
+
+In your `foundry.toml` file, add:
+
+```toml
+[profile.default]
+libs = ['node_modules']
+```
+
+Then install the package:
+
+```sh
+# Install the package
+npm install intmax2-contract
+
+# Or with Forge
+forge install --no-git intmax2-contract
 ```
 
 ## Environment Setup
