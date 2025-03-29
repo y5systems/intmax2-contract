@@ -1,6 +1,8 @@
 # INTMAX2 Contract
 
-<img src="https://github.com/user-attachments/assets/32d0dbd0-0fb7-4506-8810-0adf73494340" width="500">
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/32d0dbd0-0fb7-4506-8810-0adf73494340" width="500">
+</p>
 
 ## Installation
 
@@ -203,11 +205,7 @@ npm run lint
 ### Testing
 
 ```sh
-# Run all tests
 npm test
-
-# Run specific test file
-npx hardhat test test/path/to/test-file.test.ts
 ```
 
 ### Documentation
@@ -233,6 +231,5 @@ npx hardhat docgen
   - `test/`: Test contracts
 - `scripts/`: Deployment and operational scripts
 - `test/`: Test files
-- `utils/`: Utility functions
 - `test_data/`: Test data files
 - `test_data_generator/`: Tools for generating test data
