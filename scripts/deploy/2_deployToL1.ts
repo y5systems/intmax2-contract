@@ -1,14 +1,20 @@
-import { ethers, network, upgrades } from 'hardhat'
+import { ethers, upgrades } from 'hardhat'
 import { readDeployedContracts, writeDeployedContracts } from '../utils/io'
 import { getL1MessengerAddress } from '../utils/addressBook'
 import { sleep } from '../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
 import { bool, cleanEnv, num, str } from 'envalid'
+import { Contribution } from '../../typechain-types/contracts/Contribution'
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
 	RELAYER_ADDRESS: str(),
 	CONTRIBUTION_PERIOD_INTERVAL: num(),
+	INTMAX_TOKEN_ADDRESS: str({
+		default: '',
+	}),
+	WBTC_ADDRESS: str(),
+	USDC_ADDRESS: str(),
 	ADMIN_PRIVATE_KEY: str({
 		default: '',
 	}),
@@ -40,7 +46,7 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 
-	if (!deployedContracts.testErc20) {
+	if (!deployedContracts.testErc20 && env.INTMAX_TOKEN_ADDRESS === '') {
 		console.log('deploying testErc20')
 		const TestERC20 = await ethers.getContractFactory('TestERC20')
 		const owner = (await ethers.getSigners())[0]
@@ -88,16 +94,21 @@ async function main() {
 		if (!deployedContracts.l1Contribution) {
 			throw new Error('l1Contribution address is not set')
 		}
-		if (!deployedContracts.testErc20) {
-			throw new Error('testErc20 address is not set')
-		}
 
 		const liquidityFactory = await ethers.getContractFactory('Liquidity')
-		// todo fix
+		let intmaxTokenAddress: string
+		if (env.INTMAX_TOKEN_ADDRESS === '') {
+			if (!deployedContracts.testErc20) {
+				throw new Error('testErc20 address is not set')
+			}
+			intmaxTokenAddress = deployedContracts.testErc20
+		} else {
+			intmaxTokenAddress = env.INTMAX_TOKEN_ADDRESS
+		}
 		const initialERC20Tokens = [
-			deployedContracts.testErc20,
-			'0x779877A7B0D9E8603169DdbD7836e478b4624789',
-			'0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238',
+			intmaxTokenAddress,
+			env.WBTC_ADDRESS,
+			env.USDC_ADDRESS,
 		]
 		const liquidity = await upgrades.deployProxy(
 			liquidityFactory,
@@ -142,9 +153,10 @@ async function main() {
 		)
 		const role = ethers.solidityPackedKeccak256(['string'], ['CONTRIBUTOR'])
 		if (!(await l1Contribution.hasRole(role, deployedContracts.liquidity))) {
-			await l1Contribution
-				.connect(admin)
-				.grantRole(role, deployedContracts.liquidity)
+			await (l1Contribution.connect(admin) as Contribution).grantRole(
+				role,
+				deployedContracts.liquidity,
+			)
 			console.log('granted role')
 		}
 	}
