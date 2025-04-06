@@ -280,6 +280,63 @@ describe('Claim', () => {
 			})
 		})
 	})
+
+	describe('updateVerifier', () => {
+		describe('success', () => {
+			it('should update the claim verifier address', async () => {
+				const { claim } = await loadFixture(setup)
+				const { admin } = await getSigners()
+
+				// Get the initial verifier address
+				const initialVerifier = await claim.claimVerifier()
+
+				// Create a new mock verifier
+				const newMockPlonkVerifierFactory =
+					await ethers.getContractFactory('MockPlonkVerifier')
+				const newMockPlonkVerifier = await newMockPlonkVerifierFactory.deploy()
+				const newVerifierAddress = await newMockPlonkVerifier.getAddress()
+
+				// Update the verifier
+				await expect(claim.connect(admin).updateVerifier(newVerifierAddress))
+					.to.emit(claim, 'VerifierUpdated')
+					.withArgs(newVerifierAddress)
+
+				// Check that the verifier was updated
+				const updatedVerifier = await claim.claimVerifier()
+				expect(updatedVerifier).to.equal(newVerifierAddress)
+				expect(updatedVerifier).to.not.equal(initialVerifier)
+			})
+		})
+
+		describe('fail', () => {
+			it('should revert when called by non-owner', async () => {
+				const { claim } = await loadFixture(setup)
+				const { user1 } = await getSigners()
+
+				// Create a new mock verifier
+				const newMockPlonkVerifierFactory =
+					await ethers.getContractFactory('MockPlonkVerifier')
+				const newMockPlonkVerifier = await newMockPlonkVerifierFactory.deploy()
+				const newVerifierAddress = await newMockPlonkVerifier.getAddress()
+
+				// Try to update the verifier as non-owner
+				await expect(claim.connect(user1).updateVerifier(newVerifierAddress))
+					.to.be.revertedWithCustomError(claim, 'OwnableUnauthorizedAccount')
+					.withArgs(user1.address)
+			})
+
+			it('should revert when trying to set zero address', async () => {
+				const { claim } = await loadFixture(setup)
+				const { admin } = await getSigners()
+
+				// Try to update the verifier to zero address
+				await expect(
+					claim.connect(admin).updateVerifier(ethers.ZeroAddress),
+				).to.be.revertedWithCustomError(claim, 'AddressZero')
+			})
+		})
+	})
+
 	describe('submitClaimProof', () => {
 		describe('success', () => {
 			it('if claims length is 1, emit ContributionRecorded count is 1', async () => {
@@ -519,7 +576,7 @@ describe('Claim', () => {
 			const user = ethers.Wallet.createRandom().address
 			const info = await claim.getAllocationInfo(0, user)
 			expect(info[0]).to.equal(0n)
-			expect(info[1]).to.equal(46549479166666666666666n)
+			expect(info[1]).to.equal(23274739583333333333333n)
 			expect(info[2]).to.equal(0n)
 			expect(info[3]).to.equal(0n)
 		})

@@ -80,7 +80,6 @@ async function main() {
 
 	// Initialize contracts
 	if ((await rollup.owner()) === ethers.ZeroAddress) {
-		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Rollup')
 		const tx = await rollup.initialize(
 			env.ADMIN_ADDRESS,
@@ -96,7 +95,6 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 	if ((await withdrawal.owner()) === ethers.ZeroAddress) {
-		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Withdrawal')
 		const tx = await withdrawal.initialize(
 			env.ADMIN_ADDRESS,
@@ -112,7 +110,6 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 	if ((await claim.owner()) === ethers.ZeroAddress) {
-		await sleep(env.SLEEP_TIME)
 		console.log('Initializing Claim')
 		const tx = await claim.initialize(
 			env.ADMIN_ADDRESS,
@@ -128,11 +125,11 @@ async function main() {
 		await sleep(env.SLEEP_TIME)
 	}
 	if ((await registry.owner()) === ethers.ZeroAddress) {
-		await sleep(env.SLEEP_TIME)
 		console.log('Initializing BlockBuilderRegistry')
 		const tx = await registry.initialize(env.ADMIN_ADDRESS)
 		await tx.wait()
 		console.log('BlockBuilderRegistry initialized')
+		await sleep(env.SLEEP_TIME)
 	}
 
 	if (env.GRANT_ROLE) {
@@ -150,6 +147,7 @@ async function main() {
 				rollup,
 			)
 			console.log('for rollup')
+			await sleep(env.SLEEP_TIME)
 		}
 		if (!(await l2Contribution.hasRole(contributorRole, withdrawal))) {
 			await (l2Contribution.connect(admin) as Contribution).grantRole(
@@ -157,6 +155,7 @@ async function main() {
 				withdrawal,
 			)
 			console.log('for withdrawal')
+			await sleep(env.SLEEP_TIME)
 		}
 		if (!(await l2Contribution.hasRole(contributorRole, claim))) {
 			await (l2Contribution.connect(admin) as Contribution).grantRole(
@@ -164,13 +163,7 @@ async function main() {
 				claim,
 			)
 			console.log('for claim')
-		}
-		if (!(await l2Contribution.hasRole(contributorRole, registry))) {
-			await (l2Contribution.connect(admin) as Contribution).grantRole(
-				contributorRole,
-				registry,
-			)
-			console.log('for registry')
+			await sleep(env.SLEEP_TIME)
 		}
 	}
 }

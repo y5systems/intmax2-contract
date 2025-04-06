@@ -1,103 +1,92 @@
 # Solidity API
 
-## BlockBuilderRegistry
+## ClaimPlonkVerifier
 
-Registry for block builders to signal their availability in the Intmax2 protocol
-
-### constructor
+### Verify
 
 ```solidity
-constructor() public
+function Verify(bytes proof, uint256[] public_inputs) public view returns (bool success)
 ```
 
-### initialize
-
-```solidity
-function initialize(address admin) external
-```
-
-Initializes the contract with an admin address
-
-_Sets up the initial owner and initializes the upgradeable functionality_
+Verify a Plonk proof.
+Reverts if the proof or the public inputs are malformed.
 
 #### Parameters
 
-| Name  | Type    | Description                                       |
-| ----- | ------- | ------------------------------------------------- |
-| admin | address | The address that will have admin/owner privileges |
+| Name          | Type      | Description                                            |
+| ------------- | --------- | ------------------------------------------------------ |
+| proof         | bytes     | serialised plonk proof (using gnark's MarshalSolidity) |
+| public_inputs | uint256[] | (must be reduced)                                      |
 
-### emitHeartbeat
+#### Return Values
 
-```solidity
-function emitHeartbeat(string url) external
-```
-
-Allows a block builder to emit a heartbeat signaling they are online
-
-_Emits a BlockBuilderHeartbeat event with the sender's address and provided URL_
-
-#### Parameters
-
-| Name | Type   | Description                                             |
-| ---- | ------ | ------------------------------------------------------- |
-| url  | string | The URL endpoint where the block builder can be reached |
-
-### \_authorizeUpgrade
-
-```solidity
-function _authorizeUpgrade(address newImplementation) internal
-```
-
-Authorizes an upgrade to the implementation
-
-_Only callable by the owner_
-
-#### Parameters
-
-| Name              | Type    | Description                                                                 |
-| ----------------- | ------- | --------------------------------------------------------------------------- |
-| newImplementation | address | The address of the new implementation (unused but required by UUPS pattern) |
-
-## IBlockBuilderRegistry
-
-Interface for registering and tracking block builders in the Intmax2 protocol
-
-_Block builders emit heartbeats to signal their availability and provide their URL_
-
-### BlockBuilderHeartbeat
-
-```solidity
-event BlockBuilderHeartbeat(address blockBuilder, string url)
-```
-
-Event emitted when a block builder signals they are online
-
-_Used to track active block builders and their endpoints_
-
-#### Parameters
-
-| Name         | Type    | Description                                             |
-| ------------ | ------- | ------------------------------------------------------- |
-| blockBuilder | address | The address of the block builder emitting the heartbeat |
-| url          | string  | The URL endpoint where the block builder can be reached |
-
-### emitHeartbeat
-
-```solidity
-function emitHeartbeat(string url) external
-```
-
-Allows a block builder to emit a heartbeat signaling they are online
-
-_The sender's address is automatically recorded as the block builder address_
-
-#### Parameters
-
-| Name | Type   | Description                                             |
-| ---- | ------ | ------------------------------------------------------- |
-| url  | string | The URL endpoint where the block builder can be reached |
+| Name    | Type | Description                              |
+| ------- | ---- | ---------------------------------------- |
+| success | bool | true if the proof passes false otherwise |
 
 ## Claim
+
+### claimVerifier
+
+```solidity
+contract IPlonkVerifier claimVerifier
+```
+
+verifies the claim proof
+
+### l2ScrollMessenger
+
+```solidity
+contract IL2ScrollMessenger l2ScrollMessenger
+```
+
+ScrollMessenger contract
+
+### rollup
+
+```solidity
+contract IRollup rollup
+```
+
+Rollup contract
+
+### liquidity
+
+```solidity
+address liquidity
+```
+
+Liquidity contract
+
+### contribution
+
+```solidity
+contract IContribution contribution
+```
+
+Contribution contract
+
+### nullifierNonce
+
+```solidity
+uint256 nullifierNonce
+```
+
+Nonce to make nullifier unique
+
+### nullifiers
+
+```solidity
+mapping(bytes32 => bool) nullifiers
+```
+
+nullifiers
+
+### REWARD_TOKEN_INDEX
+
+```solidity
+uint32 REWARD_TOKEN_INDEX
+```
 
 ### constructor
 
@@ -126,6 +115,22 @@ _Sets up the contract with required dependencies and initializes the allocation 
 | \_rollup          | address | Address of the Rollup contract                      |
 | \_contribution    | address | Address of the Contribution contract                |
 | periodInterval    | uint256 | Time interval between allocation periods in seconds |
+
+### updateVerifier
+
+```solidity
+function updateVerifier(address _claimVerifier) external
+```
+
+Updates the claim verifier address
+
+_Only the contract owner can update the verifier_
+
+#### Parameters
+
+| Name            | Type    | Description                       |
+| --------------- | ------- | --------------------------------- |
+| \_claimVerifier | address | Address of the new claim verifier |
 
 ### submitClaimProof
 
@@ -275,6 +280,14 @@ error ClaimProofVerificationFailed()
 
 Error thrown when the ZKP verification of the claim proof fails
 
+### VerifierUpdated
+
+```solidity
+event VerifierUpdated(address claimVerifier)
+```
+
+Emitted when new claim verifier is set
+
 ### DirectWithdrawalQueued
 
 ```solidity
@@ -290,6 +303,22 @@ Emitted when a direct withdrawal is queued
 | withdrawalHash | bytes32                         | The hash of the withdrawal   |
 | recipient      | address                         | The address of the recipient |
 | withdrawal     | struct WithdrawalLib.Withdrawal | The withdrawal details       |
+
+### updateVerifier
+
+```solidity
+function updateVerifier(address _claimVerifier) external
+```
+
+Updates the claim verifier address
+
+_Only the contract owner can update the verifier_
+
+#### Parameters
+
+| Name            | Type    | Description                       |
+| --------------- | ------- | --------------------------------- |
+| \_claimVerifier | address | Address of the new claim verifier |
 
 ### submitClaimProof
 
@@ -1854,6 +1883,30 @@ uint256 deploymentTime
 
 Deployment time which is used to calculate the deposit limit
 
+### l1ScrollMessenger
+
+```solidity
+contract IL1ScrollMessenger l1ScrollMessenger
+```
+
+Address of the L1 ScrollMessenger contract
+
+### contribution
+
+```solidity
+contract IContribution contribution
+```
+
+Address of the Contribution contract
+
+### rollup
+
+```solidity
+address rollup
+```
+
+Address of the Rollup contract
+
 ### amlPermitter
 
 ```solidity
@@ -1903,6 +1956,16 @@ mapping(uint32 => uint256) collectedWithdrawalFees
 Mapping of token index to the total amount of withdrawal fees collected
 
 _Used to track fees that can be withdrawn by the admin_
+
+### doesDepositHashExist
+
+```solidity
+mapping(bytes32 => bool) doesDepositHashExist
+```
+
+Mapping of deposit hashes to a boolean indicating whether the deposit hash exists
+
+_Used to prevent duplicate deposits with the same parameters_
 
 ### onlyWithdrawalRole
 
@@ -3197,6 +3260,36 @@ Implementation of the Intmax2 L2 rollup contract
 
 _Manages block submission, deposit processing, and maintains the state of the rollup chain_
 
+### NUM_SENDERS_IN_BLOCK
+
+```solidity
+uint256 NUM_SENDERS_IN_BLOCK
+```
+
+The maximum number of senders in a block
+
+_Used to limit the size of blocks and for padding sender arrays_
+
+### FULL_ACCOUNT_IDS_BYTES
+
+```solidity
+uint256 FULL_ACCOUNT_IDS_BYTES
+```
+
+The number of bytes required to represent the account IDs of all senders in a block
+
+_Each account ID uses 5 bytes, so 128 senders require 640 bytes_
+
+### liquidity
+
+```solidity
+address liquidity
+```
+
+Address of the Liquidity contract on L1
+
+_Used to verify cross-chain messages from the Liquidity contract_
+
 ### lastProcessedDepositId
 
 ```solidity
@@ -3236,6 +3329,26 @@ mapping(address => uint32) builderNonRegistrationNonce
 Mapping of block builder addresses to their current nonce for non-registration blocks
 
 _Used to prevent replay attacks and ensure block ordering_
+
+### l2ScrollMessenger
+
+```solidity
+contract IL2ScrollMessenger l2ScrollMessenger
+```
+
+Reference to the L2 ScrollMessenger contract
+
+_Used for cross-chain communication with L1_
+
+### contribution
+
+```solidity
+contract IContribution contribution
+```
+
+Reference to the Contribution contract
+
+_Used to record block builder contributions_
 
 ### depositTreeRoot
 
@@ -3847,6 +3960,30 @@ _Useful for checking the penalty before actually updating the state_
 | ---- | ------- | --------------------------------- |
 | [0]  | uint256 | The calculated penalty fee in wei |
 
+## FasterClaimPlonkVerifier
+
+### Verify
+
+```solidity
+function Verify(bytes proof, uint256[] public_inputs) public view returns (bool success)
+```
+
+Verify a Plonk proof.
+Reverts if the proof or the public inputs are malformed.
+
+#### Parameters
+
+| Name          | Type      | Description                                            |
+| ------------- | --------- | ------------------------------------------------------ |
+| proof         | bytes     | serialised plonk proof (using gnark's MarshalSolidity) |
+| public_inputs | uint256[] | (must be reduced)                                      |
+
+#### Return Values
+
+| Name    | Type | Description                              |
+| ------- | ---- | ---------------------------------------- |
+| success | bool | true if the proof passes false otherwise |
+
 ## IWithdrawal
 
 Interface for the Withdrawal contract that processes withdrawals from L2 to L1
@@ -3940,6 +4077,14 @@ _Ensures that only tokens in the direct withdrawal list can be removed_
 | Name       | Type    | Description                                                       |
 | ---------- | ------- | ----------------------------------------------------------------- |
 | tokenIndex | uint256 | The index of the non-existent token in the direct withdrawal list |
+
+### VerifierUpdated
+
+```solidity
+event VerifierUpdated(address withdrawalVerifier)
+```
+
+Emitted when new withdrawal verifier is set
 
 ### ClaimableWithdrawalQueued
 
@@ -4083,6 +4228,56 @@ Contract for processing withdrawals from L2 to L1 in the Intmax2 protocol
 
 _Handles verification of withdrawal proofs and relays withdrawal information to the Liquidity contract on L1_
 
+### withdrawalVerifier
+
+```solidity
+contract IPlonkVerifier withdrawalVerifier
+```
+
+Reference to the PLONK verifier contract for withdrawal proofs
+
+_Used to verify zero-knowledge proofs of withdrawals_
+
+### l2ScrollMessenger
+
+```solidity
+contract IL2ScrollMessenger l2ScrollMessenger
+```
+
+Reference to the L2 ScrollMessenger contract
+
+_Used for cross-chain communication with L1_
+
+### rollup
+
+```solidity
+contract IRollup rollup
+```
+
+Reference to the Rollup contract
+
+_Used to verify block hashes for withdrawals_
+
+### liquidity
+
+```solidity
+address liquidity
+```
+
+Address of the Liquidity contract on L1
+
+_Target for cross-chain messages about withdrawals_
+
+### contribution
+
+```solidity
+contract IContribution contribution
+```
+
+Reference to the Contribution contract
+
+_Used to record withdrawal contributions_
+
 ### nullifiers
 
 ```solidity
@@ -4130,6 +4325,22 @@ _Sets up the initial state with required contract references and token indices_
 | \_rollup                       | address   | Address of the Rollup contract                         |
 | \_contribution                 | address   | Address of the Contribution contract                   |
 | \_directWithdrawalTokenIndices | uint256[] | Initial list of token indices for direct withdrawals   |
+
+### updateVerifier
+
+```solidity
+function updateVerifier(address _withdrawalVerifier) external
+```
+
+Updates the withdrawal verifier address
+
+_Only the contract owner can update the verifier_
+
+#### Parameters
+
+| Name                 | Type    | Description                            |
+| -------------------- | ------- | -------------------------------------- |
+| \_withdrawalVerifier | address | Address of the new withdrawal verifier |
 
 ### submitWithdrawalProof
 
@@ -4312,6 +4523,103 @@ _This hash is used as input to the zero-knowledge proof verification_
 | Name | Type    | Description                                                                       |
 | ---- | ------- | --------------------------------------------------------------------------------- |
 | [0]  | bytes32 | bytes32 The resulting hash that will be split into uint256 array for the verifier |
+
+## BlockBuilderRegistry
+
+Registry for block builders to signal their availability in the Intmax2 protocol
+
+### constructor
+
+```solidity
+constructor() public
+```
+
+### initialize
+
+```solidity
+function initialize(address admin) external
+```
+
+Initializes the contract with an admin address
+
+_Sets up the initial owner and initializes the upgradeable functionality_
+
+#### Parameters
+
+| Name  | Type    | Description                                       |
+| ----- | ------- | ------------------------------------------------- |
+| admin | address | The address that will have admin/owner privileges |
+
+### emitHeartbeat
+
+```solidity
+function emitHeartbeat(string url) external
+```
+
+Allows a block builder to emit a heartbeat signaling they are online
+
+_Emits a BlockBuilderHeartbeat event with the sender's address and provided URL_
+
+#### Parameters
+
+| Name | Type   | Description                                             |
+| ---- | ------ | ------------------------------------------------------- |
+| url  | string | The URL endpoint where the block builder can be reached |
+
+### \_authorizeUpgrade
+
+```solidity
+function _authorizeUpgrade(address newImplementation) internal
+```
+
+Authorizes an upgrade to the implementation
+
+_Only callable by the owner_
+
+#### Parameters
+
+| Name              | Type    | Description                                                                 |
+| ----------------- | ------- | --------------------------------------------------------------------------- |
+| newImplementation | address | The address of the new implementation (unused but required by UUPS pattern) |
+
+## IBlockBuilderRegistry
+
+Interface for registering and tracking block builders in the Intmax2 protocol
+
+_Block builders emit heartbeats to signal their availability and provide their URL_
+
+### BlockBuilderHeartbeat
+
+```solidity
+event BlockBuilderHeartbeat(address blockBuilder, string url)
+```
+
+Event emitted when a block builder signals they are online
+
+_Used to track active block builders and their endpoints_
+
+#### Parameters
+
+| Name         | Type    | Description                                             |
+| ------------ | ------- | ------------------------------------------------------- |
+| blockBuilder | address | The address of the block builder emitting the heartbeat |
+| url          | string  | The URL endpoint where the block builder can be reached |
+
+### emitHeartbeat
+
+```solidity
+function emitHeartbeat(string url) external
+```
+
+Allows a block builder to emit a heartbeat signaling they are online
+
+_The sender's address is automatically recorded as the block builder address_
+
+#### Parameters
+
+| Name | Type   | Description                                             |
+| ---- | ------ | ------------------------------------------------------- |
+| url  | string | The URL endpoint where the block builder can be reached |
 
 ## Contribution
 
@@ -4594,30 +4902,6 @@ _Can only be called by the contract owner_
 | Name              | Type    | Description                                |
 | ----------------- | ------- | ------------------------------------------ |
 | newImplementation | address | Address of the new implementation contract |
-
-## ClaimPlonkVerifier
-
-### Verify
-
-```solidity
-function Verify(bytes proof, uint256[] public_inputs) public view returns (bool success)
-```
-
-Verify a Plonk proof.
-Reverts if the proof or the public inputs are malformed.
-
-#### Parameters
-
-| Name          | Type      | Description                                            |
-| ------------- | --------- | ------------------------------------------------------ |
-| proof         | bytes     | serialised plonk proof (using gnark's MarshalSolidity) |
-| public_inputs | uint256[] | (must be reduced)                                      |
-
-#### Return Values
-
-| Name    | Type | Description                              |
-| ------- | ---- | ---------------------------------------- |
-| success | bool | true if the proof passes false otherwise |
 
 ## WithdrawalPlonkVerifier
 

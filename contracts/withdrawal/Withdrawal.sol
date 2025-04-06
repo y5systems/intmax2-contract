@@ -33,31 +33,31 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 * @notice Reference to the PLONK verifier contract for withdrawal proofs
 	 * @dev Used to verify zero-knowledge proofs of withdrawals
 	 */
-	IPlonkVerifier private withdrawalVerifier;
+	IPlonkVerifier public withdrawalVerifier;
 
 	/**
 	 * @notice Reference to the L2 ScrollMessenger contract
 	 * @dev Used for cross-chain communication with L1
 	 */
-	IL2ScrollMessenger private l2ScrollMessenger;
+	IL2ScrollMessenger public l2ScrollMessenger;
 
 	/**
 	 * @notice Reference to the Rollup contract
 	 * @dev Used to verify block hashes for withdrawals
 	 */
-	IRollup private rollup;
+	IRollup public rollup;
 
 	/**
 	 * @notice Address of the Liquidity contract on L1
 	 * @dev Target for cross-chain messages about withdrawals
 	 */
-	address private liquidity;
+	address public liquidity;
 
 	/**
 	 * @notice Reference to the Contribution contract
 	 * @dev Used to record withdrawal contributions
 	 */
-	IContribution private contribution;
+	IContribution public contribution;
 
 	/**
 	 * @notice Mapping of nullifiers to their used status
@@ -114,6 +114,19 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		contribution = IContribution(_contribution);
 		liquidity = _liquidity;
 		innerAddDirectWithdrawalTokenIndices(_directWithdrawalTokenIndices);
+	}
+
+	/**
+	 * @notice Updates the withdrawal verifier address
+	 * @dev Only the contract owner can update the verifier
+	 * @param _withdrawalVerifier Address of the new withdrawal verifier
+	 */
+	function updateVerifier(address _withdrawalVerifier) external onlyOwner {
+		if (_withdrawalVerifier == address(0)) {
+			revert AddressZero();
+		}
+		withdrawalVerifier = IPlonkVerifier(_withdrawalVerifier);
+		emit VerifierUpdated(_withdrawalVerifier);
 	}
 
 	function submitWithdrawalProof(
