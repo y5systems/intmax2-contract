@@ -40,6 +40,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 */
 	address public liquidity;
 
+	/// @notice Address of the LzRelay contract
+	address public lzrelay;
+
 	/**
 	 * @notice The ID of the last processed deposit from the Liquidity contract
 	 * @dev Used to track which deposits have been included in the deposit tree
@@ -101,16 +104,19 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	uint32 public depositIndex;
 
 	/**
-	 * @notice Modifier to restrict function access to the Liquidity contract via ScrollMessenger
+	 * @notice Modifier to restrict function access to the Liquidity contract via ScrollMessenger or LzRelay
 	 * @dev Verifies that the message sender is the ScrollMessenger and the xDomain sender is the Liquidity contract
+	 * or the LzRelay contract
 	 */
 	modifier onlyLiquidityContract() {
-		IL2ScrollMessenger l2ScrollMessengerCached = l2ScrollMessenger;
-		if (_msgSender() != address(l2ScrollMessengerCached)) {
-			revert OnlyScrollMessenger();
-		}
-		if (liquidity != l2ScrollMessengerCached.xDomainMessageSender()) {
-			revert OnlyLiquidity();
+		if (_msgSender() != lzrelay) {
+			IL2ScrollMessenger l2ScrollMessengerCached = l2ScrollMessenger;
+			if (_msgSender() != address(l2ScrollMessengerCached)) {
+				revert OnlyScrollMessenger();
+			}
+			if (liquidity != l2ScrollMessengerCached.xDomainMessageSender()) {
+				revert OnlyLiquidity();
+			}
 		}
 		_;
 	}
@@ -135,6 +141,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		address _admin,
 		address _scrollMessenger,
 		address _liquidity,
+		address _lzrelay,
 		address _contribution,
 		uint256 _rateLimitThresholdInterval,
 		uint256 _rateLimitAlpha,
@@ -144,6 +151,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			_admin == address(0) ||
 			_scrollMessenger == address(0) ||
 			_liquidity == address(0) ||
+			_lzrelay == address(0) ||
 			_contribution == address(0)
 		) {
 			revert AddressZero();
@@ -153,6 +161,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		depositTree.initialize();
 		l2ScrollMessenger = IL2ScrollMessenger(_scrollMessenger);
 		liquidity = _liquidity;
+		lzrelay = _lzrelay;
 		contribution = IContribution(_contribution);
 
 		rateLimitState.setConstants(
