@@ -103,14 +103,19 @@ contract Liquidity is
 	 * @dev Ensures the function is called via the L1ScrollMessenger and the cross-domain sender has the WITHDRAWAL role
 	 */
 	modifier onlyWithdrawalRole() {
-		IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
-		if (_msgSender() != address(l1ScrollMessengerCached)) {
-			revert SenderIsNotScrollMessenger();
-		}
-		if (
-			!hasRole(WITHDRAWAL, l1ScrollMessengerCached.xDomainMessageSender())
-		) {
-			revert InvalidWithdrawalAddress();
+		if (_msgSender() != lzrelay) {
+			IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
+			if (_msgSender() != address(l1ScrollMessengerCached)) {
+				revert SenderIsNotScrollMessenger();
+			}
+			if (
+				!hasRole(
+					WITHDRAWAL,
+					l1ScrollMessengerCached.xDomainMessageSender()
+				)
+			) {
+				revert InvalidWithdrawalAddress();
+			}
 		}
 		_;
 	}
@@ -440,7 +445,9 @@ contract Liquidity is
 		uint32 dstEid,
 		bytes calldata options
 	) external payable onlyRole(RELAYER) returns (bytes memory) {
-		bytes32[] memory depositHashes = depositQueue.batchDequeue(upToDepositId);
+		bytes32[] memory depositHashes = depositQueue.batchDequeue(
+			upToDepositId
+		);
 
 		if (depositHashes.length > RELAY_LIMIT) {
 			revert RelayLimitExceeded();
@@ -455,7 +462,9 @@ contract Liquidity is
 			options
 		);
 
-		(bool success, bytes memory receipt) = lzrelay.call{value: msg.value}(data);
+		(bool success, bytes memory receipt) = lzrelay.call{value: msg.value}(
+			data
+		);
 		if (!success) {
 			revert CallToLzRelayFailed();
 		}
