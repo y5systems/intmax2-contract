@@ -94,6 +94,11 @@ interface ILiquidity {
 	error WithdrawalFeeRatioExceedsLimit();
 
 	/**
+	 * @notice Error thrown when low level call to LzRelay fails
+	 */
+	error CallToLzRelayFailed();
+
+	/**
 	 * @notice Event emitted when a deposit is made
 	 * @param depositId The unique identifier for the deposit
 	 * @param sender The address that made the deposit
@@ -325,6 +330,20 @@ interface ILiquidity {
 		uint256 upToDepositId,
 		uint256 gasLimit
 	) external payable;
+
+	/**
+	 * @notice Relays deposits from destination chain to Intmax
+	 * @dev The msg.value is used to pay for the L2 gas
+	 * @param upToDepositId The upper limit of the Deposit ID that will be relayed
+	 * @param dstEid The endpoint ID of the destination chain.
+     * @param options Additional options for message execution.
+	 * @return receipt An encoded `MessagingReceipt` struct containing details of the message sent.
+	 */
+	function relayDeposits(
+		uint256 upToDepositId,
+		uint32 dstEid,
+		bytes calldata options
+	) external payable returns (bytes memory);
 
 	/**
 	 * @notice Cancels a deposit that hasn't been relayed yet

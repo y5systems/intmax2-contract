@@ -67,6 +67,9 @@ contract Liquidity is
 	/// @notice Address of the Rollup contract
 	address public rollup;
 
+	/// @notice Address of the LzRelay contract
+	address public lzrelay;
+
 	/// @notice Address of the AML Permitter contract
 	/// @dev If not set, we skip AML check
 	IPermitter public amlPermitter;
@@ -146,6 +149,7 @@ contract Liquidity is
 	/// @param _admin The address that will have admin privileges
 	/// @param _l1ScrollMessenger The address of the L1ScrollMessenger contract
 	/// @param _rollup The address of the Rollup contract
+	/// @param _lzrelay The address of the Rollup contract
 	/// @param _withdrawal The address that will have withdrawal privileges
 	/// @param _claim The address that will have claim privileges
 	/// @param _relayer The address that will have relayer privileges
@@ -155,6 +159,7 @@ contract Liquidity is
 		address _admin,
 		address _l1ScrollMessenger,
 		address _rollup,
+		address _lzrelay,
 		address _withdrawal,
 		address _claim,
 		address _relayer,
@@ -165,6 +170,7 @@ contract Liquidity is
 			_admin == address(0) ||
 			_l1ScrollMessenger == address(0) ||
 			_rollup == address(0) ||
+			_lzrelay == address(0) ||
 			_withdrawal == address(0) ||
 			_claim == address(0) ||
 			_relayer == address(0) ||
@@ -185,6 +191,7 @@ contract Liquidity is
 		contribution = IContribution(_contribution);
 
 		rollup = _rollup;
+		lzrelay = _lzrelay;
 		// Set deployment time to the next day
 		deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
 	}
@@ -426,6 +433,36 @@ contract Liquidity is
 			_msgSender()
 		);
 		emit DepositsRelayed(upToDepositId, gasLimit, message);
+	}
+
+	function relayDeposits(
+		uint256 upToDepositId,
+		uint32 dstEid,
+		bytes calldata options
+	) external payable onlyRole(RELAYER) returns (bytes memory) {
+		bytes32[] memory depositHashes = depositQueue.batchDequeue(upToDepositId);
+
+		if (depositHashes.length > RELAY_LIMIT) {
+			revert RelayLimitExceeded();
+		}
+
+		bytes memory payload = abi.encode(upToDepositId, depositHashes);
+
+		bytes memory data = abi.encodeWithSignature(
+			"send(uint32,bytes,bytes)",
+			dstEid,
+			payload,
+			options
+		);
+
+		(bool success, bytes memory receipt) = lzrelay.call{value: msg.value}(data);
+		if (!success) {
+			revert CallToLzRelayFailed();
+		}
+
+		emit DepositsRelayed(upToDepositId, 0, payload);
+
+		return receipt;
 	}
 
 	function claimWithdrawals(
