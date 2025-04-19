@@ -58,6 +58,9 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 */
 	address public liquidity;
 
+	/// @notice Address of the LzRelay contract
+	address public lzrelay;
+
 	/**
 	 * @notice Reference to the Contribution contract
 	 * @dev Used to record withdrawal contributions
@@ -89,6 +92,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 * @param _withdrawalVerifier Address of the PLONK verifier for withdrawal proofs
 	 * @param _liquidity Address of the Liquidity contract on L1
 	 * @param _rollup Address of the Rollup contract
+	 * @param _lzrelay The address of the Rollup contract
 	 * @param _contribution Address of the Contribution contract
 	 * @param _directWithdrawalTokenIndices Initial list of token indices for direct withdrawals
 	 */
@@ -98,6 +102,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _withdrawalVerifier,
 		address _liquidity,
 		address _rollup,
+		address _lzrelay,
 		address _contribution,
 		uint256[] memory _directWithdrawalTokenIndices
 	) external initializer {
@@ -107,6 +112,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			_withdrawalVerifier == address(0) ||
 			_liquidity == address(0) ||
 			_rollup == address(0) ||
+			_lzrelay == address(0) ||
 			_contribution == address(0)
 		) {
 			revert AddressZero();
@@ -118,6 +124,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		rollup = IRollup(_rollup);
 		contribution = IContribution(_contribution);
 		liquidity = _liquidity;
+		lzrelay = _lzrelay;
 		innerAddDirectWithdrawalTokenIndices(_directWithdrawalTokenIndices);
 	}
 
@@ -140,6 +147,17 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			calldata publicInputs,
 		bytes calldata proof
 	) external {
+		submitWithdrawalProof(withdrawals, publicInputs, proof, 0, "");
+	}
+
+	function submitWithdrawalProof(
+		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
+		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
+			calldata publicInputs,
+		bytes calldata proof,
+		uint32 dstEid,
+		bytes memory options
+	) public payable {
 		_validateWithdrawalProof(withdrawals, publicInputs, proof);
 		uint256 directWithdrawalCounter = 0;
 		uint256 claimableWithdrawalCounter = 0;
@@ -216,12 +234,21 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			}
 		}
 
-		bytes memory message = abi.encodeWithSelector(
-			ILiquidity.processWithdrawals.selector,
-			directWithdrawals,
-			claimableWithdrawals
-		);
-		_relayMessage(message);
+		if (dstEid == 0) {
+			bytes memory message = abi.encodeWithSelector(
+				ILiquidity.processWithdrawals.selector,
+				directWithdrawals,
+				claimableWithdrawals
+			);
+			_relayMessage(message);
+		} else {
+			_relayMessage(
+				directWithdrawals,
+				claimableWithdrawals,
+				dstEid,
+				options
+			);
+		}
 
 		contribution.recordContribution(
 			keccak256("WITHDRAWAL"),
@@ -248,6 +275,40 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			gasLimit,
 			_msgSender()
 		);
+	}
+
+	/**
+	 * @notice Relays a message to the Liquidity contract
+	 * @dev Uses the LzRelay to send a cross-chain message
+	 * @param directWithdrawals Array of direct withdrawals to relay
+	 * @param claimableWithdrawals Array of claimable withdrawals to relay
+	 * @param dstEid The endpoint ID of the destination chain.
+     * @param options Additional options for message execution.
+	 */
+	function _relayMessage(
+		WithdrawalLib.Withdrawal[] memory directWithdrawals,
+		bytes32[] memory claimableWithdrawals,
+		uint32 dstEid,
+		bytes memory options
+	) private {
+		bytes memory payload = abi.encode(
+			directWithdrawals,
+			claimableWithdrawals
+		);
+
+		bytes memory data = abi.encodeWithSignature(
+			"send(uint32,bytes,bytes)",
+			dstEid,
+			payload,
+			options
+		);
+
+		(bool success, ) = lzrelay.call{value: msg.value}(
+			data
+		);
+		if (!success) {
+			revert CallToLzRelayFailed();
+		}
 	}
 
 	/**

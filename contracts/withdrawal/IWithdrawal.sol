@@ -63,6 +63,11 @@ interface IWithdrawal {
 	error RelayLimitExceeded();
 
 	/**
+	 * @notice Error thrown when low level call to LzRelay fails
+	 */
+	error CallToLzRelayFailed();
+
+	/**
 	 * @notice Emitted when new withdrawal verifier is set
 	 */
 	event VerifierUpdated(address indexed withdrawalVerifier);
@@ -120,6 +125,25 @@ interface IWithdrawal {
 			calldata publicInputs,
 		bytes calldata proof
 	) external;
+
+	/**
+	 * @notice Submit and verify a withdrawal proof from Intmax2 L2
+	 * @dev Processes the withdrawals and relays them to the Liquidity contract using the
+	 * LzRelay contract
+	 * @param withdrawals Array of chained withdrawals to process
+	 * @param publicInputs Public inputs for the withdrawal proof verification
+	 * @param proof The zero-knowledge proof data
+	 * @param dstEid The endpoint ID of the destination chain.
+     * @param options Additional options for message execution.
+	 */
+	function submitWithdrawalProof(
+		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
+		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
+			calldata publicInputs,
+		bytes calldata proof,
+		uint32 dstEid,
+		bytes calldata options
+	) external payable;
 
 	/**
 	 * @notice Get the list of token indices that can be withdrawn directly
