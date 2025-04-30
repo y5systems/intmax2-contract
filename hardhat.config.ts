@@ -13,6 +13,8 @@ const env = cleanEnv(process.env, {
 	ALCHEMY_KEY: str(),
 	ETHERSCAN_API_KEY: str(),
 	SCROLLSCAN_API_KEY: str(),
+	INFURA_KEY: str(),
+	BASESCAN_API_KEY: str(),
 })
 
 const accounts = [env.DEPLOYER_PRIVATE_KEY]
@@ -52,6 +54,10 @@ const config: HardhatUserConfig = {
 			url: `https://eth-holesky.g.alchemy.com/v2/${env.ALCHEMY_KEY}`,
 			accounts,
 		},
+		baseSepolia: {
+			url: `https://base-sepolia.infura.io/v3/${env.INFURA_KEY}`,
+			accounts,
+		},
 	},
 	docgen: {
 		exclude: ['test'],
@@ -62,6 +68,7 @@ const config: HardhatUserConfig = {
 			sepolia: env.ETHERSCAN_API_KEY,
 			scroll: env.SCROLLSCAN_API_KEY,
 			scrollSepolia: env.SCROLLSCAN_API_KEY,
+			baseSepolia: env.BASESCAN_API_KEY,
 		},
 		customChains: [
 			{
@@ -78,6 +85,14 @@ const config: HardhatUserConfig = {
 				urls: {
 					apiURL: 'https://api-sepolia.scrollscan.com/api',
 					browserURL: 'https://sepolia.scrollscan.com/',
+				},
+			},
+			{
+				network: 'baseSepolia',
+				chainId: 84532,
+				urls: {
+					apiURL: 'https://sepolia.basescan.org//api',
+					browserURL: 'https://sepolia.basescan.org/',
 				},
 			},
 		],

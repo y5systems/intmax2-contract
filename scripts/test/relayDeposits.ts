@@ -27,9 +27,16 @@ async function main() {
 	const buffer = 100_000n
 	const gasLimit = 220_000n + 20_000n * numDepositsToRelay + buffer
 	try {
+		// const tx = await liquidity
+		// 	.connect(relayer)
+		// 	.relayDeposits(lastDepositId, gasLimit, {
+		// 		value: ethers.parseEther('0.1'), // will be refunded
+		// 	})
 		const tx = await liquidity
-			.connect(relayer)
-			.relayDeposits(lastDepositId, gasLimit, {
+    		.connect(relayer)["relayDeposits(uint256,uint256)"](
+				lastDepositId,
+				gasLimit,
+			{
 				value: ethers.parseEther('0.1'), // will be refunded
 			})
 		console.log('relayDeposits tx hash:', tx.hash)

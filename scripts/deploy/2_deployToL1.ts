@@ -9,6 +9,7 @@ import { Contribution } from '../../typechain-types/contracts/Contribution'
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
 	RELAYER_ADDRESS: str(),
+	LZ_RELAYER_ADDRESS: str(),
 	CONTRIBUTION_PERIOD_INTERVAL: num(),
 	INTMAX_TOKEN_ADDRESS: str({
 		default: '',
@@ -26,6 +27,9 @@ const env = cleanEnv(process.env, {
 	}),
 	DEPLOY_MOCK_MESSENGER: bool({
 		default: false,
+	}),
+	DETERMINISTIC_DEPLOYMENT_SALT: str({
+		default: 'intmax_v2_deployment_salt_8x7y9z',
 	}),
 })
 
@@ -118,6 +122,7 @@ async function main() {
 				env.ADMIN_ADDRESS,
 				await getL1MessengerAddress(),
 				deployedL2Contracts.rollup,
+				env.LZ_RELAYER_ADDRESS,
 				deployedL2Contracts.withdrawal,
 				deployedL2Contracts.claim,
 				env.RELAYER_ADDRESS,
@@ -126,6 +131,9 @@ async function main() {
 			],
 			{
 				kind: 'uups',
+				// Making Addresses Deterministic
+				deterministicDeployment: true,
+				salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 			},
 		)
 		await writeDeployedContracts({

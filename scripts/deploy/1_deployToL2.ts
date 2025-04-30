@@ -16,6 +16,10 @@ const env = cleanEnv(process.env, {
 		choices: ['mock', 'faster-mining', 'normal'],
 		default: 'normal',
 	}),
+	DETERMINISTIC_DEPLOYMENT_SALT: str({
+        default: 'intmax_v2_deployment_salt_8x7y9z'
+    }),
+	
 })
 
 async function main() {
@@ -27,6 +31,9 @@ async function main() {
 		const rollup = await upgrades.deployProxy(rollupFactory, [], {
 			initializer: false,
 			kind: 'uups',
+			// Making Addresses Deterministic
+			deterministicDeployment: true,
+			salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 		})
 		const deployedContracts = await readDeployedContracts()
 		const newContractAddresses = {
@@ -48,6 +55,9 @@ async function main() {
 			{
 				initializer: false,
 				kind: 'uups',
+				// Making Addresses Deterministic
+				deterministicDeployment: true,
+				salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 			},
 		)
 		const deployedContracts = await readDeployedContracts()
@@ -65,6 +75,9 @@ async function main() {
 		const withdrawal = await upgrades.deployProxy(withdrawalFactory, [], {
 			initializer: false,
 			kind: 'uups',
+			// Making Addresses Deterministic
+			deterministicDeployment: true,
+			salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 		})
 		const deployedContracts = await readDeployedContracts()
 		const newContractAddresses = {
@@ -81,6 +94,9 @@ async function main() {
 		const claim = await upgrades.deployProxy(claimFactory, [], {
 			initializer: false,
 			kind: 'uups',
+			// Making Addresses Deterministic
+			deterministicDeployment: true,
+			salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 		})
 		const deployedContracts = await readDeployedContracts()
 		const newContractAddresses = {
@@ -99,6 +115,9 @@ async function main() {
 			[env.ADMIN_ADDRESS, env.CONTRIBUTION_PERIOD_INTERVAL],
 			{
 				kind: 'uups',
+				// Making Addresses Deterministic
+				deterministicDeployment: true,
+				salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 			},
 		)
 		const deployedContracts = await readDeployedContracts()
