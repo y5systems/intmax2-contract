@@ -4,7 +4,7 @@ import { getL1MessengerAddress } from '../utils/addressBook'
 import { sleep } from '../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
 import { bool, cleanEnv, num, str } from 'envalid'
-import { Contribution } from '../../typechain-types/contracts/Contribution'
+import { Contribution } from '../../typechain-types/contracts/contribution'
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
@@ -131,8 +131,7 @@ async function main() {
 			],
 			{
 				kind: 'uups',
-				// Making Addresses Deterministic
-				deterministicDeployment: true,
+				// CREATE2 - Making Addresses Deterministic
 				salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 			},
 		)

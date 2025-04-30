@@ -4,7 +4,7 @@ import { getL2MessengerAddress } from '../utils/addressBook'
 import { sleep } from '../utils/sleep'
 import { getCounterPartNetwork } from '../utils/counterPartNetwork'
 import { bool, cleanEnv, num, str } from 'envalid'
-import { Contribution } from '../../typechain-types/contracts/Contribution'
+import { Contribution } from '../../typechain-types/contracts/contribution'
 
 // default values for late limiter
 const fixedPointOne = 10n ** 18n

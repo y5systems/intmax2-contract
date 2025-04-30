@@ -31,8 +31,7 @@ async function main() {
 		const rollup = await upgrades.deployProxy(rollupFactory, [], {
 			initializer: false,
 			kind: 'uups',
-			// Making Addresses Deterministic
-			deterministicDeployment: true,
+			// CREATE2 - Making Addresses Deterministic
 			salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 		})
 		const deployedContracts = await readDeployedContracts()
@@ -55,8 +54,7 @@ async function main() {
 			{
 				initializer: false,
 				kind: 'uups',
-				// Making Addresses Deterministic
-				deterministicDeployment: true,
+				// CREATE2 - Making Addresses Deterministic
 				salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 			},
 		)
@@ -75,8 +73,7 @@ async function main() {
 		const withdrawal = await upgrades.deployProxy(withdrawalFactory, [], {
 			initializer: false,
 			kind: 'uups',
-			// Making Addresses Deterministic
-			deterministicDeployment: true,
+			// CREATE2 - Making Addresses Deterministic
 			salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 		})
 		const deployedContracts = await readDeployedContracts()
@@ -94,8 +91,7 @@ async function main() {
 		const claim = await upgrades.deployProxy(claimFactory, [], {
 			initializer: false,
 			kind: 'uups',
-			// Making Addresses Deterministic
-			deterministicDeployment: true,
+			// CREATE2 - Making Addresses Deterministic
 			salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 		})
 		const deployedContracts = await readDeployedContracts()
@@ -115,8 +111,7 @@ async function main() {
 			[env.ADMIN_ADDRESS, env.CONTRIBUTION_PERIOD_INTERVAL],
 			{
 				kind: 'uups',
-				// Making Addresses Deterministic
-				deterministicDeployment: true,
+				// CREATE2 - Making Addresses Deterministic
 				salt: ethers.id(env.DETERMINISTIC_DEPLOYMENT_SALT),
 			},
 		)
