@@ -7,7 +7,7 @@ pragma solidity 0.8.27;
  * @dev Handles deposit queuing, withdrawal processing, fee collection, and AML/eligibility checks.
  */
 import {ILiquidity} from "./Interfaces/ILiquidity.sol";
-import {ILzRelay} from "Interfaces/ILzRelay.sol";
+import {ILzRelay, MessagingReceipt} from "./Interfaces/ILzRelay.sol";
 import {IRollup} from "../rollup/IRollup.sol";
 import {IContribution} from "../contribution/IContribution.sol";
 import {IPermitter} from "../permitter/IPermitter.sol";
@@ -452,7 +452,7 @@ contract Liquidity is
 		uint256 upToDepositId,
 		uint32 dstEid,
 		bytes calldata options
-	) external payable onlyRole(RELAYER) returns (bytes memory) {
+	) external payable onlyRole(RELAYER) returns (MessagingReceipt memory) {
 		bytes32[] memory depositHashes = depositQueue.batchDequeue(
 			upToDepositId
 		);
@@ -463,28 +463,11 @@ contract Liquidity is
 
 		bytes memory payload = abi.encode(upToDepositId, depositHashes);
 
-		bytes memory receipt = ILzRelay(lzrelay).send{value: msg.value}(
+		MessagingReceipt memory receipt = ILzRelay(lzrelay).send{value: msg.value}(
 			dstEid,
 			payload,
 			options
 		);
-
-		// ToDo: remove this in production
-		// bytes memory data = abi.encodeWithSignature(
-		// 	"send(uint32,bytes,bytes)",
-		// 	dstEid,
-		// 	payload,
-		// 	options
-		// );
-		// (bool success, bytes memory receipt) = lzrelay.call{value: msg.value, gas: 5_000_000}(
-		// 	data
-		// );
-		// if (!success) {
-		// 	assembly{
-		// 		revert(add(receipt, 32), mload(receipt))
-		// 	}
-		// 	// revert CallToLzRelayFailed();
-		// }
 
 		emit DepositsRelayed(upToDepositId, 0, payload);
 

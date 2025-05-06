@@ -4,6 +4,7 @@ pragma solidity 0.8.27;
 import {DepositLib} from "../../common/DepositLib.sol";
 import {WithdrawalLib} from "../../common/WithdrawalLib.sol";
 import {DepositQueueLib} from "../lib/DepositQueueLib.sol";
+import {MessagingReceipt} from "./ILzRelay.sol";
 
 /**
  * @title Liquidity Interface
@@ -343,7 +344,7 @@ interface ILiquidity {
 		uint256 upToDepositId,
 		uint32 dstEid,
 		bytes calldata options
-	) external payable returns (bytes memory);
+	) external payable returns(MessagingReceipt memory);
 
 	/**
 	 * @notice Cancels a deposit that hasn't been relayed yet
