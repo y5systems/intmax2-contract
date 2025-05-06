@@ -139,6 +139,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 */
 	function initialize(
 		address _admin,
+		// ToDo: remove this parameter for non ETH/Scroll chains
 		address _scrollMessenger,
 		address _liquidity,
 		address _lzrelay,

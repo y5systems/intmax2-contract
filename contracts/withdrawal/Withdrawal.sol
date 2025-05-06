@@ -3,7 +3,7 @@ pragma solidity 0.8.27;
 
 import {IWithdrawal} from "./IWithdrawal.sol";
 import {IPlonkVerifier} from "../common/IPlonkVerifier.sol";
-import {ILiquidity} from "../liquidity/ILiquidity.sol";
+import {ILiquidity} from "../liquidity/Interfaces/ILiquidity.sol";
 import {IRollup} from "../rollup/IRollup.sol";
 import {IContribution} from "../contribution/IContribution.sol";
 import {IL2ScrollMessenger} from "@scroll-tech/contracts/L2/IL2ScrollMessenger.sol";

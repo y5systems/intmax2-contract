@@ -11,13 +11,16 @@ export function getCounterPartNetwork(): string {
 		return 'scrollSepolia'
 	}
 	if (network.name === 'scrollSepolia') {
-		return 'sepolia'
+		return 'baseSepolia'
 	}
 	if (network.name === 'mainnet') {
 		return 'scroll'
 	}
 	if (network.name === 'scroll') {
 		return 'mainnet'
+	}
+	if (network.name === 'baseSepolia') {
+		return 'scrollSepolia'
 	}
 	throw new Error('unknown network')
 }

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
-import {DepositLib} from "../common/DepositLib.sol";
-import {WithdrawalLib} from "../common/WithdrawalLib.sol";
-import {DepositQueueLib} from "./lib/DepositQueueLib.sol";
+import {DepositLib} from "../../common/DepositLib.sol";
+import {WithdrawalLib} from "../../common/WithdrawalLib.sol";
+import {DepositQueueLib} from "../lib/DepositQueueLib.sol";
 
 /**
  * @title Liquidity Interface

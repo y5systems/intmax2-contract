@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
 			accounts,
 		},
 		scrollSepolia: {
-			url: `https://scroll-sepolia.g.alchemy.com/v2/${env.ALCHEMY_KEY}`,
+			url: `https://scroll-sepolia.infura.io/v3/${env.INFURA_KEY}`,
 			accounts,
 		},
 		holesky: {
@@ -91,7 +91,7 @@ const config: HardhatUserConfig = {
 				network: 'baseSepolia',
 				chainId: 84532,
 				urls: {
-					apiURL: 'https://sepolia.basescan.org//api',
+					apiURL: 'https://api-sepolia.basescan.org/api',
 					browserURL: 'https://sepolia.basescan.org/',
 				},
 			},

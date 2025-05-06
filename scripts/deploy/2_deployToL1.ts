@@ -9,7 +9,7 @@ import { Contribution } from '../../typechain-types/contracts/contribution'
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
 	RELAYER_ADDRESS: str(),
-	LZ_RELAYER_ADDRESS: str(),
+	BASE_SEPOLIA_LZ_RELAYER_ADDRESS: str(),
 	CONTRIBUTION_PERIOD_INTERVAL: num(),
 	INTMAX_TOKEN_ADDRESS: str({
 		default: '',
@@ -122,7 +122,7 @@ async function main() {
 				env.ADMIN_ADDRESS,
 				await getL1MessengerAddress(),
 				deployedL2Contracts.rollup,
-				env.LZ_RELAYER_ADDRESS,
+				env.BASE_SEPOLIA_LZ_RELAYER_ADDRESS,
 				deployedL2Contracts.withdrawal,
 				deployedL2Contracts.claim,
 				env.RELAYER_ADDRESS,

@@ -6,7 +6,8 @@ pragma solidity 0.8.27;
  * @notice This contract manages deposits and withdrawals of various token types (Native, ERC20, ERC721, ERC1155).
  * @dev Handles deposit queuing, withdrawal processing, fee collection, and AML/eligibility checks.
  */
-import {ILiquidity} from "./ILiquidity.sol";
+import {ILiquidity} from "./Interfaces/ILiquidity.sol";
+import {ILzRelay} from "Interfaces/ILzRelay.sol";
 import {IRollup} from "../rollup/IRollup.sol";
 import {IContribution} from "../contribution/IContribution.sol";
 import {IPermitter} from "../permitter/IPermitter.sol";
@@ -162,6 +163,7 @@ contract Liquidity is
 	/// @param initialERC20Tokens Initial list of ERC20 token addresses to support
 	function initialize(
 		address _admin,
+		// ToDo: Remove Scroll Messenger for other chains
 		address _l1ScrollMessenger,
 		address _rollup,
 		address _lzrelay,
@@ -199,6 +201,12 @@ contract Liquidity is
 		lzrelay = _lzrelay;
 		// Set deployment time to the next day
 		deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
+	}
+
+	// ToDo: Remove this function in production
+	/* HELPER FUNCTION - SHOULD BE REMOVED IN PRODUCTION */
+	function simulateBatchDequeue(uint256 upToId) external view returns (bytes32[] memory) {
+		return depositQueue.batchDequeueView(upToId);
 	}
 
 	/**
@@ -455,19 +463,28 @@ contract Liquidity is
 
 		bytes memory payload = abi.encode(upToDepositId, depositHashes);
 
-		bytes memory data = abi.encodeWithSignature(
-			"send(uint32,bytes,bytes)",
+		bytes memory receipt = ILzRelay(lzrelay).send{value: msg.value}(
 			dstEid,
 			payload,
 			options
 		);
 
-		(bool success, bytes memory receipt) = lzrelay.call{value: msg.value}(
-			data
-		);
-		if (!success) {
-			revert CallToLzRelayFailed();
-		}
+		// ToDo: remove this in production
+		// bytes memory data = abi.encodeWithSignature(
+		// 	"send(uint32,bytes,bytes)",
+		// 	dstEid,
+		// 	payload,
+		// 	options
+		// );
+		// (bool success, bytes memory receipt) = lzrelay.call{value: msg.value, gas: 5_000_000}(
+		// 	data
+		// );
+		// if (!success) {
+		// 	assembly{
+		// 		revert(add(receipt, 32), mload(receipt))
+		// 	}
+		// 	// revert CallToLzRelayFailed();
+		// }
 
 		emit DepositsRelayed(upToDepositId, 0, payload);
 

@@ -51,6 +51,31 @@ library DepositQueueLib {
 		depositQueue.front = 1;
 	}
 
+	// ToDo: Remove this function in production
+	/* HELPER FUNCTION - SHOULD BE REMOVED IN PRODUCTION */
+	function batchDequeueView(DepositQueue storage self, uint256 upToId) internal view returns (bytes32[] memory) {
+		require(upToId >= self.front, "Invalid upToId");
+		require(upToId < self.depositData.length, "upToId exceeds queue bounds");
+
+		uint256 size = 0;
+		for (uint256 i = self.front; i <= upToId; i++) {
+			if (self.depositData[i].sender != address(0)) {
+				size++;
+			}
+		}
+
+		bytes32[] memory hashes = new bytes32[](size);
+		uint256 idx = 0;
+		for (uint256 i = self.front; i <= upToId; i++) {
+			if (self.depositData[i].sender != address(0)) {
+				hashes[idx] = self.depositData[i].depositHash;
+				idx++;
+			}
+		}
+
+		return hashes;
+	}
+
 	/**
 	 * @notice Adds a new deposit to the queue
 	 * @dev The deposit ID is the index in the depositData array

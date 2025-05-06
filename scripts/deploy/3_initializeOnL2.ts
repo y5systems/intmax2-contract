@@ -14,7 +14,7 @@ const defaultRateLimitK = fixedPointOne / 1000n // 0.001
 
 const env = cleanEnv(process.env, {
 	ADMIN_ADDRESS: str(),
-	LZ_RELAYER_ADDRESS: str(),
+	SCROLL_SEPOLIA_LZ_RELAYER_ADDRESS: str(),
 	CLAIM_PERIOD_INTERVAL: num(),
 	ADMIN_PRIVATE_KEY: str({
 		default: '',
@@ -86,7 +86,7 @@ async function main() {
 			env.ADMIN_ADDRESS,
 			await getL2MessengerAddress(),
 			deployedL1Contracts.liquidity,
-			env.LZ_RELAYER_ADDRESS,
+			env.SCROLL_SEPOLIA_LZ_RELAYER_ADDRESS,
 			deployedL2Contracts.l2Contribution,
 			env.RATELIMIT_THRESHOLD_INTERVAL,
 			env.RATELIMIT_ALPHA,
@@ -104,7 +104,7 @@ async function main() {
 			deployedL2Contracts.withdrawalPlonkVerifier,
 			deployedL1Contracts.liquidity,
 			deployedL2Contracts.rollup,
-			env.LZ_RELAYER_ADDRESS,
+			env.SCROLL_SEPOLIA_LZ_RELAYER_ADDRESS,
 			deployedL2Contracts.l2Contribution,
 			[0, 1, 2, 3], // 0: eth, 1: intmax token, 2: wbtc, 3: usdc
 		)

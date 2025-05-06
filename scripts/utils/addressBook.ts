@@ -13,6 +13,9 @@ export const getL1MessengerAddress = async () => {
 	if (network.name === 'mainnet') {
 		return '0x6774Bcbd5ceCeF1336b5300fb5186a12DDD8b367'
 	}
+	if (network.name === 'baseSepolia') {
+		return '0x50c7d3e7f7c656493D1D76aaa1a836CedfCBB16A'
+	}
 	throw new Error('Unsupported network')
 }
 
