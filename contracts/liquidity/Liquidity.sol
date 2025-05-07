@@ -225,6 +225,18 @@ contract Liquidity is
 	}
 
 	/**
+	 * @notice Updates the LayerZero Relayer contract address
+	 * @dev Only callable by the admin role
+	 * @param _lzRelay The new LayerZero Relayer contract address
+	 */
+	function setLzRelayer(address _lzRelay) external onlyRole(DEFAULT_ADMIN_ROLE) {
+		if(_lzRelay == address(0)){
+			revert AddressZero();
+		}
+		lzrelay = _lzRelay;
+	}
+
+	/**
 	 * @notice Sets the withdrawal fee ratio for a specific token
 	 * @dev Only callable by the admin role. Fee ratio is in basis points (1bp = 0.01%)
 	 * @param tokenIndex The index of the token to set the fee ratio for

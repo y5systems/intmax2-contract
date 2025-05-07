@@ -174,6 +174,18 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		blockHashes.pushGenesisBlockHash(depositTreeRoot);
 	}
 
+	/**
+	 * @notice Updates the LayerZero Relayer contract address
+	 * @dev Only callable by the owner
+	 * @param _lzRelay The new LayerZero Relayer contract address
+	 */
+	function setLzRelayer(address _lzRelay) external onlyOwner {
+		if(_lzRelay == address(0)){
+			revert AddressZero();
+		}
+		lzrelay = _lzRelay;
+	}
+
 	function postRegistrationBlock(
 		bytes32 txTreeRoot,
 		uint64 expiry,
