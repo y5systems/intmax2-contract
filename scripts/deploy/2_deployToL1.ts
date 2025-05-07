@@ -168,6 +168,20 @@ async function main() {
 			)
 			console.log('granted role')
 		}
+
+		// Add RELAYER role grant
+		const liquidity = await ethers.getContractAt(
+			'Liquidity',
+			deployedContracts.liquidity,
+		)
+		const relayerRole = ethers.solidityPackedKeccak256(['string'], ['RELAYER'])
+		if (!(await liquidity.hasRole(relayerRole, env.RELAYER_ADDRESS))) {
+			await liquidity.connect(admin).grantRole(
+				relayerRole,
+				env.RELAYER_ADDRESS,
+			)
+			console.log('granted RELAYER role to', env.RELAYER_ADDRESS)
+		}
 	}
 }
 
