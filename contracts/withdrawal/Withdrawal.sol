@@ -141,6 +141,18 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		emit VerifierUpdated(_withdrawalVerifier);
 	}
 
+	/**
+	 * @notice Updates the LayerZero Relayer contract address
+	 * @dev Only callable by the admin role
+	 * @param _lzRelay The new LayerZero Relayer contract address
+	 */
+	function setLzRelayer(address _lzRelay) external onlyOwner {
+		if(_lzRelay == address(0)){
+			revert AddressZero();
+		}
+		lzrelay = _lzRelay;
+	}
+
 	function submitWithdrawalProof(
 		ChainedWithdrawalLib.ChainedWithdrawal[] calldata withdrawals,
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
