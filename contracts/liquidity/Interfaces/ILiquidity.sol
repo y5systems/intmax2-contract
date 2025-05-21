@@ -100,11 +100,6 @@ interface ILiquidity {
 	error CallToLzRelayFailed();
 
 	/**
-	 * @notice Chain ID out of supported range
-	 */
-	error ChainIdOutOfRange();
-
-	/**
 	 * @notice Event emitted when a deposit is made
 	 * @param depositId The unique identifier for the deposit
 	 * @param sender The address that made the deposit
