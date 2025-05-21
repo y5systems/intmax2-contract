@@ -18,6 +18,18 @@ abstract contract TokenData is Initializable, ITokenData {
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
 
 	/**
+	 * @notice Maximum number of chains supported
+	 * @dev Used to calculate token index partitions across different chains
+	 */
+	uint32 private constant MAX_SUPPORTED_CHAINS = 2 ** 18;
+
+	/**
+	 * @notice Maximum number of tokens supported
+	 * @dev Used to calculate token index partitions across different chains
+	 */
+	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
+
+	/**
 	 * @notice Array of all token information stored in the system
 	 * @dev Index in this array corresponds to the token index used throughout the protocol
 	 */
@@ -37,22 +49,10 @@ abstract contract TokenData is Initializable, ITokenData {
 		private nonFungibleTokenIndexMap;
 
 	/**
-	 * @notice Maximum number of chains supported
-	 * @dev Used to calculate token index partitions across different chains
-	 */
-	uint32 private constant MAX_SUPPORTED_CHAINS = 2 ** 18;
-
-	/**
-	 * @notice Maximum number of tokens supported
-	 * @dev Used to calculate token index partitions across different chains
-	 */
-	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
-
-	/**
 	 * @notice Chain ID of the current blockchain
 	 * @dev Stored during initialization and used for token index creation
 	 */
-	uint32 private chainId;
+	// uint32 private chainId;
 
 	/**
 	 * @notice Initializes the TokenData contract with native token and initial ERC20 tokens
@@ -64,10 +64,10 @@ abstract contract TokenData is Initializable, ITokenData {
 		address[] memory initialERC20Tokens
 	) internal onlyInitializing {
 		// Store the chain ID to use for token index partitioning
-		if (block.chainid > MAX_SUPPORTED_CHAINS) {
-			revert ChainIdOutOfRange();
-		}
-		chainId = uint32(block.chainid);
+		// if (block.chainid > MAX_SUPPORTED_CHAINS) {
+		// 	revert ChainIdOutOfRange();
+		// }
+		// chainId = uint32(block.chainid);
 		
 		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
 		for (uint256 i = 0; i < initialERC20Tokens.length; i++) {
@@ -127,7 +127,7 @@ abstract contract TokenData is Initializable, ITokenData {
 			revert TokenLimitReached();
 		}
 
-		uint32 tokenIndex = chainId;
+		uint32 tokenIndex = uint32(block.chainid);
 		tokenIndex = (tokenIndex << 14) | (uint16(tokenInfoList.length) & 0x0FFFFFFFF);
 
 		tokenInfoList.push(TokenInfo(tokenType, tokenAddress, tokenId));
