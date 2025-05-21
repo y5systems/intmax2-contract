@@ -18,6 +18,24 @@ abstract contract TokenData is Initializable, ITokenData {
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
 
 	/**
+	 * @notice Maximum number of chains supported for token index partitioning
+	 * @dev Used to calculate token index partitions across different chains
+	 */
+	uint16 private constant MAX_SUPPORTED_CHAINS = 10;
+
+	/**
+	 * @notice Maximum token index value (2^32 - 1)
+	 * @dev Used in token index partition calculations
+	 */
+	uint32 private constant MAX_TOKEN_INDEX = type(uint32).max;
+
+	/**
+	 * @notice Chain ID of the current blockchain
+	 * @dev Stored during initialization and used for token index creation
+	 */
+	uint16 private chainId;
+
+	/**
 	 * @notice Array of all token information stored in the system
 	 * @dev Index in this array corresponds to the token index used throughout the protocol
 	 */
@@ -45,6 +63,9 @@ abstract contract TokenData is Initializable, ITokenData {
 	function __TokenData_init(
 		address[] memory initialERC20Tokens
 	) internal onlyInitializing {
+		// Store the chain ID to use for token index partitioning
+		chainId = uint16(block.chainid);
+		
 		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
 		for (uint256 i = 0; i < initialERC20Tokens.length; i++) {
 			_createTokenIndex(TokenType.ERC20, initialERC20Tokens[i], 0);
@@ -78,12 +99,12 @@ abstract contract TokenData is Initializable, ITokenData {
 
 	/**
 	 * @notice Retrieves the index of the native token (ETH)
-	 * @dev The native token is always at index 0 in the system
-	 * @return uint32 The index of the native token (always 0)
+	 * @dev The native token is the first token in each chain's partition
+	 * @return uint32 The index of the native token for this chain
 	 */
-	function getNativeTokenIndex() public pure returns (uint32) {
-		// fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = 0
-		return 0;
+	function getNativeTokenIndex() public view returns (uint32) {
+		// Use the fungibleTokenIndexMap to get the native token index for this chain
+		return fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS];
 	}
 
 	/**
@@ -99,8 +120,22 @@ abstract contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) private returns (uint32) {
-		uint32 tokenIndex = uint32(tokenInfoList.length);
+		// Get the starting index for this chain's partition
+		(uint32 startIndex, uint32 endIndex) = _calculateChainPartition(chainId);
+		
+		// Calculate the local token index within the chain's partition
+		uint32 localIndex = uint32(tokenInfoList.length);
+		
+		// Calculate the global token index based on the chain partition
+		uint32 tokenIndex = startIndex + localIndex;
+		
+		// Check if we've exceeded this chain's partition
+		if (tokenIndex > endIndex) {
+			revert("Token index exceeds chain's allocation");
+		}
+		
 		tokenInfoList.push(TokenInfo(tokenType, tokenAddress, tokenId));
+		
 		if (tokenType == TokenType.NATIVE) {
 			fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = tokenIndex;
 			return tokenIndex;
@@ -132,8 +167,9 @@ abstract contract TokenData is Initializable, ITokenData {
 		uint256 tokenId
 	) public view returns (bool, uint32) {
 		if (tokenType == TokenType.NATIVE) {
-			// fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = 0
-			return (true, 0);
+			// Get the stored native token index for this chain
+			uint32 nativeIndex = fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS];
+			return (true, nativeIndex);
 		}
 		if (tokenAddress == address(0)) {
 			revert TokenAddressIsZero();
@@ -163,5 +199,34 @@ abstract contract TokenData is Initializable, ITokenData {
 		uint32 tokenIndex
 	) public view returns (TokenInfo memory) {
 		return tokenInfoList[tokenIndex];
+	}
+
+	/**
+	 * @notice Calculates the partition range for a given chain ID
+	 * @dev Returns the start and end indices for the specified chain's token index range
+	 * @param _chainId The chain ID to calculate the partition for
+	 * @return start The starting index for the chain's partition (inclusive)
+	 * @return end The ending index for the chain's partition (inclusive)
+	 */
+	function _calculateChainPartition(uint16 _chainId) private pure returns (uint32 start, uint32 end) {
+		if (_chainId > MAX_SUPPORTED_CHAINS || _chainId == 0) {
+			revert ChainIdOutOfRange();
+		}
+		
+		// Calculate partition size (divide the uint32 space by the max number of chains)
+		uint32 partitionSize = MAX_TOKEN_INDEX / MAX_SUPPORTED_CHAINS;
+		
+		// Calculate start index (0-based chain ID index * partition size)
+		start = partitionSize * (_chainId - 1);
+		
+		// Calculate end index (next partition start - 1)
+		if (_chainId == MAX_SUPPORTED_CHAINS) {
+			// For the last chain, use the maximum possible index
+			end = MAX_TOKEN_INDEX;
+		} else {
+			end = partitionSize * _chainId - 1;
+		}
+		
+		return (start, end);
 	}
 }
