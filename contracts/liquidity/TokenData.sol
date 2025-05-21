@@ -18,24 +18,6 @@ abstract contract TokenData is Initializable, ITokenData {
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
 
 	/**
-	 * @notice Maximum number of chains supported
-	 * @dev Used to calculate token index partitions across different chains
-	 */
-	uint32 private constant MAX_SUPPORTED_CHAINS = 2 ** 18;
-
-	/**
-	 * @notice Maximum number of tokens supported
-	 * @dev Used to calculate token index partitions across different chains
-	 */
-	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
-
-	/**
-	 * @notice Chain ID of the current blockchain
-	 * @dev Stored during initialization and used for token index creation
-	 */
-	uint32 private chainId;
-
-	/**
 	 * @notice Array of all token information stored in the system
 	 * @dev Index in this array corresponds to the token index used throughout the protocol
 	 */
@@ -53,6 +35,24 @@ abstract contract TokenData is Initializable, ITokenData {
 	 */
 	mapping(address => mapping(uint256 => uint32))
 		private nonFungibleTokenIndexMap;
+
+	/**
+	 * @notice Maximum number of chains supported
+	 * @dev Used to calculate token index partitions across different chains
+	 */
+	uint32 private constant MAX_SUPPORTED_CHAINS = 2 ** 18;
+
+	/**
+	 * @notice Maximum number of tokens supported
+	 * @dev Used to calculate token index partitions across different chains
+	 */
+	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
+
+	/**
+	 * @notice Chain ID of the current blockchain
+	 * @dev Stored during initialization and used for token index creation
+	 */
+	uint32 private chainId;
 
 	/**
 	 * @notice Initializes the TokenData contract with native token and initial ERC20 tokens
