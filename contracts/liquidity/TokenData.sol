@@ -30,12 +30,6 @@ abstract contract TokenData is Initializable, ITokenData {
 	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
 
 	/**
-	 * @notice Chain ID of the current blockchain
-	 * @dev Stored during initialization and used for token index creation
-	 */
-	uint32 private chainId;
-
-	/**
 	 * @notice Array of all token information stored in the system
 	 * @dev Index in this array corresponds to the token index used throughout the protocol
 	 */
@@ -53,6 +47,12 @@ abstract contract TokenData is Initializable, ITokenData {
 	 */
 	mapping(address => mapping(uint256 => uint32))
 		private nonFungibleTokenIndexMap;
+
+	/**
+	 * @notice Chain ID of the current blockchain
+	 * @dev Stored during initialization and used for token index creation
+	 */
+	uint32 private chainId;
 
 	/**
 	 * @notice Initializes the TokenData contract with native token and initial ERC20 tokens
