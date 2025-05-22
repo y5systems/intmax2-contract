@@ -129,13 +129,14 @@ abstract contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) private returns (uint32) {
+		uint32 tokenIndex = chainId;
+		tokenIndex = (tokenIndex << 14) | (tokenInfoCount & 0x0FFFFFFFF);
+
 		tokenInfoCount++;
 		if (tokenInfoCount >= MAX_SUPPORTED_TOKENS) {
 			revert TokenLimitReached();
 		}
 
-		uint32 tokenIndex = chainId;
-		tokenIndex = (tokenIndex << 14) | (tokenInfoCount & 0x0FFFFFFFF);
 		tokenInfoList[tokenIndex] = (TokenInfo(tokenType, tokenAddress, tokenId));
 
 		if (tokenType == TokenType.NATIVE) {
