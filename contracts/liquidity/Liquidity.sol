@@ -167,6 +167,7 @@ contract Liquidity is
 	/// @param _relayer The address that will have relayer privileges
 	/// @param _contribution The address of the Contribution contract
 	/// @param initialERC20Tokens Initial list of ERC20 token addresses to support
+	/// @param _dstChainId The destination chain ID for cross-chain messaging
 	function initialize(
 		address _admin,
 		// ToDo: Remove Scroll Messenger for other chains
