@@ -30,10 +30,16 @@ abstract contract TokenData is Initializable, ITokenData {
 	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
 
 	/**
-	 * @notice Array of all token information stored in the system
+	 * @notice Mapping of all token information stored in the system
 	 * @dev Index in this array corresponds to the token index used throughout the protocol
 	 */
-	TokenInfo[] private tokenInfoList;
+	mapping(uint32 => TokenInfo) private tokenInfoList;
+
+	/**
+	 * @notice Counter for the number of registered tokens
+	 * @dev Used to keep track of the number of entries in the tokenInfoList mapping
+	 */
+	uint16 private tokenInfoCount = 0;
 
 	/**
 	 * @notice Mapping from token address to token index for fungible tokens (NATIVE and ERC20)
@@ -52,7 +58,7 @@ abstract contract TokenData is Initializable, ITokenData {
 	 * @notice Chain ID of the current blockchain
 	 * @dev Stored during initialization and used for token index creation
 	 */
-	// uint32 private chainId;
+	 uint32 private chainId;
 
 	/**
 	 * @notice Initializes the TokenData contract with native token and initial ERC20 tokens
@@ -64,11 +70,11 @@ abstract contract TokenData is Initializable, ITokenData {
 		address[] memory initialERC20Tokens
 	) internal onlyInitializing {
 		// Store the chain ID to use for token index partitioning
-		// if (block.chainid > MAX_SUPPORTED_CHAINS) {
-		// 	revert ChainIdOutOfRange();
-		// }
-		// chainId = uint32(block.chainid);
-		
+		if (block.chainid > MAX_SUPPORTED_CHAINS) {
+			revert ChainIdOutOfRange();
+		}
+		chainId = uint32(block.chainid);
+
 		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
 		for (uint256 i = 0; i < initialERC20Tokens.length; i++) {
 			_createTokenIndex(TokenType.ERC20, initialERC20Tokens[i], 0);
@@ -123,14 +129,15 @@ abstract contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) private returns (uint32) {
-		if (tokenInfoList.length > MAX_SUPPORTED_TOKENS) {
+		tokenInfoCount++;
+		if (tokenInfoCount >= MAX_SUPPORTED_TOKENS) {
 			revert TokenLimitReached();
 		}
 
-		uint32 tokenIndex = uint32(block.chainid);
-		tokenIndex = (tokenIndex << 14) | (uint16(tokenInfoList.length) & 0x0FFFFFFFF);
+		uint32 tokenIndex = chainId;
+		tokenIndex = (tokenIndex << 14) | (tokenInfoCount & 0x0FFFFFFFF);
+		tokenInfoList[tokenIndex] = (TokenInfo(tokenType, tokenAddress, tokenId));
 
-		tokenInfoList.push(TokenInfo(tokenType, tokenAddress, tokenId));
 		if (tokenType == TokenType.NATIVE) {
 			fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = tokenIndex;
 			return tokenIndex;
