@@ -69,7 +69,13 @@ contract Liquidity is
 	address public rollup;
 
 	/// @notice Address of the LzRelay contract
-	address public lzrelay;
+	address public lzRelay;
+
+	/**
+	 * @notice Destination chainId used by LZ Protocol
+	 * @dev Used to send cross-chain messages using LZ Protocol
+	 */
+	uint32 private dstChainId;
 
 	/// @notice Address of the AML Permitter contract
 	/// @dev If not set, we skip AML check
@@ -104,7 +110,7 @@ contract Liquidity is
 	 * @dev Ensures the function is called via the L1ScrollMessenger and the cross-domain sender has the WITHDRAWAL role
 	 */
 	modifier onlyWithdrawalRole() {
-		if (_msgSender() != lzrelay) {
+		if (_msgSender() != lzRelay) {
 			IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
 			if (_msgSender() != address(l1ScrollMessengerCached)) {
 				revert SenderIsNotScrollMessenger();
@@ -155,7 +161,7 @@ contract Liquidity is
 	/// @param _admin The address that will have admin privileges
 	/// @param _l1ScrollMessenger The address of the L1ScrollMessenger contract
 	/// @param _rollup The address of the Rollup contract
-	/// @param _lzrelay The address of the Rollup contract
+	/// @param _lzRelay The address of the Rollup contract
 	/// @param _withdrawal The address that will have withdrawal privileges
 	/// @param _claim The address that will have claim privileges
 	/// @param _relayer The address that will have relayer privileges
@@ -166,18 +172,19 @@ contract Liquidity is
 		// ToDo: Remove Scroll Messenger for other chains
 		address _l1ScrollMessenger,
 		address _rollup,
-		address _lzrelay,
+		address _lzRelay,
 		address _withdrawal,
 		address _claim,
 		address _relayer,
 		address _contribution,
-		address[] memory initialERC20Tokens
+		address[] memory initialERC20Tokens,
+		uint32 _dstChainId
 	) external initializer {
 		if (
 			_admin == address(0) ||
 			_l1ScrollMessenger == address(0) ||
 			_rollup == address(0) ||
-			_lzrelay == address(0) ||
+			_lzRelay == address(0) ||
 			_withdrawal == address(0) ||
 			_claim == address(0) ||
 			_relayer == address(0) ||
@@ -198,7 +205,8 @@ contract Liquidity is
 		contribution = IContribution(_contribution);
 
 		rollup = _rollup;
-		lzrelay = _lzrelay;
+		lzRelay = _lzRelay;
+		dstChainId = _dstChainId;
 		// Set deployment time to the next day
 		deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
 	}
@@ -233,7 +241,7 @@ contract Liquidity is
 		if(_lzRelay == address(0)){
 			revert AddressZero();
 		}
-		lzrelay = _lzRelay;
+		lzRelay = _lzRelay;
 	}
 
 	/**
@@ -462,7 +470,6 @@ contract Liquidity is
 
 	function relayDeposits(
 		uint256 upToDepositId,
-		uint32 dstEid,
 		bytes calldata options
 	) external payable onlyRole(RELAYER) returns (MessagingReceipt memory) {
 		bytes32[] memory depositHashes = depositQueue.batchDequeue(
@@ -475,8 +482,8 @@ contract Liquidity is
 
 		bytes memory payload = abi.encode(upToDepositId, depositHashes);
 
-		MessagingReceipt memory receipt = ILzRelay(lzrelay).send{value: msg.value}(
-			dstEid,
+		MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
+			dstChainId,
 			payload,
 			options
 		);
