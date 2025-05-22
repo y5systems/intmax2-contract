@@ -105,6 +105,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 * @param _lzRelay The address of the Rollup contract
 	 * @param _contribution Address of the Contribution contract
 	 * @param _directWithdrawalTokenIndices Initial list of token indices for direct withdrawals
+	 * @param _scrollDstChainId The destination chain ID for ScrollMessenger
 	 */
 	function initialize(
 		address _admin,
