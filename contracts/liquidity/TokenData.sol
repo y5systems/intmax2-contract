@@ -39,7 +39,7 @@ abstract contract TokenData is Initializable, ITokenData {
 	 * @notice Counter for the number of registered tokens
 	 * @dev Used to keep track of the number of entries in the tokenInfoList mapping
 	 */
-	uint16 private tokenInfoCount = 0;
+	uint16 private tokenInfoCount;
 
 	/**
 	 * @notice Mapping from token address to token index for fungible tokens (NATIVE and ERC20)
