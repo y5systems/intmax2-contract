@@ -68,7 +68,7 @@ library DepositLimit {
 	) internal view returns (uint256 limit) {
 		// Extract the actual token index from the composite token index
 		// by taking only the lower 14 bits
-		uint32 tokenIndex = tokenIndex & 0x3FFF; // 0x3FFF = 16383 (2^14 - 1)
+		tokenIndex = tokenIndex & 0x3FFF; // 0x3FFF = 16383 (2^14 - 1)
 		
 		if (
 			tokenIndex != ETH_INDEX &&
