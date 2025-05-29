@@ -106,7 +106,8 @@ async function main() {
 			deployedL2Contracts.rollup,
 			env.SCROLL_SEPOLIA_LZ_RELAYER_ADDRESS,
 			deployedL2Contracts.l2Contribution,
-			[0, 1, 2, 3], // 0: eth, 1: intmax token, 2: wbtc, 3: usdc
+			534351, // scroll sepolia -> we can improve this later
+			[0, 1, 2, 3, 1384972288], // 0: eth, 1: intmax token, 2: wbtc, 3: usdc
 		)
 		await tx.wait()
 		console.log('Withdrawal initialized')

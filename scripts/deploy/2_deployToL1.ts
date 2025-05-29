@@ -128,6 +128,7 @@ async function main() {
 				env.RELAYER_ADDRESS,
 				deployedContracts.l1Contribution,
 				initialERC20Tokens,
+				534351, // scroll sepolia -> we can improve this later
 			],
 			{
 				kind: 'uups',
