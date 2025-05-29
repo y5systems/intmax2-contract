@@ -66,17 +66,21 @@ library DepositLimit {
 		uint32 tokenIndex,
 		uint256 deploymentTime
 	) internal view returns (uint256 limit) {
+		// Extract the actual token index from the composite token index
+		// by taking only the lower 14 bits
+		uint32 actualTokenIndex = tokenIndex & 0x3FFF; // 0x3FFF = 16383 (2^14 - 1)
+		
 		if (
-			tokenIndex != ETH_INDEX &&
-			tokenIndex != WBTC_INDEX &&
-			tokenIndex != USDC_INDEX
+			actualTokenIndex != ETH_INDEX &&
+			actualTokenIndex != WBTC_INDEX &&
+			actualTokenIndex != USDC_INDEX
 		) {
 			return type(uint256).max;
 		}
 
 		if (block.timestamp < deploymentTime) {
-			if (tokenIndex == ETH_INDEX) return ETH_LIMIT_0;
-			if (tokenIndex == WBTC_INDEX) return WBTC_LIMIT_0;
+			if (actualTokenIndex == ETH_INDEX) return ETH_LIMIT_0;
+			if (actualTokenIndex == WBTC_INDEX) return WBTC_LIMIT_0;
 			return USDC_LIMIT_0;
 		}
 
@@ -91,13 +95,13 @@ library DepositLimit {
 		else periodIndex = 0;
 
 		// Return limit based on token type and period
-		if (tokenIndex == ETH_INDEX) {
+		if (actualTokenIndex == ETH_INDEX) {
 			if (periodIndex == 0) return ETH_LIMIT_0;
 			if (periodIndex == 1) return ETH_LIMIT_1;
 			if (periodIndex == 2) return ETH_LIMIT_2;
 			if (periodIndex == 3) return ETH_LIMIT_3;
 			return ETH_LIMIT_4;
-		} else if (tokenIndex == WBTC_INDEX) {
+		} else if (actualTokenIndex == WBTC_INDEX) {
 			if (periodIndex == 0) return WBTC_LIMIT_0;
 			if (periodIndex == 1) return WBTC_LIMIT_1;
 			if (periodIndex == 2) return WBTC_LIMIT_2;
