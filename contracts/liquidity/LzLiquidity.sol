@@ -6,7 +6,7 @@ pragma solidity 0.8.27;
  * @notice This contract manages deposits and withdrawals of various token types using LayerZero protocol
  * @dev Handles deposit queuing, withdrawal processing, fee collection, and AML/eligibility checks
  */
-import {ILiquidity} from "./Interfaces/ILiquidity.sol";
+import {ILzLiquidity} from "./Interfaces/ILzLiquidity.sol";
 import {ILzRelay, MessagingReceipt} from "./Interfaces/ILzRelay.sol";
 import {IContribution} from "../contribution/IContribution.sol";
 import {IPermitter} from "../permitter/IPermitter.sol";
@@ -31,7 +31,7 @@ contract LzLiquidity is
     PausableUpgradeable,
     UUPSUpgradeable,
     AccessControlUpgradeable,
-    ILiquidity
+    ILzLiquidity
 {
     using SafeERC20 for IERC20;
     using ERC20CallOptionalLib for IERC20;
@@ -54,11 +54,11 @@ contract LzLiquidity is
     /// @dev which could exceed the L2 block gas limit and cause transaction failures.
     uint256 public constant RELAY_LIMIT = 450;
 
-	 /**
+     /**
      * @notice Destination chainId used by LZ Protocol
      * @dev Used to send cross-chain messages using LZ Protocol
      */
-    uint32 private immutable DST_CHAIN_ID;
+    uint32 private dstChainId;
 
     /// @notice Deployment time which is used to calculate the deposit limit
     uint256 public deploymentTime;
@@ -99,7 +99,7 @@ contract LzLiquidity is
     /// @notice Deposit information queue that tracks all deposits
     /// @dev Used to manage the order and state of deposits
     DepositQueueLib.DepositQueue private depositQueue;
-
+    
     /**
      * @notice Modifier to restrict access to only the withdrawal role through the LzRelay
      * @dev Ensures the function is called via LzRelay and sender has WITHDRAWAL role
@@ -186,7 +186,7 @@ contract LzLiquidity is
 
         rollup = _rollup;
         lzRelay = _lzRelay;
-        DST_CHAIN_ID = _dstChainId;
+        dstChainId = _dstChainId;
         // Set deployment time to the next day
         deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
     }
@@ -434,6 +434,11 @@ contract LzLiquidity is
         uint256 upToDepositId,
         bytes calldata options
     ) external payable onlyRole(RELAYER) returns (MessagingReceipt memory) {
+        // Validate that the destination chain ID is a supported Scroll chain
+        if (!_isScrollChain(dstChainId)) {
+            revert UnsupportedDestinationChain(dstChainId);
+        }
+        
         bytes32[] memory depositHashes = depositQueue.batchDequeue(
             upToDepositId
         );
@@ -442,10 +447,12 @@ contract LzLiquidity is
             revert RelayLimitExceeded();
         }
 
-        bytes memory payload = abi.encode(upToDepositId, depositHashes);
+        // Include current chain ID in payload for additional validation
+        uint32 currentChainId = uint32(block.chainid);
+        bytes memory payload = abi.encode(currentChainId, upToDepositId, depositHashes);
 
         MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
-            DST_CHAIN_ID,
+            dstChainId,
             payload,
             options
         );
@@ -542,6 +549,9 @@ contract LzLiquidity is
     function _processDirectWithdrawal(
         WithdrawalLib.Withdrawal memory withdrawal_
     ) internal {
+        // Validate the token belongs to the current chain
+        _validateTokenChainId(withdrawal_.tokenIndex);
+        
         TokenInfo memory tokenInfo = getTokenInfo(withdrawal_.tokenIndex);
         uint256 fee = _getWithdrawalFee(
             withdrawal_.tokenIndex,
@@ -636,6 +646,10 @@ contract LzLiquidity is
         bytes memory amlPermission,
         bytes memory eligibilityPermission
     ) private {
+        // Validate the token belongs to the current chain
+        _validateTokenChainId(tokenIndex);
+        
+        // Rest of your existing code
         _validateAmlPermission(encodedData, amlPermission);
         bool isEligible = _validateEligibilityPermission(
             encodedData,

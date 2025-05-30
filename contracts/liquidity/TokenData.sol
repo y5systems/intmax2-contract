@@ -30,6 +30,12 @@ abstract contract TokenData is Initializable, ITokenData {
 	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
 
 	/**
+	 * @notice Error thrown when a chain ID is out of the supported range
+	 */
+	uint32 private constant SCROLL_CHAIN_ID = 534352;
+	uint32 private constant SCROLL_SEPOLIA_CHAIN_ID = 534351;
+
+	/**
 	 * @notice Mapping of all token information stored in the system
 	 * @dev Index in this array corresponds to the token index used throughout the protocol
 	 */
@@ -202,5 +208,32 @@ abstract contract TokenData is Initializable, ITokenData {
 		uint32 tokenIndex
 	) public view returns (TokenInfo memory) {
 		return tokenInfoList[tokenIndex];
+	}
+
+	/**
+	 * @notice Validates that a token index belongs to the chain ID of this contract
+	 * @dev Extracts the chain ID from the token index and verifies it matches this chain
+	 * @param tokenIndex The token index to validate
+	 */
+	function _validateTokenChainId(uint32 tokenIndex) internal view {
+		// Extract the chain ID from the token index (upper 18 bits)
+		uint32 tokenChainId = tokenIndex >> 14;
+		
+		// Get current chain ID
+		uint32 currentChainId = uint32(block.chainid);
+		
+		if (tokenChainId != currentChainId) {
+			revert InvalidChainForToken(tokenIndex, currentChainId, tokenChainId);
+		}
+	}
+
+	/**
+	 * @notice Checks if a chain ID is a supported Scroll chain
+	 * @dev Only allows Scroll mainnet and Scroll Sepolia
+	 * @param _chainId The chain ID to check
+	 * @return bool True if the chain is a supported Scroll chain
+	 */
+	function _isScrollChain(uint32 _chainId) internal pure returns (bool) {
+		return (_chainId == SCROLL_CHAIN_ID || _chainId == SCROLL_SEPOLIA_CHAIN_ID);
 	}
 }
