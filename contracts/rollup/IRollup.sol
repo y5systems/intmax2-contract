@@ -120,6 +120,14 @@ interface IRollup {
 	);
 
 	/**
+	 * @notice Event emmitted when LzRelay address is updated
+	 * @dev Used to change the LzRelay address for cross-chain message handling
+	 * @param oldLzRelay The previous LzRelay address
+	 * @param newLzRelay The new LzRelay address
+	 */
+	event LzRelayUpdated(address indexed oldLzRelay, address indexed newLzRelay);
+
+	/**
 	 * @notice Struct to store block data to avoid stack too deep errors
 	 * @dev Used in the internal _postBlock function to organize block parameters
 	 * @param isRegistrationBlock Whether the block is a registration block (true) or non-registration block (false)

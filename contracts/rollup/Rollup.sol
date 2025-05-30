@@ -191,10 +191,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @param _lzRelay The new LayerZero Relayer contract address
 	 */
 	function setLzRelayer(address _lzRelay) external onlyOwner {
-		if(_lzRelay == address(0)){
-			revert AddressZero();
-		}
+		if(_lzRelay == address(0)) revert AddressZero();
+
+		address oldLzRelay = lzrelay;
 		lzrelay = _lzRelay;
+
+		emit LzRelayUpdated(oldLzRelay, _lzRelay);
 	}
 
 	function postRegistrationBlock(
@@ -344,6 +346,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		lastProcessedDepositId = _lastProcessedDepositId;
 		bytes32 newDepositTreeRoot = depositTree.getRoot();
 		depositTreeRoot = newDepositTreeRoot;
+
+		// ToDo: consider adding the path to track from where the deposit was processed
+		// we can use someting like 0 for scroll and 1 for lzrelay
 		emit DepositsProcessed(_lastProcessedDepositId, newDepositTreeRoot);
 	}
 
