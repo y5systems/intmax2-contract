@@ -20,6 +20,11 @@ interface IRollup {
 	error OnlyScrollMessenger();
 
 	/**
+	 * @notice Error thrown when the sender is not the LzRelay contract
+	 */
+	error OnlyLzRelay();
+
+	/**
 	 * @notice Error thrown when the xDomainMessageSender in ScrollMessenger is not the liquidity contract
 	 * @dev Used to ensure only the authorized Liquidity contract can send cross-chain messages
 	 */
