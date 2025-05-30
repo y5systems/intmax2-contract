@@ -12,6 +12,16 @@ interface ITokenData {
 	error TokenAddressIsZero();
 
 	/**
+	 * @notice Chain ID out of supported range
+	 */
+	error ChainIdOutOfRange();
+
+	/**
+	 * @notice Reached maximum number of tokens
+	 */
+	error TokenLimitReached();
+
+	/**
 	 * @notice Enum representing different token types supported by the protocol
 	 * @dev Used to determine how to handle each token type during deposits and withdrawals
 	 */

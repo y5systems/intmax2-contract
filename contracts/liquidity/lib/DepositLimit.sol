@@ -66,6 +66,10 @@ library DepositLimit {
 		uint32 tokenIndex,
 		uint256 deploymentTime
 	) internal view returns (uint256 limit) {
+		// Extract the actual token index from the composite token index
+		// by taking only the lower 14 bits
+		tokenIndex = tokenIndex & 0x3FFF; // 0x3FFF = 16383 (2^14 - 1)
+		
 		if (
 			tokenIndex != ETH_INDEX &&
 			tokenIndex != WBTC_INDEX &&

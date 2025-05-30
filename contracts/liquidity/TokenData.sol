@@ -18,10 +18,28 @@ abstract contract TokenData is Initializable, ITokenData {
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
 
 	/**
-	 * @notice Array of all token information stored in the system
+	 * @notice Maximum number of chains supported
+	 * @dev Used to calculate token index partitions across different chains
+	 */
+	uint32 private constant MAX_SUPPORTED_CHAINS = 2 ** 18;
+
+	/**
+	 * @notice Maximum number of tokens supported
+	 * @dev Used to calculate token index partitions across different chains
+	 */
+	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
+
+	/**
+	 * @notice Mapping of all token information stored in the system
 	 * @dev Index in this array corresponds to the token index used throughout the protocol
 	 */
-	TokenInfo[] private tokenInfoList;
+	mapping(uint32 => TokenInfo) private tokenInfoList;
+
+	/**
+	 * @notice Counter for the number of registered tokens
+	 * @dev Used to keep track of the number of entries in the tokenInfoList mapping
+	 */
+	uint16 private tokenInfoCount;
 
 	/**
 	 * @notice Mapping from token address to token index for fungible tokens (NATIVE and ERC20)
@@ -37,6 +55,12 @@ abstract contract TokenData is Initializable, ITokenData {
 		private nonFungibleTokenIndexMap;
 
 	/**
+	 * @notice Chain ID of the current blockchain
+	 * @dev Stored during initialization and used for token index creation
+	 */
+	 uint32 private chainId;
+
+	/**
 	 * @notice Initializes the TokenData contract with native token and initial ERC20 tokens
 	 * @dev Called during contract initialization to set up the token indices
 	 * @param initialERC20Tokens Array of ERC20 token addresses to initialize with
@@ -45,6 +69,12 @@ abstract contract TokenData is Initializable, ITokenData {
 	function __TokenData_init(
 		address[] memory initialERC20Tokens
 	) internal onlyInitializing {
+		// Store the chain ID to use for token index partitioning
+		if (block.chainid > MAX_SUPPORTED_CHAINS) {
+			revert ChainIdOutOfRange();
+		}
+		chainId = uint32(block.chainid);
+
 		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
 		for (uint256 i = 0; i < initialERC20Tokens.length; i++) {
 			_createTokenIndex(TokenType.ERC20, initialERC20Tokens[i], 0);
@@ -78,12 +108,12 @@ abstract contract TokenData is Initializable, ITokenData {
 
 	/**
 	 * @notice Retrieves the index of the native token (ETH)
-	 * @dev The native token is always at index 0 in the system
-	 * @return uint32 The index of the native token (always 0)
+	 * @dev The native token is the first token in each chain's partition
+	 * @return uint32 The index of the native token for this chain
 	 */
-	function getNativeTokenIndex() public pure returns (uint32) {
-		// fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = 0
-		return 0;
+	function getNativeTokenIndex() public view returns (uint32) {
+		// Use the fungibleTokenIndexMap to get the native token index for this chain
+		return fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS];
 	}
 
 	/**
@@ -99,8 +129,16 @@ abstract contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) private returns (uint32) {
-		uint32 tokenIndex = uint32(tokenInfoList.length);
-		tokenInfoList.push(TokenInfo(tokenType, tokenAddress, tokenId));
+		uint32 tokenIndex = chainId;
+		tokenIndex = (tokenIndex << 14) | (tokenInfoCount & 0x3FFF);
+
+		tokenInfoCount++;
+		if (tokenInfoCount >= MAX_SUPPORTED_TOKENS) {
+			revert TokenLimitReached();
+		}
+
+		tokenInfoList[tokenIndex] = (TokenInfo(tokenType, tokenAddress, tokenId));
+
 		if (tokenType == TokenType.NATIVE) {
 			fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = tokenIndex;
 			return tokenIndex;
@@ -132,8 +170,9 @@ abstract contract TokenData is Initializable, ITokenData {
 		uint256 tokenId
 	) public view returns (bool, uint32) {
 		if (tokenType == TokenType.NATIVE) {
-			// fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS] = 0
-			return (true, 0);
+			// Get the stored native token index for this chain
+			uint32 nativeIndex = fungibleTokenIndexMap[NATIVE_CURRENCY_ADDRESS];
+			return (true, nativeIndex);
 		}
 		if (tokenAddress == address(0)) {
 			revert TokenAddressIsZero();

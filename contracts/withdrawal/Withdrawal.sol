@@ -59,7 +59,17 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	address public liquidity;
 
 	/// @notice Address of the LzRelay contract
-	address public lzrelay;
+	/**
+	 * @notice Address of the LzRelay contract
+	 * @dev Used to send cross-chain messages using LZ Protocol
+	 */
+	address public lzRelay;
+
+	/**
+	 * @notice Destination chainId used by ScrollMessenger
+	 * @dev Used to check how to send cross-chain message
+	 */
+	uint32 private scrollDstChainId;
 
 	/**
 	 * @notice Reference to the Contribution contract
@@ -92,9 +102,10 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 * @param _withdrawalVerifier Address of the PLONK verifier for withdrawal proofs
 	 * @param _liquidity Address of the Liquidity contract on L1
 	 * @param _rollup Address of the Rollup contract
-	 * @param _lzrelay The address of the Rollup contract
+	 * @param _lzRelay The address of the Rollup contract
 	 * @param _contribution Address of the Contribution contract
 	 * @param _directWithdrawalTokenIndices Initial list of token indices for direct withdrawals
+	 * @param _scrollDstChainId The destination chain ID for ScrollMessenger
 	 */
 	function initialize(
 		address _admin,
@@ -102,8 +113,9 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _withdrawalVerifier,
 		address _liquidity,
 		address _rollup,
-		address _lzrelay,
+		address _lzRelay,
 		address _contribution,
+		uint32 _scrollDstChainId,
 		uint256[] memory _directWithdrawalTokenIndices
 	) external initializer {
 		if (
@@ -112,7 +124,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			_withdrawalVerifier == address(0) ||
 			_liquidity == address(0) ||
 			_rollup == address(0) ||
-			_lzrelay == address(0) ||
+			_lzRelay == address(0) ||
 			_contribution == address(0)
 		) {
 			revert AddressZero();
@@ -124,7 +136,8 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		rollup = IRollup(_rollup);
 		contribution = IContribution(_contribution);
 		liquidity = _liquidity;
-		lzrelay = _lzrelay;
+		lzRelay = _lzRelay;
+		scrollDstChainId = _scrollDstChainId;
 		innerAddDirectWithdrawalTokenIndices(_directWithdrawalTokenIndices);
 	}
 
@@ -150,7 +163,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		if(_lzRelay == address(0)){
 			revert AddressZero();
 		}
-		lzrelay = _lzRelay;
+		lzRelay = _lzRelay;
 	}
 
 	function submitWithdrawalProof(
@@ -159,7 +172,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			calldata publicInputs,
 		bytes calldata proof
 	) external {
-		submitWithdrawalProof(withdrawals, publicInputs, proof, 0, "");
+		submitWithdrawalProof(withdrawals, publicInputs, proof, "");
 	}
 
 	function submitWithdrawalProof(
@@ -167,14 +180,22 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
 			calldata publicInputs,
 		bytes calldata proof,
-		uint32 dstEid,
 		bytes memory options
 	) public payable {
 		_validateWithdrawalProof(withdrawals, publicInputs, proof);
 		uint256 directWithdrawalCounter = 0;
 		uint256 claimableWithdrawalCounter = 0;
 		bool[] memory isSkippedFlags = new bool[](withdrawals.length);
+		uint32 dstChainId = 0;
+
 		for (uint256 i = 0; i < withdrawals.length; i++) {
+			uint32 chainId = (withdrawals[i].tokenIndex >> 14) & 0x3FFFF;
+			if (dstChainId == 0) {
+				dstChainId = chainId;
+			} else if (dstChainId != chainId) {
+				revert WithdrawalChainMismatch();
+			}
+
 			ChainedWithdrawalLib.ChainedWithdrawal
 				memory chainedWithdrawal = withdrawals[i];
 			if (nullifiers[chainedWithdrawal.nullifier]) {
@@ -246,7 +267,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			}
 		}
 
-		if (dstEid == 0) {
+		if (dstChainId == scrollDstChainId) {
 			bytes memory message = abi.encodeWithSelector(
 				ILiquidity.processWithdrawals.selector,
 				directWithdrawals,
@@ -254,10 +275,14 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			);
 			_relayMessage(message);
 		} else {
-			_relayMessage(
+			bytes memory message = abi.encode(
 				directWithdrawals,
-				claimableWithdrawals,
-				dstEid,
+				claimableWithdrawals
+			);
+
+			_relayMessage(
+				message,
+				dstChainId,
 				options
 			);
 		}
@@ -292,30 +317,23 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	/**
 	 * @notice Relays a message to the Liquidity contract
 	 * @dev Uses the LzRelay to send a cross-chain message
-	 * @param directWithdrawals Array of direct withdrawals to relay
-	 * @param claimableWithdrawals Array of claimable withdrawals to relay
-	 * @param dstEid The endpoint ID of the destination chain.
+	 * @param message The encoded message to send to the Liquidity contract
+	 * @param dstChainId The id of the destination chain.
      * @param options Additional options for message execution.
 	 */
 	function _relayMessage(
-		WithdrawalLib.Withdrawal[] memory directWithdrawals,
-		bytes32[] memory claimableWithdrawals,
-		uint32 dstEid,
+		bytes memory message,
+		uint32 dstChainId,
 		bytes memory options
 	) private {
-		bytes memory payload = abi.encode(
-			directWithdrawals,
-			claimableWithdrawals
-		);
-
 		bytes memory data = abi.encodeWithSignature(
 			"send(uint32,bytes,bytes)",
-			dstEid,
-			payload,
+			dstChainId,
+			message,
 			options
 		);
 
-		(bool success, ) = lzrelay.call{value: msg.value}(
+		(bool success, ) = lzRelay.call{value: msg.value}(
 			data
 		);
 		if (!success) {

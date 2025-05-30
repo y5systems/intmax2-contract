@@ -336,13 +336,11 @@ interface ILiquidity {
 	 * @notice Relays deposits from destination chain to Intmax
 	 * @dev The msg.value is used to pay for the L2 gas
 	 * @param upToDepositId The upper limit of the Deposit ID that will be relayed
-	 * @param dstEid The endpoint ID of the destination chain.
      * @param options Additional options for message execution.
 	 * @return receipt An encoded `MessagingReceipt` struct containing details of the message sent.
 	 */
 	function relayDeposits(
 		uint256 upToDepositId,
-		uint32 dstEid,
 		bytes calldata options
 	) external payable returns(MessagingReceipt memory);
 

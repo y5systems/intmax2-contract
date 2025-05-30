@@ -68,6 +68,11 @@ interface IWithdrawal {
 	error CallToLzRelayFailed();
 
 	/**
+	 * @notice Error thrown when withdrawing to different chains
+	 */
+	error WithdrawalChainMismatch();
+
+	/**
 	 * @notice Emitted when new withdrawal verifier is set
 	 */
 	event VerifierUpdated(address indexed withdrawalVerifier);
@@ -133,7 +138,6 @@ interface IWithdrawal {
 	 * @param withdrawals Array of chained withdrawals to process
 	 * @param publicInputs Public inputs for the withdrawal proof verification
 	 * @param proof The zero-knowledge proof data
-	 * @param dstEid The endpoint ID of the destination chain.
      * @param options Additional options for message execution.
 	 */
 	function submitWithdrawalProof(
@@ -141,7 +145,6 @@ interface IWithdrawal {
 		WithdrawalProofPublicInputsLib.WithdrawalProofPublicInputs
 			calldata publicInputs,
 		bytes calldata proof,
-		uint32 dstEid,
 		bytes calldata options
 	) external payable;
 

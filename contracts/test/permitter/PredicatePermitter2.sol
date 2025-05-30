@@ -16,22 +16,22 @@ contract PredicatePermitter2 is PredicatePermitter {
 		// We need to set the contract itself as the liquidity address temporarily
 		address originalLiquidity = liquidity;
 		liquidity = address(this);
-		
+
 		// Now call permit directly - this will work because the contract is now set as liquidity
 		PredicateMessage memory predicateMessage = abi.decode(
 			permission,
 			(PredicateMessage)
 		);
 		bool latestPermitResult = _authorizeTransaction(
-			predicateMessage, 
-			encodedData, 
-			user, 
+			predicateMessage,
+			encodedData,
+			user,
 			value
 		);
-		
+
 		// Restore the original liquidity address
 		liquidity = originalLiquidity;
-		
+
 		emit LatestPermitResult(latestPermitResult);
 	}
 
