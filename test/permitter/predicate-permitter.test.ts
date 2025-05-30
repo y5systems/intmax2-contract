@@ -2,7 +2,10 @@ import { expect } from 'chai'
 import { ethers, upgrades } from 'hardhat'
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers'
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers'
-import { PredicateManagerTest, PredicatePermitter2 } from '../../typechain-types'
+import {
+	PredicateManagerTest,
+	PredicatePermitter2,
+} from '../../typechain-types'
 
 describe('PredicatePermitter', () => {
 	const POLICY = 'POLICY_ID'
@@ -27,7 +30,12 @@ describe('PredicatePermitter', () => {
 
 		const predicatePermitter = (await upgrades.deployProxy(
 			predicatePermitterFactory,
-			[admin.address, liquidityAddress, await predicateManager.getAddress(), POLICY],
+			[
+				admin.address,
+				liquidityAddress,
+				await predicateManager.getAddress(),
+				POLICY,
+			],
 			{ kind: 'uups', unsafeAllow: ['constructor'] },
 		)) as unknown as PredicatePermitter2
 
@@ -228,11 +236,14 @@ describe('PredicatePermitter', () => {
 			const { predicatePermitter, liquidityAddress } = await loadFixture(setup)
 
 			// Check that the liquidity address was set correctly
-			expect(await predicatePermitter.getLiquidityAddress()).to.equal(liquidityAddress)
+			expect(await predicatePermitter.getLiquidityAddress()).to.equal(
+				liquidityAddress,
+			)
 		})
 
 		it('should allow calls to permit from the liquidity address', async () => {
-			const { predicatePermitter, predicateManager, liquidityAddress } = await loadFixture(setup)
+			const { predicatePermitter, predicateManager, liquidityAddress } =
+				await loadFixture(setup)
 			const { user } = await getSigners()
 
 			await predicateManager.setResult(true)
@@ -309,16 +320,8 @@ describe('PredicatePermitter', () => {
 
 			// Direct call to permit should fail with NotLiquidity error
 			await expect(
-				predicatePermitter.permit(
-					user.address,
-					0n,
-					encodedData,
-					permission,
-				),
-			).to.be.revertedWithCustomError(
-				predicatePermitter,
-				'NotLiquidity',
-			)
+				predicatePermitter.permit(user.address, 0n, encodedData, permission),
+			).to.be.revertedWithCustomError(predicatePermitter, 'NotLiquidity')
 		})
 
 		it('should allow permit calls after changing liquidity address', async () => {
@@ -329,7 +332,9 @@ describe('PredicatePermitter', () => {
 			await predicatePermitter.setLiquidityAddress(user.address)
 
 			// Verify the liquidity address was updated
-			expect(await predicatePermitter.getLiquidityAddress()).to.equal(user.address)
+			expect(await predicatePermitter.getLiquidityAddress()).to.equal(
+				user.address,
+			)
 
 			await predicateManager.setResult(true)
 
@@ -360,12 +365,9 @@ describe('PredicatePermitter', () => {
 
 			// Now user should be able to call permit directly
 			// We need to await the transaction to complete
-			const tx = await predicatePermitter.connect(user).permit(
-				user.address,
-				0n,
-				encodedData,
-				permission,
-			)
+			const tx = await predicatePermitter
+				.connect(user)
+				.permit(user.address, 0n, encodedData, permission)
 
 			// Wait for the transaction to be mined
 			await tx.wait()
@@ -374,16 +376,10 @@ describe('PredicatePermitter', () => {
 
 			// Admin should not be able to call permit
 			await expect(
-				predicatePermitter.connect(admin).permit(
-					user.address,
-					0n,
-					encodedData,
-					permission,
-				),
-			).to.be.revertedWithCustomError(
-				predicatePermitter,
-				'NotLiquidity',
-			)
+				predicatePermitter
+					.connect(admin)
+					.permit(user.address, 0n, encodedData, permission),
+			).to.be.revertedWithCustomError(predicatePermitter, 'NotLiquidity')
 		})
 	})
 

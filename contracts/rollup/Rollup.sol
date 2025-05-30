@@ -206,10 +206,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			expiry: expiry,
 			builderAddress: _msgSender(),
 			builderNonce: builderNonce,
-			senderFlags: senderFlags,
-			aggregatedPublicKey: aggregatedPublicKey,
-			aggregatedSignature: aggregatedSignature,
-			messagePoint: messagePoint
+			senderFlags: senderFlags
 		});
 		uint256 length = senderPublicKeys.length;
 		if (length > NUM_SENDERS_IN_BLOCK) {
@@ -256,10 +253,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			expiry: expiry,
 			builderAddress: _msgSender(),
 			builderNonce: builderNonce,
-			senderFlags: senderFlags,
-			aggregatedPublicKey: aggregatedPublicKey,
-			aggregatedSignature: aggregatedSignature,
-			messagePoint: messagePoint
+			senderFlags: senderFlags
 		});
 		uint256 length = senderAccountIds.length;
 		if (length > FULL_ACCOUNT_IDS_BYTES) {
