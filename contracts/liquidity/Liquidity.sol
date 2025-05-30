@@ -7,7 +7,6 @@ pragma solidity 0.8.27;
  * @dev Handles deposit queuing, withdrawal processing, fee collection, and AML/eligibility checks.
  */
 import {ILiquidity} from "./Interfaces/ILiquidity.sol";
-import {ILzRelay, MessagingReceipt} from "./Interfaces/ILzRelay.sol";
 import {IRollup} from "../rollup/IRollup.sol";
 import {IContribution} from "../contribution/IContribution.sol";
 import {IPermitter} from "../permitter/IPermitter.sol";
@@ -68,15 +67,6 @@ contract Liquidity is
 	/// @notice Address of the Rollup contract
 	address public rollup;
 
-	/// @notice Address of the LzRelay contract
-	address public lzRelay;
-
-	/**
-	 * @notice Destination chainId used by LZ Protocol
-	 * @dev Used to send cross-chain messages using LZ Protocol
-	 */
-	uint32 private dstChainId;
-
 	/// @notice Address of the AML Permitter contract
 	/// @dev If not set, we skip AML check
 	IPermitter public amlPermitter;
@@ -110,19 +100,14 @@ contract Liquidity is
 	 * @dev Ensures the function is called via the L1ScrollMessenger and the cross-domain sender has the WITHDRAWAL role
 	 */
 	modifier onlyWithdrawalRole() {
-		if (_msgSender() != lzRelay) {
-			IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
-			if (_msgSender() != address(l1ScrollMessengerCached)) {
-				revert SenderIsNotScrollMessenger();
-			}
-			if (
-				!hasRole(
-					WITHDRAWAL,
-					l1ScrollMessengerCached.xDomainMessageSender()
-				)
-			) {
-				revert InvalidWithdrawalAddress();
-			}
+		IL1ScrollMessenger l1ScrollMessengerCached = l1ScrollMessenger;
+		if (_msgSender() != address(l1ScrollMessengerCached)) {
+			revert SenderIsNotScrollMessenger();
+		}
+		if (
+			!hasRole(WITHDRAWAL, l1ScrollMessengerCached.xDomainMessageSender())
+		) {
+			revert InvalidWithdrawalAddress();
 		}
 		_;
 	}
@@ -161,31 +146,25 @@ contract Liquidity is
 	/// @param _admin The address that will have admin privileges
 	/// @param _l1ScrollMessenger The address of the L1ScrollMessenger contract
 	/// @param _rollup The address of the Rollup contract
-	/// @param _lzRelay The address of the Rollup contract
 	/// @param _withdrawal The address that will have withdrawal privileges
 	/// @param _claim The address that will have claim privileges
 	/// @param _relayer The address that will have relayer privileges
 	/// @param _contribution The address of the Contribution contract
 	/// @param initialERC20Tokens Initial list of ERC20 token addresses to support
-	/// @param _dstChainId The destination chain ID for cross-chain messaging
 	function initialize(
 		address _admin,
-		// ToDo: Remove Scroll Messenger for other chains
 		address _l1ScrollMessenger,
 		address _rollup,
-		address _lzRelay,
 		address _withdrawal,
 		address _claim,
 		address _relayer,
 		address _contribution,
-		address[] memory initialERC20Tokens,
-		uint32 _dstChainId
+		address[] memory initialERC20Tokens
 	) external initializer {
 		if (
 			_admin == address(0) ||
 			_l1ScrollMessenger == address(0) ||
 			_rollup == address(0) ||
-			_lzRelay == address(0) ||
 			_withdrawal == address(0) ||
 			_claim == address(0) ||
 			_relayer == address(0) ||
@@ -206,16 +185,8 @@ contract Liquidity is
 		contribution = IContribution(_contribution);
 
 		rollup = _rollup;
-		lzRelay = _lzRelay;
-		dstChainId = _dstChainId;
 		// Set deployment time to the next day
 		deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
-	}
-
-	// ToDo: Remove this function in production
-	/* HELPER FUNCTION - SHOULD BE REMOVED IN PRODUCTION */
-	function simulateBatchDequeue(uint256 upToId) external view returns (bytes32[] memory) {
-		return depositQueue.batchDequeueView(upToId);
 	}
 
 	/**
@@ -231,18 +202,6 @@ contract Liquidity is
 		amlPermitter = IPermitter(_amlPermitter);
 		eligibilityPermitter = IPermitter(_eligibilityPermitter);
 		emit PermitterSet(_amlPermitter, _eligibilityPermitter);
-	}
-
-	/**
-	 * @notice Updates the LayerZero Relayer contract address
-	 * @dev Only callable by the admin role
-	 * @param _lzRelay The new LayerZero Relayer contract address
-	 */
-	function setLzRelayer(address _lzRelay) external onlyRole(DEFAULT_ADMIN_ROLE) {
-		if(_lzRelay == address(0)){
-			revert AddressZero();
-		}
-		lzRelay = _lzRelay;
 	}
 
 	/**
@@ -467,31 +426,6 @@ contract Liquidity is
 			_msgSender()
 		);
 		emit DepositsRelayed(upToDepositId, gasLimit, message);
-	}
-
-	function relayDeposits(
-		uint256 upToDepositId,
-		bytes calldata options
-	) external payable onlyRole(RELAYER) returns (MessagingReceipt memory) {
-		bytes32[] memory depositHashes = depositQueue.batchDequeue(
-			upToDepositId
-		);
-
-		if (depositHashes.length > RELAY_LIMIT) {
-			revert RelayLimitExceeded();
-		}
-
-		bytes memory payload = abi.encode(upToDepositId, depositHashes);
-
-		MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
-			dstChainId,
-			payload,
-			options
-		);
-
-		emit DepositsRelayed(upToDepositId, 0, payload);
-
-		return receipt;
 	}
 
 	function claimWithdrawals(
@@ -755,11 +689,12 @@ contract Liquidity is
 		bytes memory encodedData,
 		bytes memory amlPermission
 	) private {
-		if (address(amlPermitter) == address(0)) {
+		IPermitter amlPermitterCached = amlPermitter;
+		if (address(amlPermitterCached) == address(0)) {
 			// if aml permitter is not set, skip aml check
 			return;
 		}
-		bool result = amlPermitter.permit(
+		bool result = amlPermitterCached.permit(
 			_msgSender(),
 			msg.value,
 			encodedData,
@@ -782,7 +717,8 @@ contract Liquidity is
 		bytes memory encodedData,
 		bytes memory eligibilityPermission
 	) private returns (bool) {
-		if (address(eligibilityPermitter) == address(0)) {
+		IPermitter eligibilityPermitterCached = eligibilityPermitter;
+		if (address(eligibilityPermitterCached) == address(0)) {
 			// if eligibility permitter is not set, skip eligibility check
 			return true;
 		}
@@ -790,7 +726,7 @@ contract Liquidity is
 			// if eligibility permitter is set but permission doesn't returned, return false.
 			return false;
 		}
-		bool result = eligibilityPermitter.permit(
+		bool result = eligibilityPermitterCached.permit(
 			_msgSender(),
 			msg.value,
 			encodedData,
