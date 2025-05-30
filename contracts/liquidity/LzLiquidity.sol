@@ -162,6 +162,10 @@ contract LzLiquidity is
         address[] memory initialERC20Tokens,
         uint32 _dstChainId
     ) external initializer {
+        if (!_isScrollChain(_dstChainId)) {
+            revert UnsupportedDestinationChain(_dstChainId);
+        }
+        
         if (
             _admin == address(0) ||
             _rollup == address(0) ||
@@ -434,11 +438,6 @@ contract LzLiquidity is
         uint256 upToDepositId,
         bytes calldata options
     ) external payable onlyRole(RELAYER) returns (MessagingReceipt memory) {
-        // Validate that the destination chain ID is a supported Scroll chain
-        if (!_isScrollChain(dstChainId)) {
-            revert UnsupportedDestinationChain(dstChainId);
-        }
-        
         bytes32[] memory depositHashes = depositQueue.batchDequeue(
             upToDepositId
         );
@@ -549,7 +548,6 @@ contract LzLiquidity is
     function _processDirectWithdrawal(
         WithdrawalLib.Withdrawal memory withdrawal_
     ) internal {
-        // Validate the token belongs to the current chain
         _validateTokenChainId(withdrawal_.tokenIndex);
         
         TokenInfo memory tokenInfo = getTokenInfo(withdrawal_.tokenIndex);
