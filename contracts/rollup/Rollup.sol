@@ -104,6 +104,17 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	uint32 public depositIndex;
 
 	/**
+	 * @notice Modifier to restrict function access to only the LzRelay contract
+	 * @dev Verifies that the message sender is the LzRelay contract
+	 */
+	modifier onlyLzRelay() {
+		if (_msgSender() != lzrelay) {
+			revert OnlyLzRelay();
+		}
+		_;
+	}
+
+	/**
 	 * @notice Modifier to restrict function access to the Liquidity contract via ScrollMessenger or LzRelay
 	 * @dev Verifies that the message sender is the ScrollMessenger and the xDomain sender is the Liquidity contract
 	 * or the LzRelay contract
@@ -180,10 +191,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @param _lzRelay The new LayerZero Relayer contract address
 	 */
 	function setLzRelayer(address _lzRelay) external onlyOwner {
-		if(_lzRelay == address(0)){
-			revert AddressZero();
-		}
+		if(_lzRelay == address(0)) revert AddressZero();
+
+		address oldLzRelay = lzrelay;
 		lzrelay = _lzRelay;
+
+		emit LzRelayUpdated(oldLzRelay, _lzRelay);
 	}
 
 	function postRegistrationBlock(
@@ -281,10 +294,42 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		);
 	}
 
+	/**
+	 * @notice Process deposits received through ScrollMessenger
+	 * @dev Can only be called by the Liquidity contract via ScrollMessenger
+	 * @param _lastProcessedDepositId The ID of the last processed deposit
+	 * @param depositHashes Array of deposit leaf hashes to insert into the deposit tree
+	 */
 	function processDeposits(
 		uint256 _lastProcessedDepositId,
 		bytes32[] calldata depositHashes
 	) external onlyLiquidityContract {
+		_processDeposits(_lastProcessedDepositId, depositHashes);
+	}
+
+	/**
+	 * @notice Process deposits received through LzRelay
+	 * @dev Can only be called by the LzRelay contract
+	 * @param _lastProcessedDepositId The ID of the last processed deposit
+	 * @param depositHashes Array of deposit leaf hashes to insert into the deposit tree
+	 */
+	function processLzDeposits(
+		uint256 _lastProcessedDepositId,
+		bytes32[] calldata depositHashes
+	) external onlyLzRelay {
+		_processDeposits(_lastProcessedDepositId, depositHashes);
+	}
+
+	/**
+	 * @notice Internal function to process deposits
+	 * @dev Updates the deposit tree and emits events
+	 * @param _lastProcessedDepositId The ID of the last processed deposit
+	 * @param depositHashes Array of deposit leaf hashes to insert into the deposit tree
+	 */
+	function _processDeposits(
+		uint256 _lastProcessedDepositId,
+		bytes32[] calldata depositHashes
+	) private {
 		uint32 depositIndexCached = depositIndex;
 		for (uint256 i = 0; i < depositHashes.length; i++) {
 			depositTree.deposit(depositHashes[i]);
@@ -295,6 +340,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		lastProcessedDepositId = _lastProcessedDepositId;
 		bytes32 newDepositTreeRoot = depositTree.getRoot();
 		depositTreeRoot = newDepositTreeRoot;
+
+		// ToDo: consider adding the path to track from where the deposit was processed
+		// we can use someting like 0 for scroll and 1 for lzrelay
 		emit DepositsProcessed(_lastProcessedDepositId, newDepositTreeRoot);
 	}
 

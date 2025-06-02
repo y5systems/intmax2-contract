@@ -22,6 +22,12 @@ interface ITokenData {
 	error TokenLimitReached();
 
 	/**
+	 * @notice Invalid chain ID for the token
+	 */
+	error InvalidChainForToken(uint32 tokenIndex, uint32 expectedChainId, uint32 actualChainId);
+
+
+	/**
 	 * @notice Enum representing different token types supported by the protocol
 	 * @dev Used to determine how to handle each token type during deposits and withdrawals
 	 */

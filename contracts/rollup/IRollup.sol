@@ -20,6 +20,11 @@ interface IRollup {
 	error OnlyScrollMessenger();
 
 	/**
+	 * @notice Error thrown when the sender is not the LzRelay contract
+	 */
+	error OnlyLzRelay();
+
+	/**
 	 * @notice Error thrown when the xDomainMessageSender in ScrollMessenger is not the liquidity contract
 	 * @dev Used to ensure only the authorized Liquidity contract can send cross-chain messages
 	 */
@@ -113,6 +118,14 @@ interface IRollup {
 		bytes32 depositTreeRoot,
 		bytes32 signatureHash
 	);
+
+	/**
+	 * @notice Event emmitted when LzRelay address is updated
+	 * @dev Used to change the LzRelay address for cross-chain message handling
+	 * @param oldLzRelay The previous LzRelay address
+	 * @param newLzRelay The new LzRelay address
+	 */
+	event LzRelayUpdated(address indexed oldLzRelay, address indexed newLzRelay);
 
 	/**
 	 * @notice Struct to store block data to avoid stack too deep errors
