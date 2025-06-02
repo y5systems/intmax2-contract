@@ -548,7 +548,6 @@ contract LzLiquidity is
     function _processDirectWithdrawal(
         WithdrawalLib.Withdrawal memory withdrawal_
     ) internal {
-        _validateTokenChainId(withdrawal_.tokenIndex);
         
         TokenInfo memory tokenInfo = getTokenInfo(withdrawal_.tokenIndex);
         uint256 fee = _getWithdrawalFee(
@@ -647,7 +646,6 @@ contract LzLiquidity is
         // Validate the token belongs to the current chain
         _validateTokenChainId(tokenIndex);
         
-        // Rest of your existing code
         _validateAmlPermission(encodedData, amlPermission);
         bool isEligible = _validateEligibilityPermission(
             encodedData,
