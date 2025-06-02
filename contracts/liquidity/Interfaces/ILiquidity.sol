@@ -95,6 +95,12 @@ interface ILiquidity {
 	error WithdrawalFeeRatioExceedsLimit();
 
 	/**
+     * @notice Error thrown when an unsupported destination chain is specified
+     * @param chainId The chain ID that was unsupported
+     */
+    error UnsupportedDestinationChain(uint32 chainId);
+
+	/**
 	 * @notice Event emitted when a deposit is made
 	 * @param depositId The unique identifier for the deposit
 	 * @param sender The address that made the deposit
