@@ -446,9 +446,7 @@ contract LzLiquidity is
             revert RelayLimitExceeded();
         }
 
-        // Include current chain ID in payload for additional validation
-        uint32 currentChainId = uint32(block.chainid);
-        bytes memory payload = abi.encode(currentChainId, upToDepositId, depositHashes);
+        bytes memory payload = abi.encode(upToDepositId, depositHashes);
 
         MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
             dstChainId,
