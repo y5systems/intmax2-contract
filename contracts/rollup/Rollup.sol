@@ -120,14 +120,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * or the LzRelay contract
 	 */
 	modifier onlyLiquidityContract() {
-		if (_msgSender() != lzrelay) {
-			IL2ScrollMessenger l2ScrollMessengerCached = l2ScrollMessenger;
-			if (_msgSender() != address(l2ScrollMessengerCached)) {
-				revert OnlyScrollMessenger();
-			}
-			if (liquidity != l2ScrollMessengerCached.xDomainMessageSender()) {
-				revert OnlyLiquidity();
-			}
+		IL2ScrollMessenger l2ScrollMessengerCached = l2ScrollMessenger;
+		if (_msgSender() != address(l2ScrollMessengerCached)) {
+			revert OnlyScrollMessenger();
+		}
+		if (liquidity != l2ScrollMessengerCached.xDomainMessageSender()) {
+			revert OnlyLiquidity();
 		}
 		_;
 	}
@@ -341,8 +339,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32 newDepositTreeRoot = depositTree.getRoot();
 		depositTreeRoot = newDepositTreeRoot;
 
-		// ToDo: consider adding the path to track from where the deposit was processed
-		// we can use someting like 0 for scroll and 1 for lzrelay
 		emit DepositsProcessed(_lastProcessedDepositId, newDepositTreeRoot);
 	}
 
