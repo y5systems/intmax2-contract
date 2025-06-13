@@ -135,8 +135,7 @@ abstract contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) private returns (uint32) {
-		uint32 tokenIndex = chainId;
-		tokenIndex = (tokenIndex << 14) | (tokenInfoCount & 0x3FFF);
+		uint32 tokenIndex = (chainId << 24) | (tokenInfoCount & 0xFFFFFF);
 
 		tokenInfoCount++;
 		if (tokenInfoCount >= MAX_SUPPORTED_TOKENS) {
@@ -216,8 +215,8 @@ abstract contract TokenData is Initializable, ITokenData {
 	 * @param tokenIndex The token index to validate
 	 */
 	function _validateTokenChainId(uint32 tokenIndex) internal view {
-		// Extract the chain ID from the token index (upper 18 bits)
-		uint32 tokenChainId = tokenIndex >> 14;
+		// Extract the chain ID from the token index (upper 24 bits)
+		uint32 tokenChainId = tokenIndex >> 24;
 		
 		// Get current chain ID
 		uint32 currentChainId = uint32(block.chainid);
