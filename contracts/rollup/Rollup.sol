@@ -39,11 +39,9 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @notice Chain ID constants for Ethereum networks.
 	 * @dev Used to validate against token-index chainId.
 	 * 
-	 * ETHEREUM_MAINNET_CHAIN_ID - Chain ID for Ethereum Mainnet (1)
-	 * ETHEREUM_SEPOLIA_CHAIN_ID - Chain ID for Ethereum Sepolia Testnet (11155111)
+	 * ETHEREUM_CHAIN_INDEX - Chain Index for Ethereum networks.
 	 */
-	uint32 private constant ETHEREUM_MAINNET_CHAIN_ID = 1;
-	uint32 private constant ETHEREUM_SEPOLIA_CHAIN_ID = 11155111;
+	uint8 private constant ETHEREUM_CHAIN_INDEX = 0;
 
 	/**
 	 * @notice Address of the Liquidity contract on L1
@@ -348,12 +346,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		bytes32[] memory depositHashes = new bytes32[](deposits.length);
 		
 		for (uint256 i = 0; i < deposits.length; i++) {
-			// Extract chain ID from token index (upper 18 bits)
-			uint32 chainId = deposits[i].tokenIndex >> 24;
+			// Extract chain index from token index (upper 8 bits)
+			uint8 chainIndex = uint8(deposits[i].tokenIndex >> 24);
 			
-			// For LayerZero, reject Ethereum mainnet and Sepolia tokens
-			if (chainId == ETHEREUM_MAINNET_CHAIN_ID || chainId == ETHEREUM_SEPOLIA_CHAIN_ID) {
-				revert InvalidTokenForLayerZero(deposits[i].tokenIndex, chainId);
+			// For LayerZero, reject Ethereum tokens
+			if (chainIndex == ETHEREUM_CHAIN_INDEX) {
+				revert InvalidTokenForLayerZero(deposits[i].tokenIndex, chainIndex);
 			}
 			
 			// Compute deposit hash
