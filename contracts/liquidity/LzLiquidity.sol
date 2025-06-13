@@ -55,10 +55,10 @@ contract LzLiquidity is
     uint256 public constant RELAY_LIMIT = 450;
 
      /**
-     * @notice Destination chainId used by LZ Protocol
+     * @notice Destination chain index used by LZRelay
      * @dev Used to send cross-chain messages using LZ Protocol
      */
-    uint32 private dstChainId;
+    uint32 private dstChainIndex;
 
     /// @notice Deployment time which is used to calculate the deposit limit
     uint256 public deploymentTime;
@@ -150,7 +150,7 @@ contract LzLiquidity is
     /// @param _relayer The address that will have relayer privileges
     /// @param _contribution The address of the Contribution contract
     /// @param initialERC20Tokens Initial list of ERC20 token addresses to support
-    /// @param _dstChainId The destination chain ID for LayerZero cross-chain messaging
+    /// @param _dstChainIndex The destination chain ID for LayerZero cross-chain messaging
     function initialize(
         address _admin,
         address _rollup,
@@ -160,10 +160,10 @@ contract LzLiquidity is
         address _relayer,
         address _contribution,
         address[] memory initialERC20Tokens,
-        uint32 _dstChainId
+        uint8 _dstChainIndex
     ) external initializer {
-        if (!_isScrollChain(_dstChainId)) {
-            revert UnsupportedDestinationChain(_dstChainId);
+        if (!_isScrollChain(_dstChainIndex)) {
+            revert UnsupportedDestinationChain(_dstChainIndex);
         }
         
         if (
@@ -183,14 +183,14 @@ contract LzLiquidity is
         _grantRole(WITHDRAWAL, _claim);
         __UUPSUpgradeable_init();
         __AccessControl_init();
-        __TokenData_init(initialERC20Tokens);
+        __TokenData_init(initialERC20Tokens, _dstChainIndex);
         __Pausable_init();
         depositQueue.initialize();
         contribution = IContribution(_contribution);
 
         rollup = _rollup;
         lzRelay = _lzRelay;
-        dstChainId = _dstChainId;
+        dstChainIndex = _dstChainIndex;
         // Set deployment time to the next day
         deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
     }
@@ -448,7 +448,7 @@ contract LzLiquidity is
             // Reconstruct full deposit struct from stored data
             deposits[depositCount] = DepositLib.Deposit({
                 depositor: data.sender,
-                recipientSaltHash: data.recipientSaltHash,
+                recipientSaltHash: data.receiptSaltHash,
                 amount: data.amount,
                 tokenIndex: data.tokenIndex,
                 isEligible: data.isEligible
@@ -467,7 +467,7 @@ contract LzLiquidity is
         bytes memory payload = abi.encode(upToDepositId, deposits);
         
         MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
-            dstChainId,
+            dstChainIndex,
             payload,
             options
         );
