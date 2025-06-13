@@ -326,27 +326,12 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @notice Process deposits received through ScrollMessenger
 	 * @dev Can only be called by the Liquidity contract via ScrollMessenger
 	 * @param _lastProcessedDepositId The ID of the last processed deposit
-	 * @param deposits Array of full deposit structs to process
+	 * @param depositHashes Array of deposit leaf hashes to insert into the deposit tree
 	 */
 	function processDeposits(
 		uint256 _lastProcessedDepositId,
-		DepositLib.Deposit[] calldata deposits
+		bytes32[] calldata depositHashes
 	) external onlyLiquidityContract {
-		bytes32[] memory depositHashes = new bytes32[](deposits.length);
-		
-		for (uint256 i = 0; i < deposits.length; i++) {
-			// Extract chain ID from token index (upper 18 bits)
-			uint32 chainId = deposits[i].tokenIndex >> 24;
-			
-			// For Scroll, only allow Ethereum mainnet and Sepolia tokens
-			if (chainId != ETHEREUM_MAINNET_CHAIN_ID && chainId != ETHEREUM_SEPOLIA_CHAIN_ID) {
-				revert InvalidTokenForScroll(deposits[i].tokenIndex, chainId);
-			}
-			
-			// Compute deposit hash
-			depositHashes[i] = deposits[i].getHash();
-		}
-		
 		_processDeposits(_lastProcessedDepositId, depositHashes);
 	}
 
@@ -372,7 +357,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 			}
 			
 			// Compute deposit hash
-			depositHashes[i] = deposits[i].getHash();
+			depositHashes[i] = DepositLib.getHash(deposits[i]);
 		}
 		
 		_processDeposits(_lastProcessedDepositId, depositHashes);
@@ -386,7 +371,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 */
 	function _processDeposits(
 		uint256 _lastProcessedDepositId,
-		bytes32[] calldata depositHashes
+		bytes32[] memory depositHashes
 	) private {
 		uint32 depositIndexCached = depositIndex;
 		for (uint256 i = 0; i < depositHashes.length; i++) {
