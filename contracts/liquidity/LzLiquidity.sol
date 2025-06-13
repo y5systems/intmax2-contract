@@ -99,6 +99,8 @@ contract LzLiquidity is
     /// @notice Deposit information queue that tracks all deposits
     /// @dev Used to manage the order and state of deposits
     DepositQueueLib.DepositQueue private depositQueue;
+
+    mapping(bytes32 => DepositLib.Deposit) private depositDetails;
     
     /**
      * @notice Modifier to restrict access to only the withdrawal role through the LzRelay
@@ -445,14 +447,7 @@ contract LzLiquidity is
             DepositQueueLib.DepositData memory data = depositQueue.depositData[i];
             if (data.sender == address(0)) continue;
             
-            // Reconstruct full deposit struct from stored data
-            deposits[depositCount] = DepositLib.Deposit({
-                depositor: data.sender,
-                recipientSaltHash: data.receiptSaltHash,
-                amount: data.amount,
-                tokenIndex: data.tokenIndex,
-                isEligible: data.isEligible
-            });
+            deposits[depositCount] = depositDetails[data.depositHash];
             depositCount++;
         }
         
@@ -674,14 +669,14 @@ contract LzLiquidity is
         if (amount > depositLimit) {
             revert DepositAmountExceedsLimit(amount, depositLimit);
         }
-        bytes32 depositHash = DepositLib
-            .Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible)
-            .getHash();
+        DepositLib.Deposit memory deposit = DepositLib.Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible);
+        bytes32 depositHash = DepositLib.getHash(deposit);
         if (doesDepositHashExist[depositHash]) {
             revert DepositHashAlreadyExists(depositHash);
         }
         doesDepositHashExist[depositHash] = true;
         uint256 depositId = depositQueue.enqueue(depositHash, sender);
+        depositDetails[depositHash] = deposit;
         emit Deposited(
             depositId,
             sender,
