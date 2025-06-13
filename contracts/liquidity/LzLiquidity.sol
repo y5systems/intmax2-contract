@@ -428,8 +428,8 @@ contract LzLiquidity is
     }
 
     /**
-     * @notice Relays deposits from source chain to destination chain using LayerZero
-     * @dev Only callable by addresses with the RELAYER role
+     * @notice Relays deposits to the Intmax rollup via LayerZero
+     * @dev The msg.value is used to pay for the LayerZero message fees
      * @param upToDepositId The upper limit of the Deposit ID that will be relayed
      * @param options Additional options for LayerZero message execution
      * @return receipt A MessagingReceipt struct containing details of the message sent
@@ -438,24 +438,42 @@ contract LzLiquidity is
         uint256 upToDepositId,
         bytes calldata options
     ) external payable onlyRole(RELAYER) returns (MessagingReceipt memory) {
-        bytes32[] memory depositHashes = depositQueue.batchDequeue(
-            upToDepositId
-        );
-
-        if (depositHashes.length > RELAY_LIMIT) {
+        DepositLib.Deposit[] memory deposits = new DepositLib.Deposit[](upToDepositId - depositQueue.front + 1);
+        uint256 depositCount = 0;
+        
+        for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
+            DepositQueueLib.DepositData memory data = depositQueue.depositData[i];
+            if (data.sender == address(0)) continue;
+            
+            // Reconstruct full deposit struct from stored data
+            deposits[depositCount] = DepositLib.Deposit({
+                depositor: data.sender,
+                recipientSaltHash: data.recipientSaltHash,
+                amount: data.amount,
+                tokenIndex: data.tokenIndex,
+                isEligible: data.isEligible
+            });
+            depositCount++;
+        }
+        
+        assembly {
+            mstore(deposits, depositCount)
+        }
+        
+        if (deposits.length > RELAY_LIMIT) {
             revert RelayLimitExceeded();
         }
-
-        bytes memory payload = abi.encode(upToDepositId, depositHashes);
-
+        
+        bytes memory payload = abi.encode(upToDepositId, deposits);
+        
         MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
             dstChainId,
             payload,
             options
         );
-
+        
         emit DepositsRelayed(upToDepositId, 0, payload);
-
+        
         return receipt;
     }
 

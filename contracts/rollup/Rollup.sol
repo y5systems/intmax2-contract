@@ -12,6 +12,7 @@ import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
 import {BlockHashLib} from "./lib/BlockHashLib.sol";
 import {PairingLib} from "./lib/PairingLib.sol";
 import {RateLimiterLib} from "./lib/RateLimiterLib.sol";
+import {DepositLib} from "../common/DepositLib.sol";
 
 /**
  * @title Rollup
@@ -33,6 +34,16 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @dev Each account ID uses 5 bytes, so 128 senders require 640 bytes
 	 */
 	uint256 public constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
+
+	/**
+	 * @notice Chain ID constants for Ethereum networks.
+	 * @dev Used to validate against token-index chainId.
+	 * 
+	 * ETHEREUM_MAINNET_CHAIN_ID - Chain ID for Ethereum Mainnet (1)
+	 * ETHEREUM_SEPOLIA_CHAIN_ID - Chain ID for Ethereum Sepolia Testnet (11155111)
+	 */
+	uint32 private constant ETHEREUM_MAINNET_CHAIN_ID = 1;
+	uint32 private constant ETHEREUM_SEPOLIA_CHAIN_ID = 11155111;
 
 	/**
 	 * @notice Address of the Liquidity contract on L1
@@ -102,6 +113,25 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @dev Incremented for each processed deposit
 	 */
 	uint32 public depositIndex;
+
+	/**
+	 * @notice Error thrown when a token from Ethereum or Sepolia is attempted to be processed via LayerZero
+	 * @param tokenIndex The token index that was rejected
+	 * @param chainId The extracted chain ID that was rejected
+	 */
+	error InvalidTokenForLayerZero(uint32 tokenIndex, uint32 chainId);
+
+	/**
+	 * @notice Error thrown when a token not from Ethereum or Sepolia is attempted to be processed via Scroll
+	 * @param tokenIndex The token index that was rejected
+	 * @param chainId The extracted chain ID that was rejected
+	 */
+	error InvalidTokenForScroll(uint32 tokenIndex, uint32 chainId);
+
+	/**
+	 * @notice Error thrown when array lengths don't match
+	 */
+	error ArrayLengthMismatch();
 
 	/**
 	 * @notice Modifier to restrict function access to only the LzRelay contract
@@ -296,12 +326,27 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @notice Process deposits received through ScrollMessenger
 	 * @dev Can only be called by the Liquidity contract via ScrollMessenger
 	 * @param _lastProcessedDepositId The ID of the last processed deposit
-	 * @param depositHashes Array of deposit leaf hashes to insert into the deposit tree
+	 * @param deposits Array of full deposit structs to process
 	 */
 	function processDeposits(
 		uint256 _lastProcessedDepositId,
-		bytes32[] calldata depositHashes
+		DepositLib.Deposit[] calldata deposits
 	) external onlyLiquidityContract {
+		bytes32[] memory depositHashes = new bytes32[](deposits.length);
+		
+		for (uint256 i = 0; i < deposits.length; i++) {
+			// Extract chain ID from token index (upper 18 bits)
+			uint32 chainId = deposits[i].tokenIndex >> 14;
+			
+			// For Scroll, only allow Ethereum mainnet and Sepolia tokens
+			if (chainId != ETHEREUM_MAINNET_CHAIN_ID && chainId != ETHEREUM_SEPOLIA_CHAIN_ID) {
+				revert InvalidTokenForScroll(deposits[i].tokenIndex, chainId);
+			}
+			
+			// Compute deposit hash
+			depositHashes[i] = deposits[i].getHash();
+		}
+		
 		_processDeposits(_lastProcessedDepositId, depositHashes);
 	}
 
@@ -309,12 +354,27 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @notice Process deposits received through LzRelay
 	 * @dev Can only be called by the LzRelay contract
 	 * @param _lastProcessedDepositId The ID of the last processed deposit
-	 * @param depositHashes Array of deposit leaf hashes to insert into the deposit tree
+	 * @param deposits Array of full deposit structs to process
 	 */
 	function processLzDeposits(
 		uint256 _lastProcessedDepositId,
-		bytes32[] calldata depositHashes
+		DepositLib.Deposit[] calldata deposits
 	) external onlyLzRelay {
+		bytes32[] memory depositHashes = new bytes32[](deposits.length);
+		
+		for (uint256 i = 0; i < deposits.length; i++) {
+			// Extract chain ID from token index (upper 18 bits)
+			uint32 chainId = deposits[i].tokenIndex >> 14;
+			
+			// For LayerZero, reject Ethereum mainnet and Sepolia tokens
+			if (chainId == ETHEREUM_MAINNET_CHAIN_ID || chainId == ETHEREUM_SEPOLIA_CHAIN_ID) {
+				revert InvalidTokenForLayerZero(deposits[i].tokenIndex, chainId);
+			}
+			
+			// Compute deposit hash
+			depositHashes[i] = deposits[i].getHash();
+		}
+		
 		_processDeposits(_lastProcessedDepositId, depositHashes);
 	}
 
