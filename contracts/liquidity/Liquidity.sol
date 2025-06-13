@@ -151,7 +151,6 @@ contract Liquidity is
 	/// @param _relayer The address that will have relayer privileges
 	/// @param _contribution The address of the Contribution contract
 	/// @param initialERC20Tokens Initial list of ERC20 token addresses to support
-	/// @param _dstChainId The destination chain ID for LayerZero cross-chain messaging
 	function initialize(
 		address _admin,
 		address _l1ScrollMessenger,
@@ -160,13 +159,8 @@ contract Liquidity is
 		address _claim,
 		address _relayer,
 		address _contribution,
-		address[] memory initialERC20Tokens,
-		uint32 _dstChainId
+		address[] memory initialERC20Tokens
 	) external initializer {
-		if (_isScrollChain(_dstChainId)) {
-            revert UnsupportedDestinationChain(_dstChainId);
-        }
-
 		if (
 			_admin == address(0) ||
 			_l1ScrollMessenger == address(0) ||
@@ -184,7 +178,7 @@ contract Liquidity is
 		_grantRole(WITHDRAWAL, _claim);
 		__UUPSUpgradeable_init();
 		__AccessControl_init();
-		__TokenData_init(initialERC20Tokens);
+		__TokenData_init(initialERC20Tokens, 0);
 		__Pausable_init();
 		depositQueue.initialize();
 		l1ScrollMessenger = IL1ScrollMessenger(_l1ScrollMessenger);

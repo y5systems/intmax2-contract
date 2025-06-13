@@ -18,22 +18,15 @@ abstract contract TokenData is Initializable, ITokenData {
 	address private constant NATIVE_CURRENCY_ADDRESS = address(0);
 
 	/**
-	 * @notice Maximum number of chains supported
-	 * @dev Used to calculate token index partitions across different chains
-	 */
-	uint32 private constant MAX_SUPPORTED_CHAINS = 2 ** 18;
-
-	/**
 	 * @notice Maximum number of tokens supported
 	 * @dev Used to calculate token index partitions across different chains
 	 */
-	uint16 private constant MAX_SUPPORTED_TOKENS = 2 ** 14;
+	uint32 private constant MAX_SUPPORTED_TOKENS = 2 ** 24;
 
 	/**
 	 * @notice Error thrown when a chain ID is out of the supported range
 	 */
-	uint32 private constant SCROLL_CHAIN_ID = 534352;
-	uint32 private constant SCROLL_SEPOLIA_CHAIN_ID = 534351;
+	uint8 private constant SCROLL_CHAIN_INDEX = 1;
 
 	/**
 	 * @notice Mapping of all token information stored in the system
@@ -61,10 +54,10 @@ abstract contract TokenData is Initializable, ITokenData {
 		private nonFungibleTokenIndexMap;
 
 	/**
-	 * @notice Chain ID of the current blockchain
+	 * @notice Index of the current blockchain
 	 * @dev Stored during initialization and used for token index creation
 	 */
-	 uint32 private chainId;
+	 uint8 private chainIndex;
 
 	/**
 	 * @notice Initializes the TokenData contract with native token and initial ERC20 tokens
@@ -73,13 +66,10 @@ abstract contract TokenData is Initializable, ITokenData {
 	 */
 	// solhint-disable-next-line func-name-mixedcase
 	function __TokenData_init(
-		address[] memory initialERC20Tokens
+		address[] memory initialERC20Tokens,
+		uint8 _chainIndex
 	) internal onlyInitializing {
-		// Store the chain ID to use for token index partitioning
-		if (block.chainid > MAX_SUPPORTED_CHAINS) {
-			revert ChainIdOutOfRange();
-		}
-		chainId = uint32(block.chainid);
+		chainIndex = _chainIndex;
 
 		_createTokenIndex(TokenType.NATIVE, NATIVE_CURRENCY_ADDRESS, 0);
 		for (uint256 i = 0; i < initialERC20Tokens.length; i++) {
@@ -135,8 +125,7 @@ abstract contract TokenData is Initializable, ITokenData {
 		address tokenAddress,
 		uint256 tokenId
 	) private returns (uint32) {
-		uint32 tokenIndex = chainId;
-		tokenIndex = (tokenIndex << 14) | (tokenInfoCount & 0x3FFF);
+		uint32 tokenIndex = (chainIndex << 24) | (tokenInfoCount & 0xFFFFFF);
 
 		tokenInfoCount++;
 		if (tokenInfoCount >= MAX_SUPPORTED_TOKENS) {
@@ -211,29 +200,26 @@ abstract contract TokenData is Initializable, ITokenData {
 	}
 
 	/**
-	 * @notice Validates that a token index belongs to the chain ID of this contract
-	 * @dev Extracts the chain ID from the token index and verifies it matches this chain
+	 * @notice Validates that a token index belongs to the chain where this contract is deployed
+	 * @dev Extracts the chain index from the token index and verifies if it matches this chain
 	 * @param tokenIndex The token index to validate
 	 */
 	function _validateTokenChainId(uint32 tokenIndex) internal view {
-		// Extract the chain ID from the token index (upper 18 bits)
-		uint32 tokenChainId = tokenIndex >> 14;
+		// Extract the chain index from the token index (upper 24 bits)
+		uint32 tokenChainIndex = tokenIndex >> 24;
 		
-		// Get current chain ID
-		uint32 currentChainId = uint32(block.chainid);
-		
-		if (tokenChainId != currentChainId) {
-			revert InvalidChainForToken(tokenIndex, currentChainId, tokenChainId);
+		if (tokenChainIndex != chainIndex) {
+			revert InvalidChainForToken(tokenIndex, chainIndex, tokenChainIndex);
 		}
 	}
 
 	/**
-	 * @notice Checks if a chain ID is a supported Scroll chain
+	 * @notice Checks if a chain index is a supported Scroll chain
 	 * @dev Only allows Scroll mainnet and Scroll Sepolia
-	 * @param _chainId The chain ID to check
+	 * @param _chainIndex The chain index to check
 	 * @return bool True if the chain is a supported Scroll chain
 	 */
-	function _isScrollChain(uint32 _chainId) internal pure returns (bool) {
-		return (_chainId == SCROLL_CHAIN_ID || _chainId == SCROLL_SEPOLIA_CHAIN_ID);
+	function _isScrollChain(uint8 _chainIndex) internal pure returns (bool) {
+		return (_chainIndex == SCROLL_CHAIN_INDEX);
 	}
 }

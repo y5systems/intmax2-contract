@@ -336,7 +336,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		
 		for (uint256 i = 0; i < deposits.length; i++) {
 			// Extract chain ID from token index (upper 18 bits)
-			uint32 chainId = deposits[i].tokenIndex >> 14;
+			uint32 chainId = deposits[i].tokenIndex >> 24;
 			
 			// For Scroll, only allow Ethereum mainnet and Sepolia tokens
 			if (chainId != ETHEREUM_MAINNET_CHAIN_ID && chainId != ETHEREUM_SEPOLIA_CHAIN_ID) {
@@ -364,7 +364,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 		
 		for (uint256 i = 0; i < deposits.length; i++) {
 			// Extract chain ID from token index (upper 18 bits)
-			uint32 chainId = deposits[i].tokenIndex >> 14;
+			uint32 chainId = deposits[i].tokenIndex >> 24;
 			
 			// For LayerZero, reject Ethereum mainnet and Sepolia tokens
 			if (chainId == ETHEREUM_MAINNET_CHAIN_ID || chainId == ETHEREUM_SEPOLIA_CHAIN_ID) {
