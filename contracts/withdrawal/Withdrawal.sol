@@ -185,12 +185,15 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		uint256 directWithdrawalCounter = 0;
 		uint256 claimableWithdrawalCounter = 0;
 		bool[] memory isSkippedFlags = new bool[](withdrawals.length);
-		uint8 dstChainIndex = 0;
+		uint8 dstChainIndex;
+		bool isFirst = true;
 
 		for (uint256 i = 0; i < withdrawals.length; i++) {
-			uint8 chainIndex = uint8((withdrawals[i].tokenIndex >> 24) & 0xF);
-			if (dstChainIndex == 0) {
+			uint8 chainIndex = uint8(withdrawals[i].tokenIndex >> 24);
+
+			if (isFirst) {
 				dstChainIndex = chainIndex;
+				isFirst = false;
 			} else if (dstChainIndex != chainIndex) {
 				revert WithdrawalChainMismatch();
 			}
