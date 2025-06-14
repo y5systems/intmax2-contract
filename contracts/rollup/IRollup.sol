@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.27;
 
+import {DepositLib} from "../common/DepositLib.sol";
+
 /**
  * @title IRollup
  * @notice Interface for the Intmax2 L2 rollup contract
@@ -223,6 +225,17 @@ interface IRollup {
 	function processDeposits(
 		uint256 lastProcessedDepositId,
 		bytes32[] calldata depositHashes
+	) external;
+
+	/**
+	 * @notice Process deposits received through LzRelay
+	 * @dev Can only be called by the LzRelay contract
+	 * @param _lastProcessedDepositId The ID of the last processed deposit
+	 * @param deposits Array of full deposit structs to process
+	 */
+	function processLzDeposits(
+		uint256 _lastProcessedDepositId,
+		DepositLib.Deposit[] calldata deposits
 	) external;
 
 	/**
