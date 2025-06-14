@@ -30,6 +30,8 @@ export const ContractNames = {
 	ITokenData: 'ITokenData',
 	Liquidity: 'Liquidity',
 	TokenData: 'TokenData',
+	ILzLiquidity: 'ILzLiquidity',
+	LzLiquidity: 'LzLiquidity',
 
 	// Permitter
 	IPermitter: 'IPermitter',

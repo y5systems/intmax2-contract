@@ -12,6 +12,7 @@ import {DepositTreeLib} from "./lib/DepositTreeLib.sol";
 import {BlockHashLib} from "./lib/BlockHashLib.sol";
 import {PairingLib} from "./lib/PairingLib.sol";
 import {RateLimiterLib} from "./lib/RateLimiterLib.sol";
+import {DepositLib} from "../common/DepositLib.sol";
 
 /**
  * @title Rollup
@@ -33,6 +34,14 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @dev Each account ID uses 5 bytes, so 128 senders require 640 bytes
 	 */
 	uint256 public constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
+
+	/**
+	 * @notice Chain index constants for Ethereum networks.
+	 * @dev Used to validate against token-index chainIndex.
+	 * 
+	 * ETHEREUM_CHAIN_INDEX - Chain Index for Ethereum networks.
+	 */
+	uint8 private constant ETHEREUM_CHAIN_INDEX = 0;
 
 	/**
 	 * @notice Address of the Liquidity contract on L1
@@ -102,6 +111,13 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @dev Incremented for each processed deposit
 	 */
 	uint32 public depositIndex;
+
+	/**
+	 * @notice Error thrown when a token from Ethereum or Sepolia is attempted to be processed via LayerZero
+	 * @param tokenIndex The token index that was rejected
+	 * @param chainId The extracted chain ID that was rejected
+	 */
+	error InvalidTokenForLayerZero(uint32 tokenIndex, uint32 chainId);
 
 	/**
 	 * @notice Modifier to restrict function access to only the LzRelay contract
@@ -309,12 +325,27 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 * @notice Process deposits received through LzRelay
 	 * @dev Can only be called by the LzRelay contract
 	 * @param _lastProcessedDepositId The ID of the last processed deposit
-	 * @param depositHashes Array of deposit leaf hashes to insert into the deposit tree
+	 * @param deposits Array of full deposit structs to process
 	 */
 	function processLzDeposits(
 		uint256 _lastProcessedDepositId,
-		bytes32[] calldata depositHashes
+		DepositLib.Deposit[] calldata deposits
 	) external onlyLzRelay {
+		bytes32[] memory depositHashes = new bytes32[](deposits.length);
+		
+		for (uint256 i = 0; i < deposits.length; i++) {
+			// Extract chain index from token index (upper 8 bits)
+			uint8 chainIndex = uint8(deposits[i].tokenIndex >> 24);
+			
+			// For LayerZero, reject Ethereum tokens
+			if (chainIndex == ETHEREUM_CHAIN_INDEX) {
+				revert InvalidTokenForLayerZero(deposits[i].tokenIndex, chainIndex);
+			}
+			
+			// Compute deposit hash
+			depositHashes[i] = DepositLib.getHash(deposits[i]);
+		}
+		
 		_processDeposits(_lastProcessedDepositId, depositHashes);
 	}
 
@@ -326,7 +357,7 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	 */
 	function _processDeposits(
 		uint256 _lastProcessedDepositId,
-		bytes32[] calldata depositHashes
+		bytes32[] memory depositHashes
 	) private {
 		uint32 depositIndexCached = depositIndex;
 		for (uint256 i = 0; i < depositHashes.length; i++) {

@@ -12,11 +12,6 @@ interface ITokenData {
 	error TokenAddressIsZero();
 
 	/**
-	 * @notice Chain ID out of supported range
-	 */
-	error ChainIdOutOfRange();
-
-	/**
 	 * @notice Reached maximum number of tokens
 	 */
 	error TokenLimitReached();

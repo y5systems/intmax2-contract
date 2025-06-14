@@ -54,11 +54,13 @@ contract LzLiquidity is
     /// @dev which could exceed the L2 block gas limit and cause transaction failures.
     uint256 public constant RELAY_LIMIT = 450;
 
-     /**
-     * @notice Destination chainId used by LZ Protocol
-     * @dev Used to send cross-chain messages using LZ Protocol
-     */
-    uint32 private dstChainId;
+	/**
+	 * @notice Chain index constants for Scroll networks.
+	 * @dev Used to validate against token-index chainIndex.
+	 * 
+	 * SCROLL_CHAIN_INDEX - Chain Index for Scroll networks.
+	 */
+	uint8 private constant SCROLL_CHAIN_INDEX = 1;
 
     /// @notice Deployment time which is used to calculate the deposit limit
     uint256 public deploymentTime;
@@ -99,6 +101,10 @@ contract LzLiquidity is
     /// @notice Deposit information queue that tracks all deposits
     /// @dev Used to manage the order and state of deposits
     DepositQueueLib.DepositQueue private depositQueue;
+
+    /// @notice Deposit details mapping
+    /// @dev Used to send deposits to the LzRelay
+    mapping(bytes32 => DepositLib.Deposit) private depositDetails;
     
     /**
      * @notice Modifier to restrict access to only the withdrawal role through the LzRelay
@@ -150,7 +156,6 @@ contract LzLiquidity is
     /// @param _relayer The address that will have relayer privileges
     /// @param _contribution The address of the Contribution contract
     /// @param initialERC20Tokens Initial list of ERC20 token addresses to support
-    /// @param _dstChainId The destination chain ID for LayerZero cross-chain messaging
     function initialize(
         address _admin,
         address _rollup,
@@ -159,13 +164,8 @@ contract LzLiquidity is
         address _claim,
         address _relayer,
         address _contribution,
-        address[] memory initialERC20Tokens,
-        uint32 _dstChainId
+        address[] memory initialERC20Tokens
     ) external initializer {
-        if (!_isScrollChain(_dstChainId)) {
-            revert UnsupportedDestinationChain(_dstChainId);
-        }
-        
         if (
             _admin == address(0) ||
             _rollup == address(0) ||
@@ -183,14 +183,14 @@ contract LzLiquidity is
         _grantRole(WITHDRAWAL, _claim);
         __UUPSUpgradeable_init();
         __AccessControl_init();
-        __TokenData_init(initialERC20Tokens);
+        __TokenData_init(initialERC20Tokens, SCROLL_CHAIN_INDEX);
         __Pausable_init();
         depositQueue.initialize();
         contribution = IContribution(_contribution);
 
         rollup = _rollup;
         lzRelay = _lzRelay;
-        dstChainId = _dstChainId;
+
         // Set deployment time to the next day
         deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
     }
@@ -219,7 +219,7 @@ contract LzLiquidity is
     /**
      * @notice Updates the LayerZero Relayer contract address
      * @dev Only callable by the admin role
-     * @param _lzRelay The new LayerZero Relayer contract address
+     * @param _lzRelay The new LayerZero Relay contract address
      */
     function setLzRelayer(address _lzRelay) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if(_lzRelay == address(0)){
@@ -428,8 +428,8 @@ contract LzLiquidity is
     }
 
     /**
-     * @notice Relays deposits from source chain to destination chain using LayerZero
-     * @dev Only callable by addresses with the RELAYER role
+     * @notice Relays deposits to the Intmax rollup via LayerZero
+     * @dev The msg.value is used to pay for the LayerZero message fees
      * @param upToDepositId The upper limit of the Deposit ID that will be relayed
      * @param options Additional options for LayerZero message execution
      * @return receipt A MessagingReceipt struct containing details of the message sent
@@ -446,10 +446,18 @@ contract LzLiquidity is
             revert RelayLimitExceeded();
         }
 
-        bytes memory payload = abi.encode(upToDepositId, depositHashes);
+        DepositLib.Deposit[] memory deposits = new DepositLib.Deposit[](
+            depositHashes.length
+        );
+
+        for (uint256 i = 0; i <= depositHashes.length; i++) {
+            deposits[i] = depositDetails[depositHashes[i]];
+        }
+
+        bytes memory payload = abi.encode(upToDepositId, deposits);
 
         MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
-            dstChainId,
+            SCROLL_CHAIN_INDEX,
             payload,
             options
         );
@@ -656,14 +664,14 @@ contract LzLiquidity is
         if (amount > depositLimit) {
             revert DepositAmountExceedsLimit(amount, depositLimit);
         }
-        bytes32 depositHash = DepositLib
-            .Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible)
-            .getHash();
+        DepositLib.Deposit memory deposit = DepositLib.Deposit(sender, recipientSaltHash, amount, tokenIndex, isEligible);
+        bytes32 depositHash = DepositLib.getHash(deposit);
         if (doesDepositHashExist[depositHash]) {
             revert DepositHashAlreadyExists(depositHash);
         }
         doesDepositHashExist[depositHash] = true;
         uint256 depositId = depositQueue.enqueue(depositHash, sender);
+        depositDetails[depositHash] = deposit;
         emit Deposited(
             depositId,
             sender,

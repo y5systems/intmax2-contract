@@ -9,7 +9,7 @@ contract TokenDataTest is TokenData {
 	function initialize(
 		address[] memory initialERC20Tokens
 	) public initializer {
-		__TokenData_init(initialERC20Tokens);
+		__TokenData_init(initialERC20Tokens, 0);
 	}
 
 	function getOrCreateTokenIndex(
