@@ -188,6 +188,7 @@ contract LzLiquidity is
 
         rollup = _rollup;
         lzRelay = _lzRelay;
+
         // Set deployment time to the next day
         deploymentTime = (block.timestamp / 1 days + 1) * 1 days;
     }
@@ -216,7 +217,7 @@ contract LzLiquidity is
     /**
      * @notice Updates the LayerZero Relayer contract address
      * @dev Only callable by the admin role
-     * @param _lzRelay The new LayerZero Relayer contract address
+     * @param _lzRelay The new LayerZero Relay contract address
      */
     function setLzRelayer(address _lzRelay) external onlyRole(DEFAULT_ADMIN_ROLE) {
         if(_lzRelay == address(0)){
@@ -435,35 +436,32 @@ contract LzLiquidity is
         uint256 upToDepositId,
         bytes calldata options
     ) external payable onlyRole(RELAYER) returns (MessagingReceipt memory) {
-        DepositLib.Deposit[] memory deposits = new DepositLib.Deposit[](upToDepositId - depositQueue.front + 1);
-        uint256 depositCount = 0;
-        
-        for (uint256 i = depositQueue.front; i <= upToDepositId; i++) {
-            DepositQueueLib.DepositData memory data = depositQueue.depositData[i];
-            if (data.sender == address(0)) continue;
-            
-            deposits[depositCount] = depositDetails[data.depositHash];
-            depositCount++;
-        }
-        
-        assembly {
-            mstore(deposits, depositCount)
-        }
-        
-        if (deposits.length > RELAY_LIMIT) {
+        bytes32[] memory depositHashes = depositQueue.batchDequeue(
+            upToDepositId
+        );
+
+        if (depositHashes.length > RELAY_LIMIT) {
             revert RelayLimitExceeded();
         }
-        
+
+        DepositLib.Deposit[] memory deposits = new DepositLib.Deposit[](
+            depositHashes.length
+        );
+
+        for (uint256 i = 0; i <= depositHashes.length; i++) {
+            deposits[i] = depositDetails[depositHashes[i]];
+        }
+
         bytes memory payload = abi.encode(upToDepositId, deposits);
-        
+
         MessagingReceipt memory receipt = ILzRelay(lzRelay).send{value: msg.value}(
             SCROLL_CHAIN_INDEX,
             payload,
             options
         );
-        
+
         emit DepositsRelayed(upToDepositId, 0, payload);
-        
+
         return receipt;
     }
 
