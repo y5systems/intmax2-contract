@@ -102,6 +102,8 @@ contract LzLiquidity is
     /// @dev Used to manage the order and state of deposits
     DepositQueueLib.DepositQueue private depositQueue;
 
+    /// @notice Deposit details mapping
+    /// @dev Used to send deposits to the LzRelay
     mapping(bytes32 => DepositLib.Deposit) private depositDetails;
     
     /**
