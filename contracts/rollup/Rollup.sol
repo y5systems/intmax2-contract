@@ -120,18 +120,6 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	error InvalidTokenForLayerZero(uint32 tokenIndex, uint32 chainId);
 
 	/**
-	 * @notice Error thrown when a token not from Ethereum or Sepolia is attempted to be processed via Scroll
-	 * @param tokenIndex The token index that was rejected
-	 * @param chainId The extracted chain ID that was rejected
-	 */
-	error InvalidTokenForScroll(uint32 tokenIndex, uint32 chainId);
-
-	/**
-	 * @notice Error thrown when array lengths don't match
-	 */
-	error ArrayLengthMismatch();
-
-	/**
 	 * @notice Modifier to restrict function access to only the LzRelay contract
 	 * @dev Verifies that the message sender is the LzRelay contract
 	 */
