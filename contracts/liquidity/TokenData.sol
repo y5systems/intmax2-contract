@@ -24,7 +24,10 @@ abstract contract TokenData is Initializable, ITokenData {
 	uint32 private constant MAX_SUPPORTED_TOKENS = 2 ** 24;
 
 	/**
-	 * @notice Error thrown when a chain ID is out of the supported range
+	 * @notice Chain index constants for Scroll networks.
+	 * @dev Used to validate against token-index chainIndex.
+	 * 
+	 * SCROLL_CHAIN_INDEX - Chain Index for Scroll networks.
 	 */
 	uint8 private constant SCROLL_CHAIN_INDEX = 1;
 
@@ -211,15 +214,5 @@ abstract contract TokenData is Initializable, ITokenData {
 		if (tokenChainIndex != chainIndex) {
 			revert InvalidChainForToken(tokenIndex, chainIndex, tokenChainIndex);
 		}
-	}
-
-	/**
-	 * @notice Checks if a chain index is a supported Scroll chain
-	 * @dev Only allows Scroll mainnet and Scroll Sepolia
-	 * @param _chainIndex The chain index to check
-	 * @return bool True if the chain is a supported Scroll chain
-	 */
-	function _isScrollChain(uint8 _chainIndex) internal pure returns (bool) {
-		return (_chainIndex == SCROLL_CHAIN_INDEX);
 	}
 }

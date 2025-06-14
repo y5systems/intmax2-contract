@@ -35,6 +35,14 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	uint256 public constant RELAY_LIMIT = 100;
 
 	/**
+	 * @notice Chain index constants for Ethereum networks.
+	 * @dev Used to validate against token-index chainIndex.
+	 * 
+	 * ETHEREUM_CHAIN_INDEX - Chain Index for Ethereum networks.
+	 */
+	uint8 private constant ETHEREUM_CHAIN_INDEX = 0;
+
+	/**
 	 * @notice Reference to the PLONK verifier contract for withdrawal proofs
 	 * @dev Used to verify zero-knowledge proofs of withdrawals
 	 */
@@ -64,12 +72,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 * @dev Used to send cross-chain messages using LZ Protocol
 	 */
 	address public lzRelay;
-
-	/**
-	 * @notice Destination chainId used by ScrollMessenger
-	 * @dev Used to check how to send cross-chain message
-	 */
-	uint32 private scrollDstChainId;
 
 	/**
 	 * @notice Reference to the Contribution contract
@@ -105,7 +107,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 * @param _lzRelay The address of the Rollup contract
 	 * @param _contribution Address of the Contribution contract
 	 * @param _directWithdrawalTokenIndices Initial list of token indices for direct withdrawals
-	 * @param _scrollDstChainId The destination chain ID for ScrollMessenger
 	 */
 	function initialize(
 		address _admin,
@@ -115,7 +116,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		address _rollup,
 		address _lzRelay,
 		address _contribution,
-		uint32 _scrollDstChainId,
 		uint256[] memory _directWithdrawalTokenIndices
 	) external initializer {
 		if (
@@ -137,7 +137,6 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		contribution = IContribution(_contribution);
 		liquidity = _liquidity;
 		lzRelay = _lzRelay;
-		scrollDstChainId = _scrollDstChainId;
 		innerAddDirectWithdrawalTokenIndices(_directWithdrawalTokenIndices);
 	}
 
@@ -186,13 +185,13 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 		uint256 directWithdrawalCounter = 0;
 		uint256 claimableWithdrawalCounter = 0;
 		bool[] memory isSkippedFlags = new bool[](withdrawals.length);
-		uint32 dstChainId = 0;
+		uint8 dstChainIndex = 0;
 
 		for (uint256 i = 0; i < withdrawals.length; i++) {
-			uint32 chainId = (withdrawals[i].tokenIndex >> 14) & 0x3FFFF;
-			if (dstChainId == 0) {
-				dstChainId = chainId;
-			} else if (dstChainId != chainId) {
+			uint8 chainIndex = uint8((withdrawals[i].tokenIndex >> 24) & 0xF);
+			if (dstChainIndex == 0) {
+				dstChainIndex = chainIndex;
+			} else if (dstChainIndex != chainIndex) {
 				revert WithdrawalChainMismatch();
 			}
 
@@ -267,7 +266,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 			}
 		}
 
-		if (dstChainId == scrollDstChainId) {
+		if (dstChainIndex == ETHEREUM_CHAIN_INDEX) {
 			bytes memory message = abi.encodeWithSelector(
 				ILiquidity.processWithdrawals.selector,
 				directWithdrawals,
@@ -282,7 +281,7 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 
 			_relayMessage(
 				message,
-				dstChainId,
+				dstChainIndex,
 				options
 			);
 		}
@@ -318,17 +317,17 @@ contract Withdrawal is IWithdrawal, UUPSUpgradeable, OwnableUpgradeable {
 	 * @notice Relays a message to the Liquidity contract
 	 * @dev Uses the LzRelay to send a cross-chain message
 	 * @param message The encoded message to send to the Liquidity contract
-	 * @param dstChainId The id of the destination chain.
+	 * @param dstChainIndex The index of the destination chain.
      * @param options Additional options for message execution.
 	 */
 	function _relayMessage(
 		bytes memory message,
-		uint32 dstChainId,
+		uint8 dstChainIndex,
 		bytes memory options
 	) private {
 		bytes memory data = abi.encodeWithSignature(
-			"send(uint32,bytes,bytes)",
-			dstChainId,
+			"send(uint8,bytes,bytes)",
+			dstChainIndex,
 			message,
 			options
 		);

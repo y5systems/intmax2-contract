@@ -36,8 +36,8 @@ contract Rollup is IRollup, OwnableUpgradeable, UUPSUpgradeable {
 	uint256 public constant FULL_ACCOUNT_IDS_BYTES = NUM_SENDERS_IN_BLOCK * 5;
 
 	/**
-	 * @notice Chain ID constants for Ethereum networks.
-	 * @dev Used to validate against token-index chainId.
+	 * @notice Chain index constants for Ethereum networks.
+	 * @dev Used to validate against token-index chainIndex.
 	 * 
 	 * ETHEREUM_CHAIN_INDEX - Chain Index for Ethereum networks.
 	 */
